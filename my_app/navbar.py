@@ -33,7 +33,6 @@ def my_navbar():
                         [
                             dbc.NavItem(dbc.NavLink("Home", href="/")),
                             dbc.NavItem(dbc.NavLink("About", href="/about")),
-                            dbc.NavItem(dbc.NavLink("Settings", href="/settings")),
                         ],
                         className="ms-auto",
                         navbar=True,

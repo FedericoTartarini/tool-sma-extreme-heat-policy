@@ -6,6 +6,7 @@ import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
 from my_app.charts import hss_palette, risk_map, indicator_chart
 import dash
+from copy import deepcopy
 import pandas as pd
 from utils import (
     sma_risk_messages,
@@ -14,6 +15,8 @@ from utils import (
     get_yr_weather,
     calculate_comfort_indices,
 )
+import dash_mantine_components as dmc
+
 
 dash.register_page(
     __name__,
@@ -23,10 +26,71 @@ dash.register_page(
     description="This is the home page of the SMA Extreme Policy Tool",
 )
 
+df_postcodes = pd.read_csv("./assets/postcodes.csv")
+df_postcodes["sub-state-post"] = (
+    df_postcodes["suburb"]
+    + ", "
+    + df_postcodes["state"]
+    + ", "
+    + df_postcodes["postcode"].astype("str")
+)
+
+questions = [
+    {
+        "id": "id-class",
+        "question": "Sport:",
+        "options": list(sports_category.keys()),
+        "multi": False,
+        "default": [],
+    },
+    {
+        "id": "id-postcode",
+        "question": "Location:",
+        "options": list(df_postcodes["sub-state-post"].unique()),
+        "multi": False,
+        "default": [],
+    },
+]
+
+
+def generate_dropdown(questions_to_display):
+    return [
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Label(
+                        item["question"],
+                        className="py-2",
+                    ),
+                    width="auto",
+                ),
+                dbc.Col(
+                    dcc.Dropdown(
+                        item["options"],
+                        item["default"],
+                        multi=item["multi"],
+                        id=item["id"],
+                    ),
+                ),
+            ],
+            className="pb-2",
+        )
+        for item in questions_to_display
+    ]
+
 
 def layout():
     return dbc.Container(
         children=[
+            dmc.LoadingOverlay(
+                [
+                    html.Div(
+                        generate_dropdown(questions),
+                        id="settings-dropdowns",
+                    ),
+                ],
+                loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+            ),
             html.Div(id="map-component"),
             html.Div(id="body-home"),
         ],
@@ -44,16 +108,10 @@ def body(data):
         if not sport_selected:
             return [
                 dbc.Alert(
-                    "Please return to the Settings Page and select a sport",
+                    "Please select a sport",
                     id="sport-selection",
                     color="danger",
                     className="mt-2",
-                ),
-                html.Div(
-                    [
-                        dbc.Button("Settings Page", color="primary", href="/settings"),
-                    ],
-                    className="d-grid gap-2 col-4 mx-auto",
                 ),
             ]
         else:
@@ -138,14 +196,6 @@ def body(data):
                 id="sport-selection",
                 color="danger",
                 className="mt-2",
-            ),
-            html.Div(
-                [
-                    dbc.Button(
-                        "Go to the Settings Page", color="primary", href="/settings"
-                    ),
-                ],
-                className="d-grid gap-2 col-12 col-md-4 mx-auto",
             ),
         ]
 
@@ -287,17 +337,14 @@ def update_alert_hss_current(ts, data):
 @callback(
     [Output("session-storage-weather", "data"), Output("map-component", "children")],
     [
-        Input("url", "pathname"),
         Input("local-storage-location-gps", "data"),
         Input("local-storage-location-selected", "data"),
     ],
     [State("local-storage-settings", "data")],
 )
-def on_location_change(url, loc_gps, loc_selected, data_sport):
+def on_location_change(loc_gps, loc_selected, data_sport):
 
-    if url != "/":
-        raise PreventUpdate
-
+    print(f"{ctx.triggered_id=}")
     start_location_control = True
     if loc_gps or loc_selected:
         start_location_control = False
@@ -336,4 +383,47 @@ def on_location_change(url, loc_gps, loc_selected, data_sport):
             zoom=11,
         )
     except:
+        raise PreventUpdate
+
+
+@callback(
+    Output("settings-dropdowns", "children"),
+    Input("url", "pathname"),
+    State("local-storage-settings", "data"),
+)
+def display_the_dropdown_after_page_change(pathname, data):
+    if data and pathname == "/":
+        __questions = deepcopy(questions)
+        for ix, q in enumerate(__questions):
+            __questions[ix]["default"] = data[q["id"]]
+        return generate_dropdown(__questions)
+    else:
+        raise PreventUpdate
+
+
+@callback(
+    Output("local-storage-settings", "data"),
+    State("local-storage-settings", "data"),
+    [Input(question["id"], "value") for question in questions],
+)
+def save_settings_in_storage(data, *args):
+    """Saves in local storage the settings selected by the participant"""
+    data = data or {}
+    for ix, question_id in enumerate([question["id"] for question in questions]):
+        data[question_id] = args[ix]
+
+    return data
+
+
+@callback(
+    Output("local-storage-location-selected", "data"),
+    Input("id-postcode", "value"),
+)
+def display_page(value):
+    if value:
+        information = df_postcodes[df_postcodes["sub-state-post"] == value].to_dict(
+            orient="list"
+        )
+        return {"lat": information["latitude"][0], "lon": information["longitude"][0]}
+    else:
         raise PreventUpdate
