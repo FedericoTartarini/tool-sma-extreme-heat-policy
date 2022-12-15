@@ -15,7 +15,6 @@ from utils import (
     get_yr_weather,
     calculate_comfort_indices,
 )
-import dash_mantine_components as dmc
 
 
 dash.register_page(
@@ -79,18 +78,19 @@ def generate_dropdown(questions_to_display):
     ]
 
 
-def layout():
-    return dbc.Container(
-        children=[
-            html.Div(
-                generate_dropdown(questions),
-                id="settings-dropdowns",
-            ),
-            html.Div(id="map-component"),
-            html.Div(id="body-home"),
-        ],
-        className="p-2",
-    )
+layout = dbc.Container(
+    children=[
+        html.Div(
+            generate_dropdown(questions),
+            id="settings-dropdowns",
+        ),
+        html.Div(
+            id="map-component",
+        ),
+        html.Div(id="body-home"),
+    ],
+    className="p-2",
+)
 
 
 @callback(
@@ -98,97 +98,87 @@ def layout():
     Input("local-storage-settings", "data"),
 )
 def body(data):
-    try:
-        sport_selected = data["id-class"]
-        if not sport_selected:
-            return [
-                dbc.Alert(
-                    "Please select a sport",
-                    id="sport-selection",
-                    color="danger",
-                    className="mt-2",
+    sport_selected = data["id-class"]
+    if not sport_selected:
+        return [
+            dbc.Alert(
+                "Please select a sport",
+                id="sport-selection",
+                color="danger",
+                className="mt-2",
+            ),
+        ]
+    else:
+        return [
+            dbc.Row(
+                html.Div(
+                    id="id-icon-sport",
+                    className="p-2",
                 ),
-            ]
-        else:
-            return [
-                dbc.Row(
+                justify="center",
+            ),
+            dbc.Alert(
+                [
                     html.Div(
                         id="id-icon-sport",
                         className="p-2",
                     ),
-                    justify="center",
-                ),
-                dbc.Alert(
-                    [
-                        html.Div(
-                            id="id-icon-sport",
-                            className="p-2",
-                        ),
-                        html.Hr(),
-                        html.H6(
-                            "Current Heat Stress Risk is:",
-                        ),
-                        html.H1(
-                            className="alert-heading",
-                            id="value-hss-current",
-                        ),
-                    ],
-                    style={"text-align": "center"},
-                    id="id-alert-risk-current-value",
-                ),
-                html.H3(
-                    "Heat Stress Scale:",
-                ),
-                html.Div(id="fig-indicator"),
-                dbc.Alert(
-                    [
-                        html.H3(
-                            "Key recommendations:",
-                        ),
-                        html.Hr(),
-                        html.Div(id="div-icons-suggestions"),
-                    ],
-                    className="mt-1",
-                    color="secondary",
-                    id="id-alert-risk-current-recommendations",
-                ),
-                dbc.Accordion(
-                    dbc.AccordionItem(
-                        [
-                            html.P(
-                                id="value-risk-description",
-                            ),
-                            html.P(
-                                "You should:",
-                            ),
-                            dcc.Markdown(
-                                id="value-risk-suggestions",
-                                className="mb-0",
-                            ),
-                        ],
-                        title="Detailed suggestions: ",
+                    html.Hr(),
+                    html.H6(
+                        "Current Heat Stress Risk is:",
                     ),
-                    start_collapsed=True,
-                    className="my-2",
-                    id="id-accordion-risk-current",
-                ),
-                html.H2("Forecasted risk value"),
-                html.Div(id="fig-hss-trend"),
-                legend_risk(),
-                html.P(
-                    "Each dot in the chart above represents the forecasted conditions"
-                    " in the next X hours. Where X is the number displayed over"
-                    " the dot",
-                    className="my-2",
-                ),
-            ]
-    except:
-        return [
+                    html.H1(
+                        className="alert-heading",
+                        id="value-hss-current",
+                    ),
+                ],
+                style={"text-align": "center"},
+                id="id-alert-risk-current-value",
+            ),
+            html.H3(
+                "Heat Stress Scale:",
+            ),
+            html.Div(id="fig-indicator"),
             dbc.Alert(
-                "Please select a sport in the Settings Page",
-                id="sport-selection",
-                color="danger",
-                className="mt-2",
+                [
+                    html.H3(
+                        "Key recommendations:",
+                    ),
+                    html.Hr(),
+                    html.Div(id="div-icons-suggestions"),
+                ],
+                className="mt-1",
+                color="secondary",
+                id="id-alert-risk-current-recommendations",
+            ),
+            dbc.Accordion(
+                dbc.AccordionItem(
+                    [
+                        html.P(
+                            id="value-risk-description",
+                        ),
+                        html.P(
+                            "You should:",
+                        ),
+                        dcc.Markdown(
+                            id="value-risk-suggestions",
+                            className="mb-0",
+                        ),
+                    ],
+                    title="Detailed suggestions: ",
+                ),
+                start_collapsed=True,
+                className="my-2",
+                id="id-accordion-risk-current",
+            ),
+            html.H2("Forecasted risk value"),
+            html.Div(id="fig-hss-trend"),
+            legend_risk(),
+            html.P(
+                "Each dot in the chart above represents the forecasted conditions"
+                " in the next X hours. Where X is the number displayed over"
+                " the dot",
+                className="my-2",
             ),
         ]
 
@@ -325,7 +315,7 @@ def on_location_change(loc_selected, data_sport):
 
     loc_selected = loc_selected or {"lat": -0, "lon": 0}
 
-    try:
+    if data_sport:
         df = get_yr_weather(lat=loc_selected["lat"], lon=loc_selected["lon"])
         df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
 
@@ -347,7 +337,7 @@ def on_location_change(loc_selected, data_sport):
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
         )
-    except:
+    else:
         raise PreventUpdate
 
 

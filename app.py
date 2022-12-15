@@ -12,9 +12,9 @@ app = Dash(
         "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
     ],
     prevent_initial_callbacks=True,
+    suppress_callback_exceptions=True,
     use_pages=True,
 )
-app.config.suppress_callback_exceptions = True
 
 app.index_string = """<!DOCTYPE html>
 <html lang="en-US">
@@ -63,6 +63,9 @@ app.layout = html.Div(
         ),
         html.Div(id="id-google-analytics-event"),
         my_navbar(),
+        html.Div(
+            id="map-component",
+        ),
         html.Div(page_container, style={"flex": 1}),
         my_footer(),
     ],
