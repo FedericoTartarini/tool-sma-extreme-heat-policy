@@ -144,8 +144,21 @@ sma_risk_messages = {
     },
 }
 
+default_location = {"lat": -33.89, "lon": 151.18, "tz": "Australia/Sydney"}
 
-def get_yr_weather(lat=-33.8862, lon=151.1791):
+time_zones = {
+    "NSW": "Australia/Sydney",
+    "WA": "Australia/Perth",
+    "ACT": "Australia/Canberra",
+    "NT": "Australia/Darwin",
+    "SA": "Australia/Adelaide",
+    "QLD": "Australia/Brisbane",
+    "VIC": "Australia/Melbourne",
+    "TAS": "Australia/Hobart",
+}
+
+
+def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     """get weather forecast from YR website"""
 
     weather = requests.get(
@@ -162,7 +175,7 @@ def get_yr_weather(lat=-33.8862, lon=151.1791):
     df_weather.columns = ["time", "pressure", "tdb", "cloud", "rh", "w-dir", "wind"]
     df_weather.set_index(pd.to_datetime(df_weather["time"]), inplace=True)
     df_weather.drop(columns=["time"], inplace=True)
-    df_weather.index = df_weather.index.tz_convert(pytz.timezone("Australia/Sydney"))
+    df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
     df_weather = df_weather.resample("2H").max()
     df_weather = df_weather.dropna(subset=["tdb"])
 
@@ -244,7 +257,8 @@ def legend_risk():
 
 
 if __name__ == "__main__":
-    df = get_yr_weather(lat=-33.889, lon=151.184)
+    df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
+    df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
     df_results = calculate_comfort_indices(df, sport_class=2)
 
     # sma-hss

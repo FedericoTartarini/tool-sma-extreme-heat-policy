@@ -14,6 +14,8 @@ from utils import (
     legend_risk,
     get_yr_weather,
     calculate_comfort_indices,
+    time_zones,
+    default_location,
 )
 
 
@@ -177,7 +179,7 @@ def body(data):
             html.P(
                 "Each dot in the chart above represents the forecasted conditions"
                 " in the next X hours. Where X is the number displayed over"
-                " the dot",
+                " the dot.",
                 className="my-2",
             ),
             html.H2("Forecasted risk"),
@@ -328,10 +330,12 @@ def update_alert_hss_current(ts, data):
 )
 def on_location_change(loc_selected, data_sport):
 
-    loc_selected = loc_selected or {"lat": -0, "lon": 0}
+    loc_selected = loc_selected or default_location
 
     if data_sport:
-        df = get_yr_weather(lat=loc_selected["lat"], lon=loc_selected["lon"])
+        df = get_yr_weather(
+            lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
+        )
         df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
@@ -395,6 +399,10 @@ def display_page(value):
         information = df_postcodes[df_postcodes["sub-state-post"] == value].to_dict(
             orient="list"
         )
-        return {"lat": information["latitude"][0], "lon": information["longitude"][0]}
+        return {
+            "lat": information["latitude"][0],
+            "lon": information["longitude"][0],
+            "tz": time_zones[information["state"][0]],
+        }
     else:
         raise PreventUpdate

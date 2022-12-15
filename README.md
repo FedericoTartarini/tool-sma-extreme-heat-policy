@@ -14,6 +14,9 @@ You should be able to access the application at this URL: `http://127.0.0.1:9090
 ```
 gcloud components update
 pipenv run pip3 freeze > requirements.txt
+```
+
+```
 gcloud builds submit --tag gcr.io/football-nsw-369006/extreme-heat-tool  --project=football-nsw-369006
 gcloud run deploy extreme-heat-tool --image gcr.io/football-nsw-369006/extreme-heat-tool  --project=football-nsw-369006 --platform managed
 ```
