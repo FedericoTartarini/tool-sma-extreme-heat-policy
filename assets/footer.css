@@ -1,0 +1,15 @@
+#footer-container {
+    padding: 1rem;
+    margin:0;
+    color: white;
+    background-color: #003262;
+}
+
+a {
+    color: #333333;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: lightgrey;
+}
