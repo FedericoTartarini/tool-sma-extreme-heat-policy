@@ -82,14 +82,9 @@ def generate_dropdown(questions_to_display):
 def layout():
     return dbc.Container(
         children=[
-            dmc.LoadingOverlay(
-                [
-                    html.Div(
-                        generate_dropdown(questions),
-                        id="settings-dropdowns",
-                    ),
-                ],
-                loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+            html.Div(
+                generate_dropdown(questions),
+                id="settings-dropdowns",
             ),
             html.Div(id="map-component"),
             html.Div(id="body-home"),
@@ -133,11 +128,9 @@ def body(data):
                         html.H6(
                             "Current Heat Stress Risk is:",
                         ),
-                        dcc.Loading(
-                            html.H1(
-                                className="alert-heading",
-                                id="value-hss-current",
-                            ),
+                        html.H1(
+                            className="alert-heading",
+                            id="value-hss-current",
                         ),
                     ],
                     style={"text-align": "center"},
@@ -329,9 +322,6 @@ def update_alert_hss_current(ts, data):
 def on_location_change(loc_selected, data_sport):
 
     print(f"{ctx.triggered_id=}")
-    start_location_control = True
-    if loc_selected:
-        start_location_control = False
 
     loc_selected = loc_selected or {"lat": -0, "lon": 0}
 

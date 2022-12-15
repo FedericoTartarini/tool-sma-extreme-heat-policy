@@ -5,8 +5,6 @@ from my_app.navbar import my_navbar
 from my_app.footer import my_footer
 import os
 
-from utils import calculate_comfort_indices, get_yr_weather, sports_category
-
 app = Dash(
     __name__,
     external_stylesheets=[
@@ -59,7 +57,10 @@ app.layout = html.Div(
         dcc.Location(id="url"),
         dcc.Store(id="local-storage-location-selected", storage_type="local"),
         dcc.Store(id="local-storage-settings", storage_type="local"),
-        dcc.Store(id="session-storage-weather", storage_type="session"),
+        dcc.Loading(
+            dcc.Store(id="session-storage-weather", storage_type="session"),
+            fullscreen=True,
+        ),
         html.Div(id="id-google-analytics-event"),
         my_navbar(),
         html.Div(page_container, style={"flex": 1}),

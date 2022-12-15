@@ -69,7 +69,6 @@ headers = {
     )
 }
 
-
 sma_risk_messages = {
     "low": {
         "description": (
