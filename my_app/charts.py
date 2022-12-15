@@ -62,12 +62,10 @@ def line_chart_tmp(df, variable="tdb"):
 
     fig.add_trace(
         go.Scatter(
-            x=df_for.index,
-            y=df_for.risk_value,
-            mode="lines+markers+text",
+            x=df.index,
+            y=df[variable],
+            mode="lines+markers",
             line_color="black",
-            text=df_for.risk_value,
-            textposition="top right",
             line={"shape": "spline", "smoothing": 1.3},
         )
     )
@@ -206,18 +204,24 @@ def risk_map(df_for, sport_class):
 
 
 if __name__ == "__main__":
-    df_for = get_yr_weather(lat=-17.91, lon=122.25)
-    df_for = calculate_comfort_indices(df_for, 3)
-    # f = risk_map(df_for, 3)
-    # f.show()
+    df_w = get_yr_weather(lat=-17.91, lon=122.25)
+    df_for = calculate_comfort_indices(df_w, 3)
+    f = risk_map(df_for, 3)
+    f.show()
 
     fig = px.line(
         df_for,
         x=df_for.index,
-        y=df_for.tdb,
+        y=df_for.risk_value,
         height=200,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df_for.index,
+            y=df_for.risk_value_interpolated,
+        )
     )
     fig.show()
 
-    f = line_chart_tmp(df_for, "risk_value")
+    f = line_chart_tmp(df_for, "risk_value_interpolated")
     f.show()

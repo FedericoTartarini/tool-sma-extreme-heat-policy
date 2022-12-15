@@ -164,6 +164,7 @@ def get_yr_weather(lat=-33.8862, lon=151.1791):
     df_weather.drop(columns=["time"], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone("Australia/Sydney"))
     df_weather = df_weather.resample("2H").max()
+    df_weather = df_weather.dropna(subset=["tdb"])
 
     return df_weather
 
@@ -185,6 +186,15 @@ def calculate_comfort_indices(data_for, sport_class):
 
     risk_value = {"low": 0, "moderate": 1, "high": 2, "extreme": 3}
     data_for["risk_value"] = data_for["risk"].map(risk_value)
+
+    risk_value_interpolated = []
+    for ix, row in data_for.iterrows():
+        x = [0, row["moderate"], row["high"], row["extreme"], 100]
+        y = np.arange(0, 5, 1)
+
+        risk_value_interpolated.append(np.around(np.interp(row["rh"], x, y), 1))
+
+    data_for["risk_value_interpolated"] = risk_value_interpolated
 
     return data_for
 

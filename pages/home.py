@@ -4,7 +4,7 @@ from dash import html, dcc, Output, Input, State, callback, ctx
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
-from my_app.charts import hss_palette, risk_map, indicator_chart
+from my_app.charts import hss_palette, risk_map, indicator_chart, line_chart_tmp
 import dash
 from copy import deepcopy
 import pandas as pd
@@ -180,6 +180,8 @@ def body(data):
                 " the dot",
                 className="my-2",
             ),
+            html.H2("Forecasted risk"),
+            html.Div(id="fig-forecast_line"),
         ]
 
 
@@ -254,6 +256,21 @@ def update_fig_hss_trend(ts, data, data_sport):
         df = pd.read_json(data, orient="table")
         return dcc.Graph(
             figure=indicator_chart(df, sports_category[data_sport["id-class"]]),
+            config={"staticPlot": True},
+        )
+    except ValueError:
+        raise PreventUpdate
+
+
+@callback(
+    Output("fig-forecast_line", "children"),
+    Input("session-storage-weather", "data"),
+)
+def update_fig_hss_trend(data):
+    try:
+        df = pd.read_json(data, orient="table")
+        return dcc.Graph(
+            figure=line_chart_tmp(df, "risk_value_interpolated"),
             config={"staticPlot": True},
         )
     except ValueError:
