@@ -64,8 +64,16 @@ def generate_dropdown(questions_to_display):
 def layout():
     return dbc.Container(
         [
-            dmc.LoadingOverlay(html.Div(id="settings-dropdowns")),
-            dcc.Loading(html.Div(id="postcode-info")),
+            dmc.LoadingOverlay(
+                [
+                    html.Div(
+                        generate_dropdown(questions),
+                        id="settings-dropdowns",
+                    ),
+                    html.Div(id="postcode-info"),
+                ],
+                loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+            ),
             html.Div(
                 [
                     dbc.Button("Calculate Heat Stress Risk", color="primary", href="/"),
@@ -103,8 +111,6 @@ def display_page(pathname, data):
         for ix, q in enumerate(__questions):
             __questions[ix]["default"] = data[q["id"]]
         return generate_dropdown(__questions)
-    elif data is None:
-        return generate_dropdown(questions)
     else:
         raise PreventUpdate
 

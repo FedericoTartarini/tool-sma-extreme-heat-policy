@@ -1,13 +1,9 @@
 from dash_extensions.enrich import DashProxy
-from dash_extensions import Lottie
 from dash import Dash, Input, Output, State, ctx, page_container, html, dcc
-from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 from my_app.navbar import my_navbar
 from my_app.footer import my_footer
 import os
-
-from utils import calculate_comfort_indices, get_yr_weather, sports_category
 
 app = DashProxy(
     __name__,
@@ -59,10 +55,6 @@ app.index_string = """<!DOCTYPE html>
 app.layout = html.Div(
     children=[
         dcc.Location(id="url"),
-Lottie(
-    options=dict(loop=True, autoplay=True), width="25%",
-    url="https://assets6.lottiefiles.com/packages/lf20_rwwvwgka.json"
-),
         dcc.Store(id="local-storage-location-gps", storage_type="local"),
         dcc.Store(id="local-storage-location-selected", storage_type="local"),
         dcc.Store(id="local-storage-settings", storage_type="local"),
