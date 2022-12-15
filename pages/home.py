@@ -41,14 +41,14 @@ questions = [
         "question": "Sport:",
         "options": list(sports_category.keys()),
         "multi": False,
-        "default": [],
+        "default": "Soccer",
     },
     {
         "id": "id-postcode",
         "question": "Location:",
         "options": list(df_postcodes["sub-state-post"].unique()),
         "multi": False,
-        "default": [],
+        "default": "Sydney, NSW, 1001",
     },
 ]
 
@@ -225,21 +225,6 @@ def icon_component(src, message, size="50px"):
 
 
 @callback(
-    Output("local-storage-location-gps", "data"),
-    Input("map", "location_lat_lon_acc"),
-    State("local-storage-location-gps", "data"),
-)
-def update_location_and_forecast(location, data):
-    data = data or {"lat": -33.888, "lon": 151.185}
-
-    if location:
-        data["lat"] = round(location[0], 3)
-        data["lon"] = round(location[1], 3)
-
-    return data
-
-
-@callback(
     Output("id-icon-sport", "children"),
     Input("local-storage-settings", "data"),
 )
@@ -337,37 +322,27 @@ def update_alert_hss_current(ts, data):
 @callback(
     [Output("session-storage-weather", "data"), Output("map-component", "children")],
     [
-        Input("local-storage-location-gps", "data"),
         Input("local-storage-location-selected", "data"),
     ],
     [State("local-storage-settings", "data")],
 )
-def on_location_change(loc_gps, loc_selected, data_sport):
+def on_location_change(loc_selected, data_sport):
 
     print(f"{ctx.triggered_id=}")
     start_location_control = True
-    if loc_gps or loc_selected:
+    if loc_selected:
         start_location_control = False
 
-    loc_gps = loc_gps or {"lat": -0, "lon": 0}
-
-    if loc_selected and ctx.triggered_id != "local-storage-location-gps":
-        loc_gps = loc_selected
+    loc_selected = loc_selected or {"lat": -0, "lon": 0}
 
     try:
-        if loc_selected and ctx.triggered_id != "local-storage-location-gps":
-            loc_gps = loc_selected
-        df = get_yr_weather(lat=loc_gps["lat"], lon=loc_gps["lon"])
+        df = get_yr_weather(lat=loc_selected["lat"], lon=loc_selected["lon"])
         df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [
                 dl.TileLayer(maxZoom=13, minZoom=9),
-                dl.LocateControl(
-                    startDirectly=start_location_control,
-                    options={"locateOptions": {"enableHighAccuracy": True}},
-                ),
-                dl.Marker(position=[loc_gps["lat"], loc_gps["lon"]]),
+                dl.Marker(position=[loc_selected["lat"], loc_selected["lon"]]),
                 dl.GestureHandling(),
             ],
             id="map",
@@ -379,7 +354,7 @@ def on_location_change(loc_gps, loc_selected, data_sport):
                 # "-webkit-filter": "grayscale(100%)",
                 # "filter": "grayscale(100%)",
             },
-            center=(loc_gps["lat"], loc_gps["lon"]),
+            center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
         )
     except:
@@ -392,7 +367,9 @@ def on_location_change(loc_gps, loc_selected, data_sport):
     State("local-storage-settings", "data"),
 )
 def display_the_dropdown_after_page_change(pathname, data):
-    if data and pathname == "/":
+    print(data)
+    data = data or {"id-class": "Abseiling", "id-postcode": "Camperdown, NSW, 2050"}
+    if pathname == "/":
         __questions = deepcopy(questions)
         for ix, q in enumerate(__questions):
             __questions[ix]["default"] = data[q["id"]]
