@@ -70,7 +70,13 @@ def line_chart_tmp(df, variable="tdb"):
         )
     )
 
-    return standard_layout(fig)
+    fig = standard_layout(fig)
+
+    fig.update_layout(
+        yaxis=dict(title_text="Risk Value"),
+    )
+
+    return fig
 
 
 def heatmap_chart_tmp(df):
