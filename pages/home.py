@@ -311,8 +311,6 @@ def update_alert_hss_current(ts, data):
 )
 def on_location_change(loc_selected, data_sport):
 
-    print(f"{ctx.triggered_id=}")
-
     loc_selected = loc_selected or {"lat": -0, "lon": 0}
 
     if data_sport:
@@ -347,7 +345,6 @@ def on_location_change(loc_selected, data_sport):
     State("local-storage-settings", "data"),
 )
 def display_the_dropdown_after_page_change(pathname, data):
-    print(data)
     data = data or {"id-class": "Abseiling", "id-postcode": "Camperdown, NSW, 2050"}
     if pathname == "/":
         __questions = deepcopy(questions)
