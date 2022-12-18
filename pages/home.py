@@ -173,15 +173,7 @@ def body(data):
                 className="my-2",
                 id="id-accordion-risk-current",
             ),
-            html.H2("Forecasted risk value"),
-            html.Div(id="fig-hss-trend"),
             legend_risk(),
-            html.P(
-                "Each dot in the chart above represents the forecasted conditions"
-                " in the next X hours. Where X is the number displayed over"
-                " the dot.",
-                className="my-2",
-            ),
             html.H2("Forecasted risk"),
             html.Div(id="fig-forecast_line"),
         ]
@@ -228,23 +220,6 @@ def update_location_and_forecast(data_sport):
         return icon_component(f"../assets/icons/{data_sport['id-class']}.png", message)
     else:
         return icon_component("../assets/icons/sports.png", message)
-
-
-@callback(
-    Output("fig-hss-trend", "children"),
-    Input("session-storage-weather", "modified_timestamp"),
-    State("session-storage-weather", "data"),
-    State("local-storage-settings", "data"),
-)
-def update_fig_hss_forecast(ts, data, data_sport):
-    try:
-        df = pd.read_json(data, orient="table")
-        return dcc.Graph(
-            figure=risk_map(df, sports_category[data_sport["id-class"]]),
-            config={"staticPlot": True},
-        )
-    except ValueError:
-        raise PreventUpdate
 
 
 @callback(
