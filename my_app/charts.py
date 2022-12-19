@@ -146,12 +146,17 @@ def indicator_chart(df_for, sport_class):
                 "shape": "bullet",
                 "axis": {"range": [0, 100]},
                 "steps": steps,
-                "bar": {"color": "black"},
+                "borderwidth": 0,
+                "bar": {
+                    "color": "lightgray",
+                    "thickness": 0.3,
+                    "line": {"color": "black", "width": 1},
+                },
             },
         )
     )
     fig.add_annotation(
-        x=current_risk / 100, y=1, text="Now", showarrow=False, font=dict(color="#000")
+        x=current_risk / 100, y=1, text="Now", showarrow=False, font=dict(color="#fff")
     )
     fig = standard_layout(fig)
     fig.update_layout(height=60)
