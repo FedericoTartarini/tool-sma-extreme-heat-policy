@@ -37,8 +37,14 @@ def standard_layout(fig):
     return fig
 
 
-def line_chart_tmp(df, variable="tdb"):
+def line_chart(df, variable="tdb", date_offset=None):
+    """plots the forecast data for a specific day where -1 returns all days and 0 today"""
     fig = go.Figure()
+
+    if date_offset > -1:
+        date_keep = df.index.min() + pd.tseries.offsets.DateOffset(n=date_offset)
+        date_keep = date_keep.date()
+        df = df.loc[df.index.date == date_keep]
 
     fig.add_trace(
         go.Scatter(
@@ -242,5 +248,5 @@ if __name__ == "__main__":
     )
     fig.show()
 
-    f = line_chart_tmp(df_for, "risk_value_interpolated")
+    f = line_chart(df_for, "risk_value_interpolated")
     f.show()

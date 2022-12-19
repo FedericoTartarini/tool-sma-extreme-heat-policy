@@ -4,7 +4,7 @@ from dash import html, dcc, Output, Input, State, callback, ctx
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
-from my_app.charts import hss_palette, risk_map, indicator_chart, line_chart_tmp
+from my_app.charts import hss_palette, risk_map, indicator_chart, line_chart
 import dash
 from copy import deepcopy
 import pandas as pd
@@ -175,7 +175,7 @@ def body(data):
                 className="my-2",
                 id="id-accordion-risk-current",
             ),
-            html.H2("Forecasted risk"),
+            html.H2("Forecasted risk for today"),
             legend_risk(),
             html.Div(id="fig-forecast_line"),
         ]
@@ -249,7 +249,7 @@ def update_fig_hss_trend(data):
     try:
         df = pd.read_json(data, orient="table")
         return dcc.Graph(
-            figure=line_chart_tmp(df, "risk_value_interpolated"),
+            figure=line_chart(df, "risk_value_interpolated", date_offset=0),
             config={"staticPlot": True},
         )
     except ValueError:

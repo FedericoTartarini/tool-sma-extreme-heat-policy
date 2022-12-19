@@ -178,7 +178,6 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     df_weather.set_index(pd.to_datetime(df_weather["time"]), inplace=True)
     df_weather.drop(columns=["time"], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
-    df_weather = df_weather.resample("2H").max()
     df_weather = df_weather.dropna(subset=["tdb"])
 
     return df_weather
