@@ -37,14 +37,9 @@ def standard_layout(fig):
     return fig
 
 
-def line_chart(df, variable="tdb", date_offset=None):
+def line_chart(df, variable="tdb"):
     """plots the forecast data for a specific day where -1 returns all days and 0 today"""
     fig = go.Figure()
-
-    if date_offset > -1:
-        date_keep = df.index.min() + pd.tseries.offsets.DateOffset(n=date_offset)
-        date_keep = date_keep.date()
-        df = df.loc[df.index.date == date_keep]
 
     fig.add_trace(
         go.Scatter(

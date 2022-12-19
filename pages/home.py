@@ -17,7 +17,9 @@ from utils import (
     time_zones,
     default_location,
     default_settings,
+    get_data_specific_day,
 )
+import dash_mantine_components as dmc
 
 
 dash.register_page(
@@ -178,6 +180,7 @@ def body(data):
             html.H2("Forecasted risk for today"),
             legend_risk(),
             html.Div(id="fig-forecast_line"),
+            html.Div(id="fig-forecast-next-days"),
         ]
 
 
@@ -226,11 +229,10 @@ def update_location_and_forecast(data_sport):
 
 @callback(
     Output("fig-indicator", "children"),
-    Input("session-storage-weather", "modified_timestamp"),
-    State("session-storage-weather", "data"),
+    Input("session-storage-weather", "data"),
     State("local-storage-settings", "data"),
 )
-def update_fig_hss_trend(ts, data, data_sport):
+def update_fig_hss_trend(data, data_sport):
     try:
         df = pd.read_json(data, orient="table")
         return dcc.Graph(
@@ -248,12 +250,71 @@ def update_fig_hss_trend(ts, data, data_sport):
 def update_fig_hss_trend(data):
     try:
         df = pd.read_json(data, orient="table")
+        df = get_data_specific_day(df, date_offset=0)
         return dcc.Graph(
-            figure=line_chart(df, "risk_value_interpolated", date_offset=0),
+            figure=line_chart(df, "risk_value_interpolated"),
             config={"staticPlot": True},
         )
     except ValueError:
         raise PreventUpdate
+
+
+@callback(
+    Output("fig-forecast-next-days", "children"),
+    Input("session-storage-weather", "data"),
+)
+def update_fig_hss_trend(data):
+    try:
+        df = pd.read_json(data, orient="table")
+        accordions = []
+        for day in [1, 2, 3]:
+            df_day = get_data_specific_day(df, date_offset=day)
+            day_name = df_day.index.day_name().unique()[0]
+            color = hss_palette[df_day["risk_value"].max()]
+            risk_value = df_day.loc[
+                df_day.risk_value == df_day.risk_value.max(), "risk"
+            ].unique()[0]
+
+            accordions.append(
+                dmc.AccordionItem(
+                    label=[
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.H4(day_name, className="p-0 m-0"),
+                                    align="center",
+                                ),
+                                dbc.Col(
+                                    html.P("Max risk:", className="p-0 m-0"),
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Badge(
+                                        risk_value,
+                                        className="ms-1 p-1 m-0",
+                                        color=color,
+                                    ),
+                                    width="auto",
+                                ),
+                            ],
+                            align="center",
+                        )
+                    ],
+                    children=[
+                        dcc.Graph(
+                            figure=line_chart(df_day, "risk_value_interpolated"),
+                            config={"staticPlot": True},
+                        ),
+                    ],
+                )
+            ),
+        return dmc.Accordion(accordions, multiple=True)
+    except ValueError:
+        raise PreventUpdate
+
+
+def test():
+    return html.H1(["Example heading", dbc.Badge("New", className="ms-1")])
 
 
 @callback(

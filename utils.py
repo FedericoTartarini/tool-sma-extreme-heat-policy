@@ -258,6 +258,12 @@ def legend_risk():
     )
 
 
+def get_data_specific_day(df, date_offset=0):
+    date_keep = df.index.min() + pd.tseries.offsets.DateOffset(n=date_offset)
+    date_keep = date_keep.date()
+    return df.loc[df.index.date == date_keep]
+
+
 if __name__ == "__main__":
     df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
     df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
