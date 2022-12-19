@@ -16,6 +16,7 @@ from utils import (
     calculate_comfort_indices,
     time_zones,
     default_location,
+    default_settings,
 )
 
 
@@ -342,7 +343,7 @@ def on_location_change(loc_selected, data_sport):
     State("local-storage-settings", "data"),
 )
 def display_the_dropdown_after_page_change(pathname, data):
-    data = data or {"id-class": "Abseiling", "id-postcode": "Camperdown, NSW, 2050"}
+    data = data or default_settings
     if pathname == "/":
         __questions = deepcopy(questions)
         for ix, q in enumerate(__questions):

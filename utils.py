@@ -146,6 +146,8 @@ sma_risk_messages = {
 
 default_location = {"lat": -33.89, "lon": 151.18, "tz": "Australia/Sydney"}
 
+default_settings = {"id-class": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
+
 time_zones = {
     "NSW": "Australia/Sydney",
     "WA": "Australia/Perth",
@@ -189,6 +191,18 @@ def calculate_comfort_indices(data_for, sport_class):
     data_for["high"] = lines[2](data_for["tdb"])
     data_for["extreme"] = lines[3](data_for["tdb"])
 
+    risk_value_interpolated = []
+    for ix, row in data_for.iterrows():
+        top = 100
+        if row["extreme"] > top:
+            top = row["extreme"] + 10
+        x = [0, row["moderate"], row["high"], row["extreme"], top]
+        y = np.arange(0, 5, 1)
+
+        risk_value_interpolated.append(np.around(np.interp(row["rh"], x, y), 1))
+
+    data_for["risk_value_interpolated"] = risk_value_interpolated
+
     data_for["risk"] = "low"
     for risk in ["moderate", "high", "extreme"]:
         data_for.loc[data_for[risk] < 0, risk] = 0
@@ -197,15 +211,6 @@ def calculate_comfort_indices(data_for, sport_class):
 
     risk_value = {"low": 0, "moderate": 1, "high": 2, "extreme": 3}
     data_for["risk_value"] = data_for["risk"].map(risk_value)
-
-    risk_value_interpolated = []
-    for ix, row in data_for.iterrows():
-        x = [0, row["moderate"], row["high"], row["extreme"], 100]
-        y = np.arange(0, 5, 1)
-
-        risk_value_interpolated.append(np.around(np.interp(row["rh"], x, y), 1))
-
-    data_for["risk_value_interpolated"] = risk_value_interpolated
 
     return data_for
 
