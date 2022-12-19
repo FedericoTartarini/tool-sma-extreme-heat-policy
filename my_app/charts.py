@@ -72,9 +72,17 @@ def line_chart_tmp(df, variable="tdb"):
 
     fig = standard_layout(fig)
 
-    fig.update_layout(
-        yaxis=dict(title_text="Risk Value"),
-    )
+    fig.update_yaxes(showticklabels=False)
+    # fig.update_yaxes(
+    #     tickvals=[0.5, 1.5, 2.5, 3.5],
+    #     ticktext=[
+    #         "Low",
+    #         "Moderate",
+    #         "High",
+    #         "Extreme",
+    #     ],
+    #     ticklabelposition="inside",
+    # )
 
     return fig
 

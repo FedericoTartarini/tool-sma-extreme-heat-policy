@@ -176,8 +176,8 @@ def body(data):
                 id="id-accordion-risk-current",
             ),
             html.H2("Forecasted risk"),
-            html.Div(id="fig-forecast_line"),
             legend_risk(),
+            html.Div(id="fig-forecast_line"),
         ]
 
 
