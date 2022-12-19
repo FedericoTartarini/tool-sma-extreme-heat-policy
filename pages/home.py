@@ -141,6 +141,7 @@ def body(data):
                 "Heat Stress Scale:",
             ),
             html.Div(id="fig-indicator"),
+            legend_risk(),
             dbc.Alert(
                 [
                     html.H3(
@@ -173,9 +174,9 @@ def body(data):
                 className="my-2",
                 id="id-accordion-risk-current",
             ),
-            legend_risk(),
             html.H2("Forecasted risk"),
             html.Div(id="fig-forecast_line"),
+            legend_risk(),
         ]
 
 
@@ -260,12 +261,12 @@ def update_fig_hss_trend(data):
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
     Output("div-icons-suggestions", "children"),
-    Input("session-storage-weather", "modified_timestamp"),
-    State("session-storage-weather", "data"),
+    Input("session-storage-weather", "data"),
 )
-def update_alert_hss_current(ts, data):
+def update_alert_hss_current(data):
     try:
         df = pd.read_json(data, orient="table")
+        print(df.head(1))
         color = hss_palette[df["risk_value"][0]]
         risk_class = df["risk"].iloc[0]
         description = sma_risk_messages[risk_class]["description"].capitalize()

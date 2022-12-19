@@ -193,9 +193,7 @@ def calculate_comfort_indices(data_for, sport_class):
     for risk in ["moderate", "high", "extreme"]:
         data_for.loc[data_for[risk] < 0, risk] = 0
         data_for.loc[data_for[risk] > 100, risk] = 100
-        data_for.loc[
-            (data_for["tdb"] > 26) & (data_for["rh"] > data_for[risk]), "risk"
-        ] = risk
+        data_for.loc[data_for["rh"] > data_for[risk], "risk"] = risk
 
     risk_value = {"low": 0, "moderate": 1, "high": 2, "extreme": 3}
     data_for["risk_value"] = data_for["risk"].map(risk_value)
