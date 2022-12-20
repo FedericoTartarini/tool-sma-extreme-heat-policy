@@ -8,10 +8,8 @@ body_text = """
 # Extreme Heat Policy
 
 ## Scope
-This website in its current form provides recommendations only for Category 3 sports as defined in the 
-Extreme Heat Policy v1.0 2021, issued by Sport Medicine Australia. Sports in Risk Classification 3 are:
-Abseiling, Australian Football, Basketball, Cycling, Canoeing, Caving, Kayaking, Netball, Oztag, 
-Rock Climbing, Rowing, Soccer, Tennis, Touch Football, Long Distance Running, Triathlon, and Volleyball.
+This website in its current form provides recommendations only for the most popular sports played in Australia as defined in the 
+Extreme Heat Policy v1.0 2021, issued by Sport Medicine Australia.
 
 ## Introduction
 
