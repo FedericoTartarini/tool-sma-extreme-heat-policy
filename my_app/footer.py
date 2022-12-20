@@ -15,7 +15,7 @@ def my_footer():
                             
                             Version: 0.0.3
                             
-                            Website authors: [Federico Tartarini](https://www.linkedin.com/in/federico-tartarini/) and [Ollie Jay](https://au.linkedin.com/in/ollie-jay-793a1b11)
+                            Website authors: [Federico Tartarini](https://www.linkedin.com/in/federico-tartarini/), [Ollie Jay](https://au.linkedin.com/in/ollie-jay-793a1b11), and [James Smallcombe](https://twitter.com/smallcombe2?lang=en)
                             """
                             ),
                             width=True,
@@ -29,7 +29,7 @@ def my_footer():
                     ]
                 )
             ],
-            className="p-2",
+            className="p-2 my-2",
         ),
         style={"background": "#E64626"},
     )
