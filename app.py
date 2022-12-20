@@ -4,6 +4,7 @@ from dash import html, dcc
 from my_app.navbar import my_navbar
 from my_app.footer import my_footer
 import os
+import dash_mantine_components as dmc
 
 app = Dash(
     __name__,
@@ -57,16 +58,15 @@ app.layout = html.Div(
         dcc.Location(id="url"),
         dcc.Store(id="local-storage-location-selected", storage_type="local"),
         dcc.Store(id="local-storage-settings", storage_type="local"),
-        dcc.Loading(
-            dcc.Store(id="session-storage-weather", storage_type="session"),
-            fullscreen=True,
-        ),
+        dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(id="id-google-analytics-event"),
         my_navbar(),
         html.Div(
             id="map-component",
         ),
-        html.Div(page_container, style={"flex": 1}),
+        dmc.LoadingOverlay(
+            html.Div(page_container, style={"flex": 1}),
+        ),
         my_footer(),
     ],
     style={
