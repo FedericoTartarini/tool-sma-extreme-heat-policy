@@ -52,7 +52,7 @@ questions = [
         "question": "Location:",
         "options": list(df_postcodes["sub-state-post"].unique()),
         "multi": False,
-        "default": "Sydney, NSW, 1001",
+        "default": default_settings["id-postcode"],
     },
 ]
 
