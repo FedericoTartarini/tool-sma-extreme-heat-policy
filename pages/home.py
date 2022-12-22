@@ -364,20 +364,17 @@ def update_alert_hss_current(data):
     Output("map-component", "children"),
     Input("local-storage-location-selected", "data"),
     Input("local-storage-settings", "data"),
-    State("session-storage-weather", "data"),
 )
-def on_location_change(loc_selected, data_sport, data):
+def on_location_change(loc_selected, data_sport):
 
     loc_selected = loc_selected or default_location
     if data_sport["id-class"]:
 
-        if ctx.triggered_id == "local-storage-location-selected" or data is None:
-            print("Querying data")
-            df = get_yr_weather(
-                lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
-            )
-        else:
-            df = pd.read_json(data, orient="table")
+        print(f"querying data {pd.Timestamp.now()}")
+
+        df = get_yr_weather(
+            lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
+        )
         df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
