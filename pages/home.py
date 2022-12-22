@@ -139,6 +139,7 @@ def body(data):
                 ],
                 style={"text-align": "center"},
                 id="id-alert-risk-current-value",
+                color="light",
             ),
             html.H3(
                 "Heat Stress Scale:",
@@ -236,7 +237,7 @@ def update_fig_hss_trend(data, data_sport):
     try:
         df = pd.read_json(data, orient="table")
         return dcc.Graph(
-            figure=indicator_chart(df, sports_category[data_sport["id-class"]]),
+            figure=indicator_chart(df),
             config={"staticPlot": True},
         )
     except ValueError:
@@ -328,7 +329,6 @@ def test():
 def update_alert_hss_current(data):
     try:
         df = pd.read_json(data, orient="table")
-        print(df.head(1))
         color = hss_palette[df["risk_value"][0]]
         risk_class = df["risk"].iloc[0]
         description = sma_risk_messages[risk_class]["description"].capitalize()
@@ -351,7 +351,7 @@ def update_alert_hss_current(data):
         if risk_class == "extreme":
             icons = [
                 icon_component(
-                    "../assets/icons/stop.png", "Stop Activity", size="100px"
+                    "../assets/icons/stop.png", "Consider Suspending Play", size="100px"
                 ),
             ]
         return f"{risk_class}".capitalize(), color, description, suggestion, icons
@@ -360,21 +360,21 @@ def update_alert_hss_current(data):
 
 
 @callback(
-    [Output("session-storage-weather", "data"), Output("map-component", "children")],
-    [
-        Input("local-storage-location-selected", "data"),
-    ],
-    [State("local-storage-settings", "data")],
+    Output("session-storage-weather", "data"),
+    Output("map-component", "children"),
+    Input("local-storage-location-selected", "data"),
+    Input("local-storage-settings", "data"),
 )
 def on_location_change(loc_selected, data_sport):
 
     loc_selected = loc_selected or default_location
-
-    if data_sport:
+    print("Querying data")
+    if data_sport["id-class"]:
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
         df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
+        # print(df[["tdb", "rh", "risk_value_interpolated"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [

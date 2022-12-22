@@ -122,9 +122,8 @@ def hss_trend(df):
     return standard_layout(fig)
 
 
-def indicator_chart(df_for, sport_class):
+def indicator_chart(df):
 
-    df = calculate_comfort_indices(data_for=df_for, sport_class=sport_class)
     data = df.iloc[0]
     steps = [
         {"range": [0, 25], "color": hss_palette[0]},
@@ -164,7 +163,7 @@ def indicator_chart(df_for, sport_class):
     return fig
 
 
-def risk_map(df_for, sport_class):
+def risk_map(df_for):
 
     values = []
 
@@ -176,7 +175,6 @@ def risk_map(df_for, sport_class):
         for rh in np.arange(rh_min, rh_max):
             values.append([t, rh])
     df = pd.DataFrame(values, columns=["tdb", "rh"])
-    df = calculate_comfort_indices(data_for=df, sport_class=sport_class)
     df["top"] = 100
 
     fig = go.Figure()
@@ -226,7 +224,7 @@ def risk_map(df_for, sport_class):
 if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
     df_for = calculate_comfort_indices(df_w, 3)
-    f = risk_map(df_for, 3)
+    f = risk_map(df_for)
     f.show()
 
     fig = px.line(
