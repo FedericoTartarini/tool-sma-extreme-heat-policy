@@ -130,7 +130,7 @@ def body(data):
                     ),
                     html.Hr(),
                     html.H6(
-                        "Current Heat Stress Risk is:",
+                        "Current estimated Heat Stress Risk is:",
                     ),
                     html.H1(
                         className="alert-heading",
