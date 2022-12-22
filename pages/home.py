@@ -362,10 +362,10 @@ def update_alert_hss_current(data):
 @callback(
     Output("session-storage-weather", "data"),
     Output("map-component", "children"),
-    Input("local-storage-location-selected", "data"),
     Input("local-storage-settings", "data"),
+    State("local-storage-location-selected", "data"),
 )
-def on_location_change(loc_selected, data_sport):
+def on_location_change(data_sport, loc_selected):
 
     loc_selected = loc_selected or default_location
     if data_sport["id-class"]:
