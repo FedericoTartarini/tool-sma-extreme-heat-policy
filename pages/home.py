@@ -363,7 +363,7 @@ def update_alert_hss_current(data):
     Output("session-storage-weather", "data"),
     Output("map-component", "children"),
     Input("local-storage-settings", "data"),
-    State("local-storage-location-selected", "data"),
+    Input("local-storage-location-selected", "data"),
 )
 def on_location_change(data_sport, loc_selected):
 
