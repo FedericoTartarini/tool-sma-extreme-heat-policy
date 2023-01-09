@@ -38,7 +38,6 @@ def standard_layout(fig):
 
 
 def line_chart(df, variable="tdb"):
-    """plots the forecast data for a specific day where -1 returns all days and 0 today"""
     fig = go.Figure()
 
     fig.add_trace(
@@ -126,25 +125,20 @@ def indicator_chart(df):
 
     data = df.iloc[0]
     steps = [
-        {"range": [0, 25], "color": hss_palette[0]},
-        {"range": [25, 50], "color": hss_palette[1]},
-        {"range": [50, 75], "color": hss_palette[2]},
-        {"range": [75, 100], "color": hss_palette[3]},
+        {"range": [0, 1], "color": hss_palette[0]},
+        {"range": [1, 2], "color": hss_palette[1]},
+        {"range": [2, 3], "color": hss_palette[2]},
+        {"range": [3, 4], "color": hss_palette[3]},
     ]
-
-    x = [0, data["moderate"], data["high"], data["extreme"], 100]
-    y = np.arange(0, 125, 25)
-
-    current_risk = np.around(np.interp(data["rh"], x, y), 1)
 
     fig = go.Figure(
         go.Indicator(
             mode="gauge",
-            value=current_risk,
+            value=data["risk_value_interpolated"],
             domain={"x": [0, 1], "y": [0, 1]},
             gauge={
                 "shape": "bullet",
-                "axis": {"range": [0, 100]},
+                "axis": {"range": [0, 4]},
                 "steps": steps,
                 "borderwidth": 0,
                 "bar": {
@@ -156,7 +150,11 @@ def indicator_chart(df):
         )
     )
     fig.add_annotation(
-        x=current_risk / 100, y=1, text="Now", showarrow=False, font=dict(color="#fff")
+        x=data["risk_value_interpolated"] / 4,
+        y=1,
+        text="Now",
+        showarrow=False,
+        font=dict(color="#fff"),
     )
     fig = standard_layout(fig)
     fig.update_layout(height=60)
