@@ -17,7 +17,7 @@ pipenv run pip3 freeze > requirements.txt
 ```
 
 ```
-gcloud builds submit --tag gcr.io/football-nsw-369006/extreme-heat-tool  --project=football-nsw-369006
-gcloud run deploy extreme-heat-tool --image gcr.io/football-nsw-369006/extreme-heat-tool  --project=football-nsw-369006 --platform managed
+gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --project=sma-extreme-heat-policy
+gcloud run deploy extreme-heat-tool --image gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
 ```
 
