@@ -13,11 +13,10 @@ You should be able to access the application at this URL: `http://127.0.0.1:9090
 ### Push the container image to Container Registry and deploy
 ```
 gcloud components update
-pipenv run pip3 freeze > requirements.txt
 ```
 
 ```
-gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --project=sma-extreme-heat-policy
-gcloud run deploy extreme-heat-tool --image gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
+gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy
+gcloud run deploy sma-extreme-heat-tool-v2 --image gcr.io/sma-extreme-heat-policy/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
 ```
 
