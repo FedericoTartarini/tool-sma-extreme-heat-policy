@@ -1,5 +1,22 @@
 from dataclasses import dataclass, field
 
+# location
+default_settings = {"id-class": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
+
+time_zones = {
+    "NSW": "Australia/Sydney",
+    "WA": "Australia/Perth",
+    "ACT": "Australia/Canberra",
+    "NT": "Australia/Darwin",
+    "SA": "Australia/Adelaide",
+    "QLD": "Australia/Brisbane",
+    "VIC": "Australia/Melbourne",
+    "TAS": "Australia/Hobart",
+}
+
+default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
+
+# sports
 sports_category = dict(
     sorted(
         {
@@ -45,12 +62,8 @@ sports_category = dict(
     )
 )
 
-headers = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
-    )
-}
+# risk classes
+variable_calc_risk = "ratio_w"
 
 
 @dataclass(order=True)
@@ -59,10 +72,10 @@ class RiskInfo:
     description: str
     suggestion: str
     color: str
-    value: int
+    risk_value: int
 
     def __post_init__(self):
-        self.sort_index = self.value
+        self.sort_index = self.risk_value
 
 
 sma_risk_messages = {
@@ -86,7 +99,7 @@ sma_risk_messages = {
     sweat evaporation, which will help you dissipate heat.
         """,
         color="#00AD7C",
-        value=0,
+        risk_value=0,
     ),
     "moderate": RiskInfo(
         description=(
@@ -110,7 +123,7 @@ sma_risk_messages = {
     available, portable sun shelters should be provided, and water freely available
         """,
         color="#FFD039",
-        value=1,
+        risk_value=1,
     ),
     "high": RiskInfo(
         description=(
@@ -132,7 +145,7 @@ sma_risk_messages = {
         combined with a water misting system.
             """,
         color="#E45A01",
-        value=2,
+        risk_value=2,
     ),
     "extreme": RiskInfo(
         description=(
@@ -144,24 +157,29 @@ sma_risk_messages = {
         * Active cooling strategies should be applied.
             """,
         color="#CB3327",
-        value=3,
+        risk_value=3,
     ),
 }
 
 # # command to sort them if ever needed
 # sorted([item for key, item in sma_risk_messages.items()])
 
-default_settings = {"id-class": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
-
-time_zones = {
-    "NSW": "Australia/Sydney",
-    "WA": "Australia/Perth",
-    "ACT": "Australia/Canberra",
-    "NT": "Australia/Darwin",
-    "SA": "Australia/Adelaide",
-    "QLD": "Australia/Brisbane",
-    "VIC": "Australia/Melbourne",
-    "TAS": "Australia/Hobart",
+# mean radiant temperature calculation
+mrt_calculation = {
+    "wind_coefficient": 0.3,
+    "sharp": 0,
+    "sol_transmittance": 1,
+    "f_svv": 1,
+    "f_bes": 1,
+    "asw": 0.7,
+    "posture": "standing",
+    "floor_reflectance": 0.1,
 }
 
-default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
+# request
+headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+    )
+}

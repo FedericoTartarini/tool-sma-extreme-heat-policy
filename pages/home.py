@@ -381,7 +381,7 @@ def on_location_change(data_sport, loc_selected):
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
-        df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
+        df = calculate_comfort_indices(df)
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [

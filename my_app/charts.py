@@ -55,7 +55,7 @@ def line_chart(df, variable="tdb"):
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
-                    y=np.ones(df.shape[0]) * value.value + 1,
+                    y=np.ones(df.shape[0]) * value.risk_value + 1,
                     fill="tonexty",
                     fillcolor=value.color,
                     mode="none",
@@ -127,7 +127,7 @@ def indicator_chart(df):
 
     data = df.iloc[0]
     steps = [
-        {"range": [v.value, v.value + 1], "color": v.color}
+        {"range": [v.risk_value, v.risk_value + 1], "color": v.color}
         for i, v in sma_risk_messages.items()
     ]
 
@@ -163,7 +163,7 @@ def indicator_chart(df):
 
 if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
-    df_for = calculate_comfort_indices(df_w, 3)
+    df_for = calculate_comfort_indices(df_w)
 
     fig = indicator_chart(df_for)
     fig.show()
