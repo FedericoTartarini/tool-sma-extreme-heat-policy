@@ -1,7 +1,7 @@
 import plotly.express as px
 import numpy as np
-import pandas as pd
-from utils import calculate_comfort_indices, get_yr_weather, sma_risk_messages
+from utils import calculate_comfort_indices, get_yr_weather
+from config import sma_risk_messages
 import plotly.graph_objects as go
 
 

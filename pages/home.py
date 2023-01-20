@@ -9,15 +9,17 @@ import dash
 from copy import deepcopy
 import pandas as pd
 from utils import (
-    sma_risk_messages,
-    sports_category,
     legend_risk,
     get_yr_weather,
     calculate_comfort_indices,
+    get_data_specific_day,
+)
+from config import (
+    sma_risk_messages,
+    sports_category,
     time_zones,
     default_location,
     default_settings,
-    get_data_specific_day,
 )
 import dash_mantine_components as dmc
 
