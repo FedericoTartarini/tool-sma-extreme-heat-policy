@@ -1,7 +1,7 @@
 import plotly.express as px
 import numpy as np
 import pandas as pd
-from utils import calculate_comfort_indices, hss_palette, get_yr_weather
+from utils import calculate_comfort_indices, get_yr_weather, sma_risk_messages
 import plotly.graph_objects as go
 
 
@@ -40,25 +40,27 @@ def standard_layout(fig):
 def line_chart(df, variable="tdb"):
     fig = go.Figure()
 
-    fig.add_trace(
-        go.Scatter(
-            x=df.index,
-            y=np.ones(df.shape[0]),
-            fill="tozeroy",
-            fillcolor=hss_palette[0],
-            mode="none",
-        )
-    )
-    for ix, risk in enumerate([2, 3, 4]):
-        fig.add_trace(
-            go.Scatter(
-                x=df.index,
-                y=np.ones(df.shape[0]) * risk,
-                fill="tonexty",
-                fillcolor=hss_palette[ix + 1],
-                mode="none",
+    for risk, value in sma_risk_messages.items():
+        if risk == "low":
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=np.ones(df.shape[0]),
+                    fill="tozeroy",
+                    fillcolor=sma_risk_messages["low"].color,
+                    mode="none",
+                )
             )
-        )
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=np.ones(df.shape[0]) * value.value + 1,
+                    fill="tonexty",
+                    fillcolor=value.color,
+                    mode="none",
+                )
+            )
 
     fig.add_trace(
         go.Scatter(
@@ -90,7 +92,7 @@ def line_chart(df, variable="tdb"):
 def heatmap_chart_tmp(df):
     fig = px.imshow(
         [list(df["hss"].values)],
-        color_continuous_scale=list(hss_palette.values()),
+        color_continuous_scale=[value.color for i, value in sma_risk_messages.items()],
         height=200,
         aspect="auto",
         range_color=[0, 5],
@@ -112,7 +114,7 @@ def hss_trend(df):
         y="hss",
         color=list(df["hss"]),
         height=200,
-        color_continuous_scale=list(hss_palette.values()),
+        color_continuous_scale=[value.color for i, value in sma_risk_messages.items()],
         range_color=[0, 5],
     )
     fig.update(layout_coloraxis_showscale=False)
@@ -124,12 +126,12 @@ def hss_trend(df):
 def indicator_chart(df):
 
     data = df.iloc[0]
-    steps = [
-        {"range": [0, 1], "color": hss_palette[0]},
-        {"range": [1, 2], "color": hss_palette[1]},
-        {"range": [2, 3], "color": hss_palette[2]},
-        {"range": [3, 4], "color": hss_palette[3]},
-    ]
+    steps = (
+        [
+            {"range": [v.value, v.value + 1], "color": v.color}
+            for i, v in sma_risk_messages.items()
+        ],
+    )
 
     fig = go.Figure(
         go.Indicator(
@@ -164,8 +166,6 @@ def indicator_chart(df):
 if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
     df_for = calculate_comfort_indices(df_w, 3)
-    f = risk_map(df_for)
-    f.show()
 
     fig = px.line(
         df_for,

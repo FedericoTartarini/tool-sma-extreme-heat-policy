@@ -4,7 +4,7 @@ from dash import html, dcc, Output, Input, State, callback, ctx
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
-from my_app.charts import hss_palette, risk_map, indicator_chart, line_chart
+from my_app.charts import indicator_chart, line_chart
 import dash
 from copy import deepcopy
 import pandas as pd
@@ -272,7 +272,7 @@ def update_fig_hss_trend(data):
         for day in [1, 2, 3]:
             df_day = get_data_specific_day(df, date_offset=day)
             day_name = df_day.index.day_name().unique()[0]
-            color = hss_palette[df_day["risk_value"].max()]
+            color = sma_risk_messages[df_day["risk"].max()].color
             risk_value = df_day.loc[
                 df_day.risk_value == df_day.risk_value.max(), "risk"
             ].unique()[0]
@@ -330,10 +330,10 @@ def test():
 def update_alert_hss_current(data):
     try:
         df = pd.read_json(data, orient="table")
-        color = hss_palette[df["risk_value"][0]]
+        color = sma_risk_messages[df["risk"][0]].color
         risk_class = df["risk"].iloc[0]
-        description = sma_risk_messages[risk_class]["description"].capitalize()
-        suggestion = sma_risk_messages[risk_class]["suggestions"].capitalize()
+        description = sma_risk_messages[risk_class].description.capitalize()
+        suggestion = sma_risk_messages[risk_class].suggestion.capitalize()
         icons = [
             icon_component("../assets/icons/water-bottle.png", "Stay hydrated"),
             icon_component("../assets/icons/tshirt.png", "Wear light clothing"),
