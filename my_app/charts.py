@@ -161,64 +161,6 @@ def indicator_chart(df):
     return fig
 
 
-def risk_map(df_for):
-
-    values = []
-
-    df_for = df_for.iloc[1:].head(5)
-
-    t_min, t_max = df_for.tdb.min().round() - 3, df_for.tdb.max().round() + 3
-    rh_min, rh_max = df_for.rh.min().round() - 5, df_for.rh.max().round() + 5
-    for t in np.arange(t_min, t_max + 1):
-        for rh in np.arange(rh_min, rh_max):
-            values.append([t, rh])
-    df = pd.DataFrame(values, columns=["tdb", "rh"])
-    df["top"] = 100
-
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=df["tdb"],
-            y=df["moderate"],
-            fill="tozeroy",
-            fillcolor=hss_palette[0],
-            mode="none",
-        )
-    )
-    for ix, risk in enumerate(["high", "extreme", "top"]):
-        fig.add_trace(
-            go.Scatter(
-                x=df["tdb"],
-                y=df[risk],
-                fill="tonexty",
-                fillcolor=hss_palette[ix + 1],
-                mode="none",
-            )
-        )
-    fig.add_trace(
-        go.Scatter(
-            x=df_for["tdb"],
-            y=df_for["rh"],
-            mode="lines+markers+text",
-            line_color="black",
-            text=np.round(
-                (df_for.index - pd.Timestamp.now(tz="Australia/Sydney")).seconds / 3600,
-                0,
-            ),
-            textposition="top right",
-            line={"shape": "spline", "smoothing": 1.3},
-        )
-    )
-    fig.update_traces(textfont_size=13, textfont_color="white")
-
-    fig = standard_layout(fig)
-    fig.update_layout(
-        xaxis=dict(title_text="Temperature [°C]", range=[t_min, t_max], dtick=2),
-        yaxis=dict(title_text="Relative Humidity [%]", range=[rh_min, rh_max]),
-    )
-    return fig
-
-
 if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
     df_for = calculate_comfort_indices(df_w, 3)
