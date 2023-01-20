@@ -126,12 +126,10 @@ def hss_trend(df):
 def indicator_chart(df):
 
     data = df.iloc[0]
-    steps = (
-        [
-            {"range": [v.value, v.value + 1], "color": v.color}
-            for i, v in sma_risk_messages.items()
-        ],
-    )
+    steps = [
+        {"range": [v.value, v.value + 1], "color": v.color}
+        for i, v in sma_risk_messages.items()
+    ]
 
     fig = go.Figure(
         go.Indicator(
@@ -167,19 +165,5 @@ if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
     df_for = calculate_comfort_indices(df_w, 3)
 
-    fig = px.line(
-        df_for,
-        x=df_for.index,
-        y=df_for.risk_value,
-        height=200,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=df_for.index,
-            y=df_for.risk_value_interpolated,
-        )
-    )
+    fig = indicator_chart(df_for)
     fig.show()
-
-    f = line_chart(df_for, "risk_value_interpolated")
-    f.show()
