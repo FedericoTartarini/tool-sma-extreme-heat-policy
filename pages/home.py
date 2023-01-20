@@ -279,38 +279,41 @@ def update_fig_hss_trend(data):
 
             accordions.append(
                 dmc.AccordionItem(
-                    label=[
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    html.H4(day_name, className="p-0 m-0"),
-                                    align="center",
-                                ),
-                                dbc.Col(
-                                    html.P("Max risk:", className="p-0 m-0"),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Badge(
-                                        risk_value,
-                                        className="ms-1 p-1 m-0",
-                                        color=color,
-                                    ),
-                                    width="auto",
-                                ),
-                            ],
-                            align="center",
-                        )
-                    ],
                     children=[
-                        dcc.Graph(
-                            figure=line_chart(df_day, "risk_value_interpolated"),
-                            config={"staticPlot": True},
+                        dmc.AccordionControl(
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        html.H4(day_name, className="p-0 m-0"),
+                                        align="center",
+                                    ),
+                                    dbc.Col(
+                                        html.P("Max risk:", className="p-0 m-0"),
+                                        width="auto",
+                                    ),
+                                    dbc.Col(
+                                        dbc.Badge(
+                                            risk_value,
+                                            className="ms-1 p-1 m-0",
+                                            color=color,
+                                        ),
+                                        width="auto",
+                                    ),
+                                ],
+                                align="center",
+                            )
+                        ),
+                        dmc.AccordionPanel(
+                            dcc.Graph(
+                                figure=line_chart(df_day, "risk_value_interpolated"),
+                                config={"staticPlot": True},
+                            ),
                         ),
                     ],
+                    value=day_name,
                 )
             ),
-        return dmc.Accordion(accordions, multiple=True)
+        return dmc.Accordion(accordions)
     except ValueError:
         raise PreventUpdate
 
