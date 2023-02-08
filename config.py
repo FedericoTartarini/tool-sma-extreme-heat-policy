@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 
+import pandas as pd
+
 # location
-default_settings = {"id-class": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
+default_settings = {"id-sport": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
 
 time_zones = {
     "NSW": "Australia/Sydney",
@@ -17,50 +19,7 @@ time_zones = {
 default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
 
 # sports
-sports_category = dict(
-    sorted(
-        {
-            "Walking": 1,
-            "Archery": 2,
-            "Bowls": 2,
-            "Field Athletics": 2,
-            "Fishing": 2,
-            "Golf": 2,
-            "Lifesaving Surf": 2,
-            "Sailing": 2,
-            "Shooting": 2,
-            "Walking (brisk)": 2,
-            "Abseiling": 3,
-            "Australian Football": 3,
-            "Basketball": 3,
-            "Cycling": 3,
-            "Canoeing": 3,
-            "Caving": 3,
-            "Kayaking": 3,
-            "Netball": 3,
-            "Oztag": 3,
-            "Rock Climbing": 3,
-            "Rowing": 3,
-            "Soccer": 3,
-            "Tennis": 3,
-            "Touch Football": 3,
-            "Long Distance Running": 3,
-            "Triathlon": 3,
-            "Volleyball": 3,
-            "Baseball": 4,
-            "Bush-walking": 4,
-            "Cricket": 4,
-            "Equestrian": 4,
-            "Horseback Riding": 4,
-            "Motor Cycling": 4,
-            "Rugby Union": 4,
-            "Rugby League": 4,
-            "Softball": 4,
-            "Field Hockey": 5,
-            "Mountain Biking": 5,
-        }.items()
-    )
-)
+sports_info = pd.read_csv("assets/sports.csv")
 
 # risk classes
 variable_calc_risk = "ratio_w"

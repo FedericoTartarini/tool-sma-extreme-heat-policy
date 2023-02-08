@@ -71,8 +71,7 @@ def calculate_comfort_indices_v1(data_for, sport_class):
     return data_for
 
 
-def calculate_comfort_indices(df_for):
-
+def calculate_mean_radiant_tmp(df_for):
     site_location = location.Location(
         df_for.lat, df_for.lon, tz=df_for.tz, name=df_for.tz
     )
@@ -92,7 +91,6 @@ def calculate_comfort_indices(df_for):
 
     results = []
     for ix, row in df_for.iterrows():
-        print(row)
         erf_mrt = solar_gain(
             row["elevation"],
             mrt_calculation["sharp"],
@@ -113,7 +111,20 @@ def calculate_comfort_indices(df_for):
 
     df_for["wind"] *= mrt_calculation["wind_coefficient"]
     df_for["tr"] = df_for["tdb"] + df_for["delta_mrt"]
-    df_for["clo"] = 0.5  # fixme get clo from .csv
+
+    return df_for
+
+
+def calculate_comfort_indices(df_for, sport="Abseiling", calc_tr=True, met_corr=1):
+
+    df_sport = pd.read_csv("assets/sports.csv")[["sport", "clo", "met"]]
+    sport, clo, met = df_sport[df_sport.sport == sport].values[0]
+
+    if calc_tr:
+        df_for = calculate_mean_radiant_tmp(df_for)
+
+    df_for["clo"] = clo
+    df_for["met"] = met * met_corr
 
     df_for["utci"] = utci(
         tdb=df_for["tdb"], tr=df_for["tr"], v=df_for["wind"], rh=df_for["rh"]
@@ -123,20 +134,23 @@ def calculate_comfort_indices(df_for):
         tr=df_for["tr"],
         v=df_for["wind"],
         rh=df_for["rh"],
-        met=1.0,  # fixme get met from .csv
+        met=df_for["met"],
         clo=df_for["clo"],
         limit_inputs=False,
         round=False,
+        w_max=1,
     )
     df_for["set"] = results_two_nodes["_set"]
     df_for["w"] = results_two_nodes["w"]
     df_for["w_max"] = results_two_nodes["w_max"]
     df_for["m_bl"] = results_two_nodes["m_bl"]
     df_for["m_rsw"] = results_two_nodes["m_rsw"]
-    df_for["ratio_m_bl"] = (df_for["m_bl"] - 1.2) / (df_for["m_bl"] * 0 + 90)
-    df_for["ratio_w"] = (df_for["w"] - 0.06) / df_for["w_max"]
+    df_for["ratio_m_bl"] = (df_for["m_bl"] - 1.2) / (df_for["m_bl"] * 0 + 90 - 1.2)
+    df_for["ratio_w"] = (df_for["w"] - 0.06) / (df_for["w_max"] - 0.06)
 
-    bins = [i / len(sma_risk_messages) for i in range(len(sma_risk_messages))] + [1.1]
+    bins = [
+        i / (len(sma_risk_messages) - 1) for i in range(len(sma_risk_messages) - 1)
+    ] + [0.95, 1.1]
     for index in [variable_calc_risk]:
         df_for[f"risk"] = pd.cut(
             df_for[index], bins=bins, labels=sma_risk_messages.keys(), right=False

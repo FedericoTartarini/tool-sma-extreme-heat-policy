@@ -1,6 +1,6 @@
 import os
 
-from dash import html, dcc, Output, Input, State, callback, ctx
+from dash import html, dcc, Output, Input, State, callback, dash_table
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
@@ -16,7 +16,7 @@ from utils import (
 )
 from config import (
     sma_risk_messages,
-    sports_category,
+    sports_info,
     time_zones,
     default_location,
     default_settings,
@@ -43,9 +43,9 @@ df_postcodes["sub-state-post"] = (
 
 questions = [
     {
-        "id": "id-class",
+        "id": "id-sport",
         "question": "Sport:",
-        "options": list(sports_category.keys()),
+        "options": sports_info.sport.unique(),
         "multi": False,
         "default": "Soccer",
     },
@@ -95,6 +95,7 @@ layout = dbc.Container(
             html.Div(style={"height": "25vh"}),
             id="map-component",
         ),
+        html.Div(id="table-summary-debugging"),
         html.Div(html.Div(style={"height": "75vh"}), id="body-home"),
     ],
     className="p-2",
@@ -106,7 +107,7 @@ layout = dbc.Container(
     Input("local-storage-settings", "data"),
 )
 def body(data):
-    sport_selected = data["id-class"]
+    sport_selected = data["id-sport"]
     if not sport_selected:
         return [
             dbc.Alert(
@@ -219,14 +220,14 @@ def icon_component(src, message, size="50px"):
 def update_location_and_forecast(data_sport):
 
     try:
-        file_name = f"{data_sport['id-class']}.png"
+        file_name = f"{data_sport['id-sport']}.png"
     except KeyError:
         raise PreventUpdate
     path = os.path.join(os.getcwd(), "assets", "icons", file_name)
-    message = f"Activity: {data_sport['id-class']}"
+    message = f"Activity: {data_sport['id-sport']}"
     # source https://www.theolympicdesign.com/olympic-design/pictograms/tokyo-2020/
     if os.path.isfile(path):
-        return icon_component(f"../assets/icons/{data_sport['id-class']}.png", message)
+        return icon_component(f"../assets/icons/{data_sport['id-sport']}.png", message)
     else:
         return icon_component("../assets/icons/sports.png", message)
 
@@ -242,6 +243,42 @@ def update_fig_hss_trend(data, data_sport):
         return dcc.Graph(
             figure=indicator_chart(df),
             config={"staticPlot": True},
+        )
+    except ValueError:
+        raise PreventUpdate
+
+
+@callback(
+    Output("table-summary-debugging", "children"),
+    Input("session-storage-weather", "data"),
+)
+def update_table_debugging(data):
+    try:
+        df = pd.read_json(data, orient="table")[
+            [
+                "tdb",
+                "tr",
+                "rh",
+                "wind",
+                "dni",
+                "cloud",
+                "clo",
+                "met",
+                "utci",
+                "set",
+                "w",
+                "w_max",
+                "ratio_w",
+                "m_bl",
+                "ratio_m_bl",
+                "m_rsw",
+                "risk",
+                "risk_value_interpolated",
+            ]
+        ]
+        return dash_table.DataTable(
+            data=df.round(2).to_dict("records"),
+            columns=[{"name": i, "id": i} for i in df.columns],
         )
     except ValueError:
         raise PreventUpdate
@@ -320,10 +357,6 @@ def update_fig_hss_trend(data):
         raise PreventUpdate
 
 
-def test():
-    return html.H1(["Example heading", dbc.Badge("New", className="ms-1")])
-
-
 @callback(
     Output("value-hss-current", "children"),
     Output("id-alert-risk-current-value", "color"),
@@ -374,14 +407,14 @@ def update_alert_hss_current(data):
 def on_location_change(data_sport, loc_selected):
 
     loc_selected = loc_selected or default_location
-    if data_sport["id-class"]:
+    if data_sport["id-sport"]:
 
         print(f"querying data {pd.Timestamp.now()}")
 
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
-        df = calculate_comfort_indices(df)
+        df = calculate_comfort_indices(df, data_sport["id-sport"])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [
