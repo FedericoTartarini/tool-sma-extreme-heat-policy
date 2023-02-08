@@ -11,11 +11,6 @@ def my_navbar():
                     dbc.Row(
                         [
                             dbc.Col(
-                                html.Img(
-                                    src="../assets/icons/HHRI logo.png", width="75px"
-                                )
-                            ),
-                            dbc.Col(
                                 dbc.NavbarBrand(
                                     "SMA Heat Stress Policy", className="ms-2"
                                 )

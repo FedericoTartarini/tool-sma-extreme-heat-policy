@@ -22,7 +22,7 @@ def my_footer():
                         ),
                         dbc.Col(
                             html.Img(
-                                src="../assets/icons/HHRI logo.png", width="125px"
+                                src="../assets/icons/usyd-logo.png", width="125px"
                             ),
                             width="auto",
                         ),
