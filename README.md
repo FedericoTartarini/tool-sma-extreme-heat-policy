@@ -13,7 +13,6 @@ You should be able to access the application at this URL: `http://127.0.0.1:9090
 ### Push the container image to Container Registry and deploy
 ```
 gcloud components update
-pipenv run pip3 freeze > requirements.txt
 ```
 
 ```
