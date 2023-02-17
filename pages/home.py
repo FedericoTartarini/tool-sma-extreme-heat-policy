@@ -377,7 +377,7 @@ def on_location_change(data_sport):
             "lon": information["longitude"][0],
             "tz": time_zones[information["state"][0]],
         }
-    except:
+    except TypeError:
         loc_selected = default_location
 
     try:
@@ -407,7 +407,7 @@ def on_location_change(data_sport):
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
         )
-    except:
+    except TypeError:
         raise PreventUpdate
 
 
