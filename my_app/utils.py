@@ -161,7 +161,7 @@ time_zones = {
 
 
 def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
-    """get weather forecast from YR website"""
+    """Get weather forecast from YR website."""
 
     weather = requests.get(
         f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={lat}&lon={lon}",
@@ -184,7 +184,6 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
 
 
 def calculate_comfort_indices(data_for, sport_class):
-
     lines = generate_regression_curves(sport_class)
     data_for["moderate"] = lines[1](data_for["tdb"])
     data_for["high"] = lines[2](data_for["tdb"])
@@ -226,7 +225,6 @@ def generate_regression_curves(sport_class):
 
 
 def legend_risk():
-
     legend_items = []
     for ix, item in enumerate(["low", "moderate", "high", "extreme"]):
         legend_items.append(

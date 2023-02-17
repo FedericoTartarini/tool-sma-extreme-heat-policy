@@ -1,14 +1,14 @@
 import os
 
-from dash import html, dcc, Output, Input, State, callback, ctx
+from dash import html, dcc, Output, Input, State, callback
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
-from my_app.charts import hss_palette, risk_map, indicator_chart, line_chart
+from my_app.charts import hss_palette, indicator_chart, line_chart
 import dash
 from copy import deepcopy
 import pandas as pd
-from utils import (
+from my_app.utils import (
     sma_risk_messages,
     sports_category,
     legend_risk,
@@ -215,7 +215,6 @@ def icon_component(src, message, size="50px"):
     Input("local-storage-settings", "data"),
 )
 def update_location_and_forecast(data_sport):
-
     try:
         file_name = f"{data_sport['id-class']}.png"
     except KeyError:
@@ -369,11 +368,10 @@ def update_alert_hss_current(data):
     Input("local-storage-settings", "data"),
 )
 def on_location_change(data_sport):
-
     try:
-        information = df_postcodes[df_postcodes["sub-state-post"] == data_sport["id-postcode"]].to_dict(
-            orient="list"
-        )
+        information = df_postcodes[
+            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
+        ].to_dict(orient="list")
         loc_selected = {
             "lat": information["latitude"][0],
             "lon": information["longitude"][0],
@@ -435,7 +433,7 @@ def display_the_dropdown_after_page_change(pathname, data):
     [Input(question["id"], "value") for question in questions],
 )
 def save_settings_in_storage(data, *args):
-    """Saves in local storage the settings selected by the participant"""
+    """Saves in local storage the settings selected by the participant."""
     data = data or {}
     for ix, question_id in enumerate([question["id"] for question in questions]):
         data[question_id] = args[ix]

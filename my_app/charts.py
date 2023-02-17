@@ -1,12 +1,11 @@
 import plotly.express as px
 import numpy as np
 import pandas as pd
-from utils import calculate_comfort_indices, hss_palette, get_yr_weather
+from my_app.utils import calculate_comfort_indices, hss_palette, get_yr_weather
 import plotly.graph_objects as go
 
 
 def standard_layout(fig):
-
     fig.update_layout(
         xaxis=dict(
             showline=True,
@@ -122,7 +121,6 @@ def hss_trend(df):
 
 
 def indicator_chart(df):
-
     data = df.iloc[0]
     steps = [
         {"range": [0, 1], "color": hss_palette[0]},
@@ -162,7 +160,6 @@ def indicator_chart(df):
 
 
 def risk_map(df_for):
-
     values = []
 
     df_for = df_for.iloc[1:].head(5)
