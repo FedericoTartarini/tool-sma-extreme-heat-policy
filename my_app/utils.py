@@ -41,7 +41,7 @@ sports_category = dict(
             "Oztag": 3,
             "Rock Climbing": 3,
             "Rowing": 3,
-            "Soccer": 3,
+            "Football (Soccer)": 3,
             "Tennis": 3,
             "Touch Football": 3,
             "Long Distance Running": 3,
@@ -146,7 +146,10 @@ sma_risk_messages = {
 
 default_location = {"lat": -33.89, "lon": 151.18, "tz": "Australia/Sydney"}
 
-default_settings = {"id-class": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
+default_settings = {
+    "id-class": "Football (Soccer)",
+    "id-postcode": "Camperdown, NSW, 2050",
+}
 
 time_zones = {
     "NSW": "Australia/Sydney",

@@ -45,7 +45,7 @@ questions = [
         "question": "Sport:",
         "options": list(sports_category.keys()),
         "multi": False,
-        "default": "Soccer",
+        "default": "Football (Soccer)",
     },
     {
         "id": "id-postcode",
