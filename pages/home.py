@@ -367,12 +367,22 @@ def update_alert_hss_current(data):
     Output("session-storage-weather", "data"),
     Output("map-component", "children"),
     Input("local-storage-settings", "data"),
-    Input("local-storage-location-selected", "data"),
 )
-def on_location_change(data_sport, loc_selected):
+def on_location_change(data_sport):
 
-    loc_selected = loc_selected or default_location
-    if data_sport["id-class"]:
+    try:
+        information = df_postcodes[df_postcodes["sub-state-post"] == data_sport["id-postcode"]].to_dict(
+            orient="list"
+        )
+        loc_selected = {
+            "lat": information["latitude"][0],
+            "lon": information["longitude"][0],
+            "tz": time_zones[information["state"][0]],
+        }
+    except:
+        loc_selected = default_location
+
+    try:
 
         print(f"querying data {pd.Timestamp.now()}")
 
@@ -399,7 +409,7 @@ def on_location_change(data_sport, loc_selected):
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
         )
-    else:
+    except:
         raise PreventUpdate
 
 
@@ -431,21 +441,3 @@ def save_settings_in_storage(data, *args):
         data[question_id] = args[ix]
 
     return data
-
-
-@callback(
-    Output("local-storage-location-selected", "data"),
-    Input("id-postcode", "value"),
-)
-def display_page(value):
-    if value:
-        information = df_postcodes[df_postcodes["sub-state-post"] == value].to_dict(
-            orient="list"
-        )
-        return {
-            "lat": information["latitude"][0],
-            "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
-        }
-    else:
-        raise PreventUpdate

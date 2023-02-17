@@ -56,7 +56,6 @@ app.index_string = """<!DOCTYPE html>
 app.layout = html.Div(
     children=[
         dcc.Location(id="url"),
-        dcc.Store(id="local-storage-location-selected", storage_type="local"),
         dcc.Store(id="local-storage-settings", storage_type="local"),
         dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(id="id-google-analytics-event"),

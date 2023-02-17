@@ -20,3 +20,8 @@ gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --p
 gcloud run deploy extreme-heat-tool --image gcr.io/sma-extreme-heat-policy/extreme-heat-tool  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
 ```
 
+### Push the container image to *Test Version*
+```
+gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/extreme-heat-tool-test  --project=sma-extreme-heat-policy
+gcloud run deploy extreme-heat-tool-test --image gcr.io/sma-extreme-heat-policy/extreme-heat-tool-test  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
+```
