@@ -25,7 +25,7 @@ import dash_mantine_components as dmc
 dash.register_page(
     __name__,
     path="/",
-    title="Home Page",
+    title="SMA Extreme Heat Policy",
     name="Home Page",
     description="This is the home page of the SMA Extreme Policy Tool",
 )

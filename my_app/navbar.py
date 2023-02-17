@@ -12,7 +12,7 @@ def my_navbar():
                         [
                             dbc.Col(
                                 dbc.NavbarBrand(
-                                    "SMA Heat Stress Policy", className="ms-2"
+                                    "SMA Extreme Heat Policy", className="ms-2"
                                 )
                             ),
                         ],
