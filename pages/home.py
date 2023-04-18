@@ -14,7 +14,7 @@ from my_app.utils import (
     legend_risk,
     get_yr_weather,
     calculate_comfort_indices,
-    time_zones,
+    state2timezone,
     default_location,
     default_settings,
     get_data_specific_day,
@@ -30,7 +30,22 @@ dash.register_page(
     description="This is the home page of the SMA Extreme Policy Tool",
 )
 
-df_postcodes = pd.read_csv("./assets/postcodes.csv")
+# df_postcodes = pd.read_csv("./assets/postcodes.csv")
+df_postcodes = pd.read_csv("./assets/US.txt", header=None, delimiter="\t")
+df_postcodes.columns = [
+    "country code",
+    "postcode",
+    "suburb",
+    "state",
+    "abbreviation",
+    "admin name2",
+    "admin code2",
+    "admin name3",
+    "admin code3",
+    "latitude",
+    "longitude",
+    "accuracy",
+]
 df_postcodes["sub-state-post"] = (
     df_postcodes["suburb"]
     + ", "
@@ -375,7 +390,7 @@ def on_location_change(data_sport):
         loc_selected = {
             "lat": information["latitude"][0],
             "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
+            "tz": state2timezone[information["abbreviation"][0]],
         }
     except TypeError:
         loc_selected = default_location

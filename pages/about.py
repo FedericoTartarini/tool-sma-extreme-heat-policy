@@ -55,6 +55,9 @@ Icons created by:
 * [Icongeek26 - Flaticon](https://www.flaticon.com/free-icons/tshirt)
 * [Flat Icons Design - Flaticon](https://www.flaticon.com/free-icons/music-and-multimedi)
 * [Flat Icons Design - Flaticon](https://www.flaticon.com/free-icons/music-and-multimedi)
+
+#### Postcodes
+We are currently using the list of postcodes provided by www.geonames.org
 """
 
 layout = dbc.Container(
