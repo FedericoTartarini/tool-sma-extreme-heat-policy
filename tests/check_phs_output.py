@@ -3,7 +3,7 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from pythermalcomfort.psychrometrics import p_sat
+from pythermalcomfort.psychrometrics import p_sat, t_mrt
 from pythermalcomfort.utilities import (
     check_standard_compliance,
     body_surface_area,
@@ -13,14 +13,35 @@ import numpy as np
 from itertools import product
 import pandas as pd
 import matplotlib.pyplot as plt
+from utils import calculate_comfort_indices, generate_regression_curves
 
 from pythermalcomfort.models import phs as original_phs
 
-max_rectal_temperature = 39.5
+max_rectal_temperature = 40
 max_sweat_losses = 600
 clo = 0.45
 position = "standing"
-duration = 60
+duration = 45
+range_met = np.arange(8, 10, 2)
+t_range = np.arange(16, 49, 3)
+rh_range = np.arange(0, 105, 5)
+mrt_t_delta = 5
+wind_speed = 0.6
+sport_category = 5
+var_to_plot = {
+    # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
+    # "water_loss_watt": {"max": 750, "min": 740},
+    # "water_loss": {"max": 1900, "min": 1800},
+    "t_re": {"max": max_rectal_temperature, "min": 39.3},
+    # "t_cr": {"max": max_rectal_temperature, "min": 39},
+    # "w": {"max": 1, "min": 0.7},
+    # "w_req": {"max": 1.3, "min": 1},
+}
+
+t_mrt(42, 30, 1)
+
+# todo
+#  risk low from 750g/h per hour
 
 
 def phs_optimized(*args):
@@ -527,17 +548,17 @@ def phs(tdb, tr, v, rh, met, clo, posture, wme=0, **kwargs):
 
 if __name__ == "__main__":
     plt.close("all")
-    for met in np.arange(2, 12, 2):
-        t_range = np.arange(10, 50, 5)
-        rh_range = np.arange(0, 100, 10)
+    for met in range_met:
+
         combinations = list(product(t_range, rh_range))
         df = pd.DataFrame(combinations, columns=["t", "rh"])
         results = []
         for ix, row in df.iterrows():
             r = phs(
-                row.t,
-                row.t,
-                v=0.4,
+                tdb=row.t,
+                tr=row.t + mrt_t_delta,
+                # tr=row.t,
+                v=wind_speed,
                 rh=row.rh,
                 met=met * 58,
                 clo=clo,
@@ -550,18 +571,30 @@ if __name__ == "__main__":
             results.append(r)
 
         df_results = pd.DataFrame(results)
-        for var in [
-            "d_lim_t_re",
-            "water_loss",
-            "water_loss_watt",
-            "t_re",
-            "t_cr",
-            "w",
-            "w_req",
-        ]:
-            plt.figure(figsize=(8, 4))
-            glue = df_results.pivot("t", "rh", var).sort_index(ascending=False)
-            sns.heatmap(glue, annot=True, fmt=".1f")
+        for var, limits in var_to_plot.items():
+            f, ax = plt.subplots(figsize=(8, 4))
+            glue = df_results.pivot("rh", "t", var).sort_index(ascending=False)
+            sns.heatmap(
+                glue,
+                annot=True,
+                fmt=".2f",
+                vmin=limits["min"],
+                vmax=limits["max"],
+            )
+            lines = generate_regression_curves(sport_category)
+            ax2 = ax.twinx()
+            ax2.plot(np.arange(len(t_range)) + 0.5, lines[1](t_range))
+            ax2.plot(np.arange(len(t_range)) + 0.5, lines[2](t_range))
+            ax2.plot(np.arange(len(t_range)) + 0.5, lines[3](t_range))
+            ax2.set(ylim=(0, 100))
+
             plt.title(f"{met=} - {var}")
             plt.tight_layout()
             plt.savefig(f"./tests/figures/met_{met}_{var}")
+
+            # fig, ax = plt.subplots()
+            # im = ax.imshow(glue)
+            #
+            # # Show all ticks and label them with the respective list entries
+            # ax.set_xticks(t_range, labels=t_range)
+            # ax.set_yticks(np.arange(len(vegetables)), labels=vegetables)

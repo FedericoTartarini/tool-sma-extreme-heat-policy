@@ -56,7 +56,7 @@ for ix, row in sports.iterrows():
     df_test.tdb = [x[0] for x in combinations]
     df_test.rh = [x[1] for x in combinations]
     df_test["wind"] = 0.1
-    df_test["tr"] = df_test["tdb"] + 12
+    df_test["tr"] = df_test["tdb"] + 40
     df_test.lat = -33.865143
     df_test.lon = 151.209900
     df_test.tz = pytz.timezone("Australia/Brisbane")
