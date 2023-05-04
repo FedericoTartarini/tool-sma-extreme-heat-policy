@@ -218,7 +218,6 @@ def icon_component(src, message, size="50px"):
     Input("local-storage-settings", "data"),
 )
 def update_location_and_forecast(data_sport):
-
     try:
         file_name = f"{data_sport['id-sport']}.png"
     except KeyError:
@@ -405,7 +404,6 @@ def update_alert_hss_current(data):
     Input("local-storage-location-selected", "data"),
 )
 def on_location_change(data_sport, loc_selected):
-
     loc_selected = loc_selected or default_location
     if data_sport["id-sport"]:
 
@@ -460,7 +458,7 @@ def display_the_dropdown_after_page_change(pathname, data):
     [Input(question["id"], "value") for question in questions],
 )
 def save_settings_in_storage(data, *args):
-    """Saves in local storage the settings selected by the participant"""
+    """Saves in local storage the settings selected by the participant."""
     data = data or {}
     for ix, question_id in enumerate([question["id"] for question in questions]):
         data[question_id] = args[ix]
