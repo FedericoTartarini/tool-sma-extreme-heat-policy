@@ -17,8 +17,8 @@ gcloud components update
 
 ```
 gcloud config set account hhri.usyd@gmail.com
-gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/extreme-heat-tool-us  --project=sma-extreme-heat-policy
-gcloud run deploy extreme-heat-tool-us --image gcr.io/sma-extreme-heat-policy/extreme-heat-tool-us  --project=sma-extreme-heat-policy --region=us-central1 --platform managed
+gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-us  --project=sma-extreme-heat-policy
+gcloud run deploy extreme-heat-tool-us --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-us --project=sma-extreme-heat-policy --region=us-central1 --platform managed
 ```
 
 ### Push the container image to *Test Version*
