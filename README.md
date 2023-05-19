@@ -16,7 +16,6 @@ gcloud components update
 ```
 
 ```
-gcloud builds submit --tag gcr.io/sma-extreme-heat-policy/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy
-gcloud run deploy sma-extreme-heat-tool-v2 --image gcr.io/sma-extreme-heat-policy/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
+gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy
+gcloud run deploy sma-extreme-heat-tool-v2 --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool-v2  --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
 ```
-
