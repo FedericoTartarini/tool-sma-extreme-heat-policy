@@ -1,8 +1,6 @@
-from pprint import pprint
-
-import matplotlib.pyplot as plt
-import pandas as pd
+import os
 import seaborn as sns
+from pythermalcomfort.models import two_nodes
 from pythermalcomfort.psychrometrics import p_sat, t_mrt
 from pythermalcomfort.utilities import (
     check_standard_compliance,
@@ -12,36 +10,107 @@ import math
 import numpy as np
 from itertools import product
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
-from utils import calculate_comfort_indices, generate_regression_curves
+from utils import generate_regression_curves
 
-from pythermalcomfort.models import phs as original_phs
-
-max_rectal_temperature = 40
+###############################
+# configuration
+max_rectal_temperature = 41
 max_sweat_losses = 600
-clo = 0.45
 position = "standing"
 duration = 45
-range_met = np.arange(8, 10, 2)
-t_range = np.arange(16, 49, 3)
+t_range = np.arange(16, 44, 3)
 rh_range = np.arange(0, 105, 5)
-mrt_t_delta = 5
+mrt_t_delta = 0
 wind_speed = 0.6
-sport_category = 5
 var_to_plot = {
     # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
     # "water_loss_watt": {"max": 750, "min": 740},
     # "water_loss": {"max": 1900, "min": 1800},
-    "t_re": {"max": max_rectal_temperature, "min": 39.3},
-    # "t_cr": {"max": max_rectal_temperature, "min": 39},
-    # "w": {"max": 1, "min": 0.7},
+    # "t_cr": {"max": max_rectal_temperature, "min": 37},
+    "w": {"max": 1.25, "min": 0},
     # "w_req": {"max": 1.3, "min": 1},
 }
 
+#  risk low from 750g/h per hour
+
+people_profiles = {
+    1: {"met": 3, "clo": 0.4, "v": wind_speed, "d_mrt": mrt_t_delta},
+    2: {"met": 4.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
+    3: {"met": 8, "clo": 0.47, "v": wind_speed, "d_mrt": mrt_t_delta},
+    4: {"met": 8.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
+    5: {"met": 8, "clo": 0.63, "v": wind_speed, "d_mrt": mrt_t_delta},
+}
+
+fig_directory = os.path.join(os.getcwd(), "tests", "figures")
+###############################
+
 t_mrt(42, 30, 1)
 
-# todo
-#  risk low from 750g/h per hour
+
+def generate_t_rh_combinations():
+    all_combinations = list(product(t_range, rh_range))
+    return pd.DataFrame(all_combinations, columns=["t", "rh"])
+
+
+def plot_sma_lines(sport_cat, main_ax):
+    sma_lines = generate_regression_curves(sport_cat)
+    sma_ax = main_ax.twinx()
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[1](t_range))
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[2](t_range))
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[3](t_range))
+    sma_ax.set(ylim=(0, 100))
+
+
+def check_two_nodes_model_output():
+    for sport_cat, values in people_profiles.items():
+
+        df = generate_t_rh_combinations()
+
+        r = two_nodes(
+            tdb=df["t"],
+            tr=df["t"] + values["d_mrt"],
+            rh=df["rh"],
+            met=values["met"],
+            clo=values["clo"],
+            v=values["v"],
+            round=False,
+            w_max=1,
+        )
+
+        df_results = pd.DataFrame(r)
+        df_results = df_results.rename(columns={"t_core": "t_cr"})
+        df_results["t"] = df["t"]
+        df_results["rh"] = df["rh"]
+
+        for var, limits in var_to_plot.items():
+            f, ax = plt.subplots(figsize=(7, 6), constrained_layout=True)
+            pivot = (
+                df_results.pivot(index="rh", columns="t", values=var)
+                .sort_index(ascending=False)
+                .astype("float")
+            )
+            cmap = plt.cm.get_cmap("magma", 4)  # define the colormap
+            sns.heatmap(
+                pivot,
+                annot=True,
+                fmt=".1f",
+                vmin=limits["min"],
+                vmax=limits["max"],
+                mask=pivot < limits["min"],
+                cmap=cmap,
+            )
+
+            plot_sma_lines(sport_cat, ax)
+
+            plt.title(
+                f"{var=}; {sport_cat=}; met={values['met']};"
+                f" clo={values['clo']}; v={values['v']}; tr= tdb+{values['d_mrt']}"
+            )
+            plt.savefig(
+                os.path.join(fig_directory, f"two_node_sport_cat_{sport_cat}_{var}.png")
+            )
 
 
 def phs_optimized(*args):
@@ -548,7 +617,14 @@ def phs(tdb, tr, v, rh, met, clo, posture, wme=0, **kwargs):
 
 if __name__ == "__main__":
     plt.close("all")
-    for met in range_met:
+
+    check_two_nodes_model_output()
+
+if __name__ == "__plot__":
+    plt.close("all")
+
+    for sport_category, profile in people_profiles.items():
+        print(ix, profile)
 
         combinations = list(product(t_range, rh_range))
         df = pd.DataFrame(combinations, columns=["t", "rh"])
@@ -560,8 +636,8 @@ if __name__ == "__main__":
                 # tr=row.t,
                 v=wind_speed,
                 rh=row.rh,
-                met=met * 58,
-                clo=clo,
+                met=profile["met"] * 58,
+                clo=profile["clo"],
                 posture=position,
                 duration=duration,
                 round=False,
