@@ -1,6 +1,7 @@
 import os
 import seaborn as sns
 from pythermalcomfort.models import two_nodes
+from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, t_mrt
 from pythermalcomfort.utilities import (
     check_standard_compliance,
@@ -10,14 +11,13 @@ import math
 import numpy as np
 from itertools import product
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 from utils import generate_regression_curves
 
 ###############################
 # configuration
 max_rectal_temperature = 41
-max_sweat_losses = 600
+max_sweat_losses = 400
 position = "standing"
 duration = 60
 t_range = np.arange(16, 44, 3)
@@ -29,7 +29,7 @@ var_to_plot = {
     # "water_loss_watt": {"max": 750, "min": 740},
     # "water_loss": {"max": 1900, "min": 1800},
     "t_cr": {"max": max_rectal_temperature, "min": 37},
-    # "w": {"max": 1.25, "min": 0},
+    "w": {"max": 1.2, "min": 0.4},
     # "w_req": {"max": 1.3, "min": 1},
 }
 cmap = plt.cm.get_cmap("magma", 4)
@@ -46,96 +46,6 @@ people_profiles = {
 
 fig_directory = os.path.join(os.getcwd(), "tests", "figures")
 ###############################
-
-t_mrt(42, 30, 1)
-
-
-def generate_t_rh_combinations():
-    all_combinations = list(product(t_range, rh_range))
-    return pd.DataFrame(all_combinations, columns=["t", "rh"])
-
-
-def plot_sma_lines(sport_cat, main_ax):
-    sma_lines = generate_regression_curves(sport_cat)
-    sma_ax = main_ax.twinx()
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[1](t_range))
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[2](t_range))
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[3](t_range))
-    sma_ax.set(ylim=(0, 100))
-
-
-def calculate_results(values, model):
-    df = generate_t_rh_combinations()
-
-    if model == "two_nodes":
-        r = two_nodes(
-            tdb=df["t"],
-            tr=df["t"] + values["d_mrt"],
-            rh=df["rh"],
-            met=values["met"],
-            clo=values["clo"],
-            v=values["v"],
-            round=False,
-            w_max=1,
-        )
-
-        df_results = pd.DataFrame(r)
-        df_results = df_results.rename(columns={"t_core": "t_cr"})
-        df_results["t"] = df["t"]
-        df_results["rh"] = df["rh"]
-
-    elif model == "phs":
-        results = []
-        for ix, row in df.iterrows():
-            r = phs(
-                tdb=row.t,
-                tr=row.t + mrt_t_delta,
-                v=wind_speed,
-                rh=row.rh,
-                met=values["met"] * 58,
-                clo=values["clo"],
-                posture=position,
-                duration=duration,
-                round=False,
-            )
-            r["t"] = row.t
-            r["rh"] = row.rh
-            results.append(r)
-
-        df_results = pd.DataFrame(results)
-
-    return df_results
-
-
-def check_model_output(model):
-    for sport_cat, values in people_profiles.items():
-
-        df_results = calculate_results(values, model)
-
-        for var, limits in var_to_plot.items():
-            f, ax = plt.subplots(figsize=(7, 6))
-            pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
-
-            sns.heatmap(
-                pivot,
-                annot=True,
-                fmt=".2f",
-                vmin=limits["min"],
-                vmax=limits["max"],
-                mask=pivot < limits["min"],
-                cmap=cmap,
-            )
-
-            plot_sma_lines(sport_cat, ax)
-
-            plt.title(
-                f"{var=}; {sport_cat=}; met={values['met']};"
-                f" clo={values['clo']}; v={values['v']}; tr= tdb+{values['d_mrt']}"
-            )
-            plt.tight_layout()
-            plt.savefig(
-                os.path.join(fig_directory, f"phs_sport_cat_{sport_cat}_{var}.png")
-            )
 
 
 def phs_optimized(*args):
@@ -640,11 +550,129 @@ def phs(tdb, tr, v, rh, met, clo, posture, wme=0, **kwargs):
         }
 
 
+# t_mrt(42, 30, 1)
+print(
+    phs(
+        tdb=34,
+        tr=34,
+        v=0.6,
+        rh=50,
+        met=8.3 * 58.15,
+        clo=0.576,
+        posture=position,
+        duration=duration,
+        round=False,
+    )["t_cr"]
+)
+# print(
+#     two_nodes(
+#         tdb=34,
+#         tr=34,
+#         v=0.6,
+#         rh=50,
+#         met=8.3,
+#         clo=0.576,
+#         posture=position,
+#         round=False,
+#         w_max=1,
+#     )["t_core"]
+# )
+
+
+def generate_t_rh_combinations():
+    all_combinations = list(product(t_range, rh_range))
+    return pd.DataFrame(all_combinations, columns=["t", "rh"])
+
+
+def plot_sma_lines(sport_cat, main_ax):
+    sma_lines = generate_regression_curves(sport_cat)
+    sma_ax = main_ax.twinx()
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[1](t_range))
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[2](t_range))
+    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[3](t_range))
+    sma_ax.set(ylim=(0, 100))
+
+
+def calculate_results(values, model):
+    df = generate_t_rh_combinations()
+
+    print(values["d_mrt"])
+
+    if model == "two_node":
+        r = two_nodes(
+            tdb=df["t"],
+            tr=df["t"] + values["d_mrt"],
+            rh=df["rh"],
+            met=values["met"],
+            clo=values["clo"],
+            v=values["v"],
+            round=False,
+            w_max=1,
+        )
+
+        df_results = pd.DataFrame(r)
+        df_results = df_results.rename(columns={"t_core": "t_cr"})
+        df_results["t"] = df["t"]
+        df_results["rh"] = df["rh"]
+
+    elif model == "phs":
+        results = []
+        for ix, row in df.iterrows():
+            r = phs(
+                tdb=row.t,
+                tr=row.t + values["d_mrt"],
+                v=values["v"],
+                rh=row.rh,
+                met=values["met"] * 58.15,
+                clo=values["clo"],
+                posture=position,
+                duration=duration,
+                round=False,
+            )
+            r["t"] = row.t
+            r["rh"] = row.rh
+            results.append(r)
+
+        df_results = pd.DataFrame(results)
+
+    return df_results
+
+
+def check_model_output(model):
+    for sport_cat, values in people_profiles.items():
+
+        df_results = calculate_results(values, model)
+
+        for var, limits in var_to_plot.items():
+            f, ax = plt.subplots(figsize=(7, 6))
+            pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
+
+            sns.heatmap(
+                pivot,
+                annot=True,
+                fmt=".2f",
+                vmin=limits["min"],
+                vmax=limits["max"],
+                mask=pivot < limits["min"],
+                cmap=cmap,
+            )
+
+            plot_sma_lines(sport_cat, ax)
+
+            plt.title(
+                f"{model};{var=}; {sport_cat=}; met={values['met']};"
+                f" clo={values['clo']}; v={values['v']}; tr= tdb+{values['d_mrt']}"
+            )
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(fig_directory, f"{model}_sport_cat_{sport_cat}_{var}.png")
+            )
+
+
 if __name__ == "__main__":
     plt.close("all")
 
-    # check_model_output("two_nodes")
+    check_model_output("two_node")
     check_model_output("phs")
 
-if __name__ == "__plot__":
     plt.close("all")
