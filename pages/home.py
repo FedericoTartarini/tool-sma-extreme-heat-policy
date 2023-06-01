@@ -90,10 +90,17 @@ layout = dbc.Container(
             id="settings-dropdowns",
         ),
         html.Div(
-            html.Div(style={"height": "25vh"}),
+            dbc.Alert("", color="dark", style={"height": "10em"}),
             id="map-component",
         ),
-        html.Div(html.Div(style={"height": "75vh"}), id="body-home"),
+        html.Div(
+            [
+                dbc.Alert("", color="dark", style={"height": "11em"}),
+                dbc.Alert("", color="dark", style={"height": "2em"}),
+                dbc.Alert("", color="dark", style={"height": "11em"}),
+            ],
+            id="body-home",
+        ),
     ],
     className="p-2",
 )

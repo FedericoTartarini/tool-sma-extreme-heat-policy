@@ -60,12 +60,7 @@ app.layout = html.Div(
         dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(id="id-google-analytics-event"),
         my_navbar(),
-        html.Div(
-            id="map-component",
-        ),
-        dmc.LoadingOverlay(
-            html.Div(page_container, style={"flex": 1}),
-        ),
+        html.Div(page_container, style={"flex": 1}),
         my_footer(),
     ],
     style={
