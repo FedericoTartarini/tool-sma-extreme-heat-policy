@@ -12,11 +12,13 @@ import numpy as np
 from itertools import product
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from utils import generate_regression_curves
+import matplotlib.patheffects as pe
 
 ###############################
 # configuration
-max_rectal_temperature = 40.5
+max_rectal_temperature = 40
 max_sweat_losses = 400
 position = "standing"
 duration = 45
@@ -28,7 +30,7 @@ var_to_plot = {
     # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
     # "water_loss_watt": {"max": 750, "min": 740},
     # "water_loss": {"max": 1900, "min": 0},
-    "t_cr": {"max": max_rectal_temperature, "min": 38.5},
+    "t_cr": {"max": max_rectal_temperature, "min": 36.8},
     # "w": {"max": 1.2, "min": 0.4},
     # "w_req": {"max": 1.3, "min": 1},
 }
@@ -1122,12 +1124,30 @@ def generate_t_rh_combinations():
     return pd.DataFrame(all_combinations, columns=["t", "rh"])
 
 
-def plot_sma_lines(sport_cat, main_ax):
+def plot_sma_lines(sport_cat, main_ax, colors):
     sma_lines = generate_regression_curves(sport_cat)
     sma_ax = main_ax.twinx()
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[1](t_range))
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[2](t_range))
-    sma_ax.plot(np.arange(len(t_range)) + 0.5, sma_lines[3](t_range))
+    sma_ax.plot(
+        np.arange(len(t_range)) + 0.5,
+        sma_lines[1](t_range),
+        c=colors[1],
+        lw=2,
+        path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+    )
+    sma_ax.plot(
+        np.arange(len(t_range)) + 0.5,
+        sma_lines[2](t_range),
+        c=colors[2],
+        lw=2,
+        path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+    )
+    sma_ax.plot(
+        np.arange(len(t_range)) + 0.5,
+        sma_lines[3](t_range),
+        c=colors[3],
+        lw=2,
+        path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+    )
     sma_ax.set(ylim=(0, 100))
 
 
@@ -1180,20 +1200,30 @@ def check_model_output(model):
         df_results = calculate_results(values, model)
 
         for var, limits in var_to_plot.items():
-            f, ax = plt.subplots(figsize=(7, 6))
+            f, ax = plt.subplots(figsize=(9, 7))
             pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
 
-            sns.heatmap(
+            cmap = plt.cm.magma  # define the colormap
+            cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                "Custom cmap", cmaplist, cmap.N
+            )
+            # define the bins and normalize
+            bounds = [37, 38, 39.5, 40, 41]
+            norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+
+            hm = sns.heatmap(
                 pivot,
                 annot=True,
-                fmt=".2f",
+                fmt=".1f",
                 vmin=limits["min"],
                 vmax=limits["max"],
                 mask=pivot < limits["min"],
                 cmap=cmap,
+                norm=norm,
             )
 
-            plot_sma_lines(sport_cat, ax)
+            plot_sma_lines(sport_cat, ax, cmaplist)
 
             plt.title(
                 f"{model};{duration=};{var=};{sport_cat=}; met={values['met']};"
