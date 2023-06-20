@@ -16,29 +16,37 @@ from utils import generate_regression_curves
 
 ###############################
 # configuration
-max_rectal_temperature = 41
+max_rectal_temperature = 40.5
 max_sweat_losses = 400
 position = "standing"
 duration = 45
-t_range = np.arange(16, 44, 3)
+t_range = np.arange(25, 44, 1)
 rh_range = np.arange(0, 105, 5)
-mrt_t_delta = 0
-wind_speed = 0.6
+mrt_t_delta = 20
+wind_speed = 1
 var_to_plot = {
     # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
     # "water_loss_watt": {"max": 750, "min": 740},
-    # "water_loss": {"max": 1900, "min": 1800},
-    "t_cr": {"max": max_rectal_temperature, "min": 37},
-    "w": {"max": 1.2, "min": 0.4},
+    # "water_loss": {"max": 1900, "min": 0},
+    "t_cr": {"max": max_rectal_temperature, "min": 38.5},
+    # "w": {"max": 1.2, "min": 0.4},
     # "w_req": {"max": 1.3, "min": 1},
 }
+
 cmap = plt.cm.get_cmap("magma", 4)
+
+# todo
+# extreme for temperatures above 40
+# high for temperatures above 39.5
+# moderate for temperatures above 38
+# generate the output for the state and territories capitals and Singapore
+# create a basic slide deck
 
 #  risk low from 750g/h per hour
 
 people_profiles = {
-    1: {"met": 3, "clo": 0.4, "v": wind_speed, "d_mrt": mrt_t_delta},
-    2: {"met": 4.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
+    1: {"met": 4.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
+    2: {"met": 6, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
     3: {"met": 8, "clo": 0.47, "v": wind_speed, "d_mrt": mrt_t_delta},
     4: {"met": 8.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
     5: {"met": 8, "clo": 0.63, "v": wind_speed, "d_mrt": mrt_t_delta},
