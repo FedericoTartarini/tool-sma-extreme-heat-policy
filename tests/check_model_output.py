@@ -16,7 +16,7 @@ from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, p_sat_torr
 import psychrolib as psyc
 
-from utils import generate_regression_curves
+from utils import generate_regression_curves, calculate_comfort_indices_v1
 
 psyc.SetUnitSystem(psyc.SI)
 
@@ -1174,7 +1174,12 @@ def plot_sma_lines(sport_cat, main_ax, colors):
 
 
 def calculate_results(
-    values, model, data=pd.DataFrame(), constant_delta_mrt=True, constant_wind=True
+    values,
+    model,
+    data=pd.DataFrame(),
+    constant_delta_mrt=True,
+    constant_wind=True,
+    sport_cat=3,
 ):
     if data.shape == (0, 0):
         data = generate_t_rh_combinations()
@@ -1223,6 +1228,30 @@ def calculate_results(
             results.append(r)
 
         df_results = pd.DataFrame(results)
+
+        var = "t_cr"
+        df_results["risk_class"] = pd.cut(
+            df_results[var],
+            var_to_plot[var],
+            labels=False,
+            # right=False,
+        )
+        df_results["risk_class_label"] = df_results["risk_class"].map(
+            {
+                0: "low",
+                1: "moderate",
+                2: "high",
+                3: "extreme",
+            }
+        )
+
+    elif model == "sma":
+        df_results = calculate_comfort_indices_v1(
+            data.rename(columns={"t": "tdb"}), sport_cat
+        )
+        df_results = df_results.rename(
+            columns={"tdb": "t", "risk_value": "risk_class", "risk": "risk_class_label"}
+        )
 
     return df_results
 
@@ -1282,29 +1311,28 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     df_epw = df_epw.rename(columns=map_col_names)
     # for sport_cat, values in people_profiles.items():
     df_results = calculate_results(
-        values, model, data=df_epw, constant_wind=False, constant_delta_mrt=False
+        values,
+        model,
+        data=df_epw,
+        constant_wind=False,
+        constant_delta_mrt=False,
+        sport_cat=sport_cat,
     )
-    var = "t_cr"
-    df_results["risk_class"] = pd.cut(
-        df_results[var],
-        var_to_plot[var],
-        labels=False,
-        # right=False,
-    )
-    df_results["risk_class_label"] = df_results["risk_class"].map(
-        {
-            0: "low",
-            1: "moderate",
-            2: "high",
-            3: "extreme",
-        }
-    )
+    df_epw.groupby("month")[["t", "hr", "v", "mrt"]].describe(
+        percentiles=[0.8, 0.9, 0.95]
+    ).round(1).T
 
-    f, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(7, 7))
-    plt.suptitle(epw_file_name)
+    f, axs = plt.subplots(5, 1, constrained_layout=True, figsize=(7, 7))
+    plt.suptitle(f"{epw_file_name} - {model}")
     # cumulative number of hours in each risk category
     ax = axs[1]
     df_results["month"] = df_epw["month"].values
+    df_results["day"] = df_epw["day"].values
+    df_extreme_days = df_results.groupby(["month", "day"])[
+        "risk_class", "t", "rh"
+    ].max()
+    df_extreme_days = df_extreme_days[df_extreme_days["risk_class"] == 3].reset_index()
+    df_extreme_days = df_extreme_days.groupby("month")["day"].count()
     df_plot = (
         df_results[df_results.t > min_threshold_temperature]
         .groupby(["month", "risk_class"])["risk_class"]
@@ -1318,7 +1346,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
-    for ix, rows in df_plot.iterrows():
+    for ix, rows in df_plot.fillna(0).iterrows():
         height = 0
         for row in rows:
             height += row / 2
@@ -1342,7 +1370,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
-    for ix, rows in df_plot.iterrows():
+    for ix, rows in df_plot.fillna(0).iterrows():
         height = 0
         for row in rows:
             height += row / 2
@@ -1364,18 +1392,36 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
         x=df_results[df_results.t > min_threshold_temperature]["risk_class_label"],
         ax=ax,
         palette=cmaplist,
+        order=["low", "moderate", "high", "extreme"],
     )
-    for ix, val in enumerate(
+    df_text = (
         df_results[df_results.t > min_threshold_temperature]
         .groupby("risk_class")["risk_class"]
         .count()
-    ):
-        ax.text(ix, 100, ha="center", va="bottom", s=val)
+    )
+    for ix, val in enumerate(df_text):
+        ax.text(df_text.index[ix], 100, ha="center", va="bottom", s=val)
     ax.set(
         ylabel="hours",
         xlabel="risk class",
         title=f"only for t>{min_threshold_temperature}",
     )
+    ax = axs[4]
+    if df_extreme_days.shape[0] > 0:
+        sns.barplot(
+            data=df_extreme_days.reset_index(),
+            x="month",
+            y="day",
+            ax=ax,
+            color=cmaplist[-1],
+        )
+        for ix, val in enumerate(df_extreme_days):
+            ax.text(ix, df_extreme_days.max() / 2, ha="center", va="bottom", s=val)
+        ax.set(
+            ylabel="count",
+            xlabel="month",
+            title=f"number of days per months when we stop play for at least one hour",
+        )
     # # plot distribution of the temperature data
     # sns.histplot(df_results, x="t", ax=axs[1])
     # axs[1].axvline(min_threshold_temperature, c="k")
@@ -1423,7 +1469,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     plt.savefig(
         os.path.join(
             fig_directory,
-            f"climate_analysis_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}.png",
+            f"climate_analysis_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
         )
     )
 
@@ -1432,17 +1478,25 @@ if __name__ == "__main__":
     plt.close("all")
 
     # check_model_output("two_node")
-    check_model_output("phs")
+    # check_model_output("phs")
 
-    # pathlist = Path("tests/weather").glob("**/*.pkl.gz")
+    pathlist = Path("tests/weather").glob("**/*.pkl.gz")
+
     for path in pathlist:
         # because path is object not string
         path_in_str = str(path)
+        print(path_in_str)
         sport_cat = 3
-        path_in_str = "tests/weather/Canberra Intl AP.pkl.gz"
+        # path_in_str = "tests/weather/Darwin.Intl.AP.pkl.gz"
         calculate_heat_stress_location(
             epw_file_name=path_in_str,
             model="phs",
+            sport_cat=sport_cat,
+            values=people_profiles[sport_cat],
+        )
+        calculate_heat_stress_location(
+            epw_file_name=path_in_str,
+            model="sma",
             sport_cat=sport_cat,
             values=people_profiles[sport_cat],
         )
