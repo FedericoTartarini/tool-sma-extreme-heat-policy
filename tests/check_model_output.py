@@ -1,20 +1,24 @@
+import glob
+import math
 import os
+from itertools import product
+from pathlib import Path
+
+import matplotlib as mpl
+import matplotlib.patheffects as pe
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pytz
 import seaborn as sns
+from numba import jit
 from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, p_sat_torr
-from pythermalcomfort.utilities import (
-    check_standard_compliance,
-    body_surface_area,
-)
-from numba import jit
-import math
-import numpy as np
-from itertools import product
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import psychrolib as psyc
+
 from utils import generate_regression_curves
-import matplotlib.patheffects as pe
+
+psyc.SetUnitSystem(psyc.SI)
 
 ###############################
 # configuration
@@ -22,7 +26,8 @@ max_rectal_temperature = 40
 max_sweat_losses = 400
 position = "standing"
 duration = 45
-t_range = np.arange(25, 44, 1)
+min_threshold_temperature = 26
+t_range = np.arange(min_threshold_temperature, 44, 1)
 rh_range = np.arange(0, 105, 5)
 mrt_t_delta = 20
 wind_speed = 1
@@ -30,11 +35,12 @@ var_to_plot = {
     # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
     # "water_loss_watt": {"max": 750, "min": 740},
     # "water_loss": {"max": 1900, "min": 0},
-    "t_cr": {"max": max_rectal_temperature, "min": 36.8},
-    # "w": {"max": 1.2, "min": 0.4},
+    "t_cr": [36.8, 38, 39.5, 40, 50],
+    # "w": [0, 0.4, 0.8, 1, 1.2],
     # "w_req": {"max": 1.3, "min": 1},
 }
 
+cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 cmap = plt.cm.get_cmap("magma", 4)
 
 # todo
@@ -56,6 +62,22 @@ people_profiles = {
 
 fig_directory = os.path.join(os.getcwd(), "tests", "figures")
 ###############################
+
+
+def plot_rh_lines(ax, rh_val=1, t_array=np.arange(0, 40, 0.5)):
+    hr_array = []
+    for t, rh in zip(t_array, np.ones(len(t_array)) * rh_val):
+        hr_array.append(psyc.GetHumRatioFromRelHum(t, rh, 101325) * 1000)
+    ax.plot(t_array, hr_array, c="k", lw=0.2)
+    ax.text(
+        20,
+        psyc.GetHumRatioFromRelHum(20, rh_val, 101325) * 1000,
+        f"{rh_val * 100}%",
+        va="center",
+        ha="center",
+        rotation=20,
+        fontsize=6,
+    )
 
 
 @jit(nopython=True)
@@ -1091,32 +1113,32 @@ def phs(tdb, tr, v, rh, met, clo, posture, wme=0, **kwargs):
 
 
 # t_mrt(42, 30, 1)
-print(
-    phs(
-        tdb=34,
-        tr=34,
-        v=0.6,
-        rh=50,
-        met=8.3 * 58.15,
-        clo=0.576,
-        posture=position,
-        duration=duration,
-        round=False,
-    )["t_cr"]
-)
-print(
-    two_nodes(
-        tdb=34,
-        tr=34,
-        v=0.6,
-        rh=50,
-        met=8.3,
-        clo=0.576,
-        posture=position,
-        round=False,
-        w_max=1,
-    )["t_core"]
-)
+# print(
+#     phs(
+#         tdb=34,
+#         tr=34,
+#         v=0.6,
+#         rh=50,
+#         met=8.3 * 58.15,
+#         clo=0.576,
+#         posture=position,
+#         duration=duration,
+#         round=False,
+#     )["t_cr"]
+# )
+# print(
+#     two_nodes(
+#         tdb=34,
+#         tr=34,
+#         v=0.6,
+#         rh=50,
+#         met=8.3,
+#         clo=0.576,
+#         posture=position,
+#         round=False,
+#         w_max=1,
+#     )["t_core"]
+# )
 
 
 def generate_t_rh_combinations():
@@ -1151,33 +1173,42 @@ def plot_sma_lines(sport_cat, main_ax, colors):
     sma_ax.set(ylim=(0, 100))
 
 
-def calculate_results(values, model):
-    df = generate_t_rh_combinations()
+def calculate_results(
+    values, model, data=pd.DataFrame(), constant_delta_mrt=True, constant_wind=True
+):
+    if data.shape == (0, 0):
+        data = generate_t_rh_combinations()
+
+    if constant_delta_mrt:
+        data["mrt"] = data["t"] + values["d_mrt"]
+
+    if constant_wind:
+        data["v"] = values["v"]
 
     if model == "two_node":
         r = two_nodes(
-            tdb=df["t"],
-            tr=df["t"] + values["d_mrt"],
-            rh=df["rh"],
+            tdb=data["t"],
+            tr=data["mrt"],
+            rh=data["rh"],
             met=values["met"],
             clo=values["clo"],
-            v=values["v"],
+            v=data["v"],
             round=False,
             w_max=1,
         )
 
         df_results = pd.DataFrame(r)
         df_results = df_results.rename(columns={"t_core": "t_cr"})
-        df_results["t"] = df["t"]
-        df_results["rh"] = df["rh"]
+        df_results["t"] = data["t"]
+        df_results["rh"] = data["rh"]
 
     elif model == "phs":
         results = []
-        for ix, row in df.iterrows():
+        for ix, row in data.iterrows():
             r = phs(
                 tdb=row.t,
-                tr=row.t + values["d_mrt"],
-                v=values["v"],
+                tr=row.mrt,
+                v=row.v,
                 rh=row.rh,
                 met=values["met"] * 58.15,
                 clo=values["clo"],
@@ -1187,6 +1218,8 @@ def calculate_results(values, model):
             )
             r["t"] = row.t
             r["rh"] = row.rh
+            r["mrt"] = row.mrt
+            r["v"] = row.v
             results.append(r)
 
         df_results = pd.DataFrame(results)
@@ -1204,21 +1237,19 @@ def check_model_output(model):
             pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
 
             cmap = plt.cm.magma  # define the colormap
-            cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
             cmap = mpl.colors.LinearSegmentedColormap.from_list(
                 "Custom cmap", cmaplist, cmap.N
             )
             # define the bins and normalize
-            bounds = [37, 38, 39.5, 40, 41]
-            norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+            norm = mpl.colors.BoundaryNorm(limits, cmap.N)
 
             hm = sns.heatmap(
                 pivot,
                 annot=True,
                 fmt=".1f",
-                vmin=limits["min"],
-                vmax=limits["max"],
-                mask=pivot < limits["min"],
+                vmin=min(limits),
+                vmax=max(limits),
+                mask=pivot < min(limits),
                 cmap=cmap,
                 norm=norm,
             )
@@ -1231,14 +1262,187 @@ def check_model_output(model):
             )
             plt.tight_layout()
             plt.savefig(
-                os.path.join(fig_directory, f"{model}_sport_cat_{sport_cat}_{var}.png")
+                os.path.join(
+                    fig_directory,
+                    f"{model}_sport_cat_{sport_cat}_{var}_{mrt_t_delta}_{wind_speed}.png",
+                )
             )
+
+
+def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
+    df_epw = pd.read_pickle(epw_file_name, compression="gzip")
+    df_epw["hr"] *= 1000
+    map_col_names = {
+        "tot_sky_cover": "cloud",
+        "wind_speed": "v",
+        "DBT": "t",
+        "RH": "rh",
+        "MRT": "mrt",
+    }
+    df_epw = df_epw.rename(columns=map_col_names)
+    # for sport_cat, values in people_profiles.items():
+    df_results = calculate_results(
+        values, model, data=df_epw, constant_wind=False, constant_delta_mrt=False
+    )
+    var = "t_cr"
+    df_results["risk_class"] = pd.cut(
+        df_results[var],
+        var_to_plot[var],
+        labels=False,
+        # right=False,
+    )
+    df_results["risk_class_label"] = df_results["risk_class"].map(
+        {
+            0: "low",
+            1: "moderate",
+            2: "high",
+            3: "extreme",
+        }
+    )
+
+    f, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(7, 7))
+    plt.suptitle(epw_file_name)
+    # cumulative number of hours in each risk category
+    ax = axs[1]
+    df_results["month"] = df_epw["month"].values
+    df_plot = (
+        df_results[df_results.t > min_threshold_temperature]
+        .groupby(["month", "risk_class"])["risk_class"]
+        .count()
+        .unstack("risk_class")
+    )
+    for risk in range(4):
+        if risk not in df_plot.columns:
+            df_plot[risk] = 0
+    df_plot = df_plot[sorted(df_plot.columns)]
+    df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
+    ax.set(title="cumulative number of hours in each risk category")
+    index = 0
+    for ix, rows in df_plot.iterrows():
+        height = 0
+        for row in rows:
+            height += row / 2
+            if row > 3:
+                ax.text(index, height, ha="center", va="center", s=int(row))
+            height += row / 2
+        index += 1
+    # cumulative number of hours in each risk category
+    ax = axs[2]
+    df_results["hour"] = df_epw["hour"].values
+    df_plot = (
+        df_results[df_results.t > min_threshold_temperature]
+        .groupby(["hour", "risk_class"])["risk_class"]
+        .count()
+        .unstack("risk_class")
+    )
+    for risk in range(4):
+        if risk not in df_plot.columns:
+            df_plot[risk] = 0
+    df_plot = df_plot[sorted(df_plot.columns)]
+    df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
+    ax.set(title="cumulative number of hours in each risk category")
+    index = 0
+    for ix, rows in df_plot.iterrows():
+        height = 0
+        for row in rows:
+            height += row / 2
+            if row > 3:
+                ax.text(index, height, ha="center", va="center", s=int(row))
+            height += row / 2
+        index += 1
+    # # number of hours in each risk category, data not filtered
+    # sns.countplot(
+    #     x=df_results["risk_class"],
+    #     ax=axs[2],
+    # )
+    # for ix, val in enumerate(df_results.groupby("risk_class")["risk_class"].count()):
+    #     axs[2].text(ix, 100, ha="center", va="bottom", s=val)
+    # axs[2].set(ylabel="hours", xlabel="risk class")
+    # number of hours in each risk category, data filtered by min threshold temperature
+    ax = axs[3]
+    sns.countplot(
+        x=df_results[df_results.t > min_threshold_temperature]["risk_class_label"],
+        ax=ax,
+        palette=cmaplist,
+    )
+    for ix, val in enumerate(
+        df_results[df_results.t > min_threshold_temperature]
+        .groupby("risk_class")["risk_class"]
+        .count()
+    ):
+        ax.text(ix, 100, ha="center", va="bottom", s=val)
+    ax.set(
+        ylabel="hours",
+        xlabel="risk class",
+        title=f"only for t>{min_threshold_temperature}",
+    )
+    # # plot distribution of the temperature data
+    # sns.histplot(df_results, x="t", ax=axs[1])
+    # axs[1].axvline(min_threshold_temperature, c="k")
+    # count_points = df_results[df_results.t > min_threshold_temperature].shape[0]
+    # axs[1].text(
+    #     x=min_threshold_temperature + 2,
+    #     y=200,
+    #     s=f"{count_points/df_results.shape[0]*100:.1f}% points above",
+    # )
+    # psychrometric plot
+    ax = axs[0]
+    sns.histplot(
+        df_results,
+        x="t",
+        y=df_epw["hr"].values,
+        ax=ax,
+        cbar=True,
+        cbar_kws={"label": "Hours", "shrink": 0.75},
+        binrange=((0, 40), (0, 20)),
+        binwidth=(1, 2.5),
+        stat="count",
+        # vmax=120,
+        cmap="viridis_r",
+    )
+    ax.set(
+        ylim=(0, 25),
+        xlim=(0, 42),
+        ylabel=r"HR $g_{H20}/kg_{dry air}$",
+        xlabel=r"$t_{db}$",
+    )
+    ax.axvline(min_threshold_temperature, c="k")
+    ax.grid(color="lightgray", ls="--", lw=0.5)
+    count_points = df_results[df_results.t > min_threshold_temperature].shape[0]
+    ax.text(
+        x=min_threshold_temperature + 2,
+        y=10,
+        s=f"{count_points / df_results.shape[0] * 100:.1f}% points above",
+    )
+    plot_rh_lines(ax, rh_val=1)
+    plot_rh_lines(ax, rh_val=0.75)
+    plot_rh_lines(ax, rh_val=0.5)
+    plot_rh_lines(ax, rh_val=0.25)
+    for ax in axs:
+        sns.despine(ax=ax, bottom=True, left=True)
+    plt.savefig(
+        os.path.join(
+            fig_directory,
+            f"climate_analysis_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}.png",
+        )
+    )
 
 
 if __name__ == "__main__":
     plt.close("all")
 
-    check_model_output("two_node")
+    # check_model_output("two_node")
     check_model_output("phs")
 
-    plt.close("all")
+    # pathlist = Path("tests/weather").glob("**/*.pkl.gz")
+    for path in pathlist:
+        # because path is object not string
+        path_in_str = str(path)
+        sport_cat = 3
+        path_in_str = "tests/weather/Canberra Intl AP.pkl.gz"
+        calculate_heat_stress_location(
+            epw_file_name=path_in_str,
+            model="phs",
+            sport_cat=sport_cat,
+            values=people_profiles[sport_cat],
+        )
