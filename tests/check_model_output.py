@@ -1,4 +1,3 @@
-import glob
 import math
 import os
 from itertools import product
@@ -9,12 +8,11 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytz
+import psychrolib as psyc
 import seaborn as sns
 from numba import jit
 from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, p_sat_torr
-import psychrolib as psyc
 
 from utils import generate_regression_curves, calculate_comfort_indices_v1
 
@@ -29,35 +27,69 @@ duration = 45
 min_threshold_temperature = 26
 t_range = np.arange(min_threshold_temperature, 44, 1)
 rh_range = np.arange(0, 105, 5)
-mrt_t_delta = 20
-wind_speed = 1
+mrt_t_delta = 12
+wind_speed = 0.65
 var_to_plot = {
     # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
     # "water_loss_watt": {"max": 750, "min": 740},
-    # "water_loss": {"max": 1900, "min": 0},
-    "t_cr": [36.8, 38, 39.5, 40, 50],
+    # "water_loss": [0, 850, 900, 1000],
+    "t_cr",
     # "w": [0, 0.4, 0.8, 1, 1.2],
     # "w_req": {"max": 1.3, "min": 1},
 }
 
+# cat 1 = walking, cat 2 = brisk walking, cat 3 = cycling, cat 4 = rugby union, cat 5 = field hockey
+
 cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
-cmap = plt.cm.get_cmap("magma", 4)
 
-# todo
-# extreme for temperatures above 40
-# high for temperatures above 39.5
-# moderate for temperatures above 38
-# generate the output for the state and territories capitals and Singapore
-# create a basic slide deck
-
-#  risk low from 750g/h per hour
+# risk low from 750g/h per hour
 
 people_profiles = {
-    1: {"met": 4.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
-    2: {"met": 6, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
-    3: {"met": 8, "clo": 0.47, "v": wind_speed, "d_mrt": mrt_t_delta},
-    4: {"met": 8.3, "clo": 0.576, "v": wind_speed, "d_mrt": mrt_t_delta},
-    5: {"met": 8, "clo": 0.63, "v": wind_speed, "d_mrt": mrt_t_delta},
+    1: {
+        "met": 4.1,
+        "clo": 0.55,
+        "v": round(wind_speed * 4.1 / 8.3, 2),
+        "d_mrt": mrt_t_delta,
+        "duration": 180,
+        "t_cr": [36.8, 37.4, 38.15, 39.5, 50],
+        "water_loss": [700 / 45 * 180, 2900, 3000, 3100, 3200],
+    },
+    2: {
+        "met": 6,
+        "clo": 0.55,
+        "v": round(wind_speed * 6 / 8.3, 2),
+        "d_mrt": mrt_t_delta,
+        "duration": 60,
+        "t_cr": [36.8, 37.75, 38.82, 39.65, 50],
+        "water_loss": [825 / 45 * 60, 2900, 3000, 3100, 3200],
+    },
+    3: {
+        "met": 7.7,
+        "clo": 0.5,
+        "v": wind_speed,
+        "d_mrt": mrt_t_delta,
+        "duration": 45,
+        "t_cr": [36.8, 38, 39.5, 40, 50],
+        "water_loss": [825, 2900, 3000, 3100, 3200],
+    },
+    4: {
+        "met": 8,
+        "clo": 0.5,
+        "v": wind_speed,
+        "d_mrt": mrt_t_delta,
+        "duration": 45,
+        "t_cr": [36.8, 38, 39.5, 40, 50],
+        "water_loss": [825, 2900, 3000, 3100, 3200],
+    },
+    5: {
+        "met": 8,
+        "clo": 0.6,
+        "v": wind_speed,
+        "d_mrt": mrt_t_delta,
+        "duration": 45,
+        "t_cr": [36.8, 38, 39.5, 40, 50],
+        "water_loss": [825, 2900, 3000, 3100, 3200],
+    },
 }
 
 fig_directory = os.path.join(os.getcwd(), "tests", "figures")
@@ -1146,25 +1178,29 @@ def generate_t_rh_combinations():
     return pd.DataFrame(all_combinations, columns=["t", "rh"])
 
 
-def plot_sma_lines(sport_cat, main_ax, colors):
+def plot_sma_lines(sport_cat, main_ax, colors, reset_coordinates=True):
     sma_lines = generate_regression_curves(sport_cat)
     sma_ax = main_ax.twinx()
+    if reset_coordinates:
+        x = np.arange(len(t_range)) + 0.5
+    else:
+        x = t_range
     sma_ax.plot(
-        np.arange(len(t_range)) + 0.5,
+        x,
         sma_lines[1](t_range),
         c=colors[1],
         lw=2,
         path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
     )
     sma_ax.plot(
-        np.arange(len(t_range)) + 0.5,
+        x,
         sma_lines[2](t_range),
         c=colors[2],
         lw=2,
         path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
     )
     sma_ax.plot(
-        np.arange(len(t_range)) + 0.5,
+        x,
         sma_lines[3](t_range),
         c=colors[3],
         lw=2,
@@ -1218,7 +1254,7 @@ def calculate_results(
                 met=values["met"] * 58.15,
                 clo=values["clo"],
                 posture=position,
-                duration=duration,
+                duration=values["duration"],
                 round=False,
             )
             r["t"] = row.t
@@ -1232,7 +1268,7 @@ def calculate_results(
         var = "t_cr"
         df_results["risk_class"] = pd.cut(
             df_results[var],
-            var_to_plot[var],
+            values[var],
             labels=False,
             # right=False,
         )
@@ -1261,15 +1297,30 @@ def check_model_output(model):
 
         df_results = calculate_results(values, model)
 
-        for var, limits in var_to_plot.items():
+        for var in var_to_plot:
             f, ax = plt.subplots(figsize=(9, 7))
             pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
+            pivot_water_loss = df_results.pivot("rh", "t", "water_loss").sort_index(
+                ascending=False
+            )
 
             cmap = plt.cm.magma  # define the colormap
             cmap = mpl.colors.LinearSegmentedColormap.from_list(
                 "Custom cmap", cmaplist, cmap.N
             )
+            limits = people_profiles[sport_cat]["water_loss"]
+            norm = mpl.colors.BoundaryNorm(limits, cmap.N)
+
+            hm = sns.heatmap(
+                pivot_water_loss,
+                cmap=cmap,
+                norm=norm,
+                cbar=False,
+                mask=pivot > 40,
+            )
+
             # define the bins and normalize
+            limits = people_profiles[sport_cat][var]
             norm = mpl.colors.BoundaryNorm(limits, cmap.N)
 
             hm = sns.heatmap(
@@ -1278,7 +1329,7 @@ def check_model_output(model):
                 fmt=".1f",
                 vmin=min(limits),
                 vmax=max(limits),
-                mask=pivot < min(limits),
+                mask=pivot_water_loss < min(people_profiles[sport_cat]["water_loss"]),
                 cmap=cmap,
                 norm=norm,
             )
@@ -1328,10 +1379,12 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     ax = axs[1]
     df_results["month"] = df_epw["month"].values
     df_results["day"] = df_epw["day"].values
-    df_extreme_days = df_results.groupby(["month", "day"])[
-        "risk_class", "t", "rh"
-    ].max()
-    df_extreme_days = df_extreme_days[df_extreme_days["risk_class"] == 3].reset_index()
+    df_extreme_days = (
+        df_results[df_results.t > min_threshold_temperature]
+        .groupby(["month", "day"])["risk_class"]
+        .max()
+    )
+    df_extreme_days = df_extreme_days[df_extreme_days == 3].reset_index()
     df_extreme_days = df_extreme_days.groupby("month")["day"].count()
     df_plot = (
         df_results[df_results.t > min_threshold_temperature]
@@ -1348,10 +1401,12 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     index = 0
     for ix, rows in df_plot.fillna(0).iterrows():
         height = 0
+        pre_index = index - 0.3
         for row in rows:
             height += row / 2
-            if row > 3:
-                ax.text(index, height, ha="center", va="center", s=int(row))
+            pre_index += 0.1
+            if row > 0:
+                ax.text(pre_index, height, ha="center", va="center", s=int(row))
             height += row / 2
         index += 1
     # cumulative number of hours in each risk category
@@ -1372,9 +1427,11 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     index = 0
     for ix, rows in df_plot.fillna(0).iterrows():
         height = 0
+        pre_index = index - 0.3
         for row in rows:
             height += row / 2
-            if row > 3:
+            pre_index += 0.1
+            if row > 0:
                 ax.text(index, height, ha="center", va="center", s=int(row))
             height += row / 2
         index += 1
@@ -1478,7 +1535,9 @@ if __name__ == "__main__":
     plt.close("all")
 
     # check_model_output("two_node")
-    # check_model_output("phs")
+    check_model_output("phs")
+
+if __name__ == "__plot__":
 
     pathlist = Path("tests/weather").glob("**/*.pkl.gz")
 
@@ -1487,16 +1546,70 @@ if __name__ == "__main__":
         path_in_str = str(path)
         print(path_in_str)
         sport_cat = 3
-        # path_in_str = "tests/weather/Darwin.Intl.AP.pkl.gz"
-        calculate_heat_stress_location(
-            epw_file_name=path_in_str,
-            model="phs",
-            sport_cat=sport_cat,
-            values=people_profiles[sport_cat],
+
+        epw_file_name = path_in_str
+        sport_cat = 3
+        model = "phs"
+        var = "t_cr"
+        values = people_profiles[sport_cat]
+        limits = people_profiles[sport_cat][var]
+
+        df_epw = pd.read_pickle(epw_file_name, compression="gzip")
+        map_col_names = {
+            "tot_sky_cover": "cloud",
+            "wind_speed": "v",
+            "DBT": "t",
+            "RH": "rh",
+            "MRT": "mrt",
+        }
+        df_epw["const"] = 1
+        df_epw = df_epw.rename(columns=map_col_names)
+        df_epw = df_epw[df_epw.t > min_threshold_temperature]
+
+        plt.close("all")
+        f, ax = plt.subplots(figsize=(9, 7), constrained_layout=True)
+
+        df_results = calculate_results(values, model)
+        pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
+        cmap = plt.cm.magma  # define the colormap
+        cmap = mpl.colors.LinearSegmentedColormap.from_list(
+            "Custom cmap", cmaplist, cmap.N
         )
-        calculate_heat_stress_location(
-            epw_file_name=path_in_str,
-            model="sma",
-            sport_cat=sport_cat,
-            values=people_profiles[sport_cat],
+        # define the bins and normalize
+        norm = mpl.colors.BoundaryNorm(limits, cmap.N)
+
+        hm = sns.heatmap(
+            pivot,
+            # annot=True,
+            # fmt=".1f",
+            vmin=min(limits),
+            vmax=max(limits),
+            mask=pivot < min(limits),
+            cmap=cmap,
+            norm=norm,
+            alpha=0.5,
+        )
+
+        plot_sma_lines(sport_cat, ax, cmaplist, reset_coordinates=True)
+
+        df_plot = df_epw.copy()
+        ymin, ymax = ax.get_ylim()
+        xmin, xmax = ax.get_xlim()
+
+        # Driver Code
+        def interpolation(d, x):
+            return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
+
+        data = [[0, ymin], [100, ymax]]
+        df_plot["rh"] = [interpolation(data, x) for x in df_plot["rh"]]
+        data = [[26, xmin], [43, xmax]]
+        df_plot["t"] = [interpolation(data, x) for x in df_plot["t"]]
+        sns.scatterplot(df_plot[["t", "rh"]], x="t", y="rh", ax=ax, c="k")
+        plt.title(path_in_str)
+
+        plt.savefig(
+            os.path.join(
+                fig_directory,
+                f"climate_data_on_risk_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
+            )
         )
