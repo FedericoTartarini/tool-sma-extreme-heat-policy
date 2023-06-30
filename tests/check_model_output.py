@@ -46,13 +46,13 @@ cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
 people_profiles = {
     1: {
-        "met": 4.1,
-        "clo": 0.55,
-        "v": round(wind_speed * 4.1 / 8.3, 2),
+        "met": 5,
+        "clo": 0.5,
+        "v": round(wind_speed * 4.5 / 8.3, 2),
         "d_mrt": mrt_t_delta,
-        "duration": 180,
-        "t_cr": [36.8, 37.4, 38.15, 39.5, 50],
-        "water_loss": [700 / 45 * 180, 2900, 3000, 3100, 3200],
+        "duration": 200,
+        "t_cr": [36.8, 37.4, 38.4, 39.5, 50],
+        "water_loss": [825 / 45 * 200, 4000, 4100, 4200, 4300],
     },
     2: {
         "met": 6,
@@ -1256,6 +1256,8 @@ def calculate_results(
                 posture=position,
                 duration=values["duration"],
                 round=False,
+                acclimatized=100,
+                i_mst=0.4,
             )
             r["t"] = row.t
             r["rh"] = row.rh
@@ -1272,6 +1274,9 @@ def calculate_results(
             labels=False,
             # right=False,
         )
+        df_results.loc[
+            df_results["water_loss"] < min(values["water_loss"]), "risk_class"
+        ] = 0
         df_results["risk_class_label"] = df_results["risk_class"].map(
             {
                 0: "low",
@@ -1298,43 +1303,7 @@ def check_model_output(model):
         df_results = calculate_results(values, model)
 
         for var in var_to_plot:
-            f, ax = plt.subplots(figsize=(9, 7))
-            pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
-            pivot_water_loss = df_results.pivot("rh", "t", "water_loss").sort_index(
-                ascending=False
-            )
-
-            cmap = plt.cm.magma  # define the colormap
-            cmap = mpl.colors.LinearSegmentedColormap.from_list(
-                "Custom cmap", cmaplist, cmap.N
-            )
-            limits = people_profiles[sport_cat]["water_loss"]
-            norm = mpl.colors.BoundaryNorm(limits, cmap.N)
-
-            hm = sns.heatmap(
-                pivot_water_loss,
-                cmap=cmap,
-                norm=norm,
-                cbar=False,
-                mask=pivot > 40,
-            )
-
-            # define the bins and normalize
-            limits = people_profiles[sport_cat][var]
-            norm = mpl.colors.BoundaryNorm(limits, cmap.N)
-
-            hm = sns.heatmap(
-                pivot,
-                annot=True,
-                fmt=".1f",
-                vmin=min(limits),
-                vmax=max(limits),
-                mask=pivot_water_loss < min(people_profiles[sport_cat]["water_loss"]),
-                cmap=cmap,
-                norm=norm,
-            )
-
-            plot_sma_lines(sport_cat, ax, cmaplist)
+            plot_heatmap(df_results, sport_cat, var)
 
             plt.title(
                 f"{model};{duration=};{var=};{sport_cat=}; met={values['met']};"
@@ -1347,6 +1316,41 @@ def check_model_output(model):
                     f"{model}_sport_cat_{sport_cat}_{var}_{mrt_t_delta}_{wind_speed}.png",
                 )
             )
+
+
+def plot_heatmap(df_results, sport_cat, var):
+    f, ax = plt.subplots(figsize=(9, 7))
+    pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
+    pivot_water_loss = df_results.pivot("rh", "t", "water_loss").sort_index(
+        ascending=False
+    )
+    cmap = plt.cm.magma  # define the colormap
+    cmap = mpl.colors.LinearSegmentedColormap.from_list("Custom cmap", cmaplist, cmap.N)
+    limits = people_profiles[sport_cat]["water_loss"]
+    norm = mpl.colors.BoundaryNorm(limits, cmap.N)
+    hm = sns.heatmap(
+        pivot_water_loss,
+        cmap=cmap,
+        norm=norm,
+        cbar=False,
+        mask=pivot > 40,
+    )
+    # define the bins and normalize
+    limits = people_profiles[sport_cat][var]
+    norm = mpl.colors.BoundaryNorm(limits, cmap.N)
+    hm = sns.heatmap(
+        pivot,
+        # annot=True,
+        # fmt=".1f",
+        vmin=min(limits),
+        vmax=max(limits),
+        mask=pivot_water_loss < min(people_profiles[sport_cat]["water_loss"]),
+        cmap=cmap,
+        norm=norm,
+    )
+    plot_sma_lines(sport_cat, ax, cmaplist)
+
+    return ax
 
 
 def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
@@ -1369,11 +1373,8 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
         constant_delta_mrt=False,
         sport_cat=sport_cat,
     )
-    df_epw.groupby("month")[["t", "hr", "v", "mrt"]].describe(
-        percentiles=[0.8, 0.9, 0.95]
-    ).round(1).T
 
-    f, axs = plt.subplots(5, 1, constrained_layout=True, figsize=(7, 7))
+    f, axs = plt.subplots(5, 1, constrained_layout=True, figsize=(7, 9))
     plt.suptitle(f"{epw_file_name} - {model}")
     # cumulative number of hours in each risk category
     ax = axs[1]
@@ -1545,7 +1546,6 @@ if __name__ == "__plot__":
         # because path is object not string
         path_in_str = str(path)
         print(path_in_str)
-        sport_cat = 3
 
         epw_file_name = path_in_str
         sport_cat = 3
@@ -1566,31 +1566,13 @@ if __name__ == "__plot__":
         df_epw = df_epw.rename(columns=map_col_names)
         df_epw = df_epw[df_epw.t > min_threshold_temperature]
 
-        plt.close("all")
-        f, ax = plt.subplots(figsize=(9, 7), constrained_layout=True)
+        calculate_heat_stress_location(epw_file_name, model, sport_cat, values)
 
         df_results = calculate_results(values, model)
-        pivot = df_results.pivot("rh", "t", var).sort_index(ascending=False)
-        cmap = plt.cm.magma  # define the colormap
-        cmap = mpl.colors.LinearSegmentedColormap.from_list(
-            "Custom cmap", cmaplist, cmap.N
-        )
-        # define the bins and normalize
-        norm = mpl.colors.BoundaryNorm(limits, cmap.N)
 
-        hm = sns.heatmap(
-            pivot,
-            # annot=True,
-            # fmt=".1f",
-            vmin=min(limits),
-            vmax=max(limits),
-            mask=pivot < min(limits),
-            cmap=cmap,
-            norm=norm,
-            alpha=0.5,
-        )
+        plt.close("all")
 
-        plot_sma_lines(sport_cat, ax, cmaplist, reset_coordinates=True)
+        ax = plot_heatmap(df_results, sport_cat, var)
 
         df_plot = df_epw.copy()
         ymin, ymax = ax.get_ylim()
