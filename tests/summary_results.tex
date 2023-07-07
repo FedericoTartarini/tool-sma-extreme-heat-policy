@@ -18,37 +18,46 @@
 
     Below I am comparing the results obtained with the PHS and the SMA tables.
     Please note that we are using both models outside their limits.
-%    The inputs configuration parameters are:
-%    \begin{enumerate}
-%        \item position = standing
-%        \item duration event = 45-min for sport cat 3 or more, 60 for cat 2, and 180 for cat 1
-%        \item constant met during the event
-%        \item wind speed - see chart title
-%        \item heat stress thresholds: see colorbar next to chart to see limits
-%    \end{enumerate}
 
     \subsection{Core temperature - PHS model - Sport category 3}
     \begin{figure}[htb!]
         \centering
-        \includegraphics[width=\linewidth]{figures/phs_sport_cat_3_t_cr_12_0.65}
+        \includegraphics[width=\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.5}
         \caption{Sport category 3}\label{fig:phs_sport_cat_3}
     \end{figure}
 
     \clearpage
 
-        \begin{figure}[htb!]
+    \begin{figure}[htb!]
         \centering
 
         \begin{subfigure}{\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_20_0.65}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_13_0.5}
             \caption{}\label{fig:phs_sport_cat_3_t_cr_20_2}
         \end{subfigure}%
         \hfill
         \begin{subfigure}{\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_0_0.65}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_0_0.5}
             \caption{no solar radiation and wind 1m/s}\label{fig:phs_sport_cat_3_t_cr_0_1}
+        \end{subfigure}%
+
+    \end{figure}
+
+    \begin{figure}[htb!]
+        \centering
+
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.1}
+            \caption{}\label{fig:phs_sport_cat_3_t_cr_9_0}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_1.5}
+            \caption{no solar radiation and wind 1m/s}\label{fig:phs_sport_cat_3_t_cr_9_1}
         \end{subfigure}%
 
     \end{figure}
@@ -74,33 +83,33 @@
 
         \begin{subfigure}{.5\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_1_t_cr_12_0.65}
-            \caption{phs Sport category 2}\label{fig:phs_sport_cat_1_t_cr}
+            \caption{phs Sport category 1}\label{fig:phs_sport_cat_1_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_1_t_cr_9_0.5}
         \end{subfigure}%
         \hfill
 
         \begin{subfigure}{.5\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_2_t_cr_12_0.65}
             \caption{phs Sport category 2}\label{fig:phs_sport_cat_2_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_2_t_cr_9_0.5}
         \end{subfigure}%
         \hfill
         \begin{subfigure}{.5\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_12_0.65}
             \caption{phs Sport category 3}\label{fig:phs_sport_cat_3_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.5}
         \end{subfigure}%
         \hfill
         \begin{subfigure}{.5\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_4_t_cr_12_0.65}
             \caption{phs Sport category 4}\label{fig:phs_sport_cat_4_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_4_t_cr_9_0.5}
         \end{subfigure}%
         \hfill
         \begin{subfigure}{.5\textwidth}
             \centering
-            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_5_t_cr_12_0.65}
             \caption{phs Sport category 5}\label{fig:phs_sport_cat_5_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_5_t_cr_9_0.5}
         \end{subfigure}%
         \hfill
 
@@ -146,65 +155,65 @@
     The third figure depicts an issue with the model since it is assumed tha the heat stress risk is always moderate even at very low ambient temperatures.
     This is something to be aware of and it could be an issue.
     It is not a problem if we decide to limit the final plot to 26 degrees how it was previously done in the SMA policy.
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_sma}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \clearpage
-
-    Please note that this chart is generated using a constant mean radiant temperature while the risk in the location is calculated using the estimated mean radiant temperatur and wind.
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Adelaide.Intl.AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_sma}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Brisbane Intl AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_sma}
-        \caption{Sport category 3}
-    \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Canberra Intl AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \clearpage
+%
+%    Please note that this chart is generated using a constant mean radiant temperature while the risk in the location is calculated using the estimated mean radiant temperatur and wind.
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Adelaide.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Brisbane Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Canberra Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
     \begin{figure}[htb!]
         \centering
         \includegraphics[width=\linewidth]{figures/climate_analysis_Darwin.Intl.AP_phs}
@@ -220,38 +229,38 @@
             \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Darwin.Intl.AP_phs}
             \caption{Sport category 3}
         \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_sma}
-            \caption{Sport category 3}
-        \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Hobart.Intl.AP_phs}
-            \caption{Sport category 3}
-        \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_sma}
-            \caption{Sport category 3}
-        \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Melbourne.Intl.AP_phs}
-            \caption{Sport category 3}
-        \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Hobart.Intl.AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Melbourne.Intl.AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
 
     \begin{figure}[htb!]
         \centering
@@ -284,24 +293,24 @@
             \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Sydney.Intl.AP_phs}
             \caption{Sport category 3}
         \end{figure}
-
-    \begin{figure}[htb!]
-        \centering
-        \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_phs}
-        \caption{Sport category 3}
-    \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_sma}
-            \caption{Sport category 3}
-        \end{figure}
-    \begin{figure}[htb!]
-            \centering
-            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Tullamarine-Melbourne Intl AP_phs}
-            \caption{Sport category 3}
-        \end{figure}
-
-    \clearpage
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Tullamarine-Melbourne Intl AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
+%
+%    \clearpage
 
 
 

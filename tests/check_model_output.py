@@ -12,84 +12,91 @@ import psychrolib as psyc
 import seaborn as sns
 from numba import jit
 from pythermalcomfort.models import phs
-from pythermalcomfort.psychrometrics import p_sat, p_sat_torr
+from pythermalcomfort.psychrometrics import p_sat, p_sat_torr, t_mrt
 
 from utils import generate_regression_curves, calculate_comfort_indices_v1
 
 psyc.SetUnitSystem(psyc.SI)
 
-###############################
 # configuration
 max_rectal_temperature = 40
 max_sweat_losses = 400
 position = "standing"
-duration = 45
 min_threshold_temperature = 26
-t_range = np.arange(min_threshold_temperature, 44, 1)
-rh_range = np.arange(0, 105, 5)
-mrt_t_delta = 12
-wind_speed = 0.65
+t_range = np.arange(
+    min_threshold_temperature,
+    step=(interval := 1),
+    stop=43 + interval,
+)
+rh_range = np.arange(
+    start=0,
+    step=(interval := 5),
+    stop=100 + interval,
+)
+globe_temperature = 9
+wind_speed = 0.5
 var_to_plot = {
-    # "d_lim_t_re": {"max": duration * 0.5, "min": duration},
-    # "water_loss_watt": {"max": 750, "min": 740},
-    # "water_loss": [0, 850, 900, 1000],
     "t_cr",
-    # "w": [0, 0.4, 0.8, 1, 1.2],
-    # "w_req": {"max": 1.3, "min": 1},
 }
 
 # cat 1 = walking, cat 2 = brisk walking, cat 3 = cycling, cat 4 = rugby union, cat 5 = field hockey
 
 cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
-# risk low from 750g/h per hour
+# todo sydney, perth, and darwin
+# todo assume full sun - instead take account cloud coverage to account for moderate and high cloud coverage
+# todo for Sydney show the difference for fixing the air speed at 1m/s or using the wind speed from the TMY
+
+# todo contact SMA we will need to create a version 2 of the policy (James and Ollie) we will need to show a screenshot of the application
+# todo first publication in JSM
+# todo create a working version of the application with the new code
 
 people_profiles = {
-    1: {
-        "met": 5,
-        "clo": 0.5,
-        "v": round(wind_speed * 4.5 / 8.3, 2),
-        "d_mrt": mrt_t_delta,
-        "duration": 200,
-        "t_cr": [36.8, 37.4, 38.4, 39.5, 50],
-        "water_loss": [825 / 45 * 200, 4000, 4100, 4200, 4300],
-    },
-    2: {
-        "met": 6,
-        "clo": 0.55,
-        "v": round(wind_speed * 6 / 8.3, 2),
-        "d_mrt": mrt_t_delta,
-        "duration": 60,
-        "t_cr": [36.8, 37.75, 38.82, 39.65, 50],
-        "water_loss": [825 / 45 * 60, 2900, 3000, 3100, 3200],
-    },
+    # 1: {
+    #     "met": 4.5,
+    #     "clo": 0.55,
+    #     "v": wind_speed,
+    #     "tg": globe_temperature,
+    #     "duration": 180,
+    #     "t_cr": [36.8, 37.2, 38.4, 39.5, 50],
+    #     "water_loss": [825 / 45 * 180, 4000, 4100, 4200, 4300],
+    # },
+    # 2: {
+    #     "met": 6.2,
+    #     "clo": 0.5,
+    #     "v": wind_speed,
+    #     "tg": globe_temperature,
+    #     "duration": 60,
+    #     "t_cr": [36.8, 38, 39.5, 40, 50],
+    #     "water_loss": [825 / 45 * 60, 2900, 3000, 3100, 3200],
+    # },
     3: {
-        "met": 7.7,
+        "met": 7.2,
         "clo": 0.5,
         "v": wind_speed,
-        "d_mrt": mrt_t_delta,
+        "tg": globe_temperature,
         "duration": 45,
         "t_cr": [36.8, 38, 39.5, 40, 50],
         "water_loss": [825, 2900, 3000, 3100, 3200],
     },
-    4: {
-        "met": 8,
-        "clo": 0.5,
-        "v": wind_speed,
-        "d_mrt": mrt_t_delta,
-        "duration": 45,
-        "t_cr": [36.8, 38, 39.5, 40, 50],
-        "water_loss": [825, 2900, 3000, 3100, 3200],
-    },
-    5: {
-        "met": 8,
-        "clo": 0.6,
-        "v": wind_speed,
-        "d_mrt": mrt_t_delta,
-        "duration": 45,
-        "t_cr": [36.8, 38, 39.5, 40, 50],
-        "water_loss": [825, 2900, 3000, 3100, 3200],
-    },
+    # 4: {
+    #     "met": 7.3,
+    #     "clo": 0.5,
+    #     "v": wind_speed,
+    #     "tg": globe_temperature,
+    #     "duration": 45,
+    #     "t_cr": [36.8, 38, 39.5, 40, 50],
+    #     "water_loss": [825, 2900, 3000, 3100, 3200],
+    # },
+    # 5: {
+    #     "met": 7.5,
+    #     "clo": 0.5,
+    #     "v": wind_speed,
+    #     "tg": globe_temperature,
+    #     "duration": 45,
+    #     "t_cr": [36.8, 38, 39.5, 40, 50],
+    #     "water_loss": [825, 2900, 3000, 3100, 3200],
+    # },
 }
 
 fig_directory = os.path.join(os.getcwd(), "tests", "figures")
@@ -166,7 +173,7 @@ def two_nodes_optimized(
     c_res = 0  # convective heat loss respiration
 
     pressure_in_atmospheres = p_atmospheric / 101325
-    length_time_simulation = duration  # length time simulation
+    length_time_simulation = 60  # length time simulation
     n_simulation = 0
 
     r_clo = 0.155 * clo  # thermal resistance of clothing, C M^2 /W
@@ -1220,11 +1227,13 @@ def calculate_results(
     if data.shape == (0, 0):
         data = generate_t_rh_combinations()
 
-    if constant_delta_mrt:
-        data["mrt"] = data["t"] + values["d_mrt"]
-
     if constant_wind:
         data["v"] = values["v"]
+
+    if constant_delta_mrt:
+        data["mrt"] = t_mrt(
+            values["tg"] + data["t"], data["t"], data["v"], standard="iso"
+        )
 
     if model == "two_node":
         r = two_nodes(
@@ -1306,14 +1315,15 @@ def check_model_output(model):
             plot_heatmap(df_results, sport_cat, var)
 
             plt.title(
-                f"{model};{duration=};{var=};{sport_cat=}; met={values['met']};"
-                f" clo={values['clo']};v={values['v']};tr=tdb+{values['d_mrt']}"
+                f"{model};{values['duration']=};{var=};{sport_cat=};"
+                f" met={values['met']};"
+                f" clo={values['clo']};v={values['v']};tg={values['tg']}"
             )
             plt.tight_layout()
             plt.savefig(
                 os.path.join(
                     fig_directory,
-                    f"{model}_sport_cat_{sport_cat}_{var}_{mrt_t_delta}_{wind_speed}.png",
+                    f"{model}_sport_cat_{sport_cat}_{var}_{globe_temperature}_{wind_speed}.png",
                 )
             )
 
@@ -1374,10 +1384,10 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
         sport_cat=sport_cat,
     )
 
-    f, axs = plt.subplots(5, 1, constrained_layout=True, figsize=(7, 9))
+    f, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(7, 9))
     plt.suptitle(f"{epw_file_name} - {model}")
     # cumulative number of hours in each risk category
-    ax = axs[1]
+    ax = axs[0]
     df_results["month"] = df_epw["month"].values
     df_results["day"] = df_epw["day"].values
     df_extreme_days = (
@@ -1396,22 +1406,19 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     for risk in range(4):
         if risk not in df_plot.columns:
             df_plot[risk] = 0
-    df_plot = df_plot[sorted(df_plot.columns)]
-    df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
+    df_plot = df_plot[np.arange(1, 4, 1)]
+    df_plot.plot(kind="bar", stacked=True, color=cmaplist[1:], ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
-    for ix, rows in df_plot.fillna(0).iterrows():
+    for ix, rows in df_plot[[3]].fillna(0).iterrows():
         height = 0
-        pre_index = index - 0.3
         for row in rows:
-            height += row / 2
-            pre_index += 0.1
+            height += row
             if row > 0:
-                ax.text(pre_index, height, ha="center", va="center", s=int(row))
-            height += row / 2
+                ax.text(index, 10, ha="center", va="center", s=int(row))
         index += 1
     # cumulative number of hours in each risk category
-    ax = axs[2]
+    ax = axs[1]
     df_results["hour"] = df_epw["hour"].values
     df_plot = (
         df_results[df_results.t > min_threshold_temperature]
@@ -1422,19 +1429,16 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     for risk in range(4):
         if risk not in df_plot.columns:
             df_plot[risk] = 0
-    df_plot = df_plot[sorted(df_plot.columns)]
-    df_plot.plot(kind="bar", stacked=True, color=cmaplist, ax=ax, legend=False)
+    df_plot = df_plot[np.arange(1, 4, 1)]
+    df_plot.plot(kind="bar", stacked=True, color=cmaplist[1:], ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
-    for ix, rows in df_plot.fillna(0).iterrows():
+    for ix, rows in df_plot[[3]].fillna(0).iterrows():
         height = 0
-        pre_index = index - 0.3
         for row in rows:
-            height += row / 2
-            pre_index += 0.1
+            height += row
             if row > 0:
-                ax.text(index, height, ha="center", va="center", s=int(row))
-            height += row / 2
+                ax.text(index, 10, ha="center", va="center", s=int(row))
         index += 1
     # # number of hours in each risk category, data not filtered
     # sns.countplot(
@@ -1445,7 +1449,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     #     axs[2].text(ix, 100, ha="center", va="bottom", s=val)
     # axs[2].set(ylabel="hours", xlabel="risk class")
     # number of hours in each risk category, data filtered by min threshold temperature
-    ax = axs[3]
+    ax = axs[2]
     sns.countplot(
         x=df_results[df_results.t > min_threshold_temperature]["risk_class_label"],
         ax=ax,
@@ -1464,7 +1468,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
         xlabel="risk class",
         title=f"only for t>{min_threshold_temperature}",
     )
-    ax = axs[4]
+    ax = axs[3]
     if df_extreme_days.shape[0] > 0:
         sns.barplot(
             data=df_extreme_days.reset_index(),
@@ -1490,45 +1494,46 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     #     s=f"{count_points/df_results.shape[0]*100:.1f}% points above",
     # )
     # psychrometric plot
-    ax = axs[0]
-    sns.histplot(
-        df_results,
-        x="t",
-        y=df_epw["hr"].values,
-        ax=ax,
-        cbar=True,
-        cbar_kws={"label": "Hours", "shrink": 0.75},
-        binrange=((0, 40), (0, 20)),
-        binwidth=(1, 2.5),
-        stat="count",
-        # vmax=120,
-        cmap="viridis_r",
-    )
-    ax.set(
-        ylim=(0, 25),
-        xlim=(0, 42),
-        ylabel=r"HR $g_{H20}/kg_{dry air}$",
-        xlabel=r"$t_{db}$",
-    )
-    ax.axvline(min_threshold_temperature, c="k")
-    ax.grid(color="lightgray", ls="--", lw=0.5)
-    count_points = df_results[df_results.t > min_threshold_temperature].shape[0]
-    ax.text(
-        x=min_threshold_temperature + 2,
-        y=10,
-        s=f"{count_points / df_results.shape[0] * 100:.1f}% points above",
-    )
-    plot_rh_lines(ax, rh_val=1)
-    plot_rh_lines(ax, rh_val=0.75)
-    plot_rh_lines(ax, rh_val=0.5)
-    plot_rh_lines(ax, rh_val=0.25)
+    # ax = axs[0]
+    # sns.histplot(
+    #     df_results,
+    #     x="t",
+    #     y=df_epw["hr"].values,
+    #     ax=ax,
+    #     cbar=True,
+    #     cbar_kws={"label": "Hours", "shrink": 0.75},
+    #     binrange=((0, 40), (0, 20)),
+    #     binwidth=(1, 2.5),
+    #     stat="count",
+    #     # vmax=120,
+    #     cmap="viridis_r",
+    # )
+    # ax.set(
+    #     ylim=(0, 25),
+    #     xlim=(0, 42),
+    #     ylabel=r"HR $g_{H20}/kg_{dry air}$",
+    #     xlabel=r"$t_{db}$",
+    # )
+    # ax.axvline(min_threshold_temperature, c="k")
+    # ax.grid(color="lightgray", ls="--", lw=0.5)
+    # count_points = df_results[df_results.t > min_threshold_temperature].shape[0]
+    # ax.text(
+    #     x=min_threshold_temperature + 2,
+    #     y=10,
+    #     s=f"{count_points / df_results.shape[0] * 100:.1f}% points above",
+    # )
+    # plot_rh_lines(ax, rh_val=1)
+    # plot_rh_lines(ax, rh_val=0.75)
+    # plot_rh_lines(ax, rh_val=0.5)
+    # plot_rh_lines(ax, rh_val=0.25)
     for ax in axs:
         sns.despine(ax=ax, bottom=True, left=True)
     plt.savefig(
         os.path.join(
             fig_directory,
             f"climate_analysis_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
-        )
+        ),
+        dpi=300,
     )
 
 
@@ -1545,11 +1550,19 @@ if __name__ == "__plot__":
     for path in pathlist:
         # because path is object not string
         path_in_str = str(path)
+
+        if path_in_str not in [
+            "tests/weather/Darwin.Intl.AP.pkl.gz",
+            "tests/weather/Sydney.Intl.AP.pkl.gz",
+            "tests/weather/Perth Intl AP.pkl.gz",
+        ]:
+            continue
+
         print(path_in_str)
 
         epw_file_name = path_in_str
         sport_cat = 3
-        model = "phs"
+        model = "sma"
         var = "t_cr"
         values = people_profiles[sport_cat]
         limits = people_profiles[sport_cat][var]
@@ -1570,28 +1583,31 @@ if __name__ == "__plot__":
 
         df_results = calculate_results(values, model)
 
-        plt.close("all")
+        # plt.close("all")
 
-        ax = plot_heatmap(df_results, sport_cat, var)
+        if model == "phs":
+            ax = plot_heatmap(df_results, sport_cat, var)
 
-        df_plot = df_epw.copy()
-        ymin, ymax = ax.get_ylim()
-        xmin, xmax = ax.get_xlim()
+            df_plot = df_epw.copy()
+            ymin, ymax = ax.get_ylim()
+            xmin, xmax = ax.get_xlim()
 
-        # Driver Code
-        def interpolation(d, x):
-            return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
+            # Driver Code
+            def interpolation(d, x):
+                return d[0][1] + (x - d[0][0]) * (
+                    (d[1][1] - d[0][1]) / (d[1][0] - d[0][0])
+                )
 
-        data = [[0, ymin], [100, ymax]]
-        df_plot["rh"] = [interpolation(data, x) for x in df_plot["rh"]]
-        data = [[26, xmin], [43, xmax]]
-        df_plot["t"] = [interpolation(data, x) for x in df_plot["t"]]
-        sns.scatterplot(df_plot[["t", "rh"]], x="t", y="rh", ax=ax, c="k")
-        plt.title(path_in_str)
+            data = [[0, ymin], [100, ymax]]
+            df_plot["rh"] = [interpolation(data, x) for x in df_plot["rh"]]
+            data = [[26, xmin], [43, xmax]]
+            df_plot["t"] = [interpolation(data, x) for x in df_plot["t"]]
+            sns.scatterplot(df_plot[["t", "rh"]], x="t", y="rh", ax=ax, c="k")
+            plt.title(path_in_str)
 
-        plt.savefig(
-            os.path.join(
-                fig_directory,
-                f"climate_data_on_risk_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
+            plt.savefig(
+                os.path.join(
+                    fig_directory,
+                    f"climate_data_on_risk_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
+                )
             )
-        )
