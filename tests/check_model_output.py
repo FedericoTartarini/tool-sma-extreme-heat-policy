@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psychrolib as psyc
+import scipy
 import seaborn as sns
 from numba import jit
 from pythermalcomfort.models import phs
@@ -1220,7 +1221,7 @@ def calculate_results(
     values,
     model,
     data=pd.DataFrame(),
-    constant_delta_mrt=True,
+    const_t_globe=True,
     constant_wind=True,
     sport_cat=3,
 ):
@@ -1230,10 +1231,28 @@ def calculate_results(
     if constant_wind:
         data["v"] = values["v"]
 
-    if constant_delta_mrt:
+    if const_t_globe:
         data["mrt"] = t_mrt(
             values["tg"] + data["t"], data["t"], data["v"], standard="iso"
         )
+
+    results_globe_temperature = []
+    for ix, row in data.iterrows():
+
+        def calculate_globe_temperature(x):
+            return t_mrt(x + row["t"], row["t"], row["v"], standard="iso") - row["mrt"]
+
+        results_globe_temperature.append(
+            scipy.optimize.brentq(calculate_globe_temperature, 0.0, 200)
+        )
+    print(
+        pd.DataFrame(results_globe_temperature, columns=["tg"]).describe(
+            percentiles=[0.75, 0.85, 0.95, 0.99]
+        )
+    )
+    data["tg"] = results_globe_temperature
+
+    # print(data["mrt"].describe())
 
     if model == "two_node":
         r = two_nodes(
@@ -1251,6 +1270,7 @@ def calculate_results(
         df_results = df_results.rename(columns={"t_core": "t_cr"})
         df_results["t"] = data["t"]
         df_results["rh"] = data["rh"]
+        df_results["tg"] = data["tg"]
 
     elif model == "phs":
         results = []
@@ -1272,6 +1292,7 @@ def calculate_results(
             r["rh"] = row.rh
             r["mrt"] = row.mrt
             r["v"] = row.v
+            r["tg"] = row.tg
             results.append(r)
 
         df_results = pd.DataFrame(results)
@@ -1363,7 +1384,9 @@ def plot_heatmap(df_results, sport_cat, var):
     return ax
 
 
-def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
+def calculate_heat_stress_location(
+    epw_file_name, model, sport_cat, values, const_wind=False, const_tg=False
+):
     df_epw = pd.read_pickle(epw_file_name, compression="gzip")
     df_epw["hr"] *= 1000
     map_col_names = {
@@ -1379,13 +1402,16 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
         values,
         model,
         data=df_epw,
-        constant_wind=False,
-        constant_delta_mrt=False,
+        constant_wind=const_wind,
+        const_t_globe=const_tg,
         sport_cat=sport_cat,
     )
 
     f, axs = plt.subplots(4, 1, constrained_layout=True, figsize=(7, 9))
-    plt.suptitle(f"{epw_file_name} - {model}")
+    plt.suptitle(f"{epw_file_name} - {model} - {const_wind=} - {const_tg=}")
+
+    print(df_results[df_results.t > min_threshold_temperature]["tg"].describe())
+
     # cumulative number of hours in each risk category
     ax = axs[0]
     df_results["month"] = df_epw["month"].values
@@ -1531,7 +1557,7 @@ def calculate_heat_stress_location(epw_file_name, model, sport_cat, values):
     plt.savefig(
         os.path.join(
             fig_directory,
-            f"climate_analysis_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
+            f"climate_analysis_tg_const_{const_tg}_v_const_{const_wind}_{epw_file_name.split('/')[-1].replace('.pkl.gz', '')}_{model}.png",
         ),
         dpi=300,
     )
@@ -1562,8 +1588,10 @@ if __name__ == "__plot__":
 
         epw_file_name = path_in_str
         sport_cat = 3
-        model = "sma"
+        model = "phs"
         var = "t_cr"
+        const_wind = True
+        const_tg = False
         values = people_profiles[sport_cat]
         limits = people_profiles[sport_cat][var]
 
@@ -1579,13 +1607,20 @@ if __name__ == "__plot__":
         df_epw = df_epw.rename(columns=map_col_names)
         df_epw = df_epw[df_epw.t > min_threshold_temperature]
 
-        calculate_heat_stress_location(epw_file_name, model, sport_cat, values)
-
-        df_results = calculate_results(values, model)
+        calculate_heat_stress_location(
+            epw_file_name,
+            model,
+            sport_cat,
+            values,
+            const_wind=const_wind,
+            const_tg=const_tg,
+        )
 
         # plt.close("all")
 
         if model == "phs":
+
+            df_results = calculate_results(values, model)
             ax = plot_heatmap(df_results, sport_cat, var)
 
             df_plot = df_epw.copy()

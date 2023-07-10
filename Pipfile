@@ -19,6 +19,7 @@ pythermalcomfort = "==2.6.0"
 seaborn = "*"
 numba = "*"
 psychrolib = "*"
+scipy = "*"
 
 [requires]
 python_version = "3.10"
