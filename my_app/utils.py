@@ -169,7 +169,9 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     weather = requests.get(
         f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={lat}&lon={lon}",
         headers={
-            "User-Agent": "https://federicotartarini.github.io/air-quality-weather-sg"
+            "User-Agent": (
+                "http://sma-heat-policy.sydney.edu.au/ federico.tartarini@sydney.edu.au"
+            ),
         },
     )
 
