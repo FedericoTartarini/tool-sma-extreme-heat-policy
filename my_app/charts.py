@@ -71,17 +71,31 @@ def line_chart(df, variable="tdb"):
 
     fig = standard_layout(fig)
 
-    fig.update_yaxes(showticklabels=False)
-    # fig.update_yaxes(
-    #     tickvals=[0.5, 1.5, 2.5, 3.5],
-    #     ticktext=[
-    #         "Low",
-    #         "Moderate",
-    #         "High",
-    #         "Extreme",
-    #     ],
-    #     ticklabelposition="inside",
-    # )
+    fig.update_yaxes(showticklabels=True, title="Risk")
+
+    fig.update_xaxes(range=[df.index.min(), df.index.max()])
+
+    fig.update_xaxes(
+        tickfont_size=14,
+        title="Time",
+        tickformat="%-I %p",
+        dtick=86400000.0 / 24,
+        tickangle=-90,
+    )
+
+    fig.update_layout(
+        yaxis=dict(
+            tickmode="array",
+            tickvals=[0.5, 1.5, 2.5, 3.5],
+            ticktext=[
+                "Low",
+                "Moderate",
+                "High",
+                "Extreme",
+            ],
+            tickangle=-90,
+        ),
+    )
 
     return fig
 

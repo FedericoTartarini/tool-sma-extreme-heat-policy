@@ -14,7 +14,7 @@ This website in its current form provides recommendations only for the most popu
 
 ## Introduction
 
-`The [2021 SMA Extreme Heat Policy](https://sma.org.au/wp-content/uploads/2021/02/SMA-Extreme-Heat-Policy-2021-Final.pdf) 
+The [2021 SMA Extreme Heat Policy](https://sma.org.au/wp-content/uploads/2021/02/SMA-Extreme-Heat-Policy-2021-Final.pdf) 
 utilises the latest published research evidence to inform:
  * a biophysical model for predicting heat stress risk; 
  * recommended cooling strategies that can be used to optimally mitigate heat stress risk. 

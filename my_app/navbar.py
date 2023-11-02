@@ -1,43 +1,122 @@
 import dash_bootstrap_components as dbc
-from dash import html
+import dash_mantine_components as dmc
+from dash import Input, Output, State, html, ctx
+from dash import callback
 
 
 def my_navbar():
     return dbc.Navbar(
-        dbc.Container(
-            [
-                html.A(
-                    # Use row and col to control vertical alignment of logo / brand
-                    dbc.Row(
+        dmc.Container(
+            dmc.Grid(
+                [
+                    dmc.Col(
                         [
-                            dbc.Col(
-                                dbc.NavbarBrand(
-                                    "SMA Extreme Heat Policy", className="ms-2"
-                                )
+                            html.A(
+                                # Use row and col to control vertical alignment of logo / brand
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            dbc.NavbarBrand(
+                                                "SMA Extreme Heat Policy",
+                                                className="ms-2",
+                                            ),
+                                            width="auto",
+                                        ),
+                                    ],
+                                    align="center",
+                                    className="g-0",
+                                ),
+                                href="/",
+                                style={"textDecoration": "none"},
                             ),
                         ],
-                        align="center",
-                        className="g-0",
+                        span="content",
+                        className="py-0",
                     ),
-                    href="/",
-                    style={"textDecoration": "none"},
-                ),
-                dbc.NavbarToggler(id="navbar-toggle", n_clicks=0),
-                dbc.Collapse(
-                    dbc.Nav(
+                    dmc.Col(
                         [
-                            dbc.NavItem(dbc.NavLink("Home", href="/")),
-                            dbc.NavItem(dbc.NavLink("About", href="/about")),
+                            dbc.NavbarToggler(
+                                dmc.Burger(
+                                    id="burger-button", opened=False, color="white"
+                                ),
+                                id="navbar-toggler",
+                                n_clicks=0,
+                            )
                         ],
-                        className="ms-auto",
-                        navbar=True,
+                        span="content",
+                        className="py-0",
                     ),
-                    id="navbar-collapse",
-                    navbar=True,
-                ),
-            ],
+                    dmc.Col(
+                        [
+                            dbc.Collapse(
+                                dbc.Nav(
+                                    children=[
+                                        dbc.NavItem(
+                                            dbc.NavLink(
+                                                "Home",
+                                                href="/",
+                                                style={
+                                                    "textAlign": "center",
+                                                    "color": "white",
+                                                },
+                                                id="id-nav-home",
+                                            ),
+                                        ),
+                                        # dbc.NavItem(dbc.NavLink("Documentation", href="documentation")),
+                                        dbc.NavItem(
+                                            dbc.NavLink(
+                                                "About",
+                                                href="/about",
+                                                style={
+                                                    "textAlign": "center",
+                                                    "color": "white",
+                                                },
+                                                id="id-nav-about",
+                                            )
+                                        ),
+                                    ],
+                                ),
+                                id="navbar-collapse",
+                                is_open=False,
+                                navbar=True,
+                            ),
+                        ],
+                        span=12,
+                        md="content",
+                        className="py-0",
+                    ),
+                ],
+                justify="space-between",
+                align="center",
+            ),
+            style={"flex": 1},
+            className="p-2",
+            size="xs",
         ),
-        color="#E64626",
+        color="#ec1e23",
         dark=True,
-        className="mb-1",
     )
+
+
+# add callback for toggling the collapse on small screens
+@callback(
+    Output("navbar-collapse", "is_open"),
+    Output("burger-button", "opened"),
+    [
+        State("navbar-collapse", "is_open"),
+        State("burger-button", "opened"),
+    ],
+    [
+        Input("navbar-toggler", "n_clicks"),
+        Input("id-nav-home", "n_clicks"),
+        Input("id-nav-about", "n_clicks"),
+    ],
+    prevent_initial_call=True,
+)
+def toggle_navbar_collapse(is_open, burger_state, *args):
+    trigger = ctx.triggered_id
+    if trigger == "navbar-toggler":
+        return not is_open, burger_state
+    elif is_open:
+        return False, not burger_state
+    return is_open, burger_state

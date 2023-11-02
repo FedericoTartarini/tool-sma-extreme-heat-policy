@@ -83,7 +83,9 @@ def generate_dropdown(questions_to_display):
     ]
 
 
-layout = dbc.Container(
+layout = dmc.LoadingOverlay(
+    loaderProps={"variant": "dots", "color": "#555", "size": 100},
+    exitTransitionDuration=500,
     children=[
         dcc.Store(id="local-storage-settings", storage_type="local"),
         dcc.Store(id="session-storage-weather", storage_type="session"),
@@ -104,7 +106,6 @@ layout = dbc.Container(
             id="body-home",
         ),
     ],
-    className="p-2",
 )
 
 
@@ -189,7 +190,6 @@ def body(data):
                 id="id-accordion-risk-current",
             ),
             html.H2("Forecasted risk for today"),
-            legend_risk(),
             html.Div(id="fig-forecast_line"),
             html.Div(id="fig-forecast-next-days"),
         ]
@@ -400,7 +400,7 @@ def on_location_change(data_sport):
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [
-                dl.TileLayer(maxZoom=13, minZoom=9),
+                dl.TileLayer(maxZoom=13, minZoom=7),
                 dl.Marker(position=[loc_selected["lat"], loc_selected["lon"]]),
                 dl.GestureHandling(),
             ],
