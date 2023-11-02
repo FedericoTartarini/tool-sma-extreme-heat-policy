@@ -56,8 +56,6 @@ app.index_string = """<!DOCTYPE html>
 app.layout = html.Div(
     children=[
         dcc.Location(id="url"),
-        dcc.Store(id="local-storage-settings", storage_type="local"),
-        dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(id="id-google-analytics-event"),
         my_navbar(),
         html.Div(page_container, style={"flex": 1}),
@@ -69,22 +67,6 @@ app.layout = html.Div(
         "display": "flex",
         "flex-direction": "column",
     },
-)
-
-
-app.clientside_callback(
-    """
-    function(pathname, data){
-        if (data && pathname === "/"){
-            console.log("writing to google analytics");
-            return gtag('event', 'sport_selection', {
-                                'sport_selected': data["id-class"],
-            })
-        }
-    }
-    """,
-    Output("id-google-analytics-event", "children"),
-    [Input("url", "pathname"), State("local-storage-settings", "data")],
 )
 
 

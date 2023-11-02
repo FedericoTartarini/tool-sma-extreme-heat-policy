@@ -85,6 +85,8 @@ def generate_dropdown(questions_to_display):
 
 layout = dbc.Container(
     children=[
+        dcc.Store(id="local-storage-settings", storage_type="local"),
+        dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(
             generate_dropdown(questions),
             id="settings-dropdowns",
@@ -405,11 +407,11 @@ def on_location_change(data_sport):
             id="map",
             style={
                 "width": "100%",
-                "height": "25vh",
+                "height": "13vh",
                 "margin": "auto",
                 "display": "block",
                 # "-webkit-filter": "grayscale(100%)",
-                # "filter": "grayscale(100%)",
+                # "filter": "grayscal`e(100%)",
             },
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
