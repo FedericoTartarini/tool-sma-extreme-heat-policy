@@ -18,6 +18,12 @@ hss_palette = {
     3: "#CB3327",
 }
 
+app_version = "0.0.4"
+app_version = app_version.replace(".", "")
+local_storage_settings_name = f"local-storage-settings-{app_version}"
+session_storage_weather_name = f"session-storage-weather-{app_version}"
+storage_user_id = "user-id"
+
 sports_category = dict(
     sorted(
         {

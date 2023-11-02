@@ -11,7 +11,7 @@ import firebase_admin
 from firebase_admin import credentials
 import uuid
 
-from my_app.utils import FirebaseFields
+from my_app.utils import FirebaseFields, storage_user_id
 
 try:
     cred = credentials.Certificate("secret.json")
@@ -22,6 +22,7 @@ firebase_admin.initialize_app(
     cred,
     {"databaseURL": FirebaseFields.database_url},
 )
+
 
 app = Dash(
     __name__,
@@ -98,7 +99,7 @@ app.layout = html.Div(
     children=[
         dcc.Location(id="url"),
         html.Div(id="id-google-analytics-event"),
-        dcc.Store(id="user-id", storage_type="local", data=str(uuid.uuid1())),
+        dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
         my_navbar(),
         dmc.Container(
             html.Div(page_container, style={"flex": 1}),

@@ -5,6 +5,7 @@ from dash import html, dcc, Output, Input, State, callback
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
+
 from my_app.charts import hss_palette, indicator_chart, line_chart
 import dash
 from copy import deepcopy
@@ -20,6 +21,9 @@ from my_app.utils import (
     default_settings,
     get_data_specific_day,
     FirebaseFields,
+    local_storage_settings_name,
+    session_storage_weather_name,
+    storage_user_id,
 )
 import dash_mantine_components as dmc
 from firebase_admin import db
@@ -93,9 +97,9 @@ layout = dmc.LoadingOverlay(
     exitTransitionDuration=500,
     children=[
         dcc.Store(
-            id="local-storage-settings", storage_type="local", data=default_settings
+            id=local_storage_settings_name, storage_type="local", data=default_settings
         ),
-        dcc.Store(id="session-storage-weather", storage_type="session"),
+        dcc.Store(id=session_storage_weather_name, storage_type="session"),
         html.Div(
             generate_dropdown(questions),
             id="settings-dropdowns",
@@ -118,7 +122,7 @@ layout = dmc.LoadingOverlay(
 
 @callback(
     Output("body-home", "children"),
-    Input("local-storage-settings", "data"),
+    Input(local_storage_settings_name, "data"),
 )
 def body(data):
     sport_selected = data["id-sport"]
@@ -228,7 +232,7 @@ def icon_component(src, message, size="50px"):
 
 @callback(
     Output("id-icon-sport", "children"),
-    Input("local-storage-settings", "data"),
+    Input(local_storage_settings_name, "data"),
 )
 def update_location_and_forecast(data_sport):
     try:
@@ -246,8 +250,8 @@ def update_location_and_forecast(data_sport):
 
 @callback(
     Output("fig-indicator", "children"),
-    Input("session-storage-weather", "data"),
-    State("local-storage-settings", "data"),
+    Input(session_storage_weather_name, "data"),
+    State(local_storage_settings_name, "data"),
 )
 def update_fig_hss_trend(data, data_sport):
     try:
@@ -262,7 +266,7 @@ def update_fig_hss_trend(data, data_sport):
 
 @callback(
     Output("fig-forecast_line", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_fig_hss_trend(data):
     try:
@@ -278,7 +282,7 @@ def update_fig_hss_trend(data):
 
 @callback(
     Output("fig-forecast-next-days", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_fig_hss_trend(data):
     try:
@@ -343,7 +347,7 @@ def test():
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
     Output("div-icons-suggestions", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_alert_hss_current(data):
     try:
@@ -379,9 +383,9 @@ def update_alert_hss_current(data):
 
 
 @callback(
-    Output("session-storage-weather", "data"),
+    Output(session_storage_weather_name, "data"),
     Output("map-component", "children"),
-    Input("local-storage-settings", "data"),
+    Input(local_storage_settings_name, "data"),
     prevent_initial_call=True,
 )
 def on_location_change(data_sport):
@@ -431,7 +435,7 @@ def on_location_change(data_sport):
 @callback(
     Output("settings-dropdowns", "children"),
     Input("url", "pathname"),
-    State("local-storage-settings", "data"),
+    State(local_storage_settings_name, "data"),
 )
 def display_the_dropdown_after_page_change(pathname, data):
     data = data or default_settings
@@ -445,9 +449,9 @@ def display_the_dropdown_after_page_change(pathname, data):
 
 
 @callback(
-    Output("local-storage-settings", "data"),
-    State("local-storage-settings", "data"),
-    State("user-id", "data"),
+    Output(local_storage_settings_name, "data"),
+    State(local_storage_settings_name, "data"),
+    State(storage_user_id, "data"),
     [Input(question["id"], "value") for question in questions],
     prevent_initial_call=True,
 )
