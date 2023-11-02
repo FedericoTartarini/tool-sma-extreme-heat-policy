@@ -1,4 +1,5 @@
 import os
+import time
 
 from dash import html, dcc, Output, Input, State, callback
 import dash_bootstrap_components as dbc
@@ -18,8 +19,12 @@ from my_app.utils import (
     default_location,
     default_settings,
     get_data_specific_day,
+    FirebaseFields,
 )
 import dash_mantine_components as dmc
+from firebase_admin import db
+
+ref = db.reference(FirebaseFields.database_name)
 
 
 dash.register_page(
@@ -41,7 +46,7 @@ df_postcodes["sub-state-post"] = (
 
 questions = [
     {
-        "id": "id-class",
+        "id": "id-sport",
         "question": "Sport:",
         "options": list(sports_category.keys()),
         "multi": False,
@@ -87,7 +92,9 @@ layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
-        dcc.Store(id="local-storage-settings", storage_type="local"),
+        dcc.Store(
+            id="local-storage-settings", storage_type="local", data=default_settings
+        ),
         dcc.Store(id="session-storage-weather", storage_type="session"),
         html.Div(
             generate_dropdown(questions),
@@ -114,7 +121,7 @@ layout = dmc.LoadingOverlay(
     Input("local-storage-settings", "data"),
 )
 def body(data):
-    sport_selected = data["id-class"]
+    sport_selected = data["id-sport"]
     if not sport_selected:
         return [
             dbc.Alert(
@@ -225,14 +232,14 @@ def icon_component(src, message, size="50px"):
 )
 def update_location_and_forecast(data_sport):
     try:
-        file_name = f"{data_sport['id-class']}.png"
+        file_name = f"{data_sport['id-sport']}.png"
     except KeyError:
         raise PreventUpdate
     path = os.path.join(os.getcwd(), "assets", "icons", file_name)
-    message = f"Activity: {data_sport['id-class']}"
+    message = f"Activity: {data_sport['id-sport']}"
     # source https://www.theolympicdesign.com/olympic-design/pictograms/tokyo-2020/
     if os.path.isfile(path):
-        return icon_component(f"../assets/icons/{data_sport['id-class']}.png", message)
+        return icon_component(f"../assets/icons/{data_sport['id-sport']}.png", message)
     else:
         return icon_component("../assets/icons/sports.png", message)
 
@@ -375,6 +382,7 @@ def update_alert_hss_current(data):
     Output("session-storage-weather", "data"),
     Output("map-component", "children"),
     Input("local-storage-settings", "data"),
+    prevent_initial_call=True,
 )
 def on_location_change(data_sport):
     try:
@@ -396,7 +404,7 @@ def on_location_change(data_sport):
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
-        df = calculate_comfort_indices(df, sports_category[data_sport["id-class"]])
+        df = calculate_comfort_indices(df, sports_category[data_sport["id-sport"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [
@@ -439,12 +447,21 @@ def display_the_dropdown_after_page_change(pathname, data):
 @callback(
     Output("local-storage-settings", "data"),
     State("local-storage-settings", "data"),
+    State("user-id", "data"),
     [Input(question["id"], "value") for question in questions],
+    prevent_initial_call=True,
 )
-def save_settings_in_storage(data, *args):
+def save_settings_in_storage(data, user_id, *args):
     """Saves in local storage the settings selected by the participant."""
     data = data or {}
     for ix, question_id in enumerate([question["id"] for question in questions]):
         data[question_id] = args[ix]
+
+    firebase_data = deepcopy(data)
+    if any(data.values()):
+        firebase_data[FirebaseFields.user_id] = user_id
+        firebase_data[FirebaseFields.timestamp] = time.time()
+        print(firebase_data)
+        ref.push().set(firebase_data)
 
     return data

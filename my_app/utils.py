@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 
 import numpy as np
+from dataclasses import dataclass
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -147,7 +148,7 @@ sma_risk_messages = {
 default_location = {"lat": -33.89, "lon": 151.18, "tz": "Australia/Sydney"}
 
 default_settings = {
-    "id-class": "Football (Soccer)",
+    "id-sport": "Football (Soccer)",
     "id-postcode": "Camperdown, NSW, 2050",
 }
 
@@ -267,12 +268,21 @@ def get_data_specific_day(df, date_offset=0):
     return df.loc[df.index.date == date_keep]
 
 
+@dataclass()
+class FirebaseFields:
+    database_name: str = "/Users/Test"
+    database_url: str = "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
+    risk_profile: str = "risk-profile"
+    user_id: str = "user-id"
+    timestamp: str = "timestamp"
+    location: str = "location"
+
+
 if __name__ == "__main__":
     df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
     df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
     df_results = calculate_comfort_indices(df, sport_class=2)
 
-    # sma-hss
     values = []
     for t in np.arange(10, 50):
         for rh in np.arange(0, 100, 1):

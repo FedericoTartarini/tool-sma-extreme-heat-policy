@@ -16,6 +16,7 @@ gcloud components update
 ```
 
 ```
+gcloud components update
 gcloud config set account hhri.usyd@gmail.com
 gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool  --project=sma-extreme-heat-policy
 gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
@@ -23,6 +24,8 @@ gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/
 
 ### Push the container image to *Test Version*
 ```
+gcloud components update
+gcloud config set account hhri.usyd@gmail.com
 gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test  --project=sma-extreme-heat-policy
-gcloud run deploy extreme-heat-tool-test --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed
+gcloud run deploy extreme-heat-tool-test --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=projects/987661761927/secrets/firebase-realtime-database=firebase-realtime-database:1
 ```

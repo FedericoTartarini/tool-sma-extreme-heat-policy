@@ -12,6 +12,8 @@ file_system_store
 .git
 docs
 tests
+secret.json
+out
 
 assets/data/Region*.kml
 
