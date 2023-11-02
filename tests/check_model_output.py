@@ -14,6 +14,7 @@ import seaborn as sns
 from numba import jit
 from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, p_sat_torr, t_mrt
+from pythermalcomfort.utilities import v_relative
 
 from utils import generate_regression_curves, calculate_comfort_indices_v1
 
@@ -26,21 +27,41 @@ position = "standing"
 min_threshold_temperature = 26
 t_range = np.arange(
     min_threshold_temperature,
-    step=(interval := 1),
+    step=(interval := 0.5),
     stop=43 + interval,
 )
 rh_range = np.arange(
     start=0,
-    step=(interval := 5),
+    step=(interval := 0.5),
     stop=100 + interval,
 )
-globe_temperature = 9
+globe_temperature = 0
+globe_temperature_night = 3
 wind_speed = 0.5
 var_to_plot = {
     "t_cr",
 }
 
 # cat 1 = walking, cat 2 = brisk walking, cat 3 = cycling, cat 4 = rugby union, cat 5 = field hockey
+
+# todo fixed globe of 10 for daytime and 3 for night
+# todo fixed wind speed
+
+# paper methods
+# - how we selected the sports
+# - how we estimated met and clo. Multiply met from table to get down to 7.5
+# - how we defined wind speed and globe temperature (day night) and duration
+# - how we used the PHS model
+# - how we created the risk classifications based t_core a also sweating
+# - a few words about the online tool
+
+# results
+# - cat walking, soccer, and cricket plot.
+# - climate analysis all 7 capitals (left column scatter plot with risk, right monthly cum hours and number of days interrupted)
+
+# paper discussion
+# - how we used current evidence based to develop heat stress
+
 
 cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
@@ -54,7 +75,7 @@ cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
 people_profiles = {
     # 1: {
-    #     "met": 4.5,
+    #     "met": 4.7,
     #     "clo": 0.55,
     #     "v": wind_speed,
     #     "tg": globe_temperature,
@@ -63,13 +84,13 @@ people_profiles = {
     #     "water_loss": [825 / 45 * 180, 4000, 4100, 4200, 4300],
     # },
     # 2: {
-    #     "met": 6.2,
+    #     "met": 6.4,
     #     "clo": 0.5,
     #     "v": wind_speed,
     #     "tg": globe_temperature,
     #     "duration": 60,
     #     "t_cr": [36.8, 38, 39.5, 40, 50],
-    #     "water_loss": [825 / 45 * 60, 2900, 3000, 3100, 3200],
+    #     "water_loss": [850 / 45 * 60, 2900, 3000, 3100, 3200],
     # },
     3: {
         "met": 7.2,
@@ -78,7 +99,7 @@ people_profiles = {
         "tg": globe_temperature,
         "duration": 45,
         "t_cr": [36.8, 38, 39.5, 40, 50],
-        "water_loss": [825, 2900, 3000, 3100, 3200],
+        "water_loss": [850, 2900, 3000, 3100, 3200],
     },
     # 4: {
     #     "met": 7.3,
@@ -87,7 +108,7 @@ people_profiles = {
     #     "tg": globe_temperature,
     #     "duration": 45,
     #     "t_cr": [36.8, 38, 39.5, 40, 50],
-    #     "water_loss": [825, 2900, 3000, 3100, 3200],
+    #     "water_loss": [850, 2900, 3000, 3100, 3200],
     # },
     # 5: {
     #     "met": 7.5,
@@ -96,7 +117,7 @@ people_profiles = {
     #     "tg": globe_temperature,
     #     "duration": 45,
     #     "t_cr": [36.8, 38, 39.5, 40, 50],
-    #     "water_loss": [825, 2900, 3000, 3100, 3200],
+    #     "water_loss": [850, 2900, 3000, 3100, 3200],
     # },
 }
 
@@ -1224,15 +1245,24 @@ def calculate_results(
     const_t_globe=True,
     constant_wind=True,
     sport_cat=3,
+    night_day=False,
 ):
     if data.shape == (0, 0):
         data = generate_t_rh_combinations()
 
     if constant_wind:
         data["v"] = values["v"]
+    else:
+        data["v"] = data["v"] * 0.67 * (1.1 / 10) ** 0.25
+        data["v"] = v_relative(data["v"], values["met"])
 
     if const_t_globe:
         data["mrt"] = t_mrt(
+            values["tg"] + data["t"], data["t"], data["v"], standard="iso"
+        )
+
+    if night_day:
+        data.loc["elevation" < 0, "mrt"] = t_mrt(
             values["tg"] + data["t"], data["t"], data["v"], standard="iso"
         )
 
@@ -1591,7 +1621,7 @@ if __name__ == "__plot__":
         model = "phs"
         var = "t_cr"
         const_wind = True
-        const_tg = False
+        const_tg = True
         values = people_profiles[sport_cat]
         limits = people_profiles[sport_cat][var]
 
