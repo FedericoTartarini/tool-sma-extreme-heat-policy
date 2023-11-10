@@ -94,6 +94,9 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     df_weather.drop(columns=["time"], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
     df_weather = df_weather.dropna(subset=["tdb"])
+    df_weather["lat"] = lat
+    df_weather["lon"] = lon
+    df_weather["tz"] = tz
 
     return df_weather
 
