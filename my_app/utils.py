@@ -182,6 +182,8 @@ def calculate_comfort_indices_v2(df_for, sport="Soccer", calc_tr=True, met_corr=
 
     if calc_tr:
         df_for = calculate_mean_radiant_tmp(df_for)
+    else:
+        df_for["tr"] = df_for["tdb"]
 
     df_for["clo"] = clo
     df_for["met"] = met * met_corr
