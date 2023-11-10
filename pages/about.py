@@ -5,15 +5,16 @@ import dash_bootstrap_components as dbc
 dash.register_page(__name__, title="About Page", name="About Page")
 
 body_text = """
-# Extreme Heat Policy
+# Sports and Medicine Australia - Extreme Heat Policy
 
 ## Scope
 This website in its current form provides recommendations only for the most popular sports played in Australia as defined in the 
-Extreme Heat Policy v1.0 2021, issued by Sport Medicine Australia.
+[Extreme Heat Policy v1.0 2021](https://sma.org.au/wp-content/uploads/2021/02/SMA-Extreme-Heat-Policy-2021-Final.pdf), 
+[issued by Sport Medicine Australia](https://sma.org.au/sma-unveils-new-extreme-heat-policy/). 
 
 ## Introduction
 
-The [2021 SMA Extreme Heat Policy](https://sma.org.au/sma-site-content/uploads/2021/02/SMA-Extreme-Heat-Policy-2021-Final.pdf) 
+The [2021 SMA Extreme Heat Policy](https://sma.org.au/wp-content/uploads/2021/02/SMA-Extreme-Heat-Policy-2021-Final.pdf) 
 utilises the latest published research evidence to inform:
  * a biophysical model for predicting heat stress risk; 
  * recommended cooling strategies that can be used to optimally mitigate heat stress risk. 

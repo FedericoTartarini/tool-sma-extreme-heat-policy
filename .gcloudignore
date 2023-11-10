@@ -4,6 +4,9 @@
 .git
 .gitignore
 #!include:.gitignore
+secret.json
+out
+tests
 
 README.md
 LICENSE
@@ -18,4 +21,3 @@ __pycache__
 
 assets/data/Region*.kml
 file_system_store
-tests
