@@ -1,12 +1,11 @@
 import plotly.express as px
 import numpy as np
-from utils import calculate_comfort_indices, get_yr_weather
+from my_app.utils import calculate_comfort_indices_v2, get_yr_weather
 from config import sma_risk_messages
 import plotly.graph_objects as go
 
 
 def standard_layout(fig):
-
     fig.update_layout(
         xaxis=dict(
             showline=True,
@@ -74,17 +73,31 @@ def line_chart(df, variable="tdb"):
 
     fig = standard_layout(fig)
 
-    fig.update_yaxes(showticklabels=False)
-    # fig.update_yaxes(
-    #     tickvals=[0.5, 1.5, 2.5, 3.5],
-    #     ticktext=[
-    #         "Low",
-    #         "Moderate",
-    #         "High",
-    #         "Extreme",
-    #     ],
-    #     ticklabelposition="inside",
-    # )
+    fig.update_yaxes(showticklabels=True, title="Risk")
+
+    fig.update_xaxes(range=[df.index.min(), df.index.max()])
+
+    fig.update_xaxes(
+        tickfont_size=14,
+        title="Time",
+        tickformat="%-I %p",
+        dtick=86400000.0 / 24,
+        tickangle=-90,
+    )
+
+    fig.update_layout(
+        yaxis=dict(
+            tickmode="array",
+            tickvals=[0.5, 1.5, 2.5, 3.5],
+            ticktext=[
+                "Low",
+                "Moderate",
+                "High",
+                "Extreme",
+            ],
+            tickangle=-90,
+        ),
+    )
 
     return fig
 
@@ -124,7 +137,6 @@ def hss_trend(df):
 
 
 def indicator_chart(df):
-
     data = df.iloc[0]
     steps = [
         {"range": [v.risk_value, v.risk_value + 1], "color": v.color}
@@ -163,7 +175,21 @@ def indicator_chart(df):
 
 if __name__ == "__main__":
     df_w = get_yr_weather(lat=-17.91, lon=122.25)
-    df_for = calculate_comfort_indices(df_w)
+    df_for = calculate_comfort_indices_v2(df_w, 3)
 
-    fig = indicator_chart(df_for)
+    fig = px.line(
+        df_for,
+        x=df_for.index,
+        y=df_for.risk_value,
+        height=200,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df_for.index,
+            y=df_for.risk_value_interpolated,
+        )
+    )
     fig.show()
+
+    f = line_chart(df_for, "risk_value_interpolated")
+    f.show()

@@ -16,7 +16,7 @@ from pythermalcomfort.models import phs
 from pythermalcomfort.psychrometrics import p_sat, p_sat_torr, t_mrt
 from pythermalcomfort.utilities import v_relative
 
-from utils import generate_regression_curves, calculate_comfort_indices_v1
+from my_app.utils import generate_regression_curves, calculate_comfort_indices_v1
 
 psyc.SetUnitSystem(psyc.SI)
 

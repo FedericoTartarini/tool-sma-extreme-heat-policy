@@ -3,7 +3,7 @@ import seaborn as sns
 from config import sma_risk_messages, variable_calc_risk
 import matplotlib.pyplot as plt
 from itertools import product
-from utils import calculate_comfort_indices, generate_regression_curves
+from my_app.utils import calculate_comfort_indices_v2, generate_regression_curves
 
 # compare epw data with pvlib estimation
 import numpy as np
@@ -60,7 +60,7 @@ for ix, row in sports.iterrows():
     df_test.lat = -33.865143
     df_test.lon = 151.209900
     df_test.tz = pytz.timezone("Australia/Brisbane")
-    df_results = calculate_comfort_indices(
+    df_results = calculate_comfort_indices_v2(
         df_test, sport=sport, calc_tr=False, met_corr=0.4
     )
     df_plot = df_results.copy()

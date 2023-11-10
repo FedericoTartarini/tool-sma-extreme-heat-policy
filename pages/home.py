@@ -1,4 +1,5 @@
 import os
+import time
 
 from dash import html, dcc, Output, Input, State, callback, dash_table
 import dash_bootstrap_components as dbc
@@ -8,11 +9,15 @@ from my_app.charts import indicator_chart, line_chart
 import dash
 from copy import deepcopy
 import pandas as pd
-from utils import (
+from my_app.utils import (
     legend_risk,
     get_yr_weather,
-    calculate_comfort_indices,
+    calculate_comfort_indices_v2,
     get_data_specific_day,
+    FirebaseFields,
+    local_storage_settings_name,
+    session_storage_weather_name,
+    storage_user_id,
 )
 from config import (
     sma_risk_messages,
@@ -22,12 +27,15 @@ from config import (
     default_settings,
 )
 import dash_mantine_components as dmc
+from firebase_admin import db
+
+ref = db.reference(FirebaseFields.database_name)
 
 
 dash.register_page(
     __name__,
     path="/",
-    title="Home Page",
+    title="SMA Extreme Heat Policy",
     name="Home Page",
     description="This is the home page of the SMA Extreme Policy Tool",
 )
@@ -85,26 +93,38 @@ def generate_dropdown(questions_to_display):
     ]
 
 
-layout = dbc.Container(
+layout = dmc.LoadingOverlay(
+    loaderProps={"variant": "dots", "color": "#555", "size": 100},
+    exitTransitionDuration=500,
     children=[
+        dcc.Store(
+            id=local_storage_settings_name, storage_type="local", data=default_settings
+        ),
+        dcc.Store(id=session_storage_weather_name, storage_type="session"),
         html.Div(
             generate_dropdown(questions),
             id="settings-dropdowns",
         ),
         html.Div(
-            html.Div(style={"height": "25vh"}),
+            dbc.Alert("", color="dark", style={"height": "10em"}),
             id="map-component",
         ),
         html.Div(id="table-summary-debugging"),
-        html.Div(html.Div(style={"height": "75vh"}), id="body-home"),
+        html.Div(
+            [
+                dbc.Alert("", color="dark", style={"height": "11em"}),
+                dbc.Alert("", color="dark", style={"height": "2em"}),
+                dbc.Alert("", color="dark", style={"height": "11em"}),
+            ],
+            id="body-home",
+        ),
     ],
-    className="p-2",
 )
 
 
 @callback(
     Output("body-home", "children"),
-    Input("local-storage-settings", "data"),
+    Input(local_storage_settings_name, "data"),
 )
 def body(data):
     sport_selected = data["id-sport"]
@@ -183,7 +203,6 @@ def body(data):
                 id="id-accordion-risk-current",
             ),
             html.H2("Forecasted risk for today"),
-            legend_risk(),
             html.Div(id="fig-forecast_line"),
             html.Div(id="fig-forecast-next-days"),
         ]
@@ -215,7 +234,7 @@ def icon_component(src, message, size="50px"):
 
 @callback(
     Output("id-icon-sport", "children"),
-    Input("local-storage-settings", "data"),
+    Input(local_storage_settings_name, "data"),
 )
 def update_location_and_forecast(data_sport):
     try:
@@ -233,8 +252,8 @@ def update_location_and_forecast(data_sport):
 
 @callback(
     Output("fig-indicator", "children"),
-    Input("session-storage-weather", "data"),
-    State("local-storage-settings", "data"),
+    Input(session_storage_weather_name, "data"),
+    State(local_storage_settings_name, "data"),
 )
 def update_fig_hss_trend(data, data_sport):
     try:
@@ -285,7 +304,7 @@ def update_table_debugging(data):
 
 @callback(
     Output("fig-forecast_line", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_fig_hss_trend(data):
     try:
@@ -301,7 +320,7 @@ def update_fig_hss_trend(data):
 
 @callback(
     Output("fig-forecast-next-days", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_fig_hss_trend(data):
     try:
@@ -362,7 +381,7 @@ def update_fig_hss_trend(data):
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
     Output("div-icons-suggestions", "children"),
-    Input("session-storage-weather", "data"),
+    Input(session_storage_weather_name, "data"),
 )
 def update_alert_hss_current(data):
     try:
@@ -398,48 +417,59 @@ def update_alert_hss_current(data):
 
 
 @callback(
-    Output("session-storage-weather", "data"),
+    Output(session_storage_weather_name, "data"),
     Output("map-component", "children"),
-    Input("local-storage-settings", "data"),
-    Input("local-storage-location-selected", "data"),
+    Input(local_storage_settings_name, "data"),
+    prevent_initial_call=True,
 )
-def on_location_change(data_sport, loc_selected):
-    loc_selected = loc_selected or default_location
-    if data_sport["id-sport"]:
+def on_location_change(data_sport):
+    try:
+        information = df_postcodes[
+            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
+        ].to_dict(orient="list")
+        loc_selected = {
+            "lat": information["latitude"][0],
+            "lon": information["longitude"][0],
+            "tz": time_zones[information["state"][0]],
+        }
+    except TypeError:
+        loc_selected = default_location
+
+    try:
 
         print(f"querying data {pd.Timestamp.now()}")
 
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
-        df = calculate_comfort_indices(df, data_sport["id-sport"])
+        df = calculate_comfort_indices_v2(df, data_sport["id-sport"])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [
-                dl.TileLayer(maxZoom=13, minZoom=9),
+                dl.TileLayer(maxZoom=13, minZoom=7),
                 dl.Marker(position=[loc_selected["lat"], loc_selected["lon"]]),
                 dl.GestureHandling(),
             ],
             id="map",
             style={
                 "width": "100%",
-                "height": "25vh",
+                "height": "13vh",
                 "margin": "auto",
                 "display": "block",
                 # "-webkit-filter": "grayscale(100%)",
-                # "filter": "grayscale(100%)",
+                # "filter": "grayscal`e(100%)",
             },
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
         )
-    else:
+    except TypeError:
         raise PreventUpdate
 
 
 @callback(
     Output("settings-dropdowns", "children"),
     Input("url", "pathname"),
-    State("local-storage-settings", "data"),
+    State(local_storage_settings_name, "data"),
 )
 def display_the_dropdown_after_page_change(pathname, data):
     data = data or default_settings
@@ -453,32 +483,23 @@ def display_the_dropdown_after_page_change(pathname, data):
 
 
 @callback(
-    Output("local-storage-settings", "data"),
-    State("local-storage-settings", "data"),
+    Output(local_storage_settings_name, "data"),
+    State(local_storage_settings_name, "data"),
+    State(storage_user_id, "data"),
     [Input(question["id"], "value") for question in questions],
+    prevent_initial_call=True,
 )
-def save_settings_in_storage(data, *args):
+def save_settings_in_storage(data, user_id, *args):
     """Saves in local storage the settings selected by the participant."""
     data = data or {}
     for ix, question_id in enumerate([question["id"] for question in questions]):
         data[question_id] = args[ix]
 
+    firebase_data = deepcopy(data)
+    if any(data.values()):
+        firebase_data[FirebaseFields.user_id] = user_id
+        firebase_data[FirebaseFields.timestamp] = time.time()
+        print(firebase_data)
+        ref.push().set(firebase_data)
+
     return data
-
-
-@callback(
-    Output("local-storage-location-selected", "data"),
-    Input("id-postcode", "value"),
-)
-def display_page(value):
-    if value:
-        information = df_postcodes[df_postcodes["sub-state-post"] == value].to_dict(
-            orient="list"
-        )
-        return {
-            "lat": information["latitude"][0],
-            "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
-        }
-    else:
-        raise PreventUpdate
