@@ -1,6 +1,5 @@
 import plotly.express as px
 import numpy as np
-import pandas as pd
 from my_app.utils import calculate_comfort_indices_v1, get_yr_weather
 from config import sma_risk_messages
 import plotly.graph_objects as go

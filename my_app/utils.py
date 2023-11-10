@@ -44,7 +44,7 @@ sports_category = dict(
             "Oztag": 3,
             "Rock Climbing": 3,
             "Rowing": 3,
-            "Football (Soccer)": 3,
+            "Soccer": 3,
             "Tennis": 3,
             "Touch Football": 3,
             "Long Distance Running": 3,
@@ -94,6 +94,9 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     df_weather.drop(columns=["time"], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
     df_weather = df_weather.dropna(subset=["tdb"])
+    df_weather["lat"] = lat
+    df_weather["lon"] = lon
+    df_weather["tz"] = tz
 
     return df_weather
 
@@ -129,9 +132,10 @@ def calculate_comfort_indices_v1(data_for, sport_class):
 
 
 def calculate_mean_radiant_tmp(df_for):
-    site_location = location.Location(
-        df_for.lat, df_for.lon, tz=df_for.tz, name=df_for.tz
-    )
+    lat = df_for["lat"].unique()[0]
+    lon = df_for["lon"].unique()[0]
+    tz = df_for["tz"].unique()[0]
+    site_location = location.Location(lat, lon, tz=tz, name=tz)
     solar_position = site_location.get_solarposition(df_for.index)
     cs = site_location.get_clearsky(df_for.index)
 
@@ -172,7 +176,7 @@ def calculate_mean_radiant_tmp(df_for):
     return df_for
 
 
-def calculate_comfort_indices_v2(df_for, sport="Abseiling", calc_tr=True, met_corr=1):
+def calculate_comfort_indices_v2(df_for, sport="Soccer", calc_tr=True, met_corr=1):
     df_sport = pd.read_csv("assets/sports.csv")[["sport", "clo", "met"]]
     sport, clo, met = df_sport[df_sport.sport == sport].values[0]
 

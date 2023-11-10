@@ -22,9 +22,6 @@ from my_app.utils import (
 )
 from config import (
     sma_risk_messages,
-    default_location,
-    default_settings,
-    time_zones,
     sports_info,
     time_zones,
     default_location,
