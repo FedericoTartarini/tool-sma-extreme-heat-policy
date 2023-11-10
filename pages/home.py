@@ -5,25 +5,30 @@ from dash import html, dcc, Output, Input, State, callback
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
-
-from my_app.charts import hss_palette, indicator_chart, line_chart
+from my_app.charts import indicator_chart, line_chart
 import dash
 from copy import deepcopy
 import pandas as pd
 from my_app.utils import (
-    sma_risk_messages,
     sports_category,
     legend_risk,
     get_yr_weather,
-    calculate_comfort_indices,
-    time_zones,
-    default_location,
-    default_settings,
+    calculate_comfort_indices_v1,
     get_data_specific_day,
     FirebaseFields,
     local_storage_settings_name,
     session_storage_weather_name,
     storage_user_id,
+)
+from config import (
+    sma_risk_messages,
+    default_location,
+    default_settings,
+    time_zones,
+    sports_info,
+    time_zones,
+    default_location,
+    default_settings,
 )
 import dash_mantine_components as dmc
 from firebase_admin import db
@@ -52,9 +57,9 @@ questions = [
     {
         "id": "id-sport",
         "question": "Sport:",
-        "options": list(sports_category.keys()),
+        "options": sports_info.sport.unique(),
         "multi": False,
-        "default": "Football (Soccer)",
+        "default": "Soccer",
     },
     {
         "id": "id-postcode",
@@ -291,7 +296,7 @@ def update_fig_hss_trend(data):
         for day in [1, 2, 3]:
             df_day = get_data_specific_day(df, date_offset=day)
             day_name = df_day.index.day_name().unique()[0]
-            color = hss_palette[df_day["risk_value"].max()]
+            color = sma_risk_messages[df_day["risk"].max()].color
             risk_value = df_day.loc[
                 df_day.risk_value == df_day.risk_value.max(), "risk"
             ].unique()[0]
@@ -337,10 +342,6 @@ def update_fig_hss_trend(data):
         raise PreventUpdate
 
 
-def test():
-    return html.H1(["Example heading", dbc.Badge("New", className="ms-1")])
-
-
 @callback(
     Output("value-hss-current", "children"),
     Output("id-alert-risk-current-value", "color"),
@@ -352,10 +353,10 @@ def test():
 def update_alert_hss_current(data):
     try:
         df = pd.read_json(data, orient="table")
-        color = hss_palette[df["risk_value"][0]]
+        color = sma_risk_messages[df["risk"][0]].color
         risk_class = df["risk"].iloc[0]
-        description = sma_risk_messages[risk_class]["description"].capitalize()
-        suggestion = sma_risk_messages[risk_class]["suggestions"].capitalize()
+        description = sma_risk_messages[risk_class].description.capitalize()
+        suggestion = sma_risk_messages[risk_class].suggestion.capitalize()
         icons = [
             icon_component("../assets/icons/water-bottle.png", "Stay hydrated"),
             icon_component("../assets/icons/tshirt.png", "Wear light clothing"),
@@ -408,7 +409,7 @@ def on_location_change(data_sport):
         df = get_yr_weather(
             lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
         )
-        df = calculate_comfort_indices(df, sports_category[data_sport["id-sport"]])
+        df = calculate_comfort_indices_v1(df, sports_category[data_sport["id-sport"]])
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [

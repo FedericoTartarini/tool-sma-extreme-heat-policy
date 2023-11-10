@@ -1,0 +1,360 @@
+%! Author = ftar3919
+%! Date = 24/5/2023
+
+% Preamble
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[margin=1in]{geometry}
+
+% Document
+\begin{document}
+
+    \section{PHS model}\label{sec:phs-model}
+
+    Below I am comparing the results obtained with the PHS and the SMA tables.
+    Please note that we are using both models outside their limits.
+
+    \subsection{Core temperature - PHS model - Sport category 3}
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.5}
+        \caption{Sport category 3}\label{fig:phs_sport_cat_3}
+    \end{figure}
+
+    \clearpage
+
+    \begin{figure}[htb!]
+        \centering
+
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_13_0.5}
+            \caption{}\label{fig:phs_sport_cat_3_t_cr_20_2}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_0_0.5}
+            \caption{no solar radiation and wind 1m/s}\label{fig:phs_sport_cat_3_t_cr_0_1}
+        \end{subfigure}%
+
+    \end{figure}
+
+    \begin{figure}[htb!]
+        \centering
+
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.1}
+            \caption{}\label{fig:phs_sport_cat_3_t_cr_9_0}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{\textwidth}
+            \centering
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_1.5}
+            \caption{no solar radiation and wind 1m/s}\label{fig:phs_sport_cat_3_t_cr_9_1}
+        \end{subfigure}%
+
+    \end{figure}
+
+    \clearpage
+
+%    \subsection{Skin wettedness - PHS model - Sport category 3}
+%    We decided to use the core temperature instead of the skin wettendness since the line are more flat.
+%    In addition, we do not want that people reach critical thresholds of core temperature that could be dangerous for their health.
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/phs_sport_cat_3_w_12_1}
+%        \caption{Sport category 3}\label{fig:phs_sport_cat_3_w}
+%    \end{figure}
+
+    \clearpage
+
+    \section{Core temperature - Side by side comparison different sport categories}\label{sec:side-by-side-comparison-categories}
+
+    \begin{figure}[htb!]
+        \centering
+
+        \begin{subfigure}{.5\textwidth}
+            \centering
+            \caption{phs Sport category 1}\label{fig:phs_sport_cat_1_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_1_t_cr_9_0.5}
+        \end{subfigure}%
+        \hfill
+
+        \begin{subfigure}{.5\textwidth}
+            \centering
+            \caption{phs Sport category 2}\label{fig:phs_sport_cat_2_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_2_t_cr_9_0.5}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{.5\textwidth}
+            \centering
+            \caption{phs Sport category 3}\label{fig:phs_sport_cat_3_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_9_0.5}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{.5\textwidth}
+            \centering
+            \caption{phs Sport category 4}\label{fig:phs_sport_cat_4_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_4_t_cr_9_0.5}
+        \end{subfigure}%
+        \hfill
+        \begin{subfigure}{.5\textwidth}
+            \centering
+            \caption{phs Sport category 5}\label{fig:phs_sport_cat_5_t_cr}
+            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_5_t_cr_9_0.5}
+        \end{subfigure}%
+        \hfill
+
+    \end{figure}
+
+    \clearpage
+
+%    \section{Core temperature - Side by side comparison models}\label{sec:side-by-side-comparison-models}
+%    Please note that we are using both models outside their limits.
+%    The two-node estimates a lower core temperature for low mets while a higher one at high mets when compared with the PHS output.
+%
+%    \begin{figure}[htb!]
+%        \centering
+%
+%        \begin{subfigure}{.5\textwidth}
+%            \centering
+%            \includegraphics[width=0.9\linewidth]{figures/two_node_sport_cat_3_t_cr_20_1}
+%            \caption{two node Sport category 3}\label{fig:two_node_sport_cat_3_t_cr_20_1}
+%        \end{subfigure}%
+%        \hfill
+%        \begin{subfigure}{.5\textwidth}
+%            \centering
+%            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_3_t_cr_20_1}
+%            \caption{phs Sport category 3}\label{fig:phs_sport_cat_3_t_cr_20_1}
+%        \end{subfigure}%
+%        \hfill
+%        \begin{subfigure}{.5\textwidth}
+%            \centering
+%            \includegraphics[width=0.9\linewidth]{figures/two_node_sport_cat_4_t_cr_20_1}
+%            \caption{two node Sport category 4}\label{fig:two_node_sport_cat_4_t_cr_20_1}
+%        \end{subfigure}%
+%        \hfill
+%        \begin{subfigure}{.5\textwidth}
+%            \centering
+%            \includegraphics[width=0.9\linewidth]{figures/phs_sport_cat_4_t_cr_20_1}
+%            \caption{phs Sport category 4}\label{fig:phs_sport_cat_4_t_cr_20_1}
+%        \end{subfigure}%
+%
+%    \end{figure}
+
+    \subsection{Analysis climate data}
+    Below the preliminary results for Sydney.
+    The third figure depicts an issue with the model since it is assumed tha the heat stress risk is always moderate even at very low ambient temperatures.
+    This is something to be aware of and it could be an issue.
+    It is not a problem if we decide to limit the final plot to 26 degrees how it was previously done in the SMA policy.
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Adelaide.Intl.AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \clearpage
+%
+%    Please note that this chart is generated using a constant mean radiant temperature while the risk in the location is calculated using the estimated mean radiant temperatur and wind.
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Adelaide.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Brisbane Intl AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Brisbane Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Canberra Intl AP_sma}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Canberra Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%
+%        \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_False_Darwin.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_True_Darwin.Intl.AP_phs}
+        \caption{Sport category 3}
+    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_False_Darwin.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_True_Darwin.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_analysis_Darwin.Intl.AP_sma}
+            \caption{Sport category 3}
+        \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Darwin.Intl.AP_phs}
+            \caption{Sport category 3}
+        \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Hobart.Intl.AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Hobart.Intl.AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Melbourne.Intl.AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Melbourne.Intl.AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
+
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_False_Perth Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_True_Perth Intl AP_phs}
+        \caption{Sport category 3}
+    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_False_Perth Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_True_Perth Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_analysis_Perth Intl AP_sma}
+            \caption{Sport category 3}
+        \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Perth Intl AP_phs}
+            \caption{Sport category 3}
+        \end{figure}
+
+%        \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_False_Sydney.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_True_Sydney.Intl.AP_phs}
+        \caption{Sport category 3}
+    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_True_v_const_False_Sydney.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_tg_const_False_v_const_True_Sydney.Intl.AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_analysis_Sydney.Intl.AP_sma}
+            \caption{Sport category 3}
+        \end{figure}
+    \begin{figure}[htb!]
+            \centering
+            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Sydney.Intl.AP_phs}
+            \caption{Sport category 3}
+        \end{figure}
+%
+%    \begin{figure}[htb!]
+%        \centering
+%        \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_phs}
+%        \caption{Sport category 3}
+%    \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_analysis_Tullamarine-Melbourne Intl AP_sma}
+%            \caption{Sport category 3}
+%        \end{figure}
+%    \begin{figure}[htb!]
+%            \centering
+%            \includegraphics[width=\linewidth]{figures/climate_data_on_risk_Tullamarine-Melbourne Intl AP_phs}
+%            \caption{Sport category 3}
+%        \end{figure}
+%
+%    \clearpage
+
+\end{document}

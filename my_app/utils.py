@@ -10,13 +10,9 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 import pandas as pd
 import requests
 import pytz
-
-hss_palette = {
-    0: "#00AD7C",
-    1: "#FFD039",
-    2: "#E45A01",
-    3: "#CB3327",
-}
+from config import sma_risk_messages, mrt_calculation, variable_calc_risk
+from pvlib import location
+from pythermalcomfort.models import utci, solar_gain, two_nodes
 
 app_version = "0.0.4"
 app_version = app_version.replace(".", "")
@@ -76,99 +72,6 @@ headers = {
     )
 }
 
-sma_risk_messages = {
-    "low": {
-        "description": (
-            "maintaining hydration through regular fluid consumption and modifying"
-            " clothing is still a simple, yet effective, way of keeping cool and"
-            " preserving health and performance during the summer months."
-        ),
-        "suggestions": """
-        * Ensure pre-exercise hydration by consuming 6 ml of water per kilogram of body weight
-        every 2-3 hours before exercise. For a 70kg individual, this equates to 420ml of fluid
-        every 2-3 hours (a standard sports drink bottle contains 500ml).
-        * Drink regularly throughout exercise. You should aim to drink enough to offset sweat
-        losses, but it is important to avoid over-drinking because this can also have negative
-        health effects. To familiarise yourself with how much you typically sweat, become
-        accustomed to weighing yourself before and after practice or competition.
-        * Where possible, select light-weight and breathable clothing with extra ventilation.
-        * Remove unnecessary clothing/equipment and/or excess clothing layers.
-        * Reduce the amount of skin that is covered by clothing – this will help increase your
-        sweat evaporation, which will help you dissipate heat.
-            """,
-    },
-    "moderate": {
-        "description": (
-            "increasing the frequency and/or duration of your rest breaks during"
-            " exercise or sporting activities is an effective way of reducing your risk"
-            " for heat illness even if minimal resources are available."
-        ),
-        "suggestions": """
-        * During training sessions, provide a minimum of 15 minutes of rest for every 45 minutes
-        of practice.
-        * Extend scheduled rest breaks that naturally occur during match-play of a particular
-        sport (e.g. half-time) by ~10 minutes. This is effective for sports such as soccer/football and
-        rugby and can be implemented across other sports such as field hockey.
-        * Implement additional rest breaks that are not normally scheduled to occur. For example,
-        3 to 5-min “quarter-time” breaks can be introduced mid-way through each half of a
-        football or rugby match, or an extended 10-min drinks break can be introduced every
-        hour of a cricket match or after the second set of a tennis match.
-        * For sports with continuous play without any scheduled breaks, courses or play duration
-        can be shortened
-        * During all breaks in play or practice, everyone should seek shade – if natural shade is not
-        available, portable sun shelters should be provided, and water freely available
-            """,
-    },
-    "high": {
-        "description": (
-            "active cooling strategies should be applied during scheduled and"
-            " additional rest breaks, or before and during activity if play is"
-            " continuous. Below are strategies that have been shown to effectively"
-            " reduce body temperature. The suitability and feasibility of each strategy"
-            " will depend on the type of sport or exercise you are performing. "
-        ),
-        "suggestions": """
-        * Drinking cold fluids and/or ice slushies before exercise commences. Note that cold water
-        and ice slushy ingestion during exercise is less effective for cooling.
-        * Submerging your arms/feet in cold water.
-        * Water dousing – wetting your skin with cool water using a sponge or a spray bottle helps
-        increase evaporation, which is the most effective cooling mechanism in the heat.
-        * Ice packs/towels – placing an ice pack or damp towel filled with crushed ice around your
-        neck.
-        * Electric (misting) fans – outdoor fans can help keep your body cool, especially when
-        combined with a water misting system.
-            """,
-    },
-    "extreme": {
-        "description": (
-            "exercise/play should be suspended. If play has commenced, then all"
-            " activities should be stopped as soon as possible."
-        ),
-        "suggestions": """
-        * All players should seek shade or cool refuge in an air-conditioned space if available
-        * Active cooling strategies should be applied.
-            """,
-    },
-}
-
-default_location = {"lat": -33.89, "lon": 151.18, "tz": "Australia/Sydney"}
-
-default_settings = {
-    "id-sport": "Football (Soccer)",
-    "id-postcode": "Camperdown, NSW, 2050",
-}
-
-time_zones = {
-    "NSW": "Australia/Sydney",
-    "WA": "Australia/Perth",
-    "ACT": "Australia/Canberra",
-    "NT": "Australia/Darwin",
-    "SA": "Australia/Adelaide",
-    "QLD": "Australia/Brisbane",
-    "VIC": "Australia/Melbourne",
-    "TAS": "Australia/Hobart",
-}
-
 
 def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     """Get weather forecast from YR website."""
@@ -195,7 +98,7 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     return df_weather
 
 
-def calculate_comfort_indices(data_for, sport_class):
+def calculate_comfort_indices_v1(data_for, sport_class):
     lines = generate_regression_curves(sport_class)
     data_for["moderate"] = lines[1](data_for["tdb"])
     data_for["high"] = lines[2](data_for["tdb"])
@@ -225,6 +128,104 @@ def calculate_comfort_indices(data_for, sport_class):
     return data_for
 
 
+def calculate_mean_radiant_tmp(df_for):
+    site_location = location.Location(
+        df_for.lat, df_for.lon, tz=df_for.tz, name=df_for.tz
+    )
+    solar_position = site_location.get_solarposition(df_for.index)
+    cs = site_location.get_clearsky(df_for.index)
+
+    # correct solar radiation by cloud cover
+    solar_position.loc[solar_position["elevation"] < 0, "elevation"] = 0
+
+    df_for = pd.concat([df_for, solar_position], axis=1)
+    df_for = pd.concat([df_for, cs], axis=1)
+
+    df_for["cloud"] /= 10
+    df_for["dni"] *= (
+        -0.00375838 * df_for["cloud"] ** 2 + -0.06230424 * df_for["cloud"] + 1.02290071
+    )
+
+    results = []
+    for ix, row in df_for.iterrows():
+        erf_mrt = solar_gain(
+            row["elevation"],
+            mrt_calculation["sharp"],
+            row["dni"],
+            mrt_calculation["sol_transmittance"],
+            mrt_calculation["f_svv"],
+            mrt_calculation["f_bes"],
+            mrt_calculation["asw"],
+            mrt_calculation["posture"],
+            mrt_calculation["floor_reflectance"],
+        )
+        if erf_mrt["delta_mrt"] < 0:
+            print(row)
+        results.append(erf_mrt)
+    df_mrt = pd.DataFrame.from_dict(results)
+    df_mrt.set_index(df_for.index, inplace=True)
+    df_for = pd.concat([df_for, df_mrt], axis=1)
+
+    df_for["wind"] *= mrt_calculation["wind_coefficient"]
+    df_for["tr"] = df_for["tdb"] + df_for["delta_mrt"]
+
+    return df_for
+
+
+def calculate_comfort_indices_v2(df_for, sport="Abseiling", calc_tr=True, met_corr=1):
+    df_sport = pd.read_csv("assets/sports.csv")[["sport", "clo", "met"]]
+    sport, clo, met = df_sport[df_sport.sport == sport].values[0]
+
+    if calc_tr:
+        df_for = calculate_mean_radiant_tmp(df_for)
+
+    df_for["clo"] = clo
+    df_for["met"] = met * met_corr
+
+    df_for["utci"] = utci(
+        tdb=df_for["tdb"], tr=df_for["tr"], v=df_for["wind"], rh=df_for["rh"]
+    )
+    results_two_nodes = two_nodes(
+        tdb=df_for["tdb"],
+        tr=df_for["tr"],
+        v=df_for["wind"],
+        rh=df_for["rh"],
+        met=df_for["met"],
+        clo=df_for["clo"],
+        limit_inputs=False,
+        round=False,
+        w_max=1,
+    )
+    df_for["set"] = results_two_nodes["_set"]
+    df_for["w"] = results_two_nodes["w"]
+    df_for["w_max"] = results_two_nodes["w_max"]
+    df_for["m_bl"] = results_two_nodes["m_bl"]
+    df_for["m_rsw"] = results_two_nodes["m_rsw"]
+    df_for["ratio_m_bl"] = (df_for["m_bl"] - 1.2) / (df_for["m_bl"] * 0 + 90 - 1.2)
+    df_for["ratio_w"] = (df_for["w"] - 0.06) / (df_for["w_max"] - 0.06)
+
+    bins = [
+        i / (len(sma_risk_messages) - 1) for i in range(len(sma_risk_messages) - 1)
+    ] + [0.95, 1.1]
+    for index in [variable_calc_risk]:
+        df_for[f"risk"] = pd.cut(
+            df_for[index], bins=bins, labels=sma_risk_messages.keys(), right=False
+        )
+
+    # interpolation
+    x = bins
+    y = np.arange(0, len(sma_risk_messages) + 1, 1)
+
+    df_for["risk_value"] = np.around(np.interp(df_for[variable_calc_risk], x, y), 0)
+    df_for["risk_value_interpolated"] = np.around(
+        np.interp(df_for[variable_calc_risk], x, y), 1
+    )
+
+    df_for.index = df_for.index.tz_localize(None)
+
+    return df_for
+
+
 def generate_regression_curves(sport_class):
     df_points = pd.read_csv("./assets/points_curves.csv")
     df_class = df_points[df_points["class"] == sport_class]
@@ -238,7 +239,7 @@ def generate_regression_curves(sport_class):
 
 def legend_risk():
     legend_items = []
-    for ix, item in enumerate(["low", "moderate", "high", "extreme"]):
+    for key, value in sma_risk_messages.items():
         legend_items.append(
             dbc.Col(
                 dbc.Row(
@@ -248,12 +249,12 @@ def legend_risk():
                                 style={
                                     "height": "1em",
                                     "width": "1em",
-                                    "background-color": hss_palette[ix],
+                                    "background-color": value.color,
                                     "border-radius": "50%",
                                 }
                             ),
                         ),
-                        dbc.Col(item, className="p-0"),
+                        dbc.Col(key, className="p-0"),
                     ],
                     align="center",
                 ),
@@ -287,12 +288,12 @@ class FirebaseFields:
 if __name__ == "__main__":
     df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
     df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
-    df_results = calculate_comfort_indices(df, sport_class=2)
+    df_results = calculate_comfort_indices_v1(df, sport_class=2)
 
     values = []
     for t in np.arange(10, 50):
         for rh in np.arange(0, 100, 1):
             values.append([t, rh])
     df = pd.DataFrame(values, columns=["tdb", "rh"])
-    df_results = calculate_comfort_indices(data_for=df, sport_class=2)
+    df_results = calculate_comfort_indices_v1(data_for=df, sport_class=2)
     df_plot = df_results.pivot("rh", "tdb", "risk").sort_index(ascending=False)
