@@ -44,7 +44,7 @@ sports_category = dict(
             "Oztag": 3,
             "Rock Climbing": 3,
             "Rowing": 3,
-            "Football (Soccer)": 3,
+            "Soccer": 3,
             "Tennis": 3,
             "Touch Football": 3,
             "Long Distance Running": 3,
@@ -132,9 +132,9 @@ def calculate_comfort_indices_v1(data_for, sport_class):
 
 
 def calculate_mean_radiant_tmp(df_for):
-    lat = df_for["lat"].unique()
-    lon = df_for["lon"].unique()
-    tz = df_for["tz"].unique()
+    lat = df_for["lat"].unique()[0]
+    lon = df_for["lon"].unique()[0]
+    tz = df_for["tz"].unique()[0]
     site_location = location.Location(lat, lon, tz=tz, name=tz)
     solar_position = site_location.get_solarposition(df_for.index)
     cs = site_location.get_clearsky(df_for.index)
