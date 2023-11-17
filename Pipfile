@@ -13,7 +13,7 @@ pytz = "==2022.7.1"
 requests = "==2.28.2"
 dash-extensions = "==0.1.10"
 pvlib = "==0.9.4"
-pythermalcomfort = "==2.6.0"
+pythermalcomfort = "*"
 
 [dev-packages]
 seaborn = "*"
