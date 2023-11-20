@@ -20,34 +20,30 @@ psyc.SetUnitSystem(psyc.SI)
 
 
 class Var:
-    # configuration
-    max_rectal_temperature = 40
     position = "standing"
     min_threshold_temperature = 26
     t_range = np.arange(
         min_threshold_temperature,
         step=(interval := 0.5),
-        stop=43 + interval,
+        stop=41 + interval,
     )
     rh_range = np.arange(
         start=0,
         step=(interval := 0.5),
         stop=100 + interval,
     )
-    globe_temperature = 10
+    globe_temperature_day = 10
     globe_temperature_night = 3
     wind_speed = 0.5
-    var_to_plot = {
-        "t_cr",
-    }
-    cmaplist = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
+    var_threshold = "t_cr"
+    cmap_list = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
-    people_profiles = {
+    sports_profiles = {
         1: {
             "met": 4.7,
             "clo": 0.55,
             "v": wind_speed,
-            "tg": globe_temperature,
+            "tg": globe_temperature_day,
             "duration": 180,
             "t_cr": [36.8, 37.2, 38.4, 39.5, 50],
             "water_loss": [825 / 45 * 180, 4000, 4100, 4200, 4300],
@@ -56,7 +52,7 @@ class Var:
             "met": 6.4,
             "clo": 0.5,
             "v": wind_speed,
-            "tg": globe_temperature,
+            "tg": globe_temperature_day,
             "duration": 60,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850 / 45 * 60, 2900, 3000, 3100, 3200],
@@ -65,7 +61,7 @@ class Var:
             "met": 7.2,
             "clo": 0.5,
             "v": wind_speed,
-            "tg": globe_temperature,
+            "tg": globe_temperature_day,
             "duration": 45,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
@@ -74,7 +70,7 @@ class Var:
             "met": 7.3,
             "clo": 0.5,
             "v": wind_speed,
-            "tg": globe_temperature,
+            "tg": globe_temperature_day,
             "duration": 45,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
@@ -83,7 +79,7 @@ class Var:
             "met": 7.5,
             "clo": 0.5,
             "v": wind_speed,
-            "tg": globe_temperature,
+            "tg": globe_temperature_day,
             "duration": 45,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
@@ -93,12 +89,12 @@ class Var:
     fig_directory = os.path.join(os.getcwd(), "tests", "figures")
 
 
-def plot_rh_lines(ax, rh_val=1, t_array=np.arange(0, 40, 0.5)):
+def plot_rh_lines(axis, rh_val=1, t_array=np.arange(0, 40, 0.5)):
     hr_array = []
     for t, rh in zip(t_array, np.ones(len(t_array)) * rh_val):
         hr_array.append(psyc.GetHumRatioFromRelHum(t, rh, 101325) * 1000)
-    ax.plot(t_array, hr_array, c="k", lw=0.2)
-    ax.text(
+    axis.plot(t_array, hr_array, c="k", lw=0.2)
+    axis.text(
         20,
         psyc.GetHumRatioFromRelHum(20, rh_val, 101325) * 1000,
         f"{rh_val * 100}%",
@@ -167,27 +163,26 @@ def calculate_results(
         df_["mrt"] = t_mrt(val["tg"] + df_["t"], df_["t"], df_["v"], standard="iso")
 
     if night_day:
-        df_.loc["elevation" < 0, "mrt"] = t_mrt(
+        # todo check this code
+        df_.loc[df_["elevation"] > 0, "mrt"] = t_mrt(
             val["tg"] + df_["t"], df_["t"], df_["v"], standard="iso"
         )
 
-    results_globe_temperature = []
-    for ix, row in df_.iterrows():
-
-        def calculate_globe_temperature(x):
-            return t_mrt(x + row["t"], row["t"], row["v"], standard="iso") - row["mrt"]
-
-        results_globe_temperature.append(
-            scipy.optimize.brentq(calculate_globe_temperature, 0.0, 200)
-        )
-    print(
-        pd.DataFrame(results_globe_temperature, columns=["tg"]).describe(
-            percentiles=[0.75, 0.85, 0.95, 0.99]
-        )
-    )
-    df_["tg"] = results_globe_temperature
-
-    # print(data["mrt"].describe())
+    # results_globe_temperature = []
+    # for ix, row in df_.iterrows():
+    #
+    #     def calculate_globe_temperature(x):
+    #         return t_mrt(x + row["t"], row["t"], row["v"], standard="iso") - row["mrt"]
+    #
+    #     results_globe_temperature.append(
+    #         scipy.optimize.brentq(calculate_globe_temperature, 0.0, 200)
+    #     )
+    # print(
+    #     pd.DataFrame(results_globe_temperature, columns=["tg"]).describe(
+    #         percentiles=[0.75, 0.85, 0.95, 0.99]
+    #     )
+    # )
+    # df_["tg"] = results_globe_temperature
 
     if thermo_model == "phs":
         results = []
@@ -209,22 +204,19 @@ def calculate_results(
             r["rh"] = row.rh
             r["mrt"] = row.mrt
             r["v"] = row.v
-            r["tg"] = row.tg
+            # r["tg"] = row.tg
             results.append(r)
 
-        df_results = pd.DataFrame(results)
+        df_r = pd.DataFrame(results)
 
-        var = "t_cr"
-        df_results["risk_class"] = pd.cut(
-            df_results[var],
-            val[var],
+        df_r["risk_class"] = pd.cut(
+            df_r[Var.var_threshold],
+            val[Var.var_threshold],
             labels=False,
             # right=False,
         )
-        df_results.loc[
-            df_results["water_loss"] < min(val["water_loss"]), "risk_class"
-        ] = 0
-        df_results["risk_class_label"] = df_results["risk_class"].map(
+        df_r.loc[df_r["water_loss"] < min(val["water_loss"]), "risk_class"] = 0
+        df_r["risk_class_label"] = df_r["risk_class"].map(
             {
                 0: "low",
                 1: "moderate",
@@ -234,36 +226,37 @@ def calculate_results(
         )
 
     elif thermo_model == "sma":
-        df_results = calculate_comfort_indices_v1(
+        df_r = calculate_comfort_indices_v1(
             df_.rename(columns={"t": "tdb"}), sport_category
         )
-        df_results = df_results.rename(
+        df_r = df_r.rename(
             columns={"tdb": "t", "risk_value": "risk_class", "risk": "risk_class_label"}
         )
 
-    return df_results
+    return df_r
 
 
-def check_model_output(thermo_model):
-    for sport_category, v in Var.people_profiles.items():
+def check_model_output(thermo_model="phs"):
+    for sport_category, v in Var.sports_profiles.items():
 
-        df_ = calculate_results(v, thermo_model, constant_wind=True, const_t_globe=True)
+        df_ = calculate_results(
+            val=v, thermo_model=thermo_model, constant_wind=True, const_t_globe=True
+        )
 
-        for variable in Var.var_to_plot:
-            plot_heatmap(df_, sport_category, variable)
+        plot_heatmap(df_, sport_category, Var.var_threshold)
 
-            plt.title(
-                f"{thermo_model};{v['duration']=};{variable=};{sport_category=};"
-                f" met={v['met']};"
-                f" clo={v['clo']};v={v['v']};tg={v['tg']}"
+        plt.title(
+            f"{thermo_model};{v['duration']=};{Var.var_threshold=};{sport_category=};"
+            f" met={v['met']};"
+            f" clo={v['clo']};v={v['v']};tg={v['tg']}"
+        )
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(
+                Var.fig_directory,
+                f"{thermo_model}_sport_cat_{sport_category}_{Var.var_threshold}_{Var.globe_temperature_day}_{Var.wind_speed}.png",
             )
-            plt.tight_layout()
-            plt.savefig(
-                os.path.join(
-                    Var.fig_directory,
-                    f"{thermo_model}_sport_cat_{sport_category}_{variable}_{Var.globe_temperature}_{Var.wind_speed}.png",
-                )
-            )
+        )
 
 
 def plot_heatmap(df_, sport_category, variable):
@@ -272,9 +265,9 @@ def plot_heatmap(df_, sport_category, variable):
     pivot_water_loss = df_.pivot("rh", "t", "water_loss").sort_index(ascending=False)
     cmap = plt.cm.magma  # define the colormap
     cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "Custom cmap", Var.cmaplist, cmap.N
+        "Custom cmap", Var.cmap_list, cmap.N
     )
-    boundary_limits = Var.people_profiles[sport_category]["water_loss"]
+    boundary_limits = Var.sports_profiles[sport_category]["water_loss"]
     norm = mpl.colors.BoundaryNorm(boundary_limits, cmap.N)
     hm = sns.heatmap(
         pivot_water_loss,
@@ -284,7 +277,7 @@ def plot_heatmap(df_, sport_category, variable):
         mask=pivot > 40,
     )
     # define the bins and normalize
-    boundary_limits = Var.people_profiles[sport_category][variable]
+    boundary_limits = Var.sports_profiles[sport_category][variable]
     norm = mpl.colors.BoundaryNorm(boundary_limits, cmap.N)
     hm = sns.heatmap(
         pivot,
@@ -292,11 +285,11 @@ def plot_heatmap(df_, sport_category, variable):
         # fmt=".1f",
         vmin=min(boundary_limits),
         vmax=max(boundary_limits),
-        mask=pivot_water_loss < min(Var.people_profiles[sport_category]["water_loss"]),
+        mask=pivot_water_loss < min(Var.sports_profiles[sport_category]["water_loss"]),
         cmap=cmap,
         norm=norm,
     )
-    plot_sma_lines(sport_category, ax, Var.cmaplist)
+    plot_sma_lines(sport_category, ax, Var.cmap_list)
 
     return ax
 
@@ -350,7 +343,7 @@ def calculate_heat_stress_location(
         if risk not in df_plot.columns:
             df_plot[risk] = 0
     df_plot = df_plot[np.arange(1, 4, 1)]
-    df_plot.plot(kind="bar", stacked=True, color=Var.cmaplist[1:], ax=ax, legend=False)
+    df_plot.plot(kind="bar", stacked=True, color=Var.cmap_list[1:], ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
     for ix, rows in df_plot[[3]].fillna(0).iterrows():
@@ -373,7 +366,7 @@ def calculate_heat_stress_location(
         if risk not in df_plot.columns:
             df_plot[risk] = 0
     df_plot = df_plot[np.arange(1, 4, 1)]
-    df_plot.plot(kind="bar", stacked=True, color=Var.cmaplist[1:], ax=ax, legend=False)
+    df_plot.plot(kind="bar", stacked=True, color=Var.cmap_list[1:], ax=ax, legend=False)
     ax.set(title="cumulative number of hours in each risk category")
     index = 0
     for ix, rows in df_plot[[3]].fillna(0).iterrows():
@@ -396,7 +389,7 @@ def calculate_heat_stress_location(
     sns.countplot(
         x=df_results[df_results.t > Var.min_threshold_temperature]["risk_class_label"],
         ax=ax,
-        palette=Var.cmaplist,
+        palette=Var.cmap_list,
         order=["low", "moderate", "high", "extreme"],
     )
     df_text = (
@@ -418,7 +411,7 @@ def calculate_heat_stress_location(
             x="month",
             y="day",
             ax=ax,
-            color=Var.cmaplist[-1],
+            color=Var.cmap_list[-1],
         )
         for ix, val in enumerate(df_extreme_days):
             ax.text(ix, df_extreme_days.max() / 2, ha="center", va="bottom", s=val)
@@ -480,11 +473,177 @@ def calculate_heat_stress_location(
     )
 
 
+def compare_phs_sma():
+    f, axs = plt.subplots(1, 3, constrained_layout=True, figsize=(7, 4), sharey=True)
+    for col, sport_category in enumerate([1, 3, 5]):
+        thresholds = []
+        for t in Var.t_range:
+            results = []
+            for t_core_max in Var.sports_profiles[sport_category][Var.var_threshold][
+                -3:-1
+            ]:
+
+                def calculate_threshold_core(x):
+                    return (
+                        phs(
+                            tdb=t,
+                            tr=t_mrt(
+                                Var.sports_profiles[sport_category]["tg"] + t,
+                                t,
+                                Var.sports_profiles[sport_category]["v"],
+                                standard="iso",
+                            ),
+                            v=Var.sports_profiles[sport_category]["v"],
+                            rh=x,
+                            met=Var.sports_profiles[sport_category]["met"] * 58.15,
+                            clo=Var.sports_profiles[sport_category]["clo"],
+                            posture=Var.position,
+                            duration=Var.sports_profiles[sport_category]["duration"],
+                            round=False,
+                            acclimatized=100,
+                            i_mst=0.4,
+                        )[Var.var_threshold]
+                        - t_core_max
+                    )
+
+                try:
+                    results.append(
+                        scipy.optimize.brentq(calculate_threshold_core, 0, 100)
+                    )
+                except:
+                    results.append(np.nan)
+
+            def calculate_threshold_water_loss(x):
+                return (
+                    phs(
+                        tdb=t,
+                        tr=t_mrt(
+                            Var.sports_profiles[sport_category]["tg"] + t,
+                            t,
+                            Var.sports_profiles[sport_category]["v"],
+                            standard="iso",
+                        ),
+                        v=Var.sports_profiles[sport_category]["v"],
+                        rh=x,
+                        met=Var.sports_profiles[sport_category]["met"] * 58.15,
+                        clo=Var.sports_profiles[sport_category]["clo"],
+                        posture=Var.position,
+                        duration=Var.sports_profiles[sport_category]["duration"],
+                        round=False,
+                        acclimatized=100,
+                        i_mst=0.4,
+                    )["water_loss"]
+                    - Var.sports_profiles[sport_category]["water_loss"][0]
+                )
+
+            try:
+                results.append(
+                    scipy.optimize.brentq(calculate_threshold_water_loss, 0, 100)
+                )
+            except:
+                results.append(np.nan)
+
+            results.append(t)
+            thresholds.append(results)
+        df_ = pd.DataFrame(
+            thresholds,
+            columns=[
+                "high",
+                "extreme",
+                "moderate",
+                "t",
+            ],
+        )
+
+        # fill values to plot
+        df_.loc[df_.t > 30, ["high", "extreme"]] = df_.loc[
+            df_.t > 30, ["high", "extreme"]
+        ].fillna(0)
+        df_.loc[df_.t < 30, ["high", "extreme"]] = df_.loc[
+            df_.t < 30, ["high", "extreme"]
+        ].fillna(100)
+        t_min = df_.loc[df_["moderate"].isna(), "t"].min()
+        df_.loc[df_["t"] >= t_min, "moderate"] = 0
+        x = Var.t_range
+        colors = Var.cmap_list
+
+        # for ix, risk in enumerate(["high", "extreme"]):
+        #     df_risk = df_[[risk, 't']].dropna()
+        #     z = np.polyfit(df_risk.t, df_risk[risk], 2)
+        #
+        #     plt.plot(
+        #         x,
+        #         np.poly1d(z)(x),
+        #         label=risk,
+        #         c=colors[ix+2],
+        #         lw=2,
+        #         path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+        #     )
+
+        axs[col].fill_between(
+            df_.t,
+            df_.t * 0,
+            df_.moderate,
+            color=colors[0],
+        )
+        axs[col].fill_between(
+            df_.t,
+            df_.moderate,
+            df_.high,
+            color=colors[1],
+        )
+        axs[col].fill_between(
+            df_.t,
+            df_.extreme,
+            df_.high,
+            color=colors[2],
+        )
+        axs[col].fill_between(
+            df_.t,
+            df_.extreme,
+            df_.t * 100,
+            color=colors[3],
+        )
+
+        sma_lines = generate_regression_curves(sport_category)
+        axs[col].plot(
+            x,
+            sma_lines[1](Var.t_range),
+            c=colors[1],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        axs[col].plot(
+            x,
+            sma_lines[2](Var.t_range),
+            c=colors[2],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        axs[col].plot(
+            x,
+            sma_lines[3](Var.t_range),
+            c=colors[3],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        axs[col].set(
+            ylim=(0, 100),
+            xlim=(26, 41),
+            title=f"{sport_category=}",
+            xlabel="Air Temperature (°C)",
+        )
+    axs[0].set(ylabel="Relative Humidity (%)")
+    plt.savefig("tests/figures/comparison_sports_risk.png", dpi=300)
+
+
 if __name__ == "__main__":
     plt.close("all")
 
     # check_model_output("two_node")
-    check_model_output("phs")
+    # check_model_output("phs")
+
+    compare_phs_sma()
 
 if __name__ == "__plot__":
 
@@ -509,8 +668,8 @@ if __name__ == "__plot__":
         var = "t_cr"
         const_wind = True
         const_tg = True
-        values = Var.people_profiles[sport_cat]
-        limits = Var.people_profiles[sport_cat][var]
+        values = Var.sports_profiles[sport_cat]
+        limits = Var.sports_profiles[sport_cat][var]
 
         df_epw = pd.read_pickle(epw_file_name, compression="gzip")
         map_col_names = {
