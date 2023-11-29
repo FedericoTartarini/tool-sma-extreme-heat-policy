@@ -145,12 +145,20 @@ def indicator_chart(df):
 
     fig = go.Figure(
         go.Indicator(
-            mode="gauge",
+            mode="gauge+number+delta",
             value=data["risk_value_interpolated"],
             domain={"x": [0, 1], "y": [0, 1]},
             gauge={
-                "shape": "bullet",
-                "axis": {"range": [0, 4]},
+                "axis": {
+                    "range": [0, 4],
+                    "tickmode": "array",
+                    "ticktext": ["Low", "Moderate", "High", "Extreme"],
+                    "tickvals": [0.5, 1.5, 2.5, 3.5],
+                    "tickwidth": 2,
+                    "tickfont": {"size": 15},
+                    "ticks": "",
+                    "showticklabels": False,
+                },
                 "steps": steps,
                 "borderwidth": 0,
                 "bar": {
@@ -161,15 +169,27 @@ def indicator_chart(df):
             },
         )
     )
-    fig.add_annotation(
-        x=data["risk_value_interpolated"] / 4,
-        y=1,
-        text="Now",
-        showarrow=False,
-        font=dict(color="#fff"),
-    )
+    # fig.add_annotation(
+    #     x=0.14,
+    #     y=0.14,
+    #     text="Low",
+    #     showarrow=False,
+    #     textangle=-65,
+    #     font=dict(color="black", size=20),
+    # )
+    # fig.add_annotation(
+    #     x=0.38,
+    #     y=0.58,
+    #     text="Moderate",
+    #     showarrow=False,
+    #     textangle=-20,
+    #     font=dict(color="black", size=20),
+    # )
     fig = standard_layout(fig)
-    fig.update_layout(height=60)
+    fig.update_layout(
+        margin=dict(autoexpand=True, l=0, r=0, t=10, b=0),
+    )
+    fig.update_layout(height=300)
     return fig
 
 
