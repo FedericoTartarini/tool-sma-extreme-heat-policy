@@ -1,6 +1,7 @@
 import os
 from itertools import product
 from pathlib import Path
+import pickle
 
 import matplotlib as mpl
 import matplotlib.patheffects as pe
@@ -17,6 +18,12 @@ from pythermalcomfort.utilities import v_relative
 from my_app.utils import generate_regression_curves, calculate_comfort_indices_v1
 
 psyc.SetUnitSystem(psyc.SI)
+
+try:
+    with open("tests/regression_curves_v2.pkl", "rb") as f:
+        regression_curves_v2 = pickle.load(f)
+except FileNotFoundError:
+    regression_curves_v2 = {}
 
 
 class Var:
@@ -38,31 +45,34 @@ class Var:
     var_threshold = "t_cr"
     cmap_list = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
 
+    duration = 45
+    duration_walking = 200
+
     sports_profiles = {
         1: {
             "met": 4.7,
-            "clo": 0.55,
+            "clo": 0.4,
             "v": wind_speed,
             "tg": globe_temperature_day,
-            "duration": 180,
-            "t_cr": [36.8, 37.2, 38.4, 39.5, 50],
-            "water_loss": [825 / 45 * 180, 4000, 4100, 4200, 4300],
+            "duration": duration_walking,
+            "t_cr": [36.8, 37.2, 38.5, 40, 50],
+            "water_loss": [825 / duration * duration_walking, 4000, 4100, 4200, 4300],
         },
         2: {
             "met": 6.4,
-            "clo": 0.5,
+            "clo": 0.4,
             "v": wind_speed,
             "tg": globe_temperature_day,
-            "duration": 60,
+            "duration": duration,
             "t_cr": [36.8, 38, 39.5, 40, 50],
-            "water_loss": [850 / 45 * 60, 2900, 3000, 3100, 3200],
+            "water_loss": [850, 2900, 3000, 3100, 3200],
         },
         3: {
             "met": 7.2,
             "clo": 0.5,
             "v": wind_speed,
             "tg": globe_temperature_day,
-            "duration": 45,
+            "duration": duration,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
@@ -71,7 +81,7 @@ class Var:
             "clo": 0.5,
             "v": wind_speed,
             "tg": globe_temperature_day,
-            "duration": 45,
+            "duration": duration,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
@@ -80,13 +90,23 @@ class Var:
             "clo": 0.5,
             "v": wind_speed,
             "tg": globe_temperature_day,
-            "duration": 45,
+            "duration": duration,
             "t_cr": [36.8, 38, 39.5, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
     }
 
     fig_directory = os.path.join(os.getcwd(), "tests", "figures")
+
+
+class Col:
+    t = "tdb"
+    rh = "rh"
+    y = "year"
+    risk = "risk"
+    m = "month"
+    d = "day"
+    h = "hour"
 
 
 def plot_rh_lines(axis, rh_val=1, t_array=np.arange(0, 40, 0.5)):
@@ -474,8 +494,8 @@ def calculate_heat_stress_location(
 
 
 def compare_phs_sma():
-    f, axs = plt.subplots(1, 3, constrained_layout=True, figsize=(7, 4), sharey=True)
-    for col, sport_category in enumerate([1, 3, 5]):
+    f, axs = plt.subplots(1, 5, constrained_layout=True, figsize=(7, 4), sharey=True)
+    for col, sport_category in enumerate([1, 2, 3, 4, 5]):
         thresholds = []
         for t in Var.t_range:
             results = []
@@ -567,18 +587,22 @@ def compare_phs_sma():
         x = Var.t_range
         colors = Var.cmap_list
 
-        # for ix, risk in enumerate(["high", "extreme"]):
-        #     df_risk = df_[[risk, 't']].dropna()
-        #     z = np.polyfit(df_risk.t, df_risk[risk], 2)
-        #
-        #     plt.plot(
-        #         x,
-        #         np.poly1d(z)(x),
-        #         label=risk,
-        #         c=colors[ix+2],
-        #         lw=2,
-        #         path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
-        #     )
+        regression_curves_v2[sport_category] = {}
+        for ix, risk in enumerate(["moderate", "high", "extreme"]):
+            df_risk = df_[[risk, "t"]].dropna()
+            df_risk = df_risk[df_risk[risk] > 0]
+            df_risk = df_risk[df_risk[risk] < 100]
+            z = np.polyfit(df_risk.t, df_risk[risk], 2)
+            regression_curves_v2[sport_category][risk] = z
+
+            # axs[col].plot(
+            #     x,
+            #     np.poly1d(z)(x),
+            #     label=risk,
+            #     c=colors[ix + 1],
+            #     lw=2,
+            #     path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+            # )
 
         axs[col].fill_between(
             df_.t,
@@ -630,11 +654,326 @@ def compare_phs_sma():
         axs[col].set(
             ylim=(0, 100),
             xlim=(26, 41),
-            title=f"{sport_category=}",
-            xlabel="Air Temperature (°C)",
+            title=f"cat = {sport_category}",
+            xlabel="Air Temp. (°C)",
         )
     axs[0].set(ylabel="Relative Humidity (%)")
     plt.savefig("tests/figures/comparison_sports_risk.png", dpi=300)
+
+    with open("tests/regression_curves_v2.pkl", "wb") as f:
+        pickle.dump(regression_curves_v2, f)
+
+
+def plot_each_sport():
+    df_sport = pd.read_csv("assets/sports.csv").dropna()
+    for ix, row in df_sport.iterrows():
+        # if row["sport"] != "Rugby league":
+        #     continue
+        sport_category = row["sport_cat"]
+        Var.sports_profiles[sport_category] = {
+            "met": row["met"],
+            "clo": row["clo"],
+            "v": row["wind"],
+            "tg": Var.sports_profiles[sport_category]["tg"],
+            "duration": row["duration"],
+            "t_cr": Var.sports_profiles[sport_category]["t_cr"],
+            "water_loss": [
+                x / Var.sports_profiles[sport_category]["duration"] * row["duration"]
+                for x in Var.sports_profiles[sport_category]["water_loss"]
+            ],
+        }
+
+        f, ax = plt.subplots(1, 1, constrained_layout=True, figsize=(7, 4))
+        thresholds = []
+        for t in Var.t_range:
+            results = []
+            for t_core_max in Var.sports_profiles[sport_category][Var.var_threshold][
+                -3:-1
+            ]:
+
+                def calculate_threshold_core(x):
+                    return (
+                        phs(
+                            tdb=t,
+                            tr=t_mrt(
+                                Var.sports_profiles[sport_category]["tg"] + t,
+                                t,
+                                Var.sports_profiles[sport_category]["v"],
+                                standard="iso",
+                            ),
+                            v=Var.sports_profiles[sport_category]["v"],
+                            rh=x,
+                            met=Var.sports_profiles[sport_category]["met"] * 58.15,
+                            clo=Var.sports_profiles[sport_category]["clo"],
+                            posture=Var.position,
+                            duration=Var.sports_profiles[sport_category]["duration"],
+                            round=False,
+                            acclimatized=100,
+                            i_mst=0.4,
+                        )[Var.var_threshold]
+                        - t_core_max
+                    )
+
+                try:
+                    results.append(
+                        scipy.optimize.brentq(calculate_threshold_core, 0, 100)
+                    )
+                except:
+                    results.append(np.nan)
+
+            def calculate_threshold_water_loss(x):
+                return (
+                    phs(
+                        tdb=t,
+                        tr=t_mrt(
+                            Var.sports_profiles[sport_category]["tg"] + t,
+                            t,
+                            Var.sports_profiles[sport_category]["v"],
+                            standard="iso",
+                        ),
+                        v=Var.sports_profiles[sport_category]["v"],
+                        rh=x,
+                        met=Var.sports_profiles[sport_category]["met"] * 58.15,
+                        clo=Var.sports_profiles[sport_category]["clo"],
+                        posture=Var.position,
+                        duration=Var.sports_profiles[sport_category]["duration"],
+                        round=False,
+                        acclimatized=100,
+                        i_mst=0.4,
+                    )["water_loss"]
+                    - Var.sports_profiles[sport_category]["water_loss"][0]
+                )
+
+            try:
+                results.append(
+                    scipy.optimize.brentq(calculate_threshold_water_loss, 0, 100)
+                )
+            except:
+                results.append(np.nan)
+
+            results.append(t)
+            thresholds.append(results)
+        df_ = pd.DataFrame(
+            thresholds,
+            columns=[
+                "high",
+                "extreme",
+                "moderate",
+                "t",
+            ],
+        )
+
+        # fill values to plot
+        max_t = df_[["high", "extreme", "t"]].dropna()["t"].max()
+        df_.loc[df_.t > max_t, ["high", "extreme"]] = df_.loc[
+            df_.t > max_t, ["high", "extreme"]
+        ].fillna(0)
+        min_t = df_[["high", "extreme", "t"]].dropna()["t"].min()
+        df_.loc[df_.t < min_t, ["high", "extreme"]] = df_.loc[
+            df_.t < min_t, ["high", "extreme"]
+        ].fillna(100)
+        try:
+            index_max_t = df_[["moderate", "t"]].dropna()["moderate"].idxmin()
+            df_.loc[df_.index > index_max_t, "moderate"] = 0
+            t_min = df_[["moderate", "t"]].dropna()["t"].min()
+            df_.loc[df_["t"] < t_min, "moderate"] = 100
+        except ValueError:
+            pass
+        x = Var.t_range
+        colors = Var.cmap_list
+
+        ax.fill_between(
+            df_.t,
+            df_.t * 0,
+            df_.moderate,
+            color=colors[0],
+        )
+        ax.fill_between(
+            df_.t,
+            df_.moderate,
+            df_.high,
+            color=colors[1],
+        )
+        ax.fill_between(
+            df_.t,
+            df_.extreme,
+            df_.high,
+            color=colors[2],
+        )
+        ax.fill_between(
+            df_.t,
+            df_.extreme,
+            df_.t * 100,
+            color=colors[3],
+        )
+
+        sma_lines = generate_regression_curves(sport_category)
+        ax.plot(
+            x,
+            sma_lines[1](Var.t_range),
+            c=colors[1],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        ax.plot(
+            x,
+            sma_lines[2](Var.t_range),
+            c=colors[2],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        ax.plot(
+            x,
+            sma_lines[3](Var.t_range),
+            c=colors[3],
+            lw=1,
+            path_effects=[pe.Stroke(linewidth=3, foreground="k"), pe.Normal()],
+        )
+        ax.set(
+            ylim=(0, 100),
+            xlim=(26, 41),
+            title=f"sport = {row['sport']}",
+            xlabel="Air Temp. (°C)",
+        )
+        ax.set(ylabel="Relative Humidity (%)")
+
+
+def analyse_historical_bom_data(sport_category=3):
+    path_list_weather = Path("tests/weather").glob("*.txt")
+
+    df_days_interruptions = pd.DataFrame()
+    for path_station in path_list_weather:
+        df = pd.read_csv(str(path_station), na_values={Col.t: "     ", Col.rh: "   "})
+        df = df.rename(
+            columns={
+                "Air Temperature in degrees C": Col.t,
+                "Relative humidity in percentage %": Col.rh,
+                "Year Month Day Hour Minutes in YYYY.1": Col.y,
+                "MM": Col.m,
+                "DD": Col.d,
+                "HH24": Col.h,
+            }
+        )
+        df.index = pd.to_datetime(df[["year", "month", "day", "hour"]])
+        df[Col.rh] = df[Col.rh].replace("   ", np.nan)
+        df.dropna(inplace=True)
+        df = df[(2023 > df[Col.y]) & (df[Col.y] > 2017)]
+        df[Col.t] = df[Col.t].astype(float).values.tolist()
+        df[Col.rh] = df[Col.rh].astype(float).values.tolist()
+        df = df[[Col.t, Col.rh]].resample("1h").mean()
+        # I am not setting a limit since most of the data are missing in winter
+        df = df.interpolate(method="linear", limit_direction="forward")
+        # print(str(path_station))
+        # if any(df.isna().any(axis=0).tolist()):
+        #     print(df[df.isna().any(axis=1)])
+        #     print("there are still some missing values in the data")
+        # print(df.groupby(df.index.year)[Col.t].count())
+        df[Col.risk] = "low"
+        df[Col.risk] = 0
+        for ix, key in enumerate(regression_curves_v2[sport_category].keys()):
+            df["threshold"] = np.poly1d(regression_curves_v2[sport_category][key])(
+                df[Col.t]
+            )
+            df.loc[df[Col.rh] > df["threshold"], Col.risk] = key
+            df.loc[df[Col.rh] > df["threshold"], Col.risk] = ix + 1
+        df[Col.risk].unique()
+        plt.figure()
+        plt.scatter(
+            x=df[Col.t],
+            y=df[Col.rh],
+            c=df[Col.risk],
+            s=1,
+            cmap=mpl.colors.ListedColormap(
+                Var.cmap_list[: len(df[Col.risk].unique())], name="my"
+            ),
+        )
+        colors = Var.cmap_list
+
+        for ix, risk in enumerate(["moderate", "high", "extreme"]):
+            x = np.linspace(df[Col.t].min(), 45, 20)
+            plt.plot(
+                x,
+                np.poly1d(regression_curves_v2[sport_category][risk])(x),
+                label=risk,
+                c=colors[ix + 1],
+                lw=2,
+                path_effects=[pe.Stroke(linewidth=5, foreground="k"), pe.Normal()],
+            )
+        plt.gca().set(xlim=(26, 45), ylim=(0, 100))
+        plt.title(str(path_station).split("/")[-1])
+        plt.tight_layout()
+
+        print(str(path_station))
+        df_days_interruptions_city = (
+            df.groupby([df.index.year, df.index.date, Col.risk])[Col.risk]
+            .count()
+            .unstack(Col.risk)[3]
+            .dropna()
+            .groupby(level=0)
+            .count()
+        ).to_frame()
+        df_days_interruptions_city[
+            "city"
+        ] = f"{str(path_station).split('/')[-1].replace('.txt', '').capitalize()}."
+        # df[df[Col.risk] > 2].groupby([Col.y])[Col.risk].count().plot()
+        df_days_interruptions = pd.concat(
+            [df_days_interruptions_city, df_days_interruptions]
+        )
+
+    f, (ax_top, ax_bottom) = plt.subplots(
+        ncols=1,
+        nrows=2,
+        sharex=False,
+        gridspec_kw={"hspace": 0.05},
+        constrained_layout=True,
+        figsize=(7, 4),
+    )
+    sns.barplot(
+        df_days_interruptions,
+        x=df_days_interruptions.index,
+        y=df_days_interruptions[3],
+        hue="city",
+        ax=ax_top,
+    )
+    sns.barplot(
+        df_days_interruptions,
+        x=df_days_interruptions.index,
+        y=df_days_interruptions[3],
+        hue="city",
+        ax=ax_bottom,
+    )
+    ax_top.set_ylim(140, 240)  # those limits are fake
+    ax_bottom.set_ylim(0, 14)
+
+    sns.despine(ax=ax_bottom)
+    sns.despine(ax=ax_top, bottom=True)
+    ax_top.set(ylabel="   ", xticks=[], xlabel="")
+    ax_bottom.set(ylabel="   ", xlabel="Year")
+    ax_bottom.grid(axis="y", ls="--", color="lightgrey", alpha=0.6)
+    ax_top.grid(axis="y", ls="--", color="lightgrey", alpha=0.6)
+
+    ax = ax_top
+    d = 0.003  # how big to make the diagonal lines in axes coordinates
+    # arguments to pass to plot, just so we don't keep repeating them
+    kwargs = dict(transform=ax.transAxes, color="k", clip_on=False, lw=0.5)
+    ax.plot((-d, +d), (-d, +d), **kwargs)  # top-left diagonal
+
+    ax2 = ax_bottom
+    kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
+    ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)  # bottom-left diagonal
+    f.text(0.01, 0.5, "Number of days per year", va="center", rotation="vertical")
+    ax_top.legend(
+        bbox_to_anchor=(0, 1.02, 1, 0.2),
+        loc="lower left",
+        mode="expand",
+        borderaxespad=0,
+        ncol=8,
+        frameon=False,
+    )
+
+    # remove one of the legend
+    ax_bottom.legend_.remove()
+    plt.savefig("tests/figures/days_interruptions.png", dpi=300)
 
 
 if __name__ == "__main__":
@@ -643,7 +982,9 @@ if __name__ == "__main__":
     # check_model_output("two_node")
     # check_model_output("phs")
 
-    compare_phs_sma()
+    # compare_phs_sma()
+    plot_each_sport()
+    # analyse_historical_bom_data()
 
 if __name__ == "__plot__":
 
