@@ -139,48 +139,69 @@ def body(data):
         ]
     else:
         return [
-            dbc.Row(
-                html.Div(
-                    id="id-icon-sport",
-                    className="p-2",
+            dmc.Card(
+                children=[
+                    dmc.CardSection(
+                        dmc.Image(
+                            src="assets/images/Soccer.webp",
+                        )
+                    ),
+                ],
+                withBorder=True,
+                shadow="sm",
+                radius="md",
+                className="my-2",
+            ),
+            html.H4(
+                "Current estimated Heat Stress Risk is:",
+            ),
+            html.Div(id="fig-indicator", className="my-2"),
+            dmc.Center(
+                dbc.Alert(
+                    [
+                        html.H4(
+                            id="value-hss-current",
+                        ),
+                    ],
+                    style={
+                        "text-align": "center",
+                        "width": "30%",
+                    },
+                    id="id-alert-risk-current-value",
+                    color="light",
+                    className="p-1 m-0",
                 ),
-                justify="center",
+                style={
+                    "margin-top": "-66px",
+                },
             ),
-            dbc.Alert(
-                [
-                    html.Div(
-                        id="id-icon-sport",
-                        className="p-2",
-                    ),
-                    html.Hr(),
-                    html.H6(
-                        "Current estimated Heat Stress Risk is:",
-                    ),
-                    html.H1(
-                        className="alert-heading",
-                        id="value-hss-current",
-                    ),
-                ],
-                style={"text-align": "center"},
-                id="id-alert-risk-current-value",
-                color="light",
-            ),
-            html.H3(
-                "Heat Stress Scale:",
-            ),
-            html.Div(id="fig-indicator"),
             legend_risk(),
-            dbc.Alert(
-                [
-                    html.H3(
-                        "Key recommendations:",
+            html.H3(
+                "Key recommendations:",
+            ),
+            html.Div(
+                children=dmc.BackgroundImage(
+                    src="assets/images/low.jpg",
+                    style={"height": "300px", "position": "relative"},
+                    radius=20,
+                    children=html.Div(
+                        style={"bottom": "0", "left": "1rem", "position": "absolute"},
+                        children=[
+                            dmc.Text(
+                                "Wear light clothing",
+                                weight=700,
+                                size=50,
+                                style={"font-family": "Bebas Neue"},
+                            ),
+                            dmc.Text(
+                                "Stay hydrated",
+                                weight=700,
+                                size=50,
+                                style={"font-family": "Bebas Neue"},
+                            ),
+                        ],
                     ),
-                    html.Hr(),
-                    html.Div(id="div-icons-suggestions"),
-                ],
-                className="mt-1",
-                color="secondary",
-                id="id-alert-risk-current-recommendations",
+                ),
             ),
             dbc.Accordion(
                 dbc.AccordionItem(
@@ -230,24 +251,6 @@ def icon_component(src, message, size="50px"):
         justify="center",
         className="my-1",
     )
-
-
-@callback(
-    Output("id-icon-sport", "children"),
-    Input(local_storage_settings_name, "data"),
-)
-def update_location_and_forecast(data_sport):
-    try:
-        file_name = f"{data_sport['id-sport']}.png"
-    except KeyError:
-        raise PreventUpdate
-    path = os.path.join(os.getcwd(), "assets", "icons", file_name)
-    message = f"Activity: {data_sport['id-sport']}"
-    # source https://www.theolympicdesign.com/olympic-design/pictograms/tokyo-2020/
-    if os.path.isfile(path):
-        return icon_component(f"../assets/icons/{data_sport['id-sport']}.png", message)
-    else:
-        return icon_component("../assets/icons/sports.png", message)
 
 
 @callback(
@@ -344,7 +347,6 @@ def update_fig_hss_trend(data):
     Output("id-alert-risk-current-value", "color"),
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
-    Output("div-icons-suggestions", "children"),
     Input(session_storage_weather_name, "data"),
 )
 def update_alert_hss_current(data):
@@ -375,7 +377,7 @@ def update_alert_hss_current(data):
                     "../assets/icons/stop.png", "Consider Suspending Play", size="100px"
                 ),
             ]
-        return f"{risk_class}".capitalize(), color, description, suggestion, icons
+        return f"{risk_class}".capitalize(), color, description, suggestion
     except ValueError:
         raise PreventUpdate
 
@@ -401,12 +403,19 @@ def on_location_change(data_sport):
 
     try:
 
-        print(f"querying data {pd.Timestamp.now()}")
+        try:
+            df = pd.read_pickle("tests/weather_data.pkl")
+            print(f"using saved data {pd.Timestamp.now()}")
+        except:
 
-        df = get_yr_weather(
-            lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
-        )
-        df = calculate_comfort_indices_v1(df, sports_category[data_sport["id-sport"]])
+            print(f"querying data {pd.Timestamp.now()}")
+            df = get_yr_weather(
+                lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
+            )
+            df = calculate_comfort_indices_v1(
+                df, sports_category[data_sport["id-sport"]]
+            )
+            df.to_pickle("tests/weather_data.pkl")
 
         return df.to_json(date_format="iso", orient="table"), dl.Map(
             [

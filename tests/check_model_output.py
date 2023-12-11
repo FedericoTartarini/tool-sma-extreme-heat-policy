@@ -666,8 +666,9 @@ def compare_phs_sma():
 
 def plot_each_sport():
     df_sport = pd.read_csv("assets/sports.csv").dropna()
+    df_sport.to_latex("tests/figures/sports.tex", index=False)
     for ix, row in df_sport.iterrows():
-        # if row["sport"] != "Rugby league":
+        # if row["sport"] != "Archery":
         #     continue
         sport_category = row["sport_cat"]
         Var.sports_profiles[sport_category] = {
@@ -836,6 +837,7 @@ def plot_each_sport():
             xlabel="Air Temp. (°C)",
         )
         ax.set(ylabel="Relative Humidity (%)")
+        plt.savefig(f"tests/figures/sports/{row['sport']}")
 
 
 def analyse_historical_bom_data(sport_category=3):
@@ -985,6 +987,8 @@ if __name__ == "__main__":
     # compare_phs_sma()
     plot_each_sport()
     # analyse_historical_bom_data()
+
+    plt.close("all")
 
 if __name__ == "__plot__":
 
