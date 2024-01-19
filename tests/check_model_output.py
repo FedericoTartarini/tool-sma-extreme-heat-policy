@@ -31,7 +31,7 @@ class Var:
     min_threshold_temperature = 26
     t_range = np.arange(
         min_threshold_temperature,
-        step=(interval := 0.5),
+        step=(interval := 0.25),
         stop=41 + interval,
     )
     rh_range = np.arange(
@@ -43,13 +43,13 @@ class Var:
     globe_temperature_night = 3
     wind_speed = 0.5
     var_threshold = "t_cr"
-    cmap_list = ["#00AD7C", "#FFD039", "#E45A01", "#CB3327"]
+    cmap_list = ["#fcd200", "#fd7f00", "#dc0b00", "#9c001d"]
 
     duration = 45
     duration_walking = 200
 
     sports_profiles = {
-        1: {
+        1: {  # include older adults
             "met": 4.7,
             "clo": 0.4,
             "v": wind_speed,
@@ -64,7 +64,7 @@ class Var:
             "v": wind_speed,
             "tg": globe_temperature_day,
             "duration": duration,
-            "t_cr": [36.8, 38, 39.5, 40, 50],
+            "t_cr": [36.8, 38, 39.45, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
         3: {
@@ -73,26 +73,26 @@ class Var:
             "v": wind_speed,
             "tg": globe_temperature_day,
             "duration": duration,
-            "t_cr": [36.8, 38, 39.5, 40, 50],
+            "t_cr": [36.8, 38, 39.45, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
-        4: {
+        4: {  # higher water loss limit
             "met": 7.3,
             "clo": 0.5,
             "v": wind_speed,
             "tg": globe_temperature_day,
             "duration": duration,
-            "t_cr": [36.8, 38, 39.5, 40, 50],
+            "t_cr": [36.8, 38, 39.45, 40, 50],
             "water_loss": [850, 2900, 3000, 3100, 3200],
         },
-        5: {
+        5: {  # higher water loss limit
             "met": 7.5,
             "clo": 0.5,
             "v": wind_speed,
             "tg": globe_temperature_day,
             "duration": duration,
-            "t_cr": [36.8, 38, 39.5, 40, 50],
-            "water_loss": [850, 2900, 3000, 3100, 3200],
+            "t_cr": [36.8, 38, 39.45, 40, 50],
+            "water_loss": [950, 2900, 3000, 3100, 3200],
         },
     }
 
@@ -834,9 +834,10 @@ def plot_each_sport():
             ylim=(0, 100),
             xlim=(26, 41),
             title=f"sport = {row['sport']}",
-            xlabel="Air Temp. (°C)",
+            xlabel="Air Temperature (°C)",
         )
         ax.set(ylabel="Relative Humidity (%)")
+        sns.despine(ax=ax, bottom=True, left=True)
         plt.savefig(f"tests/figures/sports/{row['sport']}")
 
 
@@ -988,7 +989,7 @@ if __name__ == "__main__":
     plot_each_sport()
     # analyse_historical_bom_data()
 
-    plt.close("all")
+    # plt.close("all")
 
 if __name__ == "__plot__":
 

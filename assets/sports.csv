@@ -1,34 +1,34 @@
 sport,clo,met,sport_cat,wind,duration
-Abseiling,0.6,5.5,3,0.5,120
+Abseiling,0.6,5.5,5,0.5,120
 Archery,.5,5,1,0.5,180
 Australian football,0.47,7.5,3,.75,45
-Baseball,0.8,6,4,1,120
-Basketball,0.37,7.5,3,1,45
+Baseball,0.7,6,5,.75,120
+Basketball,0.37,7.5,3,.75,45
 Bowls,.5,5,1,0.5,180
 Canoeing,0.6,7.5,3,2,60
-Cricket,0.9,6,4,1,120
+Cricket,0.7,6,5,.75,120
 Cycling,0.4,7,3,5,60
 Equestrian,0.9,7.4,4,4,60
 Field Athletics,0.25,7,2,1,60
-Field hockey,0.45,7.3,5,1,45
+Field hockey,0.6,7.4,4,0.75,45
 Fishing,.6,5,1,0.5,180
 Golf,.5,5,1,0.5,180
 Horseback riding,0.9,7.4,4,4,60
 Kayaking,0.6,7.5,3,2,60
 Long distance running,0.37,7.5,3,2,60
-Mountain biking,0.55,7.5,5,5,60
-Netball,0.37,7.5,3,1,45
-Oztag,0.4,7.5,3,1,45
-Pickleball,0.48,6.5,3,0.5,60
-Rock climbing,0.6,7.5,3,1,60
+Mountain biking,0.55,7.5,4,5,60
+Netball,0.37,7.5,3,.75,45
+Oztag,0.4,7.5,3,.75,45
+Pickleball,0.4,6.5,3,.5,60
+Rock climbing,0.6,7.5,3,1,45
 Rowing,0.4,7.5,3,2,60
-Rugby league,0.47,7.5,4,1,45
-Rugby union,0.47,7.5,4,1,45
-Sailing,1,6,2,5,180
+Rugby league,0.47,7.5,4,.75,45
+Rugby union,0.47,7.5,4,.75,45
+Sailing,1,6.5,5,3,180
 Shooting,0.6,5,1,0.5,120
 Soccer,0.47,7.5,3,1,45
-Softball,0.9,6.1,4,1,120
-Tennis,0.4,6.8,3,0.5,60
-Touch football,0.4,7.5,3,1,45
-Volleyball,0.37,6,3,0.5,120
+Softball,0.9,6.1,5,1,120
+Tennis,0.4,7,3,.75,60
+Touch football,0.4,7.5,3,.75,45
+Volleyball,0.37,6.8,3,.75,60
 Walking brisk,.5,5,1,0.5,180
