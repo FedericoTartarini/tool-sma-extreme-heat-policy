@@ -24,6 +24,32 @@ sports_info = pd.read_csv("assets/sports.csv")
 # risk classes
 variable_calc_risk = "ratio_w"
 
+df_postcodes = pd.read_csv("./assets/postcodes.csv")
+df_postcodes["sub-state-post"] = (
+    df_postcodes["suburb"]
+    + ", "
+    + df_postcodes["state"]
+    + ", "
+    + df_postcodes["postcode"].astype("str")
+)
+
+questions = [
+    {
+        "id": "id-sport",
+        "question": "Sport:",
+        "options": sports_info.sport.unique(),
+        "multi": False,
+        "default": "Soccer",
+    },
+    {
+        "id": "id-postcode",
+        "question": "Location:",
+        "options": list(df_postcodes["sub-state-post"].unique()),
+        "multi": False,
+        "default": default_settings["id-postcode"],
+    },
+]
+
 
 @dataclass(order=True)
 class RiskInfo:

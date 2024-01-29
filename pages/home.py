@@ -1,34 +1,36 @@
-import os
 import time
-
-from dash import html, dcc, Output, Input, State, callback
-import dash_bootstrap_components as dbc
-import dash_leaflet as dl
-from dash.exceptions import PreventUpdate
-from my_app.charts import indicator_chart, line_chart
-import dash
 from copy import deepcopy
+
+import dash
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 import pandas as pd
+from dash import html, dcc, Output, Input, State, callback
+from dash.exceptions import PreventUpdate
+from firebase_admin import db
+
+from components.dropdowns import component_location_sport_dropdowns
+from components.forecasts import component_forecast
+from components.map import component_map
+from config import (
+    sma_risk_messages,
+    default_settings,
+    questions,
+    time_zones,
+    default_location,
+    df_postcodes,
+)
+from my_app.charts import indicator_chart
 from my_app.utils import (
-    sports_category,
     legend_risk,
-    get_yr_weather,
-    calculate_comfort_indices_v1,
-    get_data_specific_day,
     FirebaseFields,
     local_storage_settings_name,
     session_storage_weather_name,
     storage_user_id,
+    get_yr_weather,
+    calculate_comfort_indices_v1,
+    sports_category,
 )
-from config import (
-    sma_risk_messages,
-    sports_info,
-    time_zones,
-    default_location,
-    default_settings,
-)
-import dash_mantine_components as dmc
-from firebase_admin import db
 
 ref = db.reference(FirebaseFields.database_name)
 
@@ -41,58 +43,6 @@ dash.register_page(
     description="This is the home page of the SMA Extreme Policy Tool",
 )
 
-df_postcodes = pd.read_csv("./assets/postcodes.csv")
-df_postcodes["sub-state-post"] = (
-    df_postcodes["suburb"]
-    + ", "
-    + df_postcodes["state"]
-    + ", "
-    + df_postcodes["postcode"].astype("str")
-)
-
-questions = [
-    {
-        "id": "id-sport",
-        "question": "Sport:",
-        "options": sports_info.sport.unique(),
-        "multi": False,
-        "default": "Soccer",
-    },
-    {
-        "id": "id-postcode",
-        "question": "Location:",
-        "options": list(df_postcodes["sub-state-post"].unique()),
-        "multi": False,
-        "default": default_settings["id-postcode"],
-    },
-]
-
-
-def generate_dropdown(questions_to_display):
-    return [
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Label(
-                        item["question"],
-                        className="py-2",
-                    ),
-                    width="auto",
-                ),
-                dbc.Col(
-                    dcc.Dropdown(
-                        item["options"],
-                        item["default"],
-                        multi=item["multi"],
-                        id=item["id"],
-                    ),
-                ),
-            ],
-            className="pb-2",
-        )
-        for item in questions_to_display
-    ]
-
 
 layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
@@ -102,14 +52,8 @@ layout = dmc.LoadingOverlay(
             id=local_storage_settings_name, storage_type="local", data=default_settings
         ),
         dcc.Store(id=session_storage_weather_name, storage_type="session"),
-        html.Div(
-            generate_dropdown(questions),
-            id="settings-dropdowns",
-        ),
-        html.Div(
-            dbc.Alert("", color="dark", style={"height": "10em"}),
-            id="map-component",
-        ),
+        component_location_sport_dropdowns(),
+        component_map(),
         html.Div(
             [
                 dbc.Alert("", color="dark", style={"height": "11em"}),
@@ -223,9 +167,7 @@ def body(data):
                 className="my-2",
                 id="id-accordion-risk-current",
             ),
-            html.H2("Forecasted risk for today"),
-            html.Div(id="fig-forecast_line"),
-            html.Div(id="fig-forecast-next-days"),
+            component_forecast(),
         ]
 
 
@@ -265,79 +207,6 @@ def update_fig_hss_trend(data, data_sport):
             figure=indicator_chart(df),
             config={"staticPlot": True},
         )
-    except ValueError:
-        raise PreventUpdate
-
-
-@callback(
-    Output("fig-forecast_line", "children"),
-    Input(session_storage_weather_name, "data"),
-)
-def update_fig_hss_trend(data):
-    try:
-        df = pd.read_json(data, orient="table")
-        df = get_data_specific_day(df, date_offset=0)
-        return dcc.Graph(
-            figure=line_chart(df, "risk_value_interpolated"),
-            config={"staticPlot": True},
-        )
-    except ValueError:
-        raise PreventUpdate
-
-
-@callback(
-    Output("fig-forecast-next-days", "children"),
-    Input(session_storage_weather_name, "data"),
-)
-def update_fig_hss_trend(data):
-    try:
-        df = pd.read_json(data, orient="table")
-        accordions = []
-        for day in [1, 2, 3]:
-            df_day = get_data_specific_day(df, date_offset=day)
-            day_name = df_day.index.day_name().unique()[0]
-            color = sma_risk_messages[df_day["risk"].max()].color
-            risk_value = df_day.loc[
-                df_day.risk_value == df_day.risk_value.max(), "risk"
-            ].unique()[0]
-
-            accordions.append(
-                dmc.AccordionItem(
-                    children=[
-                        dmc.AccordionControl(
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.H4(day_name, className="p-0 m-0"),
-                                        align="center",
-                                    ),
-                                    dbc.Col(
-                                        html.P("Max risk:", className="p-0 m-0"),
-                                        width="auto",
-                                    ),
-                                    dbc.Col(
-                                        dbc.Badge(
-                                            risk_value,
-                                            className="ms-1 p-1 m-0",
-                                            color=color,
-                                        ),
-                                        width="auto",
-                                    ),
-                                ],
-                                align="center",
-                            )
-                        ),
-                        dmc.AccordionPanel(
-                            dcc.Graph(
-                                figure=line_chart(df_day, "risk_value_interpolated"),
-                                config={"staticPlot": True},
-                            ),
-                        ),
-                    ],
-                    value=day_name,
-                )
-            ),
-        return dmc.Accordion(accordions)
     except ValueError:
         raise PreventUpdate
 
@@ -383,79 +252,6 @@ def update_alert_hss_current(data):
 
 
 @callback(
-    Output(session_storage_weather_name, "data"),
-    Output("map-component", "children"),
-    Input(local_storage_settings_name, "data"),
-    prevent_initial_call=True,
-)
-def on_location_change(data_sport):
-    try:
-        information = df_postcodes[
-            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
-        ].to_dict(orient="list")
-        loc_selected = {
-            "lat": information["latitude"][0],
-            "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
-        }
-    except TypeError:
-        loc_selected = default_location
-
-    try:
-
-        try:
-            df = pd.read_pickle("tests/weather_data.pkl")
-            print(f"using saved data {pd.Timestamp.now()}")
-        except:
-
-            print(f"querying data {pd.Timestamp.now()}")
-            df = get_yr_weather(
-                lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
-            )
-            df = calculate_comfort_indices_v1(
-                df, sports_category[data_sport["id-sport"]]
-            )
-            df.to_pickle("tests/weather_data.pkl")
-
-        return df.to_json(date_format="iso", orient="table"), dl.Map(
-            [
-                dl.TileLayer(maxZoom=13, minZoom=7),
-                dl.Marker(position=[loc_selected["lat"], loc_selected["lon"]]),
-                dl.GestureHandling(),
-            ],
-            id="map",
-            style={
-                "width": "100%",
-                "height": "13vh",
-                "margin": "auto",
-                "display": "block",
-                # "-webkit-filter": "grayscale(100%)",
-                # "filter": "grayscal`e(100%)",
-            },
-            center=(loc_selected["lat"], loc_selected["lon"]),
-            zoom=11,
-        )
-    except TypeError:
-        raise PreventUpdate
-
-
-@callback(
-    Output("settings-dropdowns", "children"),
-    Input("url", "pathname"),
-    State(local_storage_settings_name, "data"),
-)
-def display_the_dropdown_after_page_change(pathname, data):
-    data = data or default_settings
-    if pathname == "/":
-        __questions = deepcopy(questions)
-        for ix, q in enumerate(__questions):
-            __questions[ix]["default"] = data[q["id"]]
-        return generate_dropdown(__questions)
-    else:
-        raise PreventUpdate
-
-
-@callback(
     Output(local_storage_settings_name, "data"),
     State(local_storage_settings_name, "data"),
     State(storage_user_id, "data"),
@@ -476,3 +272,30 @@ def save_settings_in_storage(data, user_id, *args):
         ref.push().set(firebase_data)
 
     return data
+
+
+@callback(
+    Output(session_storage_weather_name, "data"),
+    Input(local_storage_settings_name, "data"),
+    prevent_initial_call=True,
+)
+def on_location_change(data_sport):
+    try:
+        information = df_postcodes[
+            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
+        ].to_dict(orient="list")
+        loc_selected = {
+            "lat": information["latitude"][0],
+            "lon": information["longitude"][0],
+            "tz": time_zones[information["state"][0]],
+        }
+    except TypeError:
+        loc_selected = default_location
+
+    print(f"querying data {pd.Timestamp.now()}")
+    df = get_yr_weather(
+        lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
+    )
+    df = calculate_comfort_indices_v1(df, sports_category[data_sport["id-sport"]])
+
+    return df.to_json(date_format="iso", orient="table")
