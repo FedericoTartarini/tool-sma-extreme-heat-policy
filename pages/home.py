@@ -12,6 +12,8 @@ from firebase_admin import db
 from components.dropdowns import component_location_sport_dropdowns
 from components.forecasts import component_forecast
 from components.map import component_map
+from components.main_recommendations import component_main_recommendation
+from components.detailed_recommendations import component_detailed_recommendation
 from config import (
     sma_risk_messages,
     default_settings,
@@ -30,6 +32,7 @@ from my_app.utils import (
     get_yr_weather,
     calculate_comfort_indices_v1,
     sports_category,
+    icon_component,
 )
 
 ref = db.reference(FirebaseFields.database_name)
@@ -120,79 +123,10 @@ def body(data):
                 },
             ),
             legend_risk(),
-            html.H3(
-                "Key recommendations:",
-            ),
-            html.Div(
-                children=dmc.BackgroundImage(
-                    src="assets/images/low.jpg",
-                    style={"height": "300px", "position": "relative"},
-                    radius=20,
-                    children=html.Div(
-                        style={"bottom": "0", "left": "1rem", "position": "absolute"},
-                        children=[
-                            dmc.Text(
-                                "Wear light clothing",
-                                weight=700,
-                                size=50,
-                                style={"font-family": "Bebas Neue"},
-                            ),
-                            dmc.Text(
-                                "Stay hydrated",
-                                weight=700,
-                                size=50,
-                                style={"font-family": "Bebas Neue"},
-                            ),
-                        ],
-                    ),
-                ),
-            ),
-            dbc.Accordion(
-                dbc.AccordionItem(
-                    [
-                        html.P(
-                            id="value-risk-description",
-                        ),
-                        html.P(
-                            "You should:",
-                        ),
-                        dcc.Markdown(
-                            id="value-risk-suggestions",
-                            className="mb-0",
-                        ),
-                    ],
-                    title="Detailed suggestions: ",
-                ),
-                start_collapsed=True,
-                className="my-2",
-                id="id-accordion-risk-current",
-            ),
+            component_main_recommendation(),
+            component_detailed_recommendation(),
             component_forecast(),
         ]
-
-
-def icon_component(src, message, size="50px"):
-    return dbc.Row(
-        [
-            dbc.Col(
-                html.Img(
-                    src=src,
-                    width=size,
-                    style={"filter": "drop-shadow(2px 5px 2px rgb(0 0 0 / 0.4))"},
-                ),
-                style={"text-align": "right"},
-                width="auto",
-            ),
-            dbc.Col(
-                html.H3(message),
-                width="auto",
-                style={"text-align": "left"},
-            ),
-        ],
-        align="center",
-        justify="center",
-        className="my-1",
-    )
 
 
 @callback(
@@ -214,8 +148,6 @@ def update_fig_hss_trend(data, data_sport):
 @callback(
     Output("value-hss-current", "children"),
     Output("id-alert-risk-current-value", "color"),
-    Output("value-risk-description", "children"),
-    Output("value-risk-suggestions", "children"),
     Input(session_storage_weather_name, "data"),
 )
 def update_alert_hss_current(data):
@@ -223,8 +155,6 @@ def update_alert_hss_current(data):
         df = pd.read_json(data, orient="table")
         color = sma_risk_messages[df["risk"][0]].color
         risk_class = df["risk"].iloc[0]
-        description = sma_risk_messages[risk_class].description.capitalize()
-        suggestion = sma_risk_messages[risk_class].suggestion.capitalize()
         icons = [
             icon_component("../assets/icons/water-bottle.png", "Stay hydrated"),
             icon_component("../assets/icons/tshirt.png", "Wear light clothing"),
@@ -246,7 +176,7 @@ def update_alert_hss_current(data):
                     "../assets/icons/stop.png", "Consider Suspending Play", size="100px"
                 ),
             ]
-        return f"{risk_class}".capitalize(), color, description, suggestion
+        return f"{risk_class}".capitalize(), color
     except ValueError:
         raise PreventUpdate
 

@@ -289,6 +289,30 @@ class FirebaseFields:
     location: str = "location"
 
 
+def icon_component(src, message, size="50px"):
+    return dbc.Row(
+        [
+            dbc.Col(
+                html.Img(
+                    src=src,
+                    width=size,
+                    style={"filter": "drop-shadow(2px 5px 2px rgb(0 0 0 / 0.4))"},
+                ),
+                style={"text-align": "right"},
+                width="auto",
+            ),
+            dbc.Col(
+                html.H3(message),
+                width="auto",
+                style={"text-align": "left"},
+            ),
+        ],
+        align="center",
+        justify="center",
+        className="my-1",
+    )
+
+
 if __name__ == "__main__":
     df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
     df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
