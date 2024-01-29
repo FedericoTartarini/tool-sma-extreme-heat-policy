@@ -9,11 +9,11 @@ from dash import html, dcc, Output, Input, State, callback
 from dash.exceptions import PreventUpdate
 from firebase_admin import db
 
+from components.detailed_recommendations import component_detailed_recommendation
 from components.dropdowns import component_location_sport_dropdowns
 from components.forecasts import component_forecast
-from components.map import component_map
 from components.main_recommendations import component_main_recommendation
-from components.detailed_recommendations import component_detailed_recommendation
+from components.map import component_map
 from config import (
     sma_risk_messages,
     default_settings,
@@ -32,7 +32,6 @@ from my_app.utils import (
     get_yr_weather,
     calculate_comfort_indices_v1,
     sports_category,
-    icon_component,
 )
 
 ref = db.reference(FirebaseFields.database_name)
@@ -155,27 +154,6 @@ def update_alert_hss_current(data):
         df = pd.read_json(data, orient="table")
         color = sma_risk_messages[df["risk"][0]].color
         risk_class = df["risk"].iloc[0]
-        icons = [
-            icon_component("../assets/icons/water-bottle.png", "Stay hydrated"),
-            icon_component("../assets/icons/tshirt.png", "Wear light clothing"),
-        ]
-        if risk_class == "moderate":
-            icons.append(
-                icon_component("../assets/icons/pause.png", "Rest Breaks"),
-            )
-        if risk_class == "high":
-            icons.append(
-                icon_component("../assets/icons/pause.png", "Rest Breaks"),
-            )
-            icons.append(
-                icon_component("../assets/icons/slush-drink.png", "Active Cooling"),
-            )
-        if risk_class == "extreme":
-            icons = [
-                icon_component(
-                    "../assets/icons/stop.png", "Consider Suspending Play", size="100px"
-                ),
-            ]
         return f"{risk_class}".capitalize(), color
     except ValueError:
         raise PreventUpdate
