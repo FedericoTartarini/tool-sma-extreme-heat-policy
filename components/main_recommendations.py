@@ -3,9 +3,6 @@ import pandas as pd
 from dash import html, Output, Input, callback
 from dash.exceptions import PreventUpdate
 
-from config import (
-    sma_risk_messages,
-)
 from my_app.utils import (
     session_storage_weather_name,
     icon_component,
