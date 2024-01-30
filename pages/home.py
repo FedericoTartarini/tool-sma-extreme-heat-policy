@@ -19,7 +19,8 @@ from firebase_admin import db
 
 from components.current_risk import component_current_risk
 from components.detailed_recommendations import component_detailed_recommendation
-from components.dropdowns import component_location_sport_dropdowns
+from components.dropdown_location import component_location_dropdowns
+from components.dropdown_sport import component_sport_dropdowns
 from components.forecasts import component_forecast
 from components.main_recommendations import component_main_recommendation
 from components.map import component_map
@@ -58,8 +59,9 @@ layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
+        component_sport_dropdowns(),
         component_sport_image(),
-        component_location_sport_dropdowns(),
+        component_location_dropdowns(),
         component_map(),
         component_current_risk(),
         legend_risk(),
