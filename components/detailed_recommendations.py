@@ -1,3 +1,5 @@
+from io import StringIO
+
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html, dcc, Output, Input, callback
@@ -45,8 +47,7 @@ def component_detailed_recommendation():
 )
 def update_alert_hss_current(data):
     try:
-        df = pd.read_json(data, orient="table")
-        color = sma_risk_messages[df["risk"][0]].color
+        df = pd.read_json(StringIO(data), orient="split")
         risk_class = df["risk"].iloc[0]
         description = sma_risk_messages[risk_class].description.capitalize()
         suggestion = sma_risk_messages[risk_class].suggestion.capitalize()

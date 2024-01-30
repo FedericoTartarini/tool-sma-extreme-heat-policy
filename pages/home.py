@@ -169,6 +169,6 @@ def on_location_change(data_sport, df_for_store):
     df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
     print(f"finished {pd.Timestamp.now()}")
 
-    return df.to_json(date_format="iso", orient="table"), df_for.to_json(
+    return df.to_json(date_format="iso", orient="split"), df_for.to_json(
         date_format="iso", orient="split"
     )

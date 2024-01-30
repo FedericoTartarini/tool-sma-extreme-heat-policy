@@ -3,6 +3,7 @@ from dash import html, dcc, Output, Input, State, callback
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
+from io import StringIO
 
 from config import sma_risk_messages
 from my_app.charts import indicator_chart
@@ -46,7 +47,7 @@ def component_current_risk():
 )
 def update_fig_hss_trend(data, data_sport):
     try:
-        df = pd.read_json(data, orient="table")
+        df = pd.read_json(StringIO(data), orient="split")
         return dcc.Graph(
             figure=indicator_chart(df),
             config={"staticPlot": True},
@@ -62,8 +63,8 @@ def update_fig_hss_trend(data, data_sport):
 )
 def update_alert_hss_current(data):
     try:
-        df = pd.read_json(data, orient="table")
-        color = sma_risk_messages[df["risk"][0]].color
+        df = pd.read_json(StringIO(data), orient="split")
+        color = sma_risk_messages[df["risk"].iloc[0]].color
         risk_class = df["risk"].iloc[0]
         return f"{risk_class}".capitalize(), color
     except ValueError:

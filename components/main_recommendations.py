@@ -1,3 +1,5 @@
+from io import StringIO
+
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html, Output, Input, callback
@@ -34,7 +36,7 @@ def component_main_recommendation():
 )
 def update_alert_hss_current(data):
     try:
-        df = pd.read_json(data, orient="table")
+        df = pd.read_json(StringIO(data), orient="split")
         risk_class = df["risk"].iloc[0]
         icons = [
             icon_component("../assets/icons/water-bottle.png", "Stay hydrated"),
