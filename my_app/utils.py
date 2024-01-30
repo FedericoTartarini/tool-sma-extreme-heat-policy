@@ -424,7 +424,7 @@ def icon_component(src, message, size="50px"):
                 html.Img(
                     src=src,
                     width=size,
-                    style={"filter": "drop-shadow(2px 5px 2px rgb(0 0 0 / 0.4))"},
+                    # style={"filter": "drop-shadow(2px 5px 2px rgb(0 0 0 / 0.4))"},
                 ),
                 style={"text-align": "right"},
                 width="auto",
