@@ -8,11 +8,12 @@ def component_sport_image():
                 dmc.Image(
                     # todo this should change based on the sport
                     src="assets/images/Soccer.webp",
+                    height=127,
                 )
             ),
         ],
         withBorder=True,
         shadow="sm",
         radius="md",
-        className="my-2",
+        className="mb-2",
     )

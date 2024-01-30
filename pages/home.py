@@ -58,39 +58,16 @@ layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
+        component_sport_image(),
         component_location_sport_dropdowns(),
         component_map(),
-        html.Div(
-            id="body-home",
-        ),
+        component_current_risk(),
+        legend_risk(),
+        component_main_recommendation(),
+        component_detailed_recommendation(),
+        component_forecast(),
     ],
 )
-
-
-@callback(
-    Output("body-home", "children"),
-    Input(local_storage_settings_name, "data"),
-)
-def body(data):
-    sport_selected = data["id-sport"]
-    if not sport_selected:
-        return [
-            dbc.Alert(
-                "Please select a sport",
-                id="sport-selection",
-                color="danger",
-                className="mt-2",
-            ),
-        ]
-    else:
-        return [
-            component_sport_image(),
-            component_current_risk(),
-            legend_risk(),
-            component_main_recommendation(),
-            component_detailed_recommendation(),
-            component_forecast(),
-        ]
 
 
 @callback(

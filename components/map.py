@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 import dash_leaflet as dl
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import (
@@ -15,9 +16,15 @@ from my_app.utils import (
 
 
 def component_map():
-    return html.Div(
-        dbc.Alert("", color="dark", style={"height": "10em"}),
+    return dmc.Card(
+        children=[
+            dbc.Alert("", color="dark", style={"height": "10em"}),
+        ],
         id="map-component",
+        withBorder=True,
+        shadow="sm",
+        radius="md",
+        className="p-0 mb-2",
     )
 
 
