@@ -1,8 +1,15 @@
 from copy import deepcopy
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Output, Input, State, callback
 from dash.exceptions import PreventUpdate
+from dash_extensions.enrich import (
+    Output,
+    Input,
+    State,
+    html,
+    callback,
+    dcc,
+)
 
 from config import (
     default_settings,
@@ -47,6 +54,7 @@ def component_location_sport_dropdowns():
     Output("settings-dropdowns", "children"),
     Input("url", "pathname"),
     State(local_storage_settings_name, "data"),
+    prevent_initial_call=True,
 )
 def display_the_dropdown_after_page_change(pathname, data):
     data = data or default_settings

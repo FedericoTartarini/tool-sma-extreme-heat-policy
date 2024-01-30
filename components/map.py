@@ -1,7 +1,12 @@
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
-from dash import html, Output, Input, callback
 from dash.exceptions import PreventUpdate
+from dash_extensions.enrich import (
+    Output,
+    Input,
+    html,
+    callback,
+)
 
 from config import time_zones, default_location, df_postcodes
 from my_app.utils import (

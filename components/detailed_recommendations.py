@@ -1,9 +1,11 @@
-from io import StringIO
-
 import dash_bootstrap_components as dbc
-import pandas as pd
-from dash import html, dcc, Output, Input, callback
-from dash.exceptions import PreventUpdate
+from dash_extensions.enrich import (
+    Output,
+    Input,
+    html,
+    callback,
+    dcc,
+)
 
 from config import (
     sma_risk_messages,
@@ -44,13 +46,10 @@ def component_detailed_recommendation():
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
     Input(session_storage_weather_name, "data"),
+    prevent_initial_call=True,
 )
-def update_alert_hss_current(data):
-    try:
-        df = pd.read_json(StringIO(data), orient="split")
-        risk_class = df["risk"].iloc[0]
-        description = sma_risk_messages[risk_class].description.capitalize()
-        suggestion = sma_risk_messages[risk_class].suggestion.capitalize()
-        return description, suggestion
-    except ValueError:
-        raise PreventUpdate
+def update_alert_hss_current(df):
+    risk_class = df["risk"].iloc[0]
+    description = sma_risk_messages[risk_class].description.capitalize()
+    suggestion = sma_risk_messages[risk_class].suggestion.capitalize()
+    return description, suggestion

@@ -1,14 +1,20 @@
 import time
 from copy import deepcopy
 from datetime import datetime
-from io import StringIO
 
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import pandas as pd
 import pytz
-from dash import html, dcc, Output, Input, State, callback
+from dash_extensions.enrich import (
+    Output,
+    Input,
+    State,
+    Serverside,
+    html,
+    callback,
+)
 from firebase_admin import db
 
 from components.current_risk import component_current_risk
@@ -19,8 +25,6 @@ from components.main_recommendations import component_main_recommendation
 from components.map import component_map
 from components.sport_image import component_sport_image
 from config import (
-    default_settings,
-    questions,
     time_zones,
     default_location,
     df_postcodes,
@@ -54,11 +58,6 @@ layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
-        dcc.Store(
-            id=local_storage_settings_name, storage_type="local", data=default_settings
-        ),
-        dcc.Store(id=session_storage_weather_name, storage_type="session"),
-        dcc.Store(id=session_storage_weather_forecast, storage_type="session"),
         component_location_sport_dropdowns(),
         component_map(),
         html.Div(
@@ -98,14 +97,15 @@ def body(data):
     Output(local_storage_settings_name, "data"),
     State(local_storage_settings_name, "data"),
     State(storage_user_id, "data"),
-    [Input(question["id"], "value") for question in questions],
+    Input("id-postcode", "value"),
+    Input("id-sport", "value"),
     prevent_initial_call=True,
 )
-def save_settings_in_storage(data, user_id, *args):
+def save_settings_in_storage(data, user_id, location, sport):
     """Saves in local storage the settings selected by the participant."""
     data = data or {}
-    for ix, question_id in enumerate([question["id"] for question in questions]):
-        data[question_id] = args[ix]
+    data["id-postcode"] = location
+    data["id-sport"] = sport
 
     firebase_data = deepcopy(data)
     if any(data.values()):
@@ -118,14 +118,13 @@ def save_settings_in_storage(data, user_id, *args):
 
 
 @callback(
-    # todo implement server side output
     Output(session_storage_weather_name, "data"),
     Output(session_storage_weather_forecast, "data"),
     Input(local_storage_settings_name, "data"),
     State(session_storage_weather_forecast, "data"),
     prevent_initial_call=True,
 )
-def on_location_change(data_sport, df_for_store):
+def on_location_change(data_sport, df_for):
     try:
         information = df_postcodes[
             df_postcodes["sub-state-post"] == data_sport["id-postcode"]
@@ -141,8 +140,7 @@ def on_location_change(data_sport, df_for_store):
     print(f"querying data {pd.Timestamp.now()}")
 
     query_yr = True
-    if df_for_store:
-        df_for = pd.read_json(StringIO(df_for_store), orient="split")
+    try:
         lat = df_for[ColumnsDataframe.lat].unique()[0]
         lon = df_for[ColumnsDataframe.lon].unique()[0]
         tz = df_for[ColumnsDataframe.tz].unique()[0]
@@ -156,6 +154,8 @@ def on_location_change(data_sport, df_for_store):
             and delta.seconds < 3600
         ):
             query_yr = False
+    except:
+        pass
 
     if query_yr:
         print(f"{datetime.now()} - querying weather data")
@@ -169,6 +169,4 @@ def on_location_change(data_sport, df_for_store):
     df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
     print(f"finished {pd.Timestamp.now()}")
 
-    return df.to_json(date_format="iso", orient="split"), df_for.to_json(
-        date_format="iso", orient="split"
-    )
+    return Serverside(df), Serverside(df_for)

@@ -1,17 +1,29 @@
 import json
-
-from dash import Dash, Input, Output, State, page_container
-import dash_bootstrap_components as dbc
-from dash import html, dcc
-from my_app.navbar import my_navbar
-from my_app.footer import my_footer
 import os
-import dash_mantine_components as dmc
-import firebase_admin
-from firebase_admin import credentials
 import uuid
 
-from my_app.utils import FirebaseFields, storage_user_id
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+import firebase_admin
+from dash import page_container
+from dash_extensions.enrich import (
+    DashProxy,
+    html,
+    dcc,
+    ServersideOutputTransform,
+)
+from firebase_admin import credentials
+
+from config import default_settings
+from my_app.footer import my_footer
+from my_app.navbar import my_navbar
+from my_app.utils import (
+    FirebaseFields,
+    storage_user_id,
+    local_storage_settings_name,
+    session_storage_weather_name,
+    session_storage_weather_forecast,
+)
 
 try:
     cred = credentials.Certificate("secret.json")
@@ -24,8 +36,10 @@ firebase_admin.initialize_app(
 )
 
 
-app = Dash(
-    __name__,
+app = DashProxy(
+    transforms=[
+        ServersideOutputTransform(),
+    ],
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
         "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
@@ -99,6 +113,19 @@ app.layout = html.Div(
     children=[
         dcc.Location(id="url"),
         html.Div(id="id-google-analytics-event"),
+        dcc.Loading(
+            [
+                dcc.Store(
+                    id=local_storage_settings_name,
+                    storage_type="local",
+                    data=default_settings,
+                ),
+                dcc.Store(id=session_storage_weather_name),
+                dcc.Store(id=session_storage_weather_forecast),
+            ],
+            fullscreen=True,
+            type="dot",
+        ),
         dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
         my_navbar(),
         dmc.Container(

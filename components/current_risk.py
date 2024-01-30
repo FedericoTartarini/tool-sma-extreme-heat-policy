@@ -1,13 +1,16 @@
-import pandas as pd
-from dash import html, dcc, Output, Input, State, callback
-import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
-from dash.exceptions import PreventUpdate
-from io import StringIO
+import dash_mantine_components as dmc
+from dash_extensions.enrich import (
+    Output,
+    Input,
+    html,
+    callback,
+    dcc,
+)
 
 from config import sma_risk_messages
 from my_app.charts import indicator_chart
-from my_app.utils import session_storage_weather_name, local_storage_settings_name
+from my_app.utils import session_storage_weather_name
 
 
 def component_current_risk():
@@ -43,29 +46,21 @@ def component_current_risk():
 @callback(
     Output("fig-indicator", "children"),
     Input(session_storage_weather_name, "data"),
-    State(local_storage_settings_name, "data"),
 )
-def update_fig_hss_trend(data, data_sport):
-    try:
-        df = pd.read_json(StringIO(data), orient="split")
-        return dcc.Graph(
-            figure=indicator_chart(df),
-            config={"staticPlot": True},
-        )
-    except ValueError:
-        raise PreventUpdate
+def update_fig_hss_trend(df):
+    return dcc.Graph(
+        figure=indicator_chart(df),
+        config={"staticPlot": True},
+    )
 
 
 @callback(
     Output("value-hss-current", "children"),
     Output("id-alert-risk-current-value", "color"),
     Input(session_storage_weather_name, "data"),
+    prevent_initial_call=True,
 )
-def update_alert_hss_current(data):
-    try:
-        df = pd.read_json(StringIO(data), orient="split")
-        color = sma_risk_messages[df["risk"].iloc[0]].color
-        risk_class = df["risk"].iloc[0]
-        return f"{risk_class}".capitalize(), color
-    except ValueError:
-        raise PreventUpdate
+def update_alert_hss_current(df):
+    color = sma_risk_messages[df["risk"].iloc[0]].color
+    risk_class = df["risk"].iloc[0]
+    return f"{risk_class}".capitalize(), color
