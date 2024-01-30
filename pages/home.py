@@ -1,10 +1,13 @@
 import time
 from copy import deepcopy
+from datetime import datetime
+from io import StringIO
 
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import pandas as pd
+import pytz
 from dash import html, dcc, Output, Input, State, callback
 from firebase_admin import db
 
@@ -27,10 +30,12 @@ from my_app.utils import (
     FirebaseFields,
     local_storage_settings_name,
     session_storage_weather_name,
+    session_storage_weather_forecast,
     storage_user_id,
-    get_yr_weather,
+    get_weather,
     calculate_comfort_indices_v1,
     sports_category,
+    ColumnsDataframe,
 )
 
 ref = db.reference(FirebaseFields.database_name)
@@ -53,6 +58,7 @@ layout = dmc.LoadingOverlay(
             id=local_storage_settings_name, storage_type="local", data=default_settings
         ),
         dcc.Store(id=session_storage_weather_name, storage_type="session"),
+        dcc.Store(id=session_storage_weather_forecast, storage_type="session"),
         component_location_sport_dropdowns(),
         component_map(),
         html.Div(
@@ -114,10 +120,12 @@ def save_settings_in_storage(data, user_id, *args):
 @callback(
     # todo implement server side output
     Output(session_storage_weather_name, "data"),
+    Output(session_storage_weather_forecast, "data"),
     Input(local_storage_settings_name, "data"),
+    State(session_storage_weather_forecast, "data"),
     prevent_initial_call=True,
 )
-def on_location_change(data_sport):
+def on_location_change(data_sport, df_for_store):
     try:
         information = df_postcodes[
             df_postcodes["sub-state-post"] == data_sport["id-postcode"]
@@ -131,11 +139,36 @@ def on_location_change(data_sport):
         loc_selected = default_location
 
     print(f"querying data {pd.Timestamp.now()}")
-    df = get_yr_weather(
-        lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
-    )
+
+    query_yr = True
+    if df_for_store:
+        df_for = pd.read_json(StringIO(df_for_store), orient="split")
+        lat = df_for[ColumnsDataframe.lat].unique()[0]
+        lon = df_for[ColumnsDataframe.lon].unique()[0]
+        tz = df_for[ColumnsDataframe.tz].unique()[0]
+        df_for.index = pd.to_datetime(df_for.index).tz_convert(tz)
+        last_query_time = df_for.index.min()
+        delta = datetime.now(pytz.timezone(tz)) - last_query_time
+        if (
+            lat == loc_selected["lat"]
+            and lon == loc_selected["lon"]
+            and tz == loc_selected["tz"]
+            and delta.seconds < 3600
+        ):
+            query_yr = False
+
+    if query_yr:
+        print(f"{datetime.now()} - querying weather data")
+        df_for = get_weather(
+            lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
+        )
+    else:
+        print(f"{datetime.now()} - using stored data")
+
     print(f"calculating comfort indices {pd.Timestamp.now()}")
-    df = calculate_comfort_indices_v1(df, sports_category[data_sport["id-sport"]])
+    df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
     print(f"finished {pd.Timestamp.now()}")
 
-    return df.to_json(date_format="iso", orient="table")
+    return df.to_json(date_format="iso", orient="table"), df_for.to_json(
+        date_format="iso", orient="split"
+    )

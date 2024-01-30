@@ -1,8 +1,8 @@
-import plotly.express as px
 import numpy as np
-from my_app.utils import calculate_comfort_indices_v1, get_yr_weather
-from config import sma_risk_messages
+import plotly.express as px
 import plotly.graph_objects as go
+
+from config import sma_risk_messages
 
 
 def standard_layout(fig):
@@ -191,25 +191,3 @@ def indicator_chart(df):
     )
     fig.update_layout(height=300)
     return fig
-
-
-if __name__ == "__main__":
-    df_w = get_yr_weather(lat=-17.91, lon=122.25)
-    df_for = calculate_comfort_indices_v1(df_w, 3)
-
-    fig = px.line(
-        df_for,
-        x=df_for.index,
-        y=df_for.risk_value,
-        height=200,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=df_for.index,
-            y=df_for.risk_value_interpolated,
-        )
-    )
-    fig.show()
-
-    f = line_chart(df_for, "risk_value_interpolated")
-    f.show()

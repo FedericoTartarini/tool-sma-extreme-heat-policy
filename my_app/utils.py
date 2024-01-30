@@ -1,9 +1,9 @@
 import warnings
-import dash_bootstrap_components as dbc
-from dash import html
-
-import numpy as np
 from dataclasses import dataclass
+
+import dash_bootstrap_components as dbc
+import numpy as np
+from dash import html
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -13,12 +13,57 @@ import pytz
 from config import sma_risk_messages, mrt_calculation, variable_calc_risk
 from pvlib import location
 from pythermalcomfort.models import utci, solar_gain, two_nodes
+import openmeteo_requests
+import requests_cache
+from retry_requests import retry
 
 app_version = "0.0.4"
 app_version = app_version.replace(".", "")
 local_storage_settings_name = f"local-storage-settings-{app_version}"
 session_storage_weather_name = f"session-storage-weather-{app_version}"
+session_storage_weather_forecast = f"session-storage-forecast-{app_version}"
 storage_user_id = "user-id"
+
+
+@dataclass()
+class ColumnsDataframe:
+    pressure: str = "pressure"
+    time: str = "time"
+    tdb: str = "tdb"
+    tdb_indoors: str = "tdb_indoors"
+    hr_indoors: str = "hr_indoors"
+    rh_indoors: str = "rh_indoors"
+    cloud: str = "cloud"
+    rh: str = "rh"
+    hr: str = "humidity_ratio"
+    wind_dir: str = "w-dir"
+    radiation: str = "radiation"
+    wind: str = "wind"
+    tr: str = "tr"
+    location: str = "indoor_outdoors"
+    clo: str = "clo"
+    met: str = "met"
+    set: str = "set"
+    w: str = "w"
+    w_max: str = "w_max"
+    m_bl: str = "m_bl"
+    m_rsw: str = "m_rsw"
+    ratio_m_bl: str = "ratio_m_bl"
+    ratio_w: str = "ratio_w"
+    ratio_disc: str = "ratio_disc"
+    disc_m_bl: str = "disc_m_bl"
+    coefficient_disc_m_bl: str = "coefficient_disc_m_bl"
+    hss_word: str = "hss_word"
+    hss: str = "hss"
+    disc: str = "disc"
+    lat: str = "lat"
+    lon: str = "lon"
+    tz: str = "tz"
+    sub_state_post: str = "sub-state-post"
+    postcode: str = "postcode"
+    state: str = "state"
+    suburb: str = "suburb"
+
 
 sports_category = dict(
     sorted(
@@ -73,7 +118,7 @@ headers = {
 }
 
 
-def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
+def yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     """Get weather forecast from YR website."""
 
     weather = requests.get(
@@ -90,13 +135,96 @@ def get_yr_weather(lat=-33.8862, lon=151.1791, tz="Australia/Sydney"):
     )
     df_weather = df_weather[df_weather.columns[:7]]
     df_weather.columns = ["time", "pressure", "tdb", "cloud", "rh", "w-dir", "wind"]
-    df_weather.set_index(pd.to_datetime(df_weather["time"]), inplace=True)
-    df_weather.drop(columns=["time"], inplace=True)
+
+    return df_weather
+
+
+def open_weather(lat, lon):
+    cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "cloud_cover",
+            "wind_speed_10m",
+            "direct_radiation",
+        ],
+        "timezone": "GMT",
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+    hourly_relative_humidity_2m = hourly.Variables(1).ValuesAsNumpy()
+    hourly_cloud_cover = hourly.Variables(2).ValuesAsNumpy()
+    hourly_wind_speed_10m = hourly.Variables(3).ValuesAsNumpy()
+    hourly_direct_radiation = hourly.Variables(4).ValuesAsNumpy()
+
+    hourly_data = {
+        ColumnsDataframe.time: pd.date_range(
+            start=pd.to_datetime(hourly.Time(), unit="s"),
+            end=pd.to_datetime(hourly.TimeEnd(), unit="s"),
+            freq=pd.Timedelta(seconds=hourly.Interval()),
+            inclusive="left",
+        ).tz_localize("GMT"),
+        ColumnsDataframe.tdb: hourly_temperature_2m,
+        ColumnsDataframe.rh: hourly_relative_humidity_2m,
+        ColumnsDataframe.cloud: hourly_cloud_cover,
+        ColumnsDataframe.wind: hourly_wind_speed_10m,
+        ColumnsDataframe.radiation: hourly_direct_radiation,
+    }
+
+    return pd.DataFrame(data=hourly_data)
+
+
+def get_weather(
+    lat=-33.8862,
+    lon=151.1791,
+    tz="Australia/Sydney",
+    provider: str = "open-meteo",
+):
+    """Get weather forecast from YR website.
+
+    provider: str
+        open-meteo or yr
+    """
+
+    try:
+        if provider == "open-meteo":
+            df_weather = open_weather(lat, lon)
+        else:
+            df_weather = yr_weather(lat, lon)
+    except:
+        if provider == "open-meteo":
+            df_weather = yr_weather(lat, lon)
+        else:
+            df_weather = open_weather(lat, lon)
+
+    df_weather.set_index(
+        pd.to_datetime(df_weather[ColumnsDataframe.time]), inplace=True
+    )
+    df_weather.drop(columns=[ColumnsDataframe.time], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
-    df_weather = df_weather.dropna(subset=["tdb"])
-    df_weather["lat"] = lat
-    df_weather["lon"] = lon
-    df_weather["tz"] = tz
+
+    now = pd.Timestamp.now(pytz.timezone(tz)) - pd.Timedelta(hours=1)
+    df_weather = df_weather[df_weather.index >= now]
+    df_weather = df_weather.dropna(subset=[ColumnsDataframe.tdb])
+    df_weather = df_weather.resample("30T").interpolate()
+    df_weather[ColumnsDataframe.lat] = lat
+    df_weather[ColumnsDataframe.lon] = lon
+    df_weather[ColumnsDataframe.tz] = tz
 
     return df_weather
 
@@ -311,17 +439,3 @@ def icon_component(src, message, size="50px"):
         justify="center",
         className="my-1",
     )
-
-
-if __name__ == "__main__":
-    df = get_yr_weather(lat=-33.889, lon=151.184, tz="Australia/Sydney")
-    df = get_yr_weather(lat=-31.92, lon=115.91, tz="Australia/Perth")
-    df_results = calculate_comfort_indices_v1(df, sport_class=2)
-
-    values = []
-    for t in np.arange(10, 50):
-        for rh in np.arange(0, 100, 1):
-            values.append([t, rh])
-    df = pd.DataFrame(values, columns=["tdb", "rh"])
-    df_results = calculate_comfort_indices_v1(data_for=df, sport_class=2)
-    df_plot = df_results.pivot("rh", "tdb", "risk").sort_index(ascending=False)

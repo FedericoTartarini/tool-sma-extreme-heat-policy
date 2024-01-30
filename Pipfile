@@ -14,6 +14,10 @@ requests = "==2.28.2"
 dash-extensions = "==0.1.10"
 pvlib = "==0.9.4"
 pythermalcomfort = "*"
+openmeteo-requests = "*"
+requests-cache = "*"
+retry-requests = "*"
+numpy = "*"
 
 [dev-packages]
 seaborn = "*"
