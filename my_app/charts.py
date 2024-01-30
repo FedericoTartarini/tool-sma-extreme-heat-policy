@@ -68,6 +68,7 @@ def line_chart(df, variable="tdb"):
             mode="lines+markers",
             line_color="black",
             line={"shape": "spline", "smoothing": 1.3},
+            marker=dict(size=15, color="#212424", line=dict(color="#304B4B", width=2)),
         )
     )
 
