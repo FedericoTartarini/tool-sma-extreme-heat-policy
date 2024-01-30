@@ -37,6 +37,7 @@ def generate_dropdown(questions_to_display):
                         item["default"],
                         multi=item["multi"],
                         id=item["id"],
+                        clearable=False,
                     ),
                 ),
             ],
