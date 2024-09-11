@@ -29,6 +29,7 @@ from config import (
 )
 import dash_mantine_components as dmc
 from firebase_admin import db
+from urllib.parse import parse_qs, urlencode
 
 ref = db.reference(FirebaseFields.database_name)
 
@@ -68,7 +69,9 @@ questions = [
 ]
 
 
-def generate_dropdown(questions_to_display):
+def generate_dropdown(questions_to_display, values=None):
+    #add the "values" as parameter to the function, to allow the dropdowns to be pre-filled by the url
+    values = values or {}
     return [
         dbc.Row(
             [
@@ -82,9 +85,9 @@ def generate_dropdown(questions_to_display):
                 dbc.Col(
                     dcc.Dropdown(
                         item["options"],
-                        item["default"],
+                        value=values.get(item['id'], item["default"]),
                         multi=item["multi"],
-                        id=item["id"],
+                        id={'type': 'dropdown', 'index': item['id']},
                     ),
                 ),
             ],
@@ -94,13 +97,13 @@ def generate_dropdown(questions_to_display):
     ]
 
 
+
 layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
-        dcc.Store(
-            id=local_storage_settings_name, storage_type="local", data=default_settings
-        ),
+        dcc.Location(id='url', refresh=False),
+        dcc.Store(id=local_storage_settings_name, storage_type="local", data=default_settings),
         dcc.Store(id=session_storage_weather_name, storage_type="session"),
         html.Div(
             generate_dropdown(questions),
@@ -120,7 +123,6 @@ layout = dmc.LoadingOverlay(
         ),
     ],
 )
-
 
 @callback(
     Output("body-home", "children"),
@@ -207,7 +209,6 @@ def body(data):
             html.Div(id="fig-forecast-next-days"),
         ]
 
-
 def icon_component(src, message, size="50px"):
     return dbc.Row(
         [
@@ -231,7 +232,6 @@ def icon_component(src, message, size="50px"):
         className="my-1",
     )
 
-
 @callback(
     Output("id-icon-sport", "children"),
     Input(local_storage_settings_name, "data"),
@@ -243,12 +243,10 @@ def update_location_and_forecast(data_sport):
         raise PreventUpdate
     path = os.path.join(os.getcwd(), "assets", "icons", file_name)
     message = f"Activity: {data_sport['id-sport']}"
-    # source https://www.theolympicdesign.com/olympic-design/pictograms/tokyo-2020/
     if os.path.isfile(path):
         return icon_component(f"../assets/icons/{data_sport['id-sport']}.png", message)
     else:
         return icon_component("../assets/icons/sports.png", message)
-
 
 @callback(
     Output("fig-indicator", "children"),
@@ -265,7 +263,6 @@ def update_fig_hss_trend(data, data_sport):
     except ValueError:
         raise PreventUpdate
 
-
 @callback(
     Output("fig-forecast_line", "children"),
     Input(session_storage_weather_name, "data"),
@@ -280,7 +277,6 @@ def update_fig_hss_trend(data):
         )
     except ValueError:
         raise PreventUpdate
-
 
 @callback(
     Output("fig-forecast-next-days", "children"),
@@ -333,11 +329,10 @@ def update_fig_hss_trend(data):
                     ],
                     value=day_name,
                 )
-            ),
+            )
         return dmc.Accordion(accordions)
     except ValueError:
         raise PreventUpdate
-
 
 @callback(
     Output("value-hss-current", "children"),
@@ -379,7 +374,6 @@ def update_alert_hss_current(data):
     except ValueError:
         raise PreventUpdate
 
-
 @callback(
     Output(session_storage_weather_name, "data"),
     Output("map-component", "children"),
@@ -400,7 +394,6 @@ def on_location_change(data_sport):
         loc_selected = default_location
 
     try:
-
         print(f"querying data {pd.Timestamp.now()}")
 
         df = get_yr_weather(
@@ -420,8 +413,6 @@ def on_location_change(data_sport):
                 "height": "13vh",
                 "margin": "auto",
                 "display": "block",
-                # "-webkit-filter": "grayscale(100%)",
-                # "filter": "grayscal`e(100%)",
             },
             center=(loc_selected["lat"], loc_selected["lon"]),
             zoom=11,
@@ -432,38 +423,61 @@ def on_location_change(data_sport):
 
 @callback(
     Output("settings-dropdowns", "children"),
+    #add the "search" parameter as an input, make the callback trigger when the page is loaded with  url have the "search" parameter
     Input("url", "pathname"),
+    Input("url", "search"),
     State(local_storage_settings_name, "data"),
 )
-def display_the_dropdown_after_page_change(pathname, data):
-    data = data or default_settings
+#add the "data" parameter as a state, to allow the dropdowns to be pre-filled by the url with the "search" parameter
+def display_the_dropdown_after_page_change(pathname, search, data):
     if pathname == "/":
-        __questions = deepcopy(questions)
-        for ix, q in enumerate(__questions):
-            __questions[ix]["default"] = data[q["id"]]
-        return generate_dropdown(__questions)
+        if search:
+            url_data = parse_qs(search.lstrip('?'))
+            for key, value in url_data.items():
+                if key in data:
+                    data[key] = value[0]
+        return generate_dropdown(questions, data)
     else:
         raise PreventUpdate
 
 
+#update local storage and the url
 @callback(
-    Output(local_storage_settings_name, "data"),
+    #allow the multiple dropdowns to be updated
+    Output(local_storage_settings_name, "data", allow_duplicate=True),
+    #update the url with the "search" parameter
+    Output('url', 'search'),
+    #use the new values and the ids of the dropdowns to update the local storage,
+    Input({'type': 'dropdown', 'index': dash.ALL}, 'value'),
+    State({'type': 'dropdown', 'index': dash.ALL}, 'id'),
     State(local_storage_settings_name, "data"),
     State(storage_user_id, "data"),
-    [Input(question["id"], "value") for question in questions],
     prevent_initial_call=True,
 )
-def save_settings_in_storage(data, user_id, *args):
-    """Saves in local storage the settings selected by the participant."""
-    data = data or {}
-    for ix, question_id in enumerate([question["id"] for question in questions]):
-        data[question_id] = args[ix]
+def save_settings_and_update_url(dropdown_new_values, dropdown_ids, data, user_id):
+    #use the context to get the id of the dropdown that was triggered
+    ctx = dash.callback_context
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    #if the triggered dropdown is not the url, update the local storage and the url
+    if triggered_id != 'url':
+        for value, id_dict in zip(dropdown_new_values, dropdown_ids):
+            if value is not None:
+                key = id_dict['index']
+                data[key] = value
 
-    firebase_data = deepcopy(data)
-    if any(data.values()):
+        firebase_data = data.copy()
         firebase_data[FirebaseFields.user_id] = user_id
         firebase_data[FirebaseFields.timestamp] = time.time()
         print(firebase_data)
         ref.push().set(firebase_data)
 
-    return data
+        #update the url with the new values
+        url_data = {k: v for k, v in data.items() if k in ['id-sport', 'id-postcode'] and v is not None}
+        #return the new values and the url
+        url_search = f"?{urlencode(url_data)}"
+
+
+        return data, url_search
+
+    return dash.no_update, dash.no_update
+
