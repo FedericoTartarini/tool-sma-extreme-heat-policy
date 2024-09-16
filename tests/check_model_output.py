@@ -912,9 +912,9 @@ def analyse_historical_bom_data(sport_category=3):
             .groupby(level=0)
             .count()
         ).to_frame()
-        df_days_interruptions_city[
-            "city"
-        ] = f"{str(path_station).split('/')[-1].replace('.txt', '').capitalize()}."
+        df_days_interruptions_city["city"] = (
+            f"{str(path_station).split('/')[-1].replace('.txt', '').capitalize()}."
+        )
         # df[df[Col.risk] > 2].groupby([Col.y])[Col.risk].count().plot()
         df_days_interruptions = pd.concat(
             [df_days_interruptions_city, df_days_interruptions]

@@ -1,6 +1,7 @@
 # Imports classes from Locust
 from locust import HttpUser, task
 
+
 # Instantiate a new virtual user
 class HelloWorldUser(HttpUser):
     # This tells locust to treat the method below

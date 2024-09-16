@@ -97,7 +97,7 @@ app.index_string = """<!DOCTYPE html>
 
 app.layout = html.Div(
     children=[
-        dcc.Location(id="url"),
+        dcc.Location(id="url", refresh=False),
         html.Div(id="id-google-analytics-event"),
         dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
         my_navbar(),
