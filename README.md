@@ -29,3 +29,12 @@ gcloud config set account hhri.usyd@gmail.com
 gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test  --project=sma-extreme-heat-policy
 gcloud run deploy extreme-heat-tool-test --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1
 ```
+
+### EMU version
+```
+gcloud components update
+gcloud config set account hhri.usyd@gmail.com
+pipenv requirements > requirements.txt
+gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/emu  --project=sma-extreme-heat-policy
+gcloud run deploy emu --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/emu --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1 --min-instances 1
+```
