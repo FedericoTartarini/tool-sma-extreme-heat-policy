@@ -64,7 +64,6 @@ layout = dmc.LoadingOverlay(
         component_location_dropdowns(),
         component_map(),
         component_current_risk(),
-        legend_risk(),
         component_main_recommendation(),
         component_detailed_recommendation(),
         component_forecast(),
