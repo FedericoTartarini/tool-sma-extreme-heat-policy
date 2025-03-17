@@ -111,7 +111,7 @@ app.index_string = """<!DOCTYPE html>
 
 app.layout = html.Div(
     children=[
-        dcc.Location(id="url"),
+        dcc.Location(id="url", refresh=False),
         html.Div(id="id-google-analytics-event"),
         dcc.Loading(
             [
