@@ -51,10 +51,10 @@ def update_fig_hss_trend(df):
     for day in [1, 2, 3, 4, 5, 6]:
         df_day = get_data_specific_day(df, date_offset=day)
         day_name = df_day.index.day_name().unique()[0]
-        color = sma_risk_messages[df_day["risk"].max()].color
         risk_value = df_day.loc[
             df_day.risk_value == df_day.risk_value.max(), "risk"
         ].unique()[0]
+        color = sma_risk_messages[risk_value].color
 
         accordions.append(
             dmc.AccordionItem(
@@ -63,23 +63,22 @@ def update_fig_hss_trend(df):
                         dbc.Row(
                             [
                                 dbc.Col(
-                                    html.H4(day_name, className="p-0 m-0"),
-                                    align="center",
-                                ),
-                                dbc.Col(
-                                    html.P("Max risk:", className="p-0 m-0"),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Badge(
-                                        risk_value,
-                                        className="ms-1 p-1 m-0",
-                                        color=color,
+                                    dmc.Stack(
+                                        [
+                                            html.H4(day_name, className="p-0 m-0"),
+                                            dmc.Text(
+                                                df_day.index.date[0].strftime(
+                                                    "%d-%m-%Y"
+                                                ),
+                                                className="p-0 m-0",
+                                                size="xs",
+                                            ),
+                                        ],
+                                        spacing=0,
                                     ),
-                                    width="auto",
-                                ),
-                            ],
-                            align="center",
+                                    align="center",
+                                )
+                            ]
                         )
                     ),
                     dmc.AccordionPanel(
