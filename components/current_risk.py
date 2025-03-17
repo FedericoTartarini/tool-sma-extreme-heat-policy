@@ -1,15 +1,13 @@
-import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash_extensions.enrich import (
     Output,
     Input,
     html,
     callback,
-    dcc,
 )
 
+from components.gauge import gauge_chart
 from config import sma_risk_messages
-from my_app.charts import indicator_chart
 from my_app.utils import session_storage_weather_name
 
 
@@ -19,26 +17,7 @@ def component_current_risk():
             html.H4(
                 "Current estimated Heat Stress Risk is:",
             ),
-            html.Div(id="fig-indicator", className="my-2"),
-            dmc.Center(
-                dbc.Alert(
-                    [
-                        html.H4(
-                            id="value-hss-current",
-                        ),
-                    ],
-                    style={
-                        "text-align": "center",
-                        "width": "30%",
-                    },
-                    id="id-alert-risk-current-value",
-                    color="light",
-                    className="p-1 m-0",
-                ),
-                style={
-                    "margin-top": "-66px",
-                },
-            ),
+            html.Div(id="fig-indicator"),
         ]
     )
 
@@ -48,9 +27,24 @@ def component_current_risk():
     Input(session_storage_weather_name, "data"),
 )
 def update_fig_hss_trend(df):
-    return dcc.Graph(
-        figure=indicator_chart(df),
-        config={"staticPlot": True},
+    colors = [x.color for x in sma_risk_messages.values()]
+    thresholds = [x.risk_value for x in sma_risk_messages.values()] + [4.0]
+    text = [x.capitalize() for x in sma_risk_messages.keys()]
+    risk_value = df.iloc[0]["risk_value_interpolated"]
+    return (
+        dmc.Image(
+            gauge_chart(
+                risk_value=risk_value,
+                colors=colors,
+                thresholds=thresholds,
+                text=text,
+                show_value=True,
+                text_rotated=True,
+            ),
+            alt="Heat stress chart",
+            py=0,
+            my={"base": "-4rem", "xs": "-6rem"},
+        ),
     )
 
 

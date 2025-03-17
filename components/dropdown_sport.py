@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import (
     Output,

@@ -83,7 +83,7 @@ sma_risk_messages = {
     * Reduce the amount of skin that is covered by clothing – this will help increase your
     sweat evaporation, which will help you dissipate heat.
         """,
-        color="#00AD7C",
+        color="#fcd200",
         risk_value=0,
     ),
     "moderate": RiskInfo(
@@ -107,7 +107,7 @@ sma_risk_messages = {
     * During all breaks in play or practice, everyone should seek shade – if natural shade is not
     available, portable sun shelters should be provided, and water freely available
         """,
-        color="#FFD039",
+        color="#fd7f00",
         risk_value=1,
     ),
     "high": RiskInfo(
@@ -129,7 +129,7 @@ sma_risk_messages = {
         * Electric (misting) fans – outdoor fans can help keep your body cool, especially when
         combined with a water misting system.
             """,
-        color="#E45A01",
+        color="#dc0b00",
         risk_value=2,
     ),
     "extreme": RiskInfo(
@@ -141,7 +141,7 @@ sma_risk_messages = {
         * All players should seek shade or cool refuge in an air-conditioned space if available
         * Active cooling strategies should be applied.
             """,
-        color="#CB3327",
+        color="#9c001d",
         risk_value=3,
     ),
 }
