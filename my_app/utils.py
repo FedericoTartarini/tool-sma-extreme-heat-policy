@@ -12,7 +12,7 @@ import requests
 import pytz
 from config import sma_risk_messages, mrt_calculation, variable_calc_risk
 from pvlib import location
-from pythermalcomfort.models import utci, solar_gain, two_nodes
+from pythermalcomfort.models import utci, solar_gain, two_nodes_gagge
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
@@ -317,15 +317,14 @@ def calculate_comfort_indices_v2(df_for, sport="Soccer", calc_tr=True, met_corr=
     df_for["utci"] = utci(
         tdb=df_for["tdb"], tr=df_for["tr"], v=df_for["wind"], rh=df_for["rh"]
     )
-    results_two_nodes = two_nodes(
+    results_two_nodes = two_nodes_gagge(
         tdb=df_for["tdb"],
         tr=df_for["tr"],
         v=df_for["wind"],
         rh=df_for["rh"],
         met=df_for["met"],
         clo=df_for["clo"],
-        limit_inputs=False,
-        round=False,
+        round_output=False,
         w_max=1,
     )
     df_for["set"] = results_two_nodes["_set"]
@@ -410,7 +409,9 @@ def get_data_specific_day(df, date_offset=0):
 @dataclass()
 class FirebaseFields:
     database_name: str = "/Users/Test"
-    database_url: str = "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
+    database_url: str = (
+        "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
+    )
     risk_profile: str = "risk-profile"
     user_id: str = "user-id"
     timestamp: str = "timestamp"
