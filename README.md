@@ -10,6 +10,11 @@ PORT=8080 && docker run -p 9090:${PORT} -e PORT=${PORT} gcr.io/football-nsw-3690
 ```
 You should be able to access the application at this URL: `http://127.0.0.1:9090/`
 
+### Run the tests
+```
+python -m pytest --base-url http://0.0.0.0:8080
+```
+
 ### Push the container image to Container Registry and deploy
 ```
 gcloud components update

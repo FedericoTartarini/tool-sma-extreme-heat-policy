@@ -25,6 +25,8 @@ seaborn = "*"
 numba = "*"
 psychrolib = "*"
 scipy = "*"
+pytest = "*"
+pytest-playwright = "*"
 
 [requires]
 python_version = "3.12"
