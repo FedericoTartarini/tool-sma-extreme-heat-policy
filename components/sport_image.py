@@ -13,7 +13,7 @@ def component_sport_image():
         children=[
             dmc.CardSection(
                 dmc.Image(
-                    src="assets/images/Walking.webp",
+                    src="assets/images/Walking (brisk).webp",
                     height=127,
                 ),
                 id="sport-image",

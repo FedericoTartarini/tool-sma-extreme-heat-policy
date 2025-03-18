@@ -1,7 +1,7 @@
 sport,clo,met,sport_cat,wind,duration
 Abseiling,0.6,5.5,5,0.5,120
 Archery,.5,5,1,0.5,180
-Australian football,0.47,7.5,3,.75,45
+Australian Football,0.47,7.5,3,.75,45
 Baseball,0.7,6,5,.75,120
 Basketball,0.37,7.5,3,.75,45
 Bowls,.5,5,1,0.5,180
@@ -31,4 +31,6 @@ Softball,0.9,6.1,5,1,120
 Tennis,0.4,7,3,.75,60
 Touch football,0.4,7.5,3,.75,45
 Volleyball,0.37,6.8,3,.75,60
-Walking brisk,.5,5,1,0.5,180
+Walking (brisk),.5,5,1,0.5,180
+Walking,.5,5,1,0.5,180
+Bush-walking,.5,5,1,0.5,180
