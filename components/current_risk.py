@@ -30,7 +30,9 @@ def update_fig_hss_trend(df):
     colors = [x.color for x in sma_risk_messages.values()]
     thresholds = [x.risk_value for x in sma_risk_messages.values()] + [4.0]
     text = [x.capitalize() for x in sma_risk_messages.keys()]
-    risk_value = df.iloc[0]["risk_value_interpolated"]
+    # I am adding one so the risk starts at 1
+    risk_value = df.iloc[0]["risk_value_interpolated"] + 1
+    thresholds = [x + 1 for x in thresholds]
     return (
         dmc.Image(
             gauge_chart(
