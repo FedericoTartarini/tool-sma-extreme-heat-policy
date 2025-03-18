@@ -12,13 +12,15 @@ from my_app.utils import session_storage_weather_name
 
 
 def component_current_risk():
-    return html.Div(
+    return dmc.Paper(
         children=[
-            html.H4(
-                "Current estimated Heat Stress Risk is:",
+            dmc.Center(
+                html.H4("Sport Heat Score Now is:"),
             ),
             html.Div(id="fig-indicator"),
-        ]
+        ],
+        shadow="md",
+        p="md",
     )
 
 

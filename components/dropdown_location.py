@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import (
     Output,
@@ -8,9 +7,9 @@ from dash_extensions.enrich import (
     State,
     html,
     callback,
-    dcc,
 )
 
+from components.dropdown_sport import generate_dropdown_inline
 from config import (
     default_settings,
     questions,
@@ -20,22 +19,9 @@ from my_app.utils import (
 )
 
 
-def location_dropdown(questions_to_display):
-    return [
-        dcc.Dropdown(
-            questions_to_display["options"],
-            questions_to_display["default"],
-            multi=questions_to_display["multi"],
-            id=questions_to_display["id"],
-            clearable=False,
-            className="pb-2",
-        )
-    ]
-
-
 def component_location_dropdowns():
     return html.Div(
-        location_dropdown(questions[1]),
+        generate_dropdown_inline(questions[1], text="Select a location:"),
         id="location_dropdown",
     )
 
@@ -53,6 +39,6 @@ def display_the_dropdown_after_page_change(pathname, data):
         __questions = deepcopy(questions)
         for ix, q in enumerate(__questions):
             __questions[ix]["default"] = data[q["id"]]
-        return location_dropdown(__questions[1])
+        return generate_dropdown_inline(__questions[1], text="Select a location:")
     else:
         raise PreventUpdate

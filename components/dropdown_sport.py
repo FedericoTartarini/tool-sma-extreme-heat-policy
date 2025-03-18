@@ -17,23 +17,41 @@ from config import (
 from my_app.utils import (
     local_storage_settings_name,
 )
+import dash_bootstrap_components as dbc
 
 
-def sport_dropdown(questions_to_display):
+def generate_dropdown_inline(content, text="Select a sport:"):
     return [
-        dcc.Dropdown(
-            questions_to_display["options"],
-            questions_to_display["default"],
-            multi=questions_to_display["multi"],
-            id=questions_to_display["id"],
-            clearable=False,
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Label(
+                        text,
+                        className="py-2",
+                    ),
+                    width="auto",
+                ),
+                dbc.Col(
+                    dcc.Dropdown(
+                        content["options"],
+                        content["default"],
+                        multi=content["multi"],
+                        id=content["id"],
+                        clearable=False,
+                        className="pb-2",
+                    )
+                ),
+            ],
             className="pb-2",
         )
     ]
 
 
 def component_sport_dropdowns():
-    return html.Div(sport_dropdown(questions[0]), id="sport_dropdown")
+    return html.Div(
+        generate_dropdown_inline(questions[0], text="Select a sport:"),
+        id="sport_dropdown",
+    )
 
 
 @callback(
@@ -48,6 +66,6 @@ def display_the_dropdown_after_page_change(pathname, data):
         __questions = deepcopy(questions)
         for ix, q in enumerate(__questions):
             __questions[ix]["default"] = data[q["id"]]
-        return sport_dropdown(__questions[0])
+        return generate_dropdown_inline(__questions[0], text="Select a sport:")
     else:
         raise PreventUpdate
