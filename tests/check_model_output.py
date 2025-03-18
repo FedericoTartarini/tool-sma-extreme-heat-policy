@@ -11,8 +11,8 @@ import pandas as pd
 import psychrolib as psyc
 import scipy
 import seaborn as sns
-from pythermalcomfort import phs
-from pythermalcomfort.psychrometrics import t_mrt
+from pythermalcomfort.models import phs
+from pythermalcomfort.utilities import mean_radiant_tmp
 from pythermalcomfort.utilities import v_relative
 
 from my_app.utils import generate_regression_curves, calculate_comfort_indices_v1
@@ -180,11 +180,13 @@ def calculate_results(
         df_["v"] = v_relative(df_["v"], val["met"])
 
     if const_t_globe:
-        df_["mrt"] = t_mrt(val["tg"] + df_["t"], df_["t"], df_["v"], standard="iso")
+        df_["mrt"] = mean_radiant_tmp(
+            val["tg"] + df_["t"], df_["t"], df_["v"], standard="iso"
+        )
 
     if night_day:
         # todo check this code
-        df_.loc[df_["elevation"] > 0, "mrt"] = t_mrt(
+        df_.loc[df_["elevation"] > 0, "mrt"] = mean_radiant_tmp(
             val["tg"] + df_["t"], df_["t"], df_["v"], standard="iso"
         )
 
@@ -192,7 +194,7 @@ def calculate_results(
     # for ix, row in df_.iterrows():
     #
     #     def calculate_globe_temperature(x):
-    #         return t_mrt(x + row["t"], row["t"], row["v"], standard="iso") - row["mrt"]
+    #         return mean_radiant_tmp()(x + row["t"], row["t"], row["v"], standard="iso") - row["mrt"]
     #
     #     results_globe_temperature.append(
     #         scipy.optimize.brentq(calculate_globe_temperature, 0.0, 200)
@@ -507,7 +509,7 @@ def compare_phs_sma():
                     return (
                         phs(
                             tdb=t,
-                            tr=t_mrt(
+                            tr=mean_radiant_tmp(
                                 Var.sports_profiles[sport_category]["tg"] + t,
                                 t,
                                 Var.sports_profiles[sport_category]["v"],
@@ -537,7 +539,7 @@ def compare_phs_sma():
                 return (
                     phs(
                         tdb=t,
-                        tr=t_mrt(
+                        tr=mean_radiant_tmp(
                             Var.sports_profiles[sport_category]["tg"] + t,
                             t,
                             Var.sports_profiles[sport_category]["v"],
@@ -695,7 +697,7 @@ def plot_each_sport():
                     return (
                         phs(
                             tdb=t,
-                            tr=t_mrt(
+                            tr=mean_radiant_tmp(
                                 Var.sports_profiles[sport_category]["tg"] + t,
                                 t,
                                 Var.sports_profiles[sport_category]["v"],
@@ -725,7 +727,7 @@ def plot_each_sport():
                 return (
                     phs(
                         tdb=t,
-                        tr=t_mrt(
+                        tr=mean_radiant_tmp(
                             Var.sports_profiles[sport_category]["tg"] + t,
                             t,
                             Var.sports_profiles[sport_category]["v"],
