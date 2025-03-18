@@ -65,50 +65,10 @@ class ColumnsDataframe:
     suburb: str = "suburb"
 
 
-sports_category = dict(
-    sorted(
-        {
-            "Walking": 1,
-            "Archery": 2,
-            "Bowls": 2,
-            "Field Athletics": 2,
-            "Fishing": 2,
-            "Golf": 2,
-            "Lifesaving Surf": 2,
-            "Sailing": 2,
-            "Shooting": 2,
-            "Walking (brisk)": 2,
-            "Abseiling": 3,
-            "Australian Football": 3,
-            "Basketball": 3,
-            "Cycling": 3,
-            "Canoeing": 3,
-            "Caving": 3,
-            "Kayaking": 3,
-            "Netball": 3,
-            "Oztag": 3,
-            "Rock Climbing": 3,
-            "Rowing": 3,
-            "Soccer": 3,
-            "Tennis": 3,
-            "Touch Football": 3,
-            "Long Distance Running": 3,
-            "Triathlon": 3,
-            "Volleyball": 3,
-            "Baseball": 4,
-            "Bush-walking": 4,
-            "Cricket": 4,
-            "Equestrian": 4,
-            "Horseback Riding": 4,
-            "Motor Cycling": 4,
-            "Rugby Union": 4,
-            "Rugby League": 4,
-            "Softball": 4,
-            "Field Hockey": 5,
-            "Mountain Biking": 5,
-        }.items()
-    )
+sports_category = pd.read_csv("assets/sports.csv")[["sport", "sport_cat"]].set_index(
+    "sport"
 )
+sports_category = sports_category.sort_index().to_dict()["sport_cat"]
 
 headers = {
     "User-Agent": (
