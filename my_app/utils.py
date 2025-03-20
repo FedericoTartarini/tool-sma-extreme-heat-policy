@@ -1,16 +1,19 @@
+import pickle
 import warnings
 from dataclasses import dataclass
+from enum import Enum
 
 import dash_bootstrap_components as dbc
 import numpy as np
 from dash import html
+from matplotlib import pyplot as plt
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 import pandas as pd
 import requests
 import pytz
-from config import sma_risk_messages, mrt_calculation, variable_calc_risk
+from config import sma_risk_messages, mrt_calculation, variable_calc_risk, sports_info
 from pvlib import location
 from pythermalcomfort.models import utci, solar_gain, two_nodes_gagge
 import openmeteo_requests
@@ -65,9 +68,7 @@ class ColumnsDataframe:
     suburb: str = "suburb"
 
 
-sports_category = pd.read_csv("assets/sports.csv")[["sport", "sport_cat"]].set_index(
-    "sport"
-)
+sports_category = sports_info[["sport", "sport_cat"]].copy().set_index("sport")
 sports_category = sports_category.sort_index().to_dict()["sport_cat"]
 
 headers = {
@@ -265,7 +266,7 @@ def calculate_mean_radiant_tmp(df_for):
 
 
 def calculate_comfort_indices_v2(df_for, sport="Soccer", calc_tr=True, met_corr=1):
-    df_sport = pd.read_csv("assets/sports.csv")[["sport", "clo", "met"]]
+    df_sport = sports_info[["sport", "clo", "met"]]
     sport, clo, met = df_sport[df_sport.sport == sport].values[0]
 
     if calc_tr:
@@ -400,3 +401,63 @@ def icon_component(src, message, size="50px"):
         justify="center",
         className="my-1",
     )
+
+
+def get_regression_curves_v2(
+    tg: float = 6, sport: str = "soccer", wind_speed: float = 1
+):
+
+    class WindSpeedCat(Enum):
+        low: str = "wind_low"
+        med: str = "wind_med"
+        high: str = "wind_high"
+
+    class GlobeTemperatures(Enum):
+        low: str = 4
+        med: str = 8
+        high: str = 12
+
+    for globe_temp in GlobeTemperatures:
+        if tg <= globe_temp.value:
+            tg = globe_temp.value
+            break
+
+        if tg > GlobeTemperatures.high.value:
+            tg = GlobeTemperatures.high.value
+
+    with open(f"assets/sma_v2_lines/regression_curves_v2_tg_{tg}.pkl", "rb") as f:
+        regression_lines = pickle.load(f)
+
+    regression_lines_sport = regression_lines[sport]
+
+    info_sports = sports_info[["sport_id"] + [x.value for x in WindSpeedCat]]
+    info_sports = info_sports.set_index("sport_id")
+    info_sport = info_sports.to_dict(orient="index")[sport]
+
+    wind_class = None
+    for wind_description, value in info_sport.items():
+        if wind_speed <= value:
+            wind_speed = value
+            wind_class = wind_description
+            break
+
+        if wind_speed > max(info_sport.values()):
+            wind_speed = max(info_sport.values())
+            wind_class = WindSpeedCat.high.value
+
+    print(f"wind_speed: {wind_speed}", f"wind_class: {wind_class}", f"tg: {tg}")
+
+    return regression_lines_sport[wind_class]
+
+
+if __name__ == "__main__":
+
+    v2_lines = get_regression_curves_v2(tg=9, wind_speed=2.5, sport="soccer")
+
+    f, ax = plt.subplots(constrained_layout=True)
+    array_t = np.arange(26, 42, 0.1)
+    for risk in v2_lines:
+        ax.plot(array_t, v2_lines[risk](array_t), label=risk)
+    ax.set(ylim=(0, 100))
+    plt.legend()
+    plt.show()

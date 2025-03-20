@@ -3,7 +3,6 @@ from copy import deepcopy
 from datetime import datetime
 
 import dash
-import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import pandas as pd
 import pytz
@@ -12,7 +11,6 @@ from dash_extensions.enrich import (
     Input,
     State,
     Serverside,
-    html,
     callback,
 )
 from firebase_admin import db
@@ -31,7 +29,6 @@ from config import (
     df_postcodes,
 )
 from my_app.utils import (
-    legend_risk,
     FirebaseFields,
     local_storage_settings_name,
     session_storage_weather_name,

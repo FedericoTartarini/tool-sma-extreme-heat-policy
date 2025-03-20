@@ -15,6 +15,7 @@ from pythermalcomfort.models import phs
 from pythermalcomfort.utilities import mean_radiant_tmp
 from pythermalcomfort.utilities import v_relative
 
+from config import sports_info
 from my_app.utils import generate_regression_curves, calculate_comfort_indices_v1
 
 psyc.SetUnitSystem(psyc.SI)
@@ -667,7 +668,7 @@ def compare_phs_sma():
 
 
 def plot_each_sport():
-    df_sport = pd.read_csv("assets/sports.csv").dropna()
+    df_sport = sports_info.copy().dropna()
     for ix, row in df_sport.iterrows():
         # if row["sport"] != "Rugby league":
         #     continue
