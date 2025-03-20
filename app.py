@@ -22,8 +22,12 @@ from my_app.utils import (
     storage_user_id,
     local_storage_settings_name,
     session_storage_weather_name,
-    session_storage_weather_forecast,
 )
+
+
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 try:
     cred = credentials.Certificate("secret.json")
@@ -109,23 +113,18 @@ app.index_string = """<!DOCTYPE html>
 """
 
 
-app.layout = html.Div(
+app.layout = dmc.LoadingOverlay(
+    loaderProps={"variant": "dots", "color": "#555", "size": 100},
+    exitTransitionDuration=500,
     children=[
         dcc.Location(id="url", refresh=False),
         html.Div(id="id-google-analytics-event"),
-        dcc.Loading(
-            [
-                dcc.Store(
-                    id=local_storage_settings_name,
-                    storage_type="local",
-                    data=default_settings,
-                ),
-                dcc.Store(id=session_storage_weather_name),
-                dcc.Store(id=session_storage_weather_forecast),
-            ],
-            fullscreen=True,
-            type="dot",
+        dcc.Store(
+            id=local_storage_settings_name,
+            storage_type="local",
+            data=default_settings,
         ),
+        dcc.Store(id=session_storage_weather_name),
         dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
         my_navbar(),
         dmc.Container(
