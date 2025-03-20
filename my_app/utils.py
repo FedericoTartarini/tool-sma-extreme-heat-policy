@@ -1,19 +1,30 @@
 import pickle
 import warnings
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
 import dash_bootstrap_components as dbc
 import numpy as np
+import scipy
 from dash import html
 from matplotlib import pyplot as plt
+from pythermalcomfort.utilities import mean_radiant_tmp
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 import pandas as pd
 import requests
 import pytz
-from config import sma_risk_messages, mrt_calculation, variable_calc_risk, sports_info
+from config import (
+    sma_risk_messages,
+    mrt_calculation,
+    variable_calc_risk,
+    sports_info,
+    df_postcodes,
+    time_zones,
+    default_location,
+)
 from pvlib import location
 from pythermalcomfort.models import utci, solar_gain, two_nodes_gagge
 import openmeteo_requests
@@ -24,15 +35,16 @@ app_version = "0.0.4"
 app_version = app_version.replace(".", "")
 local_storage_settings_name = f"local-storage-settings-{app_version}"
 session_storage_weather_name = f"session-storage-weather-{app_version}"
-session_storage_weather_forecast = f"session-storage-forecast-{app_version}"
 storage_user_id = "user-id"
 
 
 @dataclass()
-class ColumnsDataframe:
+class Cols:
     pressure: str = "pressure"
     time: str = "time"
     tdb: str = "tdb"
+    tr: str = "tr"
+    tg: str = "tg"
     tdb_indoors: str = "tdb_indoors"
     hr_indoors: str = "hr_indoors"
     rh_indoors: str = "rh_indoors"
@@ -42,7 +54,6 @@ class ColumnsDataframe:
     wind_dir: str = "w-dir"
     radiation: str = "radiation"
     wind: str = "wind"
-    tr: str = "tr"
     location: str = "indoor_outdoors"
     clo: str = "clo"
     met: str = "met"
@@ -119,6 +130,7 @@ def open_weather(lat, lon):
             "direct_radiation",
         ],
         "timezone": "GMT",
+        "wind_speed_unit": "ms",
     }
     responses = openmeteo.weather_api(url, params=params)
 
@@ -134,26 +146,26 @@ def open_weather(lat, lon):
     hourly_direct_radiation = hourly.Variables(4).ValuesAsNumpy()
 
     hourly_data = {
-        ColumnsDataframe.time: pd.date_range(
+        Cols.time: pd.date_range(
             start=pd.to_datetime(hourly.Time(), unit="s"),
             end=pd.to_datetime(hourly.TimeEnd(), unit="s"),
             freq=pd.Timedelta(seconds=hourly.Interval()),
             inclusive="left",
         ).tz_localize("GMT"),
-        ColumnsDataframe.tdb: hourly_temperature_2m,
-        ColumnsDataframe.rh: hourly_relative_humidity_2m,
-        ColumnsDataframe.cloud: hourly_cloud_cover,
-        ColumnsDataframe.wind: hourly_wind_speed_10m,
-        ColumnsDataframe.radiation: hourly_direct_radiation,
+        Cols.tdb: hourly_temperature_2m,
+        Cols.rh: hourly_relative_humidity_2m,
+        Cols.cloud: hourly_cloud_cover,
+        Cols.wind: hourly_wind_speed_10m,
+        Cols.radiation: hourly_direct_radiation,
     }
 
     return pd.DataFrame(data=hourly_data)
 
 
 def get_weather(
-    lat=-33.8862,
-    lon=151.1791,
-    tz="Australia/Sydney",
+    lat: float = -33.8862,
+    lon: float = 151.1791,
+    tz: str = "Australia/Sydney",
     provider: str = "open-meteo",
 ):
     """Get weather forecast from YR website.
@@ -173,21 +185,19 @@ def get_weather(
         else:
             df_weather = open_weather(lat, lon)
 
-    df_weather.set_index(
-        pd.to_datetime(df_weather[ColumnsDataframe.time]), inplace=True
-    )
-    df_weather.drop(columns=[ColumnsDataframe.time], inplace=True)
+    df_weather.set_index(pd.to_datetime(df_weather[Cols.time]), inplace=True)
+    df_weather.drop(columns=[Cols.time], inplace=True)
     df_weather.index = df_weather.index.tz_convert(pytz.timezone(tz))
 
     now = pd.Timestamp.now(pytz.timezone(tz)) - pd.Timedelta(hours=1)
     df_weather = df_weather[df_weather.index >= now]
-    df_weather = df_weather.dropna(subset=[ColumnsDataframe.tdb])
+    df_weather = df_weather.dropna(subset=[Cols.tdb])
     df_weather = df_weather.resample("30min").interpolate()
-    df_weather[ColumnsDataframe.lat] = lat
-    df_weather[ColumnsDataframe.lon] = lon
-    df_weather[ColumnsDataframe.tz] = tz
+    df_weather[Cols.lat] = lat
+    df_weather[Cols.lon] = lon
+    df_weather[Cols.tz] = tz
 
-    return df_weather
+    return calculate_mean_radiant_tmp(df_weather)
 
 
 def calculate_comfort_indices_v1(data_for, sport_class):
@@ -220,10 +230,50 @@ def calculate_comfort_indices_v1(data_for, sport_class):
     return data_for
 
 
+def calculate_comfort_indices_v2(data_for, sport_class):
+
+    thresholds = []
+    for ix, row in data_for.iterrows():
+        tdb = row[Cols.tdb]
+
+        # todo I need to pass the sport
+        v2_lines = get_regression_curves_v2(
+            tg=row[Cols.tg], wind_speed=row[Cols.wind], sport="soccer"
+        )
+        thresholds.append(
+            [v2_lines["moderate"](tdb), v2_lines["high"](tdb), v2_lines["extreme"](tdb)]
+        )
+
+    data_for[["moderate", "high", "extreme"]] = thresholds
+
+    risk_value_interpolated = []
+    for ix, row in data_for.iterrows():
+        top = 100
+        if row["extreme"] > top:
+            top = row["extreme"] + 10
+        x = [0, row["moderate"], row["high"], row["extreme"], top]
+        y = np.arange(0, 5, 1)
+
+        risk_value_interpolated.append(np.around(np.interp(row["rh"], x, y), 1))
+
+    data_for["risk_value_interpolated"] = risk_value_interpolated
+
+    data_for["risk"] = "low"
+    for risk in ["moderate", "high", "extreme"]:
+        data_for.loc[data_for[risk] < 0, risk] = 0
+        data_for.loc[data_for[risk] > 100, risk] = 100
+        data_for.loc[data_for["rh"] > data_for[risk], "risk"] = risk
+
+    risk_value = {"low": 0, "moderate": 1, "high": 2, "extreme": 3}
+    data_for["risk_value"] = data_for["risk"].map(risk_value)
+
+    return data_for
+
+
 def calculate_mean_radiant_tmp(df_for):
-    lat = df_for["lat"].unique()[0]
-    lon = df_for["lon"].unique()[0]
-    tz = df_for["tz"].unique()[0]
+    lat = df_for[Cols.lat].unique()[0]
+    lon = df_for[Cols.lon].unique()[0]
+    tz = df_for[Cols.tz].unique()[0]
     site_location = location.Location(lat, lon, tz=tz, name=tz)
     solar_position = site_location.get_solarposition(df_for.index)
     cs = site_location.get_clearsky(df_for.index)
@@ -254,66 +304,32 @@ def calculate_mean_radiant_tmp(df_for):
         )
         if erf_mrt["delta_mrt"] < 0:
             print(row)
-        results.append(erf_mrt)
+
+        def calculate_globe_temperature(x):
+            return mean_radiant_tmp(
+                tg=x + row[Cols.tdb],
+                tdb=row[Cols.tdb],
+                v=row[Cols.wind],
+                standard="iso",
+            ) - (row[Cols.tdb] + erf_mrt.delta_mrt)
+
+        erf_mrt_dict = erf_mrt.__dict__
+
+        try:
+            tg = scipy.optimize.brentq(calculate_globe_temperature, 0, 200)
+        except ValueError:
+            tg = 0
+        erf_mrt_dict[Cols.tg] = tg
+        # print(erf_mrt_dict, row[Cols.tdb], row[Cols.wind])
+
+        results.append(erf_mrt_dict)
+
     df_mrt = pd.DataFrame.from_dict(results)
     df_mrt.set_index(df_for.index, inplace=True)
     df_for = pd.concat([df_for, df_mrt], axis=1)
 
-    df_for["wind"] *= mrt_calculation["wind_coefficient"]
-    df_for["tr"] = df_for["tdb"] + df_for["delta_mrt"]
-
-    return df_for
-
-
-def calculate_comfort_indices_v2(df_for, sport="Soccer", calc_tr=True, met_corr=1):
-    df_sport = sports_info[["sport", "clo", "met"]]
-    sport, clo, met = df_sport[df_sport.sport == sport].values[0]
-
-    if calc_tr:
-        df_for = calculate_mean_radiant_tmp(df_for)
-
-    df_for["clo"] = clo
-    df_for["met"] = met * met_corr
-
-    df_for["utci"] = utci(
-        tdb=df_for["tdb"], tr=df_for["tr"], v=df_for["wind"], rh=df_for["rh"]
-    )
-    results_two_nodes = two_nodes_gagge(
-        tdb=df_for["tdb"],
-        tr=df_for["tr"],
-        v=df_for["wind"],
-        rh=df_for["rh"],
-        met=df_for["met"],
-        clo=df_for["clo"],
-        round_output=False,
-        w_max=1,
-    )
-    df_for["set"] = results_two_nodes["_set"]
-    df_for["w"] = results_two_nodes["w"]
-    df_for["w_max"] = results_two_nodes["w_max"]
-    df_for["m_bl"] = results_two_nodes["m_bl"]
-    df_for["m_rsw"] = results_two_nodes["m_rsw"]
-    df_for["ratio_m_bl"] = (df_for["m_bl"] - 1.2) / (df_for["m_bl"] * 0 + 90 - 1.2)
-    df_for["ratio_w"] = (df_for["w"] - 0.06) / (df_for["w_max"] - 0.06)
-
-    bins = [
-        i / (len(sma_risk_messages) - 1) for i in range(len(sma_risk_messages) - 1)
-    ] + [0.95, 1.1]
-    for index in [variable_calc_risk]:
-        df_for[f"risk"] = pd.cut(
-            df_for[index], bins=bins, labels=sma_risk_messages.keys(), right=False
-        )
-
-    # interpolation
-    x = bins
-    y = np.arange(0, len(sma_risk_messages) + 1, 1)
-
-    df_for["risk_value"] = np.around(np.interp(df_for[variable_calc_risk], x, y), 0)
-    df_for["risk_value_interpolated"] = np.around(
-        np.interp(df_for[variable_calc_risk], x, y), 1
-    )
-
-    df_for.index = df_for.index.tz_localize(None)
+    df_for[Cols.wind] *= mrt_calculation["wind_coefficient"]
+    df_for[Cols.tr] = df_for[Cols.tdb] + df_for["delta_mrt"]
 
     return df_for
 
@@ -445,9 +461,36 @@ def get_regression_curves_v2(
             wind_speed = max(info_sport.values())
             wind_class = WindSpeedCat.high.value
 
-    print(f"wind_speed: {wind_speed}", f"wind_class: {wind_class}", f"tg: {tg}")
+    # print(f"wind_speed: {wind_speed}", f"wind_class: {wind_class}", f"tg: {tg}")
 
     return regression_lines_sport[wind_class]
+
+
+def get_weather_and_calculate_risk(settings):
+    try:
+        information = df_postcodes[
+            df_postcodes["sub-state-post"] == settings["id-postcode"]
+        ].to_dict(orient="list")
+        loc_selected = {
+            Cols.lat: information["latitude"][0],
+            Cols.lon: information["longitude"][0],
+            Cols.tz: time_zones[information["state"][0]],
+        }
+    except TypeError:
+        loc_selected = default_location
+
+    print(f"querying data {pd.Timestamp.now()}")
+
+    print(f"{datetime.now()} - querying weather data")
+    df_for = get_weather(
+        lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
+    )
+
+    print(f"calculating comfort indices {pd.Timestamp.now()}")
+    df = calculate_comfort_indices_v2(df_for, sports_category[settings["id-sport"]])
+    # df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
+    print(f"finished {pd.Timestamp.now()}")
+    return df
 
 
 if __name__ == "__main__":
