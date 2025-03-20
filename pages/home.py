@@ -1,11 +1,8 @@
 import time
 from copy import deepcopy
-from datetime import datetime
 
 import dash
 import dash_mantine_components as dmc
-import pandas as pd
-import pytz
 from dash_extensions.enrich import (
     Output,
     Input,
@@ -23,21 +20,12 @@ from components.forecasts import component_forecast
 from components.main_recommendations import component_main_recommendation
 from components.map import component_map
 from components.sport_image import component_sport_image
-from config import (
-    time_zones,
-    default_location,
-    df_postcodes,
-)
 from my_app.utils import (
     FirebaseFields,
     local_storage_settings_name,
     session_storage_weather_name,
-    session_storage_weather_forecast,
     storage_user_id,
-    get_weather,
-    calculate_comfort_indices_v1,
-    sports_category,
-    ColumnsDataframe,
+    get_weather_and_calculate_risk,
 )
 
 ref = db.reference(FirebaseFields.database_name)
@@ -94,54 +82,10 @@ def save_settings_in_storage(data, user_id, location, sport):
 
 @callback(
     Output(session_storage_weather_name, "data"),
-    Output(session_storage_weather_forecast, "data"),
     Input(local_storage_settings_name, "data"),
-    State(session_storage_weather_forecast, "data"),
     prevent_initial_call=True,
 )
-def on_location_change(data_sport, df_for):
-    try:
-        information = df_postcodes[
-            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
-        ].to_dict(orient="list")
-        loc_selected = {
-            "lat": information["latitude"][0],
-            "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
-        }
-    except TypeError:
-        loc_selected = default_location
-
-    print(f"querying data {pd.Timestamp.now()}")
-
-    query_yr = True
-    try:
-        lat = df_for[ColumnsDataframe.lat].unique()[0]
-        lon = df_for[ColumnsDataframe.lon].unique()[0]
-        tz = df_for[ColumnsDataframe.tz].unique()[0]
-        df_for.index = pd.to_datetime(df_for.index).tz_convert(tz)
-        last_query_time = df_for.index.min()
-        delta = datetime.now(pytz.timezone(tz)) - last_query_time
-        if (
-            lat == loc_selected["lat"]
-            and lon == loc_selected["lon"]
-            and tz == loc_selected["tz"]
-            and delta.seconds < 3600
-        ):
-            query_yr = False
-    except:
-        pass
-
-    if query_yr:
-        print(f"{datetime.now()} - querying weather data")
-        df_for = get_weather(
-            lat=loc_selected["lat"], lon=loc_selected["lon"], tz=loc_selected["tz"]
-        )
-    else:
-        print(f"{datetime.now()} - using stored data")
-
-    print(f"calculating comfort indices {pd.Timestamp.now()}")
-    df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
-    print(f"finished {pd.Timestamp.now()}")
-
-    return Serverside(df), Serverside(df_for)
+def on_settings_change(settings):
+    print(f"{settings}")
+    df = get_weather_and_calculate_risk(settings)
+    return Serverside(df)

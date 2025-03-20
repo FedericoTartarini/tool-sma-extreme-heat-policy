@@ -982,8 +982,8 @@ def analyse_historical_bom_data(sport_category=3):
 if __name__ == "__main__":
     plt.close("all")
 
-    # check_model_output("two_node")
-    # check_model_output("phs")
+    check_model_output("two_node")
+    check_model_output("phs")
 
     # compare_phs_sma()
     plot_each_sport()
