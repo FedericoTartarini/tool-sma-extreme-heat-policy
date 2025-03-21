@@ -3,6 +3,8 @@ import dash_mantine_components as dmc
 from dash import Input, Output, State, html, ctx
 from dash import callback
 
+from config import URLS
+
 
 def my_navbar():
     return dbc.Navbar(
@@ -26,7 +28,7 @@ def my_navbar():
                                     align="center",
                                     className="g-0",
                                 ),
-                                href="/",
+                                href=URLS.HOME.url,
                                 style={"textDecoration": "none"},
                             ),
                         ],
@@ -54,7 +56,7 @@ def my_navbar():
                                         dbc.NavItem(
                                             dbc.NavLink(
                                                 "Home",
-                                                href="/",
+                                                href=URLS.HOME.url,
                                                 style={
                                                     "textAlign": "center",
                                                     "color": "white",
@@ -66,7 +68,7 @@ def my_navbar():
                                         dbc.NavItem(
                                             dbc.NavLink(
                                                 "About",
-                                                href="/about",
+                                                href=URLS.ABOUT.url,
                                                 style={
                                                     "textAlign": "center",
                                                     "color": "white",

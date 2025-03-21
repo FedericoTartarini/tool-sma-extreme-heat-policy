@@ -14,7 +14,7 @@ from config import (
 from my_app.charts import line_chart
 from my_app.utils import (
     get_data_specific_day,
-    session_storage_weather_name,
+    store_weather_risk_df,
 )
 
 
@@ -30,7 +30,7 @@ def component_forecast():
 
 @callback(
     Output("fig-forecast_line", "children"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):
@@ -43,7 +43,7 @@ def update_fig_hss_trend(df):
 
 @callback(
     Output("fig-forecast-next-days", "children"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):

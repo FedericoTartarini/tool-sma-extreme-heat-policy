@@ -1,7 +1,6 @@
 import pickle
 import warnings
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 
 import dash_bootstrap_components as dbc
@@ -11,6 +10,8 @@ from dash import html
 from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
+from my_app.my_classes import IDs
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 import pandas as pd
@@ -19,22 +20,21 @@ import pytz
 from config import (
     sma_risk_messages,
     mrt_calculation,
-    variable_calc_risk,
     sports_info,
     df_postcodes,
     time_zones,
     default_location,
 )
 from pvlib import location
-from pythermalcomfort.models import utci, solar_gain, two_nodes_gagge
+from pythermalcomfort.models import solar_gain
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 
 app_version = "0.0.4"
 app_version = app_version.replace(".", "")
-local_storage_settings_name = f"local-storage-settings-{app_version}"
-session_storage_weather_name = f"session-storage-weather-{app_version}"
+store_settings_dict = f"local-storage-settings-{app_version}"
+store_weather_risk_df = f"session-storage-weather-{app_version}"
 storage_user_id = "user-id"
 
 
@@ -230,15 +230,14 @@ def calculate_comfort_indices_v1(data_for, sport_class):
     return data_for
 
 
-def calculate_comfort_indices_v2(data_for, sport_class):
+def calculate_comfort_indices_v2(data_for, sport_id):
 
     thresholds = []
     for ix, row in data_for.iterrows():
         tdb = row[Cols.tdb]
 
-        # todo I need to pass the sport
         v2_lines = get_regression_curves_v2(
-            tg=row[Cols.tg], wind_speed=row[Cols.wind], sport="soccer"
+            tg=row[Cols.tg], wind_speed=row[Cols.wind], sport=sport_id
         )
         thresholds.append(
             [v2_lines["moderate"](tdb), v2_lines["high"](tdb), v2_lines["extreme"](tdb)]
@@ -467,30 +466,30 @@ def get_regression_curves_v2(
 
 
 def get_weather_and_calculate_risk(settings):
-    try:
-        information = df_postcodes[
-            df_postcodes["sub-state-post"] == settings["id-postcode"]
-        ].to_dict(orient="list")
-        loc_selected = {
-            Cols.lat: information["latitude"][0],
-            Cols.lon: information["longitude"][0],
-            Cols.tz: time_zones[information["state"][0]],
-        }
-    except TypeError:
-        loc_selected = default_location
+    loc_selected = get_info_location_selected(settings)
 
-    print(f"querying data {pd.Timestamp.now()}")
-
-    print(f"{datetime.now()} - querying weather data")
     df_for = get_weather(
         lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
     )
 
-    print(f"calculating comfort indices {pd.Timestamp.now()}")
-    df = calculate_comfort_indices_v2(df_for, sports_category[settings["id-sport"]])
-    # df = calculate_comfort_indices_v1(df_for, sports_category[data_sport["id-sport"]])
-    print(f"finished {pd.Timestamp.now()}")
+    df = calculate_comfort_indices_v2(df_for, settings[IDs.sport])
+
     return df
+
+
+def get_info_location_selected(data):
+    try:
+        information = df_postcodes[
+            df_postcodes["postcode"] == int(data[IDs.postcode])
+        ].to_dict(orient="list")
+        loc_selected = {
+            "lat": information["latitude"][0],
+            "lon": information["longitude"][0],
+            "tz": time_zones[information["state"][0]],
+        }
+    except TypeError:
+        loc_selected = default_location
+    return loc_selected
 
 
 if __name__ == "__main__":

@@ -1,9 +1,13 @@
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 import pandas as pd
+from pydantic import BaseModel
 
-# location
-default_settings = {"id-sport": "Soccer", "id-postcode": "Camperdown, NSW, 2050"}
+from my_app.my_classes import IDs
+
+# sports
+sports_info = pd.read_csv("assets/sports.csv")
 
 time_zones = {
     "NSW": "Australia/Sydney",
@@ -18,9 +22,6 @@ time_zones = {
 
 default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
 
-# sports
-sports_info = pd.read_csv("assets/sports.csv")
-
 # risk classes
 variable_calc_risk = "ratio_w"
 
@@ -32,23 +33,6 @@ df_postcodes["sub-state-post"] = (
     + ", "
     + df_postcodes["postcode"].astype("str")
 )
-
-questions = [
-    {
-        "id": "id-sport",
-        "question": "Sport:",
-        "options": sports_info.sport.unique(),
-        "multi": False,
-        "default": "Soccer",
-    },
-    {
-        "id": "id-postcode",
-        "question": "Location:",
-        "options": list(df_postcodes["sub-state-post"].unique()),
-        "multi": False,
-        "default": default_settings["id-postcode"],
-    },
-]
 
 
 @dataclass(order=True)
@@ -168,3 +152,72 @@ headers = {
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
     )
 }
+
+
+class UrlInfo(BaseModel):
+    url: str
+    url_id: str
+    page_title: str
+    name: str
+    description: str
+
+
+@dataclass()
+class URLS:
+    HOME: ClassVar[UrlInfo] = UrlInfo(
+        url="/",
+        url_id="id-url-home",
+        page_title="Sport Medicine Australia Extreme Heat Policy",
+        name="Home Page",
+        description="This is the home page of the SMA Extreme Policy Tool, which allows you to calculate the sport "
+        "heat score",
+    )
+
+    ABOUT: ClassVar[UrlInfo] = UrlInfo(
+        url="/about",
+        url_id="id-url-about",
+        page_title="About Page",
+        name="About",
+        description="This page provides information about the SMA Extreme Heat Policy tool",
+    )
+
+
+class DropDownInfo(BaseModel):
+    id: str
+    question: str
+    options: list[dict]
+    multi: bool
+    default: str
+
+
+data_dd_sport = sports_info[["sport", "sport_id"]].rename(
+    columns={"sport": "label", "sport_id": "value"}
+)
+data_dd_sport = data_dd_sport.to_dict("records")
+
+data_dd_location = df_postcodes[["sub-state-post", "postcode"]].rename(
+    columns={"sub-state-post": "label", "postcode": "value"}
+)
+data_dd_location = data_dd_location.to_dict("records")
+
+
+@dataclass()
+class Dropdowns:
+    SPORT: ClassVar[DropDownInfo] = DropDownInfo(
+        id=IDs.sport,
+        question="Select your sport",
+        options=data_dd_sport,
+        multi=False,
+        default="soccer",
+    )
+
+    LOCATION: ClassVar[DropDownInfo] = DropDownInfo(
+        id=IDs.postcode,
+        question="Select your postcode",
+        options=data_dd_location,
+        multi=False,
+        default="2050",
+    )
+
+    def __getitem__(self, key):
+        return getattr(self, key)

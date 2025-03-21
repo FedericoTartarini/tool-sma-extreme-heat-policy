@@ -8,9 +8,9 @@ from dash_extensions.enrich import (
     callback,
 )
 
-from config import time_zones, default_location, df_postcodes
 from my_app.utils import (
-    local_storage_settings_name,
+    store_settings_dict,
+    get_info_location_selected,
 )
 
 
@@ -29,22 +29,11 @@ def component_map():
 
 @callback(
     Output("map-component", "children"),
-    Input(local_storage_settings_name, "data"),
+    Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def on_location_change(data_sport):
-    # fixme: this function is repeated multiple times
-    try:
-        information = df_postcodes[
-            df_postcodes["sub-state-post"] == data_sport["id-postcode"]
-        ].to_dict(orient="list")
-        loc_selected = {
-            "lat": information["latitude"][0],
-            "lon": information["longitude"][0],
-            "tz": time_zones[information["state"][0]],
-        }
-    except TypeError:
-        loc_selected = default_location
+def on_location_change(settings):
+    loc_selected = get_info_location_selected(settings)
 
     try:
         return dl.Map(

@@ -7,7 +7,7 @@ from dash_extensions.enrich import (
 )
 
 from my_app.utils import (
-    session_storage_weather_name,
+    store_weather_risk_df,
     icon_component,
 )
 
@@ -33,7 +33,7 @@ def component_main_recommendation():
 
 @callback(
     Output("div-icons-suggestions", "children"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):

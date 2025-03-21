@@ -8,7 +8,7 @@ from dash_extensions.enrich import (
 
 from components.gauge import gauge_chart
 from config import sma_risk_messages
-from my_app.utils import session_storage_weather_name
+from my_app.utils import store_weather_risk_df
 
 
 def component_current_risk():
@@ -17,7 +17,7 @@ def component_current_risk():
             dmc.Center(
                 html.H4("Sport Heat Score Now is:"),
             ),
-            html.Div(id="fig-indicator"),
+            html.Div(dmc.Skeleton(height=250), id="fig-indicator"),
         ],
         shadow="md",
         p="md",
@@ -26,7 +26,7 @@ def component_current_risk():
 
 @callback(
     Output("fig-indicator", "children"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
 )
 def update_fig_hss_trend(df):
     colors = [x.color for x in sma_risk_messages.values()]
@@ -35,27 +35,25 @@ def update_fig_hss_trend(df):
     # I am adding one so the risk starts at 1
     risk_value = df.iloc[0]["risk_value_interpolated"] + 1
     thresholds = [x + 1 for x in thresholds]
-    return (
-        dmc.Image(
-            gauge_chart(
-                risk_value=risk_value,
-                colors=colors,
-                thresholds=thresholds,
-                text=text,
-                show_value=True,
-                text_rotated=True,
-            ),
-            alt="Heat stress chart",
-            py=0,
-            my={"base": "-4rem", "xs": "-6rem"},
+    return dmc.Image(
+        gauge_chart(
+            risk_value=risk_value,
+            colors=colors,
+            thresholds=thresholds,
+            text=text,
+            show_value=True,
+            text_rotated=True,
         ),
+        alt="Heat stress chart",
+        py=0,
+        my={"base": "-4rem", "xs": "-6rem"},
     )
 
 
 @callback(
     Output("value-hss-current", "children"),
     Output("id-alert-risk-current-value", "color"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):

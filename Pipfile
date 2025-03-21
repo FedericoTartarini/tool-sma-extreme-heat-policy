@@ -19,6 +19,7 @@ requests-cache = "*"
 retry-requests = "*"
 numpy = "*"
 firebase-admin = "*"
+icecream = "*"
 
 [dev-packages]
 seaborn = "*"

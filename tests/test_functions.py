@@ -47,5 +47,4 @@ def test_calculate_comfort_indices():
     for row in data:
         df = pd.DataFrame.from_dict([row])
         df_results = calculate_comfort_indices_v1(data_for=df, sport_class=row["class"])
-        print(row)
         assert row["risk"] == df_results["risk"].values[0]

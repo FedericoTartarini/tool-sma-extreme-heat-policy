@@ -3,7 +3,7 @@ import dash_mantine_components as dmc
 from dash import html, callback, Input, Output
 
 from my_app.utils import (
-    local_storage_settings_name,
+    store_settings_dict,
     get_weather_and_calculate_risk,
     Cols,
 )
@@ -30,7 +30,7 @@ layout = dmc.Stack([dmc.Center(id="id-raw-data-table")])
 
 @callback(
     Output("id-raw-data-table", "children"),
-    Input(local_storage_settings_name, "data"),
+    Input(store_settings_dict, "data"),
 )
 def update_alert_hss_current(settings):
 

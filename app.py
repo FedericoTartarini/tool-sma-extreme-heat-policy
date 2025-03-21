@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import warnings
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -14,18 +15,14 @@ from dash_extensions.enrich import (
 )
 from firebase_admin import credentials
 
-from config import default_settings
 from my_app.footer import my_footer
 from my_app.navbar import my_navbar
 from my_app.utils import (
     FirebaseFields,
     storage_user_id,
-    local_storage_settings_name,
-    session_storage_weather_name,
+    store_settings_dict,
+    store_weather_risk_df,
 )
-
-
-import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -117,14 +114,12 @@ app.layout = dmc.LoadingOverlay(
     loaderProps={"variant": "dots", "color": "#555", "size": 100},
     exitTransitionDuration=500,
     children=[
-        dcc.Location(id="url", refresh=False),
         html.Div(id="id-google-analytics-event"),
         dcc.Store(
-            id=local_storage_settings_name,
+            id=store_settings_dict,
             storage_type="local",
-            data=default_settings,
         ),
-        dcc.Store(id=session_storage_weather_name),
+        dcc.Store(id=store_weather_risk_df),
         dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
         my_navbar(),
         dmc.Container(

@@ -11,7 +11,7 @@ from config import (
     sma_risk_messages,
 )
 from my_app.utils import (
-    session_storage_weather_name,
+    store_weather_risk_df,
 )
 
 
@@ -45,7 +45,7 @@ def component_detailed_recommendation():
 @callback(
     Output("value-risk-description", "children"),
     Output("value-risk-suggestions", "children"),
-    Input(session_storage_weather_name, "data"),
+    Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):
