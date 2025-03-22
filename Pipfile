@@ -20,12 +20,14 @@ retry-requests = "*"
 numpy = "*"
 firebase-admin = "*"
 icecream = "*"
+pydantic = "*"
+matplotlib = "*"
+scipy = "*"
 
 [dev-packages]
 seaborn = "*"
 numba = "*"
 psychrolib = "*"
-scipy = "*"
 pytest = "*"
 pytest-playwright = "*"
 
