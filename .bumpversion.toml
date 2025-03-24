@@ -1,5 +1,5 @@
 [tool.bumpversion]
-current_version = "0.0.5"
+current_version = "0.0.4"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -15,3 +15,13 @@ allow_dirty = false
 commit = true
 message = "Bump version: {current_version} → {new_version}"
 commit_args = ""
+
+[[tool.bumpversion.files]]
+filename = "my_app/footer.py"
+search = "Version: {current_version}"
+replace = "Version: {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "my_app/utils.py"
+search = "{current_version}"
+replace = "{new_version}"
