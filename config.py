@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import ClassVar, Union
 
 import pandas as pd
 from pydantic import BaseModel
@@ -32,6 +32,9 @@ df_postcodes["sub-state-post"] = (
     + df_postcodes["state"]
     + ", "
     + df_postcodes["postcode"].astype("str")
+)
+df_postcodes["sub-state-post-no-space"] = (
+    df_postcodes["sub-state-post"].astype("str").replace(", ", "_", regex=True)
 )
 
 
@@ -195,8 +198,8 @@ data_dd_sport = sports_info[["sport", "sport_id"]].rename(
 )
 data_dd_sport = data_dd_sport.to_dict("records")
 
-data_dd_location = df_postcodes[["sub-state-post", "postcode"]].rename(
-    columns={"sub-state-post": "label", "postcode": "value"}
+data_dd_location = df_postcodes[["sub-state-post", "sub-state-post-no-space"]].rename(
+    columns={"sub-state-post": "label", "sub-state-post-no-space": "value"}
 )
 data_dd_location = data_dd_location.to_dict("records")
 
@@ -216,7 +219,7 @@ class Dropdowns:
         question="Select your postcode",
         options=data_dd_location,
         multi=False,
-        default="2050",
+        default="Brisbane_QLD_9013",
     )
 
     def __getitem__(self, key):

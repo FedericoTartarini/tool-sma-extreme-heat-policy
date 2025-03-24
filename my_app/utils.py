@@ -480,7 +480,7 @@ def get_weather_and_calculate_risk(settings):
 def get_info_location_selected(data):
     try:
         information = df_postcodes[
-            df_postcodes["postcode"] == int(data[IDs.postcode])
+            df_postcodes["sub-state-post-no-space"] == data[IDs.postcode]
         ].to_dict(orient="list")
         loc_selected = {
             "lat": information["latitude"][0],
