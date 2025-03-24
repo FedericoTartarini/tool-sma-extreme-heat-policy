@@ -41,6 +41,7 @@ gcloud components update
 
 ```
 gcloud components update --quiet
+bump-my-version bump patch
 gcloud config set account hhri.usyd@gmail.com
 pipenv requirements > requirements.txt
 gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool  --project=sma-extreme-heat-policy
