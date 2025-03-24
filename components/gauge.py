@@ -20,7 +20,7 @@ def gauge_chart(
     debugging: bool = False,
     show_value: bool = True,
     text_rotated: bool = True,
-    font_size: int = 12,
+    font_size: int = 18,
     bottom: int = 1,
     height: int = 2,
 ):

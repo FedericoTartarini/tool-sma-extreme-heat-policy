@@ -159,7 +159,9 @@ def open_weather(lat, lon):
         Cols.radiation: hourly_direct_radiation,
     }
 
-    return pd.DataFrame(data=hourly_data)
+    df_for = pd.DataFrame(data=hourly_data)
+    # df_for[Cols.tdb] += 6
+    return df_for
 
 
 def get_weather(

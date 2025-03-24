@@ -9,15 +9,33 @@ from dash_extensions.enrich import (
 from components.gauge import gauge_chart
 from config import sma_risk_messages
 from my_app.utils import store_weather_risk_df
+import dash_bootstrap_components as dbc
 
 
 def component_current_risk():
     return dmc.Paper(
         children=[
             dmc.Center(
-                html.H4("Sport Heat Score Now is:"),
+                html.H4("Current Sport Heat Score"),
             ),
             html.Div(dmc.Skeleton(height=250), id="fig-indicator"),
+            dmc.Center(
+                dbc.Alert(
+                    [
+                        dmc.Title(id="value-hss-current", order=3),
+                    ],
+                    style={
+                        "text-align": "center",
+                        "width": "30%",
+                    },
+                    id="id-alert-risk-current-value",
+                    color="light",
+                    className="p-1 m-0",
+                ),
+                style={
+                    "margin-top": "-66px",
+                },
+            ),
         ],
         shadow="md",
         p="md",
