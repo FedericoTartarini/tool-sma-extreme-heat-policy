@@ -30,6 +30,7 @@ numba = "*"
 psychrolib = "*"
 pytest = "*"
 pytest-playwright = "*"
+bump-my-version = "*"
 
 [requires]
 python_version = "3.12"
