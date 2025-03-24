@@ -70,10 +70,8 @@ def layout(id_sport=Dropdowns.SPORT.default, id_postcode=Dropdowns.LOCATION.defa
 def save_settings_in_storage(data, user_id, location, sport):
     """Saves in local storage the settings selected by the participant."""
     data = data or {}
-    ic(data, location, sport)
     data[IDs.postcode] = location
     data[IDs.sport] = sport
-    ic(data, location, sport)
 
     firebase_data = deepcopy(data)
     if any(data.values()):

@@ -77,7 +77,23 @@ def update_fig_hss_trend(df):
                                         spacing=0,
                                     ),
                                     align="center",
-                                )
+                                ),
+                                dbc.Col(
+                                    html.P(
+                                        "Max risk:",
+                                        className="p-0 m-0",
+                                    ),
+                                    width="auto",
+                                    className="p-0 m-0",
+                                ),
+                                dbc.Col(
+                                    dbc.Badge(
+                                        risk_value,
+                                        className="ms-1 p-1 m-0",
+                                        color=color,
+                                    ),
+                                    width="auto",
+                                ),
                             ]
                         )
                     ),
