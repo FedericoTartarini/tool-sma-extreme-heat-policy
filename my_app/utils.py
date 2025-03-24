@@ -31,7 +31,7 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 
-app_version = "0.0.4"
+app_version = "0.1.0"
 app_version = app_version.replace(".", "")
 store_settings_dict = f"local-storage-settings-{app_version}"
 store_weather_risk_df = f"session-storage-weather-{app_version}"

@@ -17,7 +17,7 @@ def my_footer():
                             
                             © 2023 - Heat and Health Research Incubator, USyd
                             
-                            Version: 0.0.4
+                            Version: 0.1.0
                             
                             [Contact Us](mailto:federico.tartarini@sydney.edu.au)
                             """
