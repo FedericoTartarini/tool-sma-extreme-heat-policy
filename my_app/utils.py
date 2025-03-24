@@ -26,7 +26,7 @@ from config import (
     default_location,
 )
 from pvlib import location
-from pythermalcomfort.models import solar_gain
+from pythermalcomfort.models import solar_gain, phs
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
@@ -420,51 +420,52 @@ def icon_component(src, message, size="50px"):
     )
 
 
-def get_regression_curves_v2(
-    tg: float = 6, sport: str = "soccer", wind_speed: float = 1
-):
+class GlobeTemperatures(Enum):
+    low: str = 4
+    med: str = 8
+    high: str = 12
 
-    class WindSpeedCat(Enum):
-        low: str = "wind_low"
-        med: str = "wind_med"
-        high: str = "wind_high"
 
-    class GlobeTemperatures(Enum):
-        low: str = 4
-        med: str = 8
-        high: str = 12
-
-    for globe_temp in GlobeTemperatures:
-        if tg <= globe_temp.value:
-            tg = globe_temp.value
-            break
-
-        if tg > GlobeTemperatures.high.value:
-            tg = GlobeTemperatures.high.value
-
-    with open(f"assets/sma_v2_lines/regression_curves_v2_tg_{tg}.pkl", "rb") as f:
-        regression_lines = pickle.load(f)
-
-    regression_lines_sport = regression_lines[sport]
-
-    info_sports = sports_info[["sport_id"] + [x.value for x in WindSpeedCat]]
-    info_sports = info_sports.set_index("sport_id")
-    info_sport = info_sports.to_dict(orient="index")[sport]
-
-    wind_class = None
-    for wind_description, value in info_sport.items():
-        if wind_speed <= value:
-            wind_speed = value
-            wind_class = wind_description
-            break
-
-        if wind_speed > max(info_sport.values()):
-            wind_speed = max(info_sport.values())
-            wind_class = WindSpeedCat.high.value
-
-    # print(f"wind_speed: {wind_speed}", f"wind_class: {wind_class}", f"tg: {tg}")
-
-    return regression_lines_sport[wind_class]
+# def get_regression_curves_v2(
+#     tg: float = 6, sport: str = "soccer", wind_speed: float = 1
+# ):
+#
+#     class WindSpeedCat(Enum):
+#         low: str = "wind_low"
+#         med: str = "wind_med"
+#         high: str = "wind_high"
+#
+#     for globe_temp in GlobeTemperatures:
+#         if tg <= globe_temp.value:
+#             tg = globe_temp.value
+#             break
+#
+#         if tg > GlobeTemperatures.high.value:
+#             tg = GlobeTemperatures.high.value
+#
+#     with open(f"assets/sma_v2_lines/regression_curves_v2_tg_{tg}.pkl", "rb") as f:
+#         regression_lines = pickle.load(f)
+#
+#     regression_lines_sport = regression_lines[sport]
+#
+#     info_sports = sports_info[["sport_id"] + [x.value for x in WindSpeedCat]]
+#     info_sports = info_sports.set_index("sport_id")
+#     info_sport = info_sports.to_dict(orient="index")[sport]
+#
+#     wind_class = None
+#     for wind_description, value in info_sport.items():
+#         if wind_speed <= value:
+#             wind_speed = value
+#             wind_class = wind_description
+#             break
+#
+#         if wind_speed > max(info_sport.values()):
+#             wind_speed = max(info_sport.values())
+#             wind_class = WindSpeedCat.high.value
+#
+#     # print(f"wind_speed: {wind_speed}", f"wind_class: {wind_class}", f"tg: {tg}")
+#
+#     return regression_lines_sport[wind_class]
 
 
 def get_weather_and_calculate_risk(settings):
@@ -494,14 +495,242 @@ def get_info_location_selected(data):
     return loc_selected
 
 
+@dataclass
+class Sport:
+    sport_id: str
+    clo: float
+    met: float
+    sport_cat: int
+    wind_low: float
+    wind_med: float
+    wind_high: float
+    duration: int
+    sport: str
+
+
+@dataclass
+class VarCalcRisk:
+    position = "standing"
+    max_threshold_t = 44
+    min_t_calculations = 21
+    min_threshold_t_moderate = 23
+    min_threshold_t_high = 25
+    min_threshold_t_extreme = 27
+    t_range = np.arange(
+        min_t_calculations,
+        step=(interval := 0.25),
+        stop=max_threshold_t + interval,
+    )
+    rh_range = np.arange(
+        start=0,
+        step=(interval := 0.5),
+        stop=100 + interval,
+    )
+    wind_speed = 0.5
+    var_threshold = "t_cr"
+    cmap_list = ["#fcd200", "#fd7f00", "#dc0b00", "#9c001d"]
+    risks_lines = ["moderate", "high", "extreme"]
+    risks = ["low", "moderate", "high", "extreme"]
+
+    duration = 45
+    duration_walking = 200
+
+    sports_profiles = {
+        1: {  # include older adults
+            "met": 4.7,
+            "clo": 0.4,
+            "v": wind_speed,
+            "duration": duration_walking,
+            "t_cr": [38.5, 40],
+            "water_loss": 825 / duration * duration_walking,
+        },
+        2: {
+            "met": 6.4,
+            "clo": 0.4,
+            "v": wind_speed,
+            "duration": duration,
+            "t_cr": [39.45, 40],
+            "water_loss": 850,
+        },
+        3: {
+            "met": 7.2,
+            "clo": 0.5,
+            "v": wind_speed,
+            "duration": duration,
+            "t_cr": [39.45, 40],
+            "water_loss": 850,
+        },
+        4: {  # higher water loss limit
+            "met": 7.3,
+            "clo": 0.5,
+            "v": wind_speed,
+            "duration": duration,
+            "t_cr": [39.45, 40],
+            "water_loss": 850,
+        },
+        5: {  # higher water loss limit
+            "met": 7.5,
+            "clo": 0.5,
+            "v": wind_speed,
+            "duration": duration,
+            "t_cr": [39.45, 40],
+            "water_loss": 950,
+        },
+    }
+
+
+def get_regression_curves_v2(tg=3, v=0.8, sport_id="soccer"):
+    sport_dict = sports_info.loc[sports_info["sport_id"] == sport_id].to_dict(
+        orient="records"
+    )
+    sport = Sport(**sport_dict[0])
+
+    if v < sport.wind_low:
+        v = sport.wind_low
+    elif v > sport.wind_high:
+        v = sport.wind_high
+
+    if tg < GlobeTemperatures.low.value:
+        tg = GlobeTemperatures.low.value
+    elif tg > GlobeTemperatures.high.value:
+        tg = GlobeTemperatures.high.value
+
+    inputs_model = {
+        "met": sport.met,
+        "clo": sport.clo,
+        "v": v,
+        "duration": sport.duration,
+        "t_cr": VarCalcRisk.sports_profiles[sport.sport_cat]["t_cr"],
+        "water_loss": VarCalcRisk.sports_profiles[sport.sport_cat]["water_loss"]
+        / VarCalcRisk.sports_profiles[sport.sport_cat]["duration"]
+        * sport.duration,
+    }
+
+    thresholds = []
+
+    for t in VarCalcRisk.t_range:
+        results = []
+
+        tr = mean_radiant_tmp(
+            tg=tg + t,
+            tdb=t,
+            v=inputs_model["v"],
+            standard="iso",
+        )
+
+        def calculate_threshold_water_loss(x):
+            return (
+                phs(
+                    tdb=t,
+                    tr=tr,
+                    v=inputs_model["v"],
+                    rh=x,
+                    met=inputs_model["met"],
+                    clo=inputs_model["clo"],
+                    posture=VarCalcRisk.position,
+                    duration=inputs_model["duration"],
+                    round=False,
+                    limit_inputs=False,
+                    acclimatized=100,
+                    i_mst=0.4,
+                )["water_loss"]
+                - inputs_model["water_loss"]
+            )
+
+        try:
+            results.append(
+                scipy.optimize.brentq(calculate_threshold_water_loss, 0, 100)
+            )
+        except:
+            results.append(np.nan)
+
+        for t_core_max in inputs_model[VarCalcRisk.var_threshold]:
+
+            def calculate_threshold_core(x):
+                return (
+                    phs(
+                        tdb=t,
+                        tr=tr,
+                        v=inputs_model["v"],
+                        rh=x,
+                        met=inputs_model["met"],
+                        clo=inputs_model["clo"],
+                        posture=VarCalcRisk.position,
+                        duration=inputs_model["duration"],
+                        limit_inputs=False,
+                        round=False,
+                        acclimatized=100,
+                        i_mst=0.4,
+                    )[VarCalcRisk.var_threshold]
+                    - t_core_max
+                )
+
+            try:
+                results.append(scipy.optimize.brentq(calculate_threshold_core, 0, 100))
+            except:
+                results.append(np.nan)
+
+        results.append(t)
+        thresholds.append(results)
+
+    df_ = pd.DataFrame(
+        thresholds,
+        columns=VarCalcRisk.risks_lines
+        + [
+            "t",
+        ],
+    )
+
+    regression_curves_v2 = {}
+    # create polynomial regression
+    for ix, risk in enumerate(["moderate", "extreme"]):
+        if risk == "moderate":
+            # df_.loc[~(df_[risk] < df_[VarCalcRisk.risks_lines[ix + 1]]), risk] = np.nan
+            df_.loc[df_.index > df_[df_[risk] < 20].index.max(), risk] = np.nan
+
+        df_int = df_[[risk, "t"]].dropna()
+        spl = np.polyfit(df_int["t"], df_int[risk], 3)
+        p = np.poly1d(spl)
+        regression_curves_v2[risk] = p
+
+    # calculate high risk as the middle point between moderate and extreme
+    t_rh_extreme = []
+    t_rh_moderate = []
+    for t in VarCalcRisk.t_range:
+        pol_extreme = regression_curves_v2["extreme"]
+        rh_extreme = pol_extreme(t)
+        if 0 <= rh_extreme <= 100:
+            t_rh_extreme.append([t, rh_extreme])
+        pol_moderate = regression_curves_v2["moderate"]
+        rh_moderate = pol_moderate(t)
+        if 0 <= rh_moderate <= 100:
+            t_rh_moderate.append([t, rh_moderate])
+
+    rh_high_array = [(x[0][1] + x[1][1]) / 2 for x in zip(t_rh_moderate, t_rh_extreme)]
+    t_high_array = [(x[0][0] + x[1][0]) / 2 for x in zip(t_rh_moderate, t_rh_extreme)]
+
+    spl = np.polyfit(t_high_array, rh_high_array, 3)
+    regression_curves_v2["high"] = np.poly1d(spl)
+
+    return regression_curves_v2
+
+
 if __name__ == "__main__":
 
-    v2_lines = get_regression_curves_v2(tg=9, wind_speed=2.5, sport="soccer")
+    tg_array = range(0, 18, 2)
+    v_array = np.arange(0.1, 5, 1)
+    sports_array = ["soccer", "cycling", "running", "tennis"]
 
-    f, ax = plt.subplots(constrained_layout=True)
-    array_t = np.arange(26, 42, 0.1)
-    for risk in v2_lines:
-        ax.plot(array_t, v2_lines[risk](array_t), label=risk)
-    ax.set(ylim=(0, 100))
-    plt.legend()
-    plt.show()
+    for sport in sports_array:
+        for v in v_array:
+            f, axs = plt.subplots(3, 3, constrained_layout=True)
+            axs = axs.flatten()
+            for ix, tg in enumerate(tg_array):
+                v2_lines = get_regression_curves_v2(tg=tg, v=v, sport_id=sport)
+                array_t = np.arange(26, 42, 0.1)
+                for risk in v2_lines:
+                    axs[ix].plot(array_t, v2_lines[risk](array_t), label=risk)
+                axs[ix].set(ylim=(0, 100), title=f"tg: {tg}")
+            plt.legend()
+            plt.suptitle(f"Sport: {sport}, Wind speed: {v}")
+            plt.show()
