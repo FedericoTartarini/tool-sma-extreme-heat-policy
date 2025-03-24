@@ -1,7 +1,26 @@
-### Create dependencies
-```
-pipenv run pip3 freeze > requirements.txt
-```
+# Sports Medicine Australia Extreme Heat Policy Tool
+
+This is a tool to help sports clubs and organisations to determine the risk of heat stress during their events. 
+It is based on the Sports Medicine Australia Extreme Heat Policy and on the following research paper:
+
+- [Tartarini, F., Smallcombe, J.W., Lynch, G.P., Cross, T.J., Broderick, C. and Jay, O., 2025. A modified sports medicine Australia extreme heat policy and web tool. Journal of Science and Medicine in Sport.](https://www.sciencedirect.com/science/article/pii/S1440244025000696)
+
+
+## Contributing
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. 
+You can also simply open an issue with the tag "enhancement".
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Test your changes and make sure the tests are passing
+5. Bump the version `bump-my-version bump patch`
+6. Push to the Branch (`git push origin feature/AmazingFeature`)
+7. Open a Pull Request
+
+
+## Guides
 
 ### Build and run the container locally using Docker
 ```
@@ -35,13 +54,3 @@ gcloud config set account hhri.usyd@gmail.com
 pipenv requirements > requirements.txt
 gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test  --project=sma-extreme-heat-policy
 gcloud run deploy extreme-heat-tool-test --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1
-```
-
-### EMU version
-```
-gcloud components update
-gcloud config set account hhri.usyd@gmail.com
-pipenv requirements > requirements.txt
-gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/emu  --project=sma-extreme-heat-policy
-gcloud run deploy emu --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/emu --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1 --min-instances 1
-```
