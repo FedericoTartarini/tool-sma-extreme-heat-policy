@@ -23,6 +23,8 @@ icecream = "*"
 pydantic = "*"
 matplotlib = "*"
 scipy = "*"
+pyarrow = "*"
+fastparquet = "*"
 
 [dev-packages]
 seaborn = "*"
