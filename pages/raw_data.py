@@ -43,25 +43,16 @@ def update_alert_hss_current(settings):
         Cols.tg,
         Cols.wind,
         Cols.cloud,
-        "elevation",
+        "risk_value_interpolated",
     ]
+
+    df = df[float_columns]
+
+    df = df.resample("H").mean()
+
     df[float_columns] = df[float_columns].astype(float).round(2)
 
     df["time"] = df.index.strftime("%D %H:%M")
-
-    df = df[
-        [
-            "time",
-            Cols.tdb,
-            Cols.rh,
-            Cols.tg,
-            Cols.wind,
-            Cols.cloud,
-            "elevation",
-            "risk",
-            "risk_value_interpolated",
-            "risk_value",
-        ]
-    ]
+    df = df[["time"] + float_columns]
 
     return create_table(df)
