@@ -1,22 +1,22 @@
 sport_id,clo,met,sport_cat,wind_low,wind_med,wind_high,duration,sport
-abseiling,0.6,5.5,5,0.5,1.5,3,120,Abseiling
-archery,0.7,4.3,1,0.5,1.5,3,180,Archery
+abseiling,0.6,6.5,5,0.5,1.5,3,120,Abseiling
+archery,0.75,4.5,1,0.5,1.5,3,180,Archery
 australian_football,0.47,7.5,3,0.75,1.5,3,45,Australian football
 baseball,0.7,6,5,0.75,1.5,3,120,Baseball
 basketball,0.37,7.5,3,0.75,1.5,3,45,Basketball
 bowls,0.5,5,2,0.5,1.5,3,180,Bowls
 canoeing,0.6,7.5,3,2,2.5,3,60,Canoeing
 cricket,0.7,6,5,0.75,1.5,3,120,Cricket
-cycling,0.4,7,3,5,5,5,60,Cycling
-equestrian,0.9,7.4,4,4,4,4,60,Equestrian
+cycling,0.4,7,3,3,4,5,60,Cycling
+equestrian,0.9,7.4,4,3,3.5,4,60,Equestrian
 field_athletics,0.3,7,2,1,2,3,60,Running (Athletics)
 field_hockey,0.6,7.4,4,0.75,1.5,3,45,Field hockey
 fishing,0.9,4,1,0.5,1.5,3,180,Fishing
 golf,0.5,5,1,0.5,1.5,3,180,Golf
-horseback,0.9,7.4,4,4,4,4,60,Horseback riding
+horseback,0.9,7.4,4,3,3.5,4,60,Horseback riding
 kayaking,0.6,7.5,3,2,2.5,3,60,Kayaking
 running,0.37,7.5,3,2,2.5,3,60,Long distance running
-mtb,0.55,7.5,4,5,5,5,60,Mountain biking
+mtb,0.55,7.5,4,3,5,5,60,Mountain biking
 netball,0.37,7.5,3,0.75,1.5,3,45,Netball
 oztag,0.4,7.5,3,0.75,1.5,3,45,Oztag
 pickleball,0.4,6.5,3,0.5,1.5,3,60,Pickleball
@@ -24,7 +24,7 @@ climbing,0.6,7.5,3,1,2,3,45,Rock climbing
 rowing,0.4,7.5,3,2,2.5,3,60,Rowing
 rugby_league,0.47,7.5,4,0.75,1.5,3,45,Rugby league
 rugby_union,0.47,7.5,4,0.75,1.5,3,45,Rugby union
-sailing,1,6.5,5,3,3,3,180,Sailing
+sailing,1,6.5,5,2,2.5,3,180,Sailing
 shooting,0.6,5,1,0.5,1.5,3,120,Shooting
 soccer,0.47,7.5,3,1,2,3,45,Soccer
 softball,0.9,6.1,5,1,2,3,120,Softball
