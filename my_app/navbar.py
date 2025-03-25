@@ -95,7 +95,7 @@ def my_navbar():
             className="p-2",
             size="xs",
         ),
-        color="#ec1e23",
+        color="#dc0b00",
         dark=True,
     )
 

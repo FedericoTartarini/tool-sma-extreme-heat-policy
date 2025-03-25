@@ -22,7 +22,7 @@ def my_footer():
                             [Contact Us](mailto:federico.tartarini@sydney.edu.au)
                             """
                         ),
-                        style={"color": "#eee", "inherit": "none"},
+                        style={"color": "#111", "inherit": "none"},
                         span=12,
                         md="auto",
                         className="markdown-footer",
@@ -43,6 +43,6 @@ def my_footer():
             className="p-2",
             size="xs",
         ),
-        style={"background": "#215f93"},
+        style={"background": "#fcd200"},
         className="p-2",
     )
