@@ -8,7 +8,6 @@ from dash import dcc
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import Output, Input, State, Serverside, callback
 from firebase_admin import db
-from icecream import ic
 
 from components.current_risk import component_current_risk
 from components.detailed_recommendations import component_detailed_recommendation

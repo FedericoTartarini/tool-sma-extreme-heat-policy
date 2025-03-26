@@ -1,3 +1,4 @@
+import logging
 import time
 import warnings
 from dataclasses import dataclass
@@ -11,6 +12,8 @@ from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
 from my_app.my_classes import IDs
+
+logger = logging.getLogger(__name__)
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -249,7 +252,10 @@ def calculate_comfort_indices_v2(data_for, sport_id):
             risk_value = df_risk_parquet.loc[(tdb, rh, tg, wind_speed, sport_id)]
             risk_value = risk_value.to_dict()
         except:
-            print(tdb, rh, tg, wind_speed, sport_id)
+            logger.error(
+                f"Parquet file - Risk value not found for {tdb=}, {rh=}, {tg=}, {wind_speed=}, {sport_id=}"
+            )
+            # df_risk_parquet.loc[(25, 74, 4, 1.5, "astralian_football")]
 
         top = 100
         if risk_value["rh_threshold_extreme"] > top:
@@ -714,9 +720,9 @@ def generate_reference_table_risk():
             orient="records"
         )
         sport = Sport(**sport_dict[0])
-        v_array = np.arange(sport.wind_low, sport.wind_high, 0.5)
+        v_array = np.arange(max(sport.wind_low - 0.5, 0), sport.wind_high + 0.5, 0.1)
         v_array = set([round(round(x / 0.5) * 0.5, 2) for x in v_array])
-        # print(sport.sport_id, sport.wind_low, sport.wind_high, v_array)
+        print(sport.sport_id, sport.wind_low, sport.wind_high, v_array)
         start_time = time.time()
         for v in v_array:
             for tg in tg_array:

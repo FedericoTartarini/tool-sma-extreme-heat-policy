@@ -25,6 +25,7 @@ matplotlib = "*"
 scipy = "*"
 pyarrow = "*"
 fastparquet = "*"
+google-cloud-logging = "*"
 
 [dev-packages]
 seaborn = "*"
