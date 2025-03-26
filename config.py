@@ -175,13 +175,19 @@ class URLS:
         description="This is the home page of the SMA Extreme Policy Tool, which allows you to calculate the sport "
         "heat score",
     )
-
     ABOUT: ClassVar[UrlInfo] = UrlInfo(
         url="/about",
         url_id="id-url-about",
         page_title="About Page",
         name="About",
         description="This page provides information about the SMA Extreme Heat Policy tool",
+    )
+    INSTALL: ClassVar[UrlInfo] = UrlInfo(
+        url="/install",
+        url_id="id-url-install",
+        page_title="Installation Page",
+        name="Install",
+        description="This page provides information on how to install the SMA Extreme Heat Policy tool on your phone",
     )
 
 

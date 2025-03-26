@@ -26,6 +26,7 @@ scipy = "*"
 pyarrow = "*"
 fastparquet = "*"
 google-cloud-logging = "*"
+dash-iconify = "*"
 
 [dev-packages]
 seaborn = "*"

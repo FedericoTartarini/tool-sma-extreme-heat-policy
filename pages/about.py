@@ -1,7 +1,16 @@
 import dash
 import dash_mantine_components as dmc
 
-dash.register_page(__name__, title="About Page", name="About Page")
+from components.install_button import component_button_install
+from config import URLS
+
+dash.register_page(
+    __name__,
+    path=URLS.ABOUT.url,
+    title=URLS.ABOUT.page_title,
+    name=URLS.ABOUT.name,
+    description=URLS.ABOUT.description,
+)
 
 layout = dmc.Stack(
     [
@@ -33,6 +42,7 @@ layout = dmc.Stack(
                     "illness.",
                     span=True,
                 ),
+                component_button_install(),
             ],
             shadow="xs",
             p="xs",

@@ -14,6 +14,7 @@ from components.detailed_recommendations import component_detailed_recommendatio
 from components.dropdown_location import display_location_dropdown
 from components.dropdown_sport import display_sport_dropdown
 from components.forecasts import component_forecast
+from components.install_button import component_button_install
 from components.main_recommendations import component_main_recommendation
 from components.map import component_map
 from components.sport_image import (
@@ -53,6 +54,7 @@ def layout(id_sport=Dropdowns.SPORT.default, id_postcode=Dropdowns.LOCATION.defa
             component_main_recommendation(),
             component_detailed_recommendation(),
             component_forecast(),
+            component_button_install(),
         ],
         spacing="xs",
     )
