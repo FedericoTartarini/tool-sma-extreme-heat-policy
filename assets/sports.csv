@@ -1,5 +1,5 @@
 sport_id,clo,met,sport_cat,wind_low,wind_med,wind_high,duration,sport
-abseiling,0.6,6.5,5,0.5,1.5,3,120,Abseiling
+abseiling,0.6,6,5,0.5,1.5,3,120,Abseiling
 archery,0.75,4.5,1,0.5,1.5,3,180,Archery
 australian_football,0.47,7.5,3,0.75,1.5,3,45,Australian football
 baseball,0.7,6,5,0.75,1.5,3,120,Baseball
