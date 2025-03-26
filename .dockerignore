@@ -9,12 +9,17 @@ Pipfile.lock
 __pycache__
 .pytest_cache
 file_system_store
+file_system_backend/
+file_system_store/
+temp_files/
 .git
 docs
 tests
 secret.json
 out
 assets/sport_images.svg
+.git/*
+.cache.sqlite
 
 assets/data/Region*.kml
 
@@ -111,7 +116,7 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
-# nyc sma-hss coverage
+# nyc test coverage
 .nyc_output
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
@@ -204,7 +209,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit sma-hss / coverage reports
+# Unit test / coverage reports
 htmlcov/
 .tox/
 .coverage
@@ -299,3 +304,41 @@ bh_unicode_properties.cache
 # Sublime-github package stores a github token in this file
 # https://packagecontrol.io/packages/sublime-github
 GitHub.sublime-settings
+
+# Miscellaneous
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# MacOS directory files
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# IDEs and editors
+.idea/
+.vscode
+*.sublime-project
+
+# Python
+__pycache__/*
+*.py[cod]
+*$py.class
+
+# Virtualenv
+.venv/

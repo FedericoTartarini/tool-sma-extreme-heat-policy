@@ -9,14 +9,19 @@ RUN apt-get update \
 && apt-get install gcc -y \
 && apt-get clean
 
-# Copy local code to the container image.
+# Set the working directory
 ENV APP_HOME /app
 WORKDIR $APP_HOME
-COPY . ./
+
+# Copy requirements.txt first to leverage Docker cache
+COPY requirements.txt ./
 
 # Install production dependencies.
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . ./
 
 EXPOSE 8080
 

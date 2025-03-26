@@ -6,6 +6,12 @@ __pycache__/
 *$py.class
 secret.json
 
+file_system_backend/
+file_system_store/
+temp_files/
+
+.cache.sqlite
+
 # C extensions
 *.so
 

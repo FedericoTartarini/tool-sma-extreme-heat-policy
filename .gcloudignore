@@ -8,6 +8,7 @@ secret.json
 out
 tests
 assets/sport_images.svg
+.cache.sqlite
 
 README.md
 LICENSE
@@ -22,3 +23,20 @@ __pycache__
 
 assets/data/Region*.kml
 file_system_store
+file_system_backend/
+file_system_store/
+temp_files/
+
+# Additional patterns to improve the .gcloudignore file
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.DS_Store
+node_modules
+dist
+coverage
+.env
+.vscode
+.idea
