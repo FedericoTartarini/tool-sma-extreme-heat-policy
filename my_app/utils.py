@@ -205,36 +205,6 @@ def get_weather(
     return calculate_mean_radiant_tmp(df_weather)
 
 
-def calculate_comfort_indices_v1(data_for, sport_class):
-    lines = generate_regression_curves(sport_class)
-    data_for["moderate"] = lines[1](data_for["tdb"])
-    data_for["high"] = lines[2](data_for["tdb"])
-    data_for["extreme"] = lines[3](data_for["tdb"])
-
-    risk_value_interpolated = []
-    for ix, row in data_for.iterrows():
-        top = 100
-        if row["extreme"] > top:
-            top = row["extreme"] + 10
-        x = [0, row["moderate"], row["high"], row["extreme"], top]
-        y = np.arange(0, 5, 1)
-
-        risk_value_interpolated.append(np.around(np.interp(row["rh"], x, y), 1))
-
-    data_for["risk_value_interpolated"] = risk_value_interpolated
-
-    data_for["risk"] = "low"
-    for risk in ["moderate", "high", "extreme"]:
-        data_for.loc[data_for[risk] < 0, risk] = 0
-        data_for.loc[data_for[risk] > 100, risk] = 100
-        data_for.loc[data_for["rh"] > data_for[risk], "risk"] = risk
-
-    risk_value = {"low": 0, "moderate": 1, "high": 2, "extreme": 3}
-    data_for["risk_value"] = data_for["risk"].map(risk_value)
-
-    return data_for
-
-
 def calculate_comfort_indices_v2(data_for, sport_id):
 
     array_risk_results = []
@@ -380,17 +350,6 @@ def calculate_mean_radiant_tmp(df_for):
     df_for[Cols.tr] = df_for[Cols.tdb] + df_for["delta_mrt"]
 
     return df_for
-
-
-def generate_regression_curves(sport_class):
-    df_points = pd.read_csv("./assets/points_curves.csv")
-    df_class = df_points[df_points["class"] == sport_class]
-    regressions_lines = {}
-    for line in df_class["line"].unique():
-        df_line = df_class[df_class["line"] == line]
-        z = np.polyfit(df_line.x, df_line.y, 2)
-        regressions_lines[line] = np.poly1d(z)
-    return regressions_lines
 
 
 def legend_risk():
