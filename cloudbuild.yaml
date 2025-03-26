@@ -1,15 +1,16 @@
 steps:
 # Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/test-image', '.']
+  args: ['build', '-t', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/$_IMG_NAME', '.']
 # Push the container image to Container Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/test-image']
+  args: ['push', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/$_IMG_NAME']
 # Deploy container image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'gcloud'
   args: ['run', 'deploy', '$_REPO_NAME',
-         '--image', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/test-image',
+         '--image', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/$_IMG_NAME',
          '--region', 'asia-southeast1',
          '--update-secrets', 'firebase_secret=firebase-realtime-database:1',
-         '--memory', '8Gi']
+         '--memory', '8Gi',
+         '--cpu', '2',]
