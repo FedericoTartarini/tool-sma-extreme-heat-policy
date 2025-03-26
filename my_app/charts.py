@@ -64,7 +64,7 @@ def line_chart(df, variable="tdb"):
     fig.add_trace(
         go.Scatter(
             x=df.index,
-            y=df[variable],
+            y=df[variable].rolling(4, min_periods=1, center=True).mean(),
             mode="lines+markers",
             line_color="black",
             line={"shape": "spline", "smoothing": 1.3},

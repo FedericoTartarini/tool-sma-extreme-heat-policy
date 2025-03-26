@@ -197,7 +197,7 @@ def get_weather(
     now = pd.Timestamp.now(pytz.timezone(tz)) - pd.Timedelta(hours=1)
     df_weather = df_weather[df_weather.index >= now]
     df_weather = df_weather.dropna(subset=[Cols.tdb])
-    df_weather = df_weather.resample("30min").interpolate()
+    # df_weather = df_weather.resample("30min").interpolate()
     df_weather[Cols.lat] = lat
     df_weather[Cols.lon] = lon
     df_weather[Cols.tz] = tz
