@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import scipy
 from dash import html
-from icecream import ic
+from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
 from my_app.my_classes import IDs
@@ -819,27 +819,27 @@ if __name__ == "__main__":
 
     generate_reference_table_risk()
 
-    # # plot lines for different sports
-    # tg_array = range(4, 13, 1)
-    # v_array = np.arange(0.1, 5, 1)
-    # # v_array = [0.1]
-    # # sports_array = ["cricket", "cycling", "running", "tennis"]
-    # # sports_array = sports_info.sport_id.unique()
-    # # sports_array = ["walking", "fishing", "archery"]
-    # sports_array = ["soccer"]
-    #
-    # for sport in sports_array:
-    #     for v in v_array:
-    #         f, axs = plt.subplots(3, 3, constrained_layout=True)
-    #         axs = axs.flatten()
-    #         for ix, tg in enumerate(tg_array):
-    #             v2_lines = get_regression_curves_v2(tg=tg, wind_speed=v, sport_id=sport)
-    #             for risk in v2_lines:
-    #                 array_t = np.arange(
-    #                     v2_lines[risk]["t_min"], v2_lines[risk]["t_max"], 0.1
-    #                 )
-    #                 axs[ix].plot(array_t, v2_lines[risk]["poly"](array_t), label=risk)
-    #             axs[ix].set(ylim=(0, 100), title=f"tg: {tg}", xlim=(26, 44))
-    #         plt.legend()
-    #         plt.suptitle(f"Sport: {sport}, Wind speed: {v}")
-    #         plt.show()
+    # plot lines for different sports
+    tg_array = range(4, 13, 1)
+    v_array = np.arange(0.1, 5, 1)
+    # v_array = [0.1]
+    # sports_array = ["cricket", "cycling", "running", "tennis"]
+    # sports_array = sports_info.sport_id.unique()
+    # sports_array = ["walking", "fishing", "archery"]
+    sports_array = ["abseiling"]
+
+    for sport in sports_array:
+        for v in v_array:
+            f, axs = plt.subplots(3, 3, constrained_layout=True)
+            axs = axs.flatten()
+            for ix, tg in enumerate(tg_array):
+                v2_lines = get_regression_curves_v2(tg=tg, wind_speed=v, sport_id=sport)
+                for risk in v2_lines:
+                    array_t = np.arange(
+                        v2_lines[risk]["t_min"], v2_lines[risk]["t_max"], 0.1
+                    )
+                    axs[ix].plot(array_t, v2_lines[risk]["poly"](array_t), label=risk)
+                axs[ix].set(ylim=(0, 100), title=f"tg: {tg}", xlim=(26, 44))
+            plt.legend()
+            plt.suptitle(f"Sport: {sport}, Wind speed: {v}")
+            plt.show()
