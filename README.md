@@ -50,10 +50,12 @@ gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/
 
 ### Push the container image to *Test Version*
 
-[//]: # (todo: change to artifact registry)
-```
+```bash
 gcloud components update --quiet
-gcloud config set account hhri.usyd@gmail.com
+bump-my-version bump patch
 pipenv requirements > requirements.txt
-gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test  --project=sma-extreme-heat-policy
-gcloud run deploy extreme-heat-tool-test --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/extreme-heat-tool-test --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1
+python -m pytest --numprocesses 10 --base-url http://0.0.0.0:8080
+gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy"
+python -m pytest --numprocesses 10 --base-url https://sma-heat-policy.sydney.edu.au/
+python -m pytest --numprocesses 10 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app
+```
