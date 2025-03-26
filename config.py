@@ -208,7 +208,7 @@ data_dd_location = data_dd_location.to_dict("records")
 class Dropdowns:
     SPORT: ClassVar[DropDownInfo] = DropDownInfo(
         id=IDs.sport,
-        question="Select your sport",
+        question="Sport:",
         options=data_dd_sport,
         multi=False,
         default="soccer",
@@ -216,7 +216,7 @@ class Dropdowns:
 
     LOCATION: ClassVar[DropDownInfo] = DropDownInfo(
         id=IDs.postcode,
-        question="Select your postcode",
+        question="Location:",
         options=data_dd_location,
         multi=False,
         default="Brisbane_QLD_9013",

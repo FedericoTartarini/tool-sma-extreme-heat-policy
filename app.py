@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import uuid
 import warnings
@@ -6,6 +7,9 @@ import warnings
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import firebase_admin
+
+# Imports the Cloud Logging client library
+import google.cloud.logging
 from dash import page_container
 from dash_extensions.enrich import (
     DashProxy,
@@ -23,10 +27,6 @@ from my_app.utils import (
     store_settings_dict,
     store_weather_risk_df,
 )
-
-# Imports the Cloud Logging client library
-import google.cloud.logging
-import logging
 
 # Instantiates a client
 client = google.cloud.logging.Client()

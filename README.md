@@ -54,7 +54,7 @@ gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/
 gcloud components update --quiet
 bump-my-version bump patch
 pipenv requirements > requirements.txt
-python -m pytest --numprocesses 10 --base-url http://0.0.0.0:8080
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
 gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy"
 python -m pytest --numprocesses 10 --base-url https://sma-heat-policy.sydney.edu.au/
 python -m pytest --numprocesses 10 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app
