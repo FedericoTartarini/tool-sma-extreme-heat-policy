@@ -33,6 +33,7 @@ psychrolib = "*"
 pytest = "*"
 pytest-playwright = "*"
 bump-my-version = "*"
+pytest-xdist = "*"
 
 [requires]
 python_version = "3.12"
