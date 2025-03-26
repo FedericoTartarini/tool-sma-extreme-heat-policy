@@ -22,40 +22,27 @@ You can also simply open an issue with the tag "enhancement".
 
 ## Guides
 
-### Build and run the container locally using Docker
-```
-docker build . --tag gcr.io/football-nsw-369006/extreme-heat-tool
-PORT=8080 && docker run -p 9090:${PORT} -e PORT=${PORT} gcr.io/football-nsw-369006/extreme-heat-tool
-```
-You should be able to access the application at this URL: `http://127.0.0.1:9090/`
-
 ### Run the tests
-```
-python -m pytest --base-url http://0.0.0.0:8080
-```
-
-### Push the container image to Container Registry and deploy
-```
-gcloud components update
-```
-
-```
-gcloud components update --quiet
-bump-my-version bump patch
-gcloud config set account hhri.usyd@gmail.com
-pipenv requirements > requirements.txt
-gcloud builds submit --tag asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool  --project=sma-extreme-heat-policy
-gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/asia.gcr.io/sma-extreme-heat-tool --project=sma-extreme-heat-policy --region=asia-southeast1 --platform managed --update-secrets=firebase_secret=firebase-realtime-database:1
+```bash
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
 ```
 
 ### Push the container image to *Test Version*
 
 ```bash
 gcloud components update --quiet
-bump-my-version bump patch
 pipenv requirements > requirements.txt
 python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
 gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy"
-python -m pytest --numprocesses 10 --base-url https://sma-heat-policy.sydney.edu.au/
-python -m pytest --numprocesses 10 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app
+python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
+```
+
+### Publish the main version of the application
+```bash
+gcloud components update --quiet
+bump-my-version bump patch
+pipenv requirements > requirements.txt
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
+gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool",_PROJ_NAME="sma-extreme-heat-policy"
+python -m pytest --numprocesses 3 --base-url https://sma-heat-policy.sydney.edu.au/
 ```
