@@ -33,7 +33,7 @@ python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Ca
 gcloud components update --quiet
 pipenv requirements > requirements.txt
 python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
-gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy"
+gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
 python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
 ```
 
@@ -43,6 +43,14 @@ gcloud components update --quiet
 bump-my-version bump patch
 pipenv requirements > requirements.txt
 python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
-gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool",_PROJ_NAME="sma-extreme-heat-policy"
+gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="main"
 python -m pytest --numprocesses 3 --base-url https://sma-heat-policy.sydney.edu.au/
+```
+
+### List all the revisions
+```bash
+gcloud auth application-default set-quota-project sma-extreme-heat-policy
+gcloud config set project sma-extreme-heat-policy
+gcloud config set run/region asia-southeast1
+gcloud run revisions list --platform managed --service extreme-heat-tool-test --filter="status.conditions.type:Active AND status.conditions.status:'False'" --format='value(metadata.name)' | xargs -r -L1 gcloud run revisions delete --quiet
 ```
