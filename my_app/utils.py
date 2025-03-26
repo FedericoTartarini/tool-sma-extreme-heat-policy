@@ -7,6 +7,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import scipy
 from dash import html
+from icecream import ic
 from pythermalcomfort.utilities import mean_radiant_tmp
 
 from my_app.my_classes import IDs
@@ -250,35 +251,35 @@ def calculate_comfort_indices_v2(data_for, sport_id):
         rh = row[Cols.rh]
         wind_speed = row[Cols.wind]
 
-        tg = round(tg)
         if tg < GlobeTemperatures.low.value:
             tg = GlobeTemperatures.low.value
         elif tg > GlobeTemperatures.high.value:
             tg = GlobeTemperatures.high.value
+        tg = round(tg)
 
-        wind_speed = round(round(wind_speed / 0.2) * 0.2, 2)
         if wind_speed < sport.wind_low:
             wind_speed = sport.wind_low
-        elif wind_speed > sport.wind_high - 0.2:
-            wind_speed = sport.wind_high - 0.2
+        elif wind_speed > sport.wind_high - 0.5:
+            wind_speed = sport.wind_high - 0.5
+        wind_speed = round(round(wind_speed / 0.5) * 0.5, 2)
 
-        tdb = round(tdb * 2) / 2
         if tdb < 24:
             tdb = 24
         elif tdb > 43.5:
             tdb = 43.5
+        tdb = round(tdb * 2) / 2
 
-        rh = round(rh)
         if rh < 0:
             rh = 0
         elif rh > 99:
             rh = 99
+        rh = round(rh)
 
         try:
             risk_value = df_risk_parquet.loc[(tdb, rh, tg, wind_speed, sport_id)]
             risk_value = risk_value.to_dict()
         except:
-            print(tdb, rh, tg, wind_speed)
+            print(tdb, rh, tg, wind_speed, sport_id)
 
         top = 100
         if risk_value["rh_threshold_extreme"] > top:
@@ -754,8 +755,9 @@ def generate_reference_table_risk():
             orient="records"
         )
         sport = Sport(**sport_dict[0])
-        v_array = np.arange(sport.wind_low, sport.wind_high, 0.2)
-        v_array = [round(round(x / 0.2) * 0.2, 2) for x in v_array]
+        v_array = np.arange(sport.wind_low, sport.wind_high, 0.5)
+        v_array = set([round(round(x / 0.5) * 0.5, 2) for x in v_array])
+        # print(sport.sport_id, sport.wind_low, sport.wind_high, v_array)
         start_time = time.time()
         for v in v_array:
             for tg in tg_array:

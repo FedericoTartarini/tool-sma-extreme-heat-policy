@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import dash
 import dash_mantine_components as dmc
 from dash import dcc
+from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import Output, Input, State, Serverside, callback
 from firebase_admin import db
 from icecream import ic
@@ -91,5 +92,7 @@ def save_settings_in_storage(data, user_id, location, sport):
     prevent_initial_call=True,
 )
 def on_settings_change(settings):
+    if not settings:
+        raise PreventUpdate
     df = get_weather_and_calculate_risk(settings)
     return Serverside(df)

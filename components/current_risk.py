@@ -26,7 +26,7 @@ def component_current_risk():
                     ],
                     style={
                         "text-align": "center",
-                        "width": "30%",
+                        "width": "35%",
                     },
                     id="id-alert-risk-current-value",
                     color="light",
@@ -55,7 +55,7 @@ def update_fig_hss_trend(df):
     thresholds = [x + 1 for x in thresholds]
     return dmc.Image(
         gauge_chart(
-            risk_value=risk_value,
+            risk_value=round(risk_value, 2),
             colors=colors,
             thresholds=thresholds,
             text=text,

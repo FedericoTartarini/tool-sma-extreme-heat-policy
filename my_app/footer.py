@@ -15,7 +15,7 @@ def my_footer():
                             
                             Website authors: [Federico Tartarini](https://www.linkedin.com/in/federico-tartarini/), [Ollie Jay](https://au.linkedin.com/in/ollie-jay-793a1b11), and [James Smallcombe](https://twitter.com/smallcombe2?lang=en)
                             
-                            © 2025 - Heat and Health Research Center, USYD
+                            © 2025 - Heat and Health Research Centre, USYD
                             
                             Version: 0.1.1
                             

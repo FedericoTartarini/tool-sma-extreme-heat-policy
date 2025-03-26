@@ -49,6 +49,8 @@ gcloud run deploy extreme-heat-tool --image asia.gcr.io/sma-extreme-heat-policy/
 ```
 
 ### Push the container image to *Test Version*
+
+[//]: # (todo: change to artifact registry)
 ```
 gcloud components update --quiet
 gcloud config set account hhri.usyd@gmail.com

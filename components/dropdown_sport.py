@@ -36,5 +36,4 @@ def generate_dropdown_inline(content):
 def display_sport_dropdown(sport):
     question = deepcopy(Dropdowns.SPORT)
     question.default = sport
-    ic(sport, question.default)
     return generate_dropdown_inline(question)
