@@ -55,7 +55,7 @@ def update_fig_hss_trend(df):
     thresholds = [x + 1 for x in thresholds]
     return dmc.Image(
         gauge_chart(
-            risk_value=round(risk_value, 2),
+            risk_value=round(risk_value, 1),
             colors=colors,
             thresholds=thresholds,
             text=text,

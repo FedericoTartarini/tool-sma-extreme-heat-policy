@@ -53,4 +53,6 @@ gcloud auth application-default set-quota-project sma-extreme-heat-policy
 gcloud config set project sma-extreme-heat-policy
 gcloud config set run/region asia-southeast1
 gcloud run revisions list --platform managed --service extreme-heat-tool-test --filter="status.conditions.type:Active AND status.conditions.status:'False'" --format='value(metadata.name)' | xargs -r -L1 gcloud run revisions delete --quiet
+
+gcloud run revisions list --platform managed --service extreme-heat-tool --sort-by=~creationTimestamp --format='value(metadata.name)'
 ```

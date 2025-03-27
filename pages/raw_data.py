@@ -13,7 +13,7 @@ dash.register_page(__name__, path=f"/raw_data")
 
 def create_table(df):
     columns, values = df.columns, df.values
-    header = [html.Tr([html.Th(col[:6]) for col in columns])]
+    header = [html.Tr([html.Th(col[:10]) for col in columns])]
     rows = [html.Tr([html.Td(cell) for cell in row]) for row in values]
     table = dmc.Table(
         [html.Thead(header), html.Tbody(rows)],
@@ -36,6 +36,8 @@ def update_alert_hss_current(settings):
 
     df = get_weather_and_calculate_risk(settings)
 
+    df["risk_value_interpolated"] += 1
+
     # Select columns with float data type
     float_columns = [
         Cols.tdb,
@@ -48,7 +50,7 @@ def update_alert_hss_current(settings):
 
     df = df[float_columns]
 
-    df = df.resample("H").mean()
+    df = df.resample("2H").mean()
 
     df[float_columns] = df[float_columns].astype(float).round(2)
 
