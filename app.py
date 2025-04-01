@@ -128,26 +128,32 @@ app.index_string = """<!DOCTYPE html>
 """
 
 
-app.layout = dmc.LoadingOverlay(
-    loaderProps={"variant": "dots", "color": "#555", "size": 100},
-    exitTransitionDuration=500,
-    children=[
-        html.Div(id="id-google-analytics-event"),
-        dcc.Store(
-            id=store_settings_dict,
-            storage_type="local",
-        ),
-        dcc.Store(id=store_weather_risk_df),
-        dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
+app.layout = html.Div(
+    [
         my_navbar(),
-        dmc.Container(
-            html.Div(page_container, style={"flex": 1}),
-            style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
-            className="p-2",
-            size="xs",
+        dmc.LoadingOverlay(
+            loaderProps={"variant": "dots", "color": "#555", "size": 100},
+            exitTransitionDuration=500,
+            children=[
+                html.Div(id="id-google-analytics-event"),
+                dcc.Store(
+                    id=store_settings_dict,
+                    storage_type="local",
+                ),
+                dcc.Store(id=store_weather_risk_df),
+                dcc.Store(
+                    id=storage_user_id, storage_type="local", data=str(uuid.uuid1())
+                ),
+                dmc.Container(
+                    html.Div(page_container, style={"flex": 1}),
+                    style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
+                    className="p-2",
+                    size="xs",
+                ),
+            ],
         ),
         my_footer(),
-    ],
+    ]
 )
 
 
