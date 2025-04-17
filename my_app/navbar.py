@@ -3,6 +3,7 @@ import dash_mantine_components as dmc
 from dash import Input, Output, State, html, ctx
 from dash import callback
 
+from components.modal_country_select import modal_country_select
 from config import URLS
 
 
@@ -36,6 +37,11 @@ def my_navbar():
                         className="py-0",
                     ),
                     dmc.Col(
+                        dbc.NavItem(modal_country_select()),
+                        span="content",
+                        className="p-0",
+                    ),
+                    dmc.Col(
                         [
                             dbc.NavbarToggler(
                                 dmc.Burger(
@@ -64,7 +70,6 @@ def my_navbar():
                                                 id="id-nav-home",
                                             ),
                                         ),
-                                        # dbc.NavItem(dbc.NavLink("Documentation", href="documentation")),
                                         dbc.NavItem(
                                             dbc.NavLink(
                                                 "About",

@@ -71,6 +71,7 @@ def get_postcodes(country="AU"):
     )
     return df_postcodes
 
+
 # todo it should not be hardcoded
 df_postcodes = get_postcodes("AU")
 

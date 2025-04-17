@@ -24,9 +24,9 @@ from config import (
     sma_risk_messages,
     mrt_calculation,
     sports_info,
-    df_postcodes,
     time_zones,
     default_location,
+    get_postcodes,
 )
 from pvlib import location
 from pythermalcomfort.models import solar_gain, phs
@@ -38,6 +38,7 @@ app_version = "1.0.0"
 app_version = app_version.replace(".", "")
 store_settings_dict = f"local-storage-settings-{app_version}"
 store_weather_risk_df = f"session-storage-weather-{app_version}"
+store_country = "local-storage-country"
 storage_user_id = "user-id"
 
 

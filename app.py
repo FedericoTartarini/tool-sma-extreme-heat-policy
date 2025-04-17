@@ -26,6 +26,7 @@ from my_app.utils import (
     storage_user_id,
     store_settings_dict,
     store_weather_risk_df,
+    store_country,
 )
 
 # Instantiates a client
@@ -141,6 +142,7 @@ app.layout = html.Div(
                     storage_type="local",
                 ),
                 dcc.Store(id=store_weather_risk_df),
+                dcc.Store(id=store_country, storage_type="local"),
                 dcc.Store(
                     id=storage_user_id, storage_type="local", data=str(uuid.uuid1())
                 ),
