@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import ClassVar, Union
+from typing import ClassVar
 
 import pandas as pd
 from pydantic import BaseModel
@@ -25,17 +25,54 @@ default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
 # risk classes
 variable_calc_risk = "ratio_w"
 
-df_postcodes = pd.read_csv("./assets/postcodes.csv")
-df_postcodes["sub-state-post"] = (
-    df_postcodes["suburb"]
-    + ", "
-    + df_postcodes["state"]
-    + ", "
-    + df_postcodes["postcode"].astype("str")
-)
-df_postcodes["sub-state-post-no-space"] = (
-    df_postcodes["sub-state-post"].astype("str").replace(", ", "_", regex=True)
-)
+
+def get_postcodes(country="AU"):
+    df_postcodes = pd.read_csv(f"./assets/{country}.txt", header=None, delimiter="\t")
+    df_postcodes.columns = [
+        "country code",
+        "postcode",
+        "suburb",
+        "state",
+        "abbreviation",
+        "admin name2",
+        "admin code2",
+        "admin name3",
+        "admin code3",
+        "lat",
+        "lon",
+        "accuracy",
+    ]
+    df_postcodes.replace("New South Wales", "NSW", inplace=True)
+    df_postcodes.replace("Western Australia", "WA", inplace=True)
+    df_postcodes.replace("Australian Capital Territory", "ACT", inplace=True)
+    df_postcodes.replace("Northern Territory", "NT", inplace=True)
+    df_postcodes.replace("South Australia", "SA", inplace=True)
+    df_postcodes.replace("Queensland", "QLD", inplace=True)
+    df_postcodes.replace("Victoria", "VIC", inplace=True)
+    df_postcodes.replace("Tasmania", "TAS", inplace=True)
+    df_postcodes = df_postcodes[
+        [
+            "postcode",
+            "suburb",
+            "state",
+            "lat",
+            "lon",
+        ]
+    ]
+    df_postcodes["sub-state-post"] = (
+        df_postcodes["suburb"]
+        + ", "
+        + df_postcodes["state"]
+        + ", "
+        + df_postcodes["postcode"].astype("str")
+    )
+    df_postcodes["sub-state-post-no-space"] = (
+        df_postcodes["sub-state-post"].astype("str").replace(", ", "_", regex=True)
+    )
+    return df_postcodes
+
+# todo it should not be hardcoded
+df_postcodes = get_postcodes("AU")
 
 
 @dataclass(order=True)
