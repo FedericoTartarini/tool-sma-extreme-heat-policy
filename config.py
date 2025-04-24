@@ -4,7 +4,7 @@ from typing import ClassVar
 import pandas as pd
 from pydantic import BaseModel
 
-from my_app.my_classes import IDs
+from my_app.my_classes import IDs, Defaults, DropDownInfo, PostcodesDefault
 
 # sports
 sports_info = pd.read_csv("assets/sports.csv")
@@ -18,6 +18,62 @@ time_zones = {
     "QLD": "Australia/Brisbane",
     "VIC": "Australia/Melbourne",
     "TAS": "Australia/Hobart",
+    "Alaska": "US/Alaska",
+    "Alabama": "US/Central",
+    "Arkansas": "US/Central",
+    "American Samoa": "US/Samoa",
+    "Arizona": "US/Mountain",
+    "California": "US/Pacific",
+    "Colorado": "US/Mountain",
+    "Connecticut": "US/Eastern",
+    "District of Columbia": "US/Eastern",
+    "Delaware": "US/Eastern",
+    "Florida": "US/Eastern",
+    "Georgia": "US/Eastern",
+    "Guam": "Pacific/Guam",
+    "Hawaii": "US/Hawaii",
+    "Iowa": "US/Central",
+    "Idaho": "US/Mountain",
+    "Illinois": "US/Central",
+    "Indiana": "US/Eastern",
+    "Kansas": "US/Central",
+    "Kentucky": "US/Eastern",
+    "Louisiana": "US/Central",
+    "Massachusetts": "US/Eastern",
+    "Maryland": "US/Eastern",
+    "Maine": "US/Eastern",
+    "Michigan": "US/Eastern",
+    "Minnesota": "US/Central",
+    "Missouri": "US/Central",
+    "Northern Mariana Islands": "Pacific/Guam",
+    "Mississippi": "US/Central",
+    "Montana": "US/Mountain",
+    "North Carolina": "US/Eastern",
+    "North Dakota": "US/Central",
+    "Nebraska": "US/Central",
+    "New Hampshire": "US/Eastern",
+    "New Jersey": "US/Eastern",
+    "New Mexico": "US/Mountain",
+    "Nevada": "US/Pacific",
+    "New York": "US/Eastern",
+    "Ohio": "US/Eastern",
+    "Oklahoma": "US/Central",
+    "Oregon": "US/Pacific",
+    "Pennsylvania": "US/Eastern",
+    "Puerto Rico": "America/Puerto_Rico",
+    "Rhode Island": "US/Eastern",
+    "South Carolina": "US/Eastern",
+    "South Dakota": "US/Central",
+    "Tennessee": "US/Central",
+    "Texas": "US/Central",
+    "Utah": "US/Mountain",
+    "Virginia": "US/Eastern",
+    "Virgin Islands": "America/Virgin",
+    "Vermont": "US/Eastern",
+    "Washington": "US/Pacific",
+    "Wisconsin": "US/Central",
+    "West Virginia": "US/Eastern",
+    "Wyoming": "US/Mountain",
 }
 
 default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
@@ -26,11 +82,11 @@ default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
 variable_calc_risk = "ratio_w"
 
 
-def get_postcodes(country="AU"):
-    df_postcodes = pd.read_csv(
+def get_postcodes(country=Defaults.country.value):
+    df_pc = pd.read_csv(
         f"./assets/postcodes/{country}.txt", header=None, delimiter="\t"
     )
-    df_postcodes.columns = [
+    df_pc.columns = [
         "country code",
         "postcode",
         "suburb",
@@ -44,15 +100,15 @@ def get_postcodes(country="AU"):
         "lon",
         "accuracy",
     ]
-    df_postcodes.replace("New South Wales", "NSW", inplace=True)
-    df_postcodes.replace("Western Australia", "WA", inplace=True)
-    df_postcodes.replace("Australian Capital Territory", "ACT", inplace=True)
-    df_postcodes.replace("Northern Territory", "NT", inplace=True)
-    df_postcodes.replace("South Australia", "SA", inplace=True)
-    df_postcodes.replace("Queensland", "QLD", inplace=True)
-    df_postcodes.replace("Victoria", "VIC", inplace=True)
-    df_postcodes.replace("Tasmania", "TAS", inplace=True)
-    df_postcodes = df_postcodes[
+    df_pc.replace("New South Wales", "NSW", inplace=True)
+    df_pc.replace("Western Australia", "WA", inplace=True)
+    df_pc.replace("Australian Capital Territory", "ACT", inplace=True)
+    df_pc.replace("Northern Territory", "NT", inplace=True)
+    df_pc.replace("South Australia", "SA", inplace=True)
+    df_pc.replace("Queensland", "QLD", inplace=True)
+    df_pc.replace("Victoria", "VIC", inplace=True)
+    df_pc.replace("Tasmania", "TAS", inplace=True)
+    df_pc = df_pc[
         [
             "postcode",
             "suburb",
@@ -61,21 +117,13 @@ def get_postcodes(country="AU"):
             "lon",
         ]
     ]
-    df_postcodes["sub-state-post"] = (
-        df_postcodes["suburb"]
-        + ", "
-        + df_postcodes["state"]
-        + ", "
-        + df_postcodes["postcode"].astype("str")
+    df_pc["sub-state-post"] = (
+        df_pc["suburb"] + ", " + df_pc["state"] + ", " + df_pc["postcode"].astype("str")
     )
-    df_postcodes["sub-state-post-no-space"] = (
-        df_postcodes["sub-state-post"].astype("str").replace(", ", "_", regex=True)
+    df_pc["sub-state-post-no-space"] = (
+        df_pc["sub-state-post"].astype("str").replace(", ", "_", regex=True)
     )
-    return df_postcodes
-
-
-# todo it should not be hardcoded
-df_postcodes = get_postcodes("AU")
+    return df_pc
 
 
 @dataclass(order=True)
@@ -231,18 +279,12 @@ class URLS:
     )
 
 
-class DropDownInfo(BaseModel):
-    id: str
-    question: str
-    options: list[dict]
-    multi: bool
-    default: str
-
-
 data_dd_sport = sports_info[["sport", "sport_id"]].rename(
     columns={"sport": "label", "sport_id": "value"}
 )
 data_dd_sport = data_dd_sport.to_dict("records")
+
+df_postcodes = get_postcodes(Defaults.country.value)
 
 data_dd_location = df_postcodes[["sub-state-post", "sub-state-post-no-space"]].rename(
     columns={"sub-state-post": "label", "sub-state-post-no-space": "value"}
@@ -257,7 +299,7 @@ class Dropdowns:
         question="Sport:",
         options=data_dd_sport,
         multi=False,
-        default="soccer",
+        default=Defaults.sport.value,
     )
 
     LOCATION: ClassVar[DropDownInfo] = DropDownInfo(
@@ -265,7 +307,7 @@ class Dropdowns:
         question="Location:",
         options=data_dd_location,
         multi=False,
-        default="Brisbane_QLD_9013",
+        default=PostcodesDefault.AU,
     )
 
     def __getitem__(self, key):

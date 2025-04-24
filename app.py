@@ -19,7 +19,9 @@ from dash_extensions.enrich import (
 )
 from firebase_admin import credentials
 
+from config import Dropdowns
 from my_app.footer import my_footer
+from my_app.my_classes import IDs, Defaults
 from my_app.navbar import my_navbar
 from my_app.utils import (
     FirebaseFields,
@@ -140,9 +142,16 @@ app.layout = html.Div(
                 dcc.Store(
                     id=store_settings_dict,
                     storage_type="local",
+                    data={
+                        IDs.country: Defaults.country.value,
+                        IDs.sport: Dropdowns.SPORT.default,
+                        IDs.postcode: Dropdowns.LOCATION.default,
+                    },
                 ),
                 dcc.Store(id=store_weather_risk_df),
-                dcc.Store(id=store_country, storage_type="local"),
+                dcc.Store(
+                    id=store_country, storage_type="local", data=Defaults.country.value
+                ),
                 dcc.Store(
                     id=storage_user_id, storage_type="local", data=str(uuid.uuid1())
                 ),
@@ -157,7 +166,6 @@ app.layout = html.Div(
         my_footer(),
     ]
 )
-
 
 if __name__ == "__main__":
     app.run_server(

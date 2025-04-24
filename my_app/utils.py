@@ -453,8 +453,7 @@ def get_weather_and_calculate_risk(settings):
 
 def get_info_location_selected(data):
     try:
-        # todo the country should not be hardcoded
-        df_postcodes = get_postcodes(country="AU")
+        df_postcodes = get_postcodes(country=data[IDs.country])
         information = df_postcodes[
             df_postcodes["sub-state-post-no-space"] == data[IDs.postcode]
         ].to_dict(orient="list")

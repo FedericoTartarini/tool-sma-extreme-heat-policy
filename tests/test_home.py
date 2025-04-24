@@ -1,5 +1,6 @@
 from playwright.sync_api import Page, expect
 
+from my_app.my_classes import Defaults
 from my_app.utils import sports_category
 
 
@@ -8,7 +9,9 @@ class TestHomePage:
     def test_visibility_text(self, page: Page):
         page.goto("/")
         expect(page.get_by_role("link", name="SMA Extreme Heat Policy")).to_be_visible()
-        expect(page.locator("#id_sport").filter(has_text="Soccer")).to_be_visible()
+        expect(
+            page.locator("#id_sport").filter(has_text=Defaults.sport.value.upper())
+        ).to_be_visible()
         expect(page.locator("#sport-image").get_by_role("img")).to_be_visible()
 
         # change the location
@@ -30,7 +33,7 @@ class TestHomePage:
     def test_click_dropdown(self, page: Page):
         page.goto("/")
         sports = sports_category.keys()
-        drop_down_sport = "Soccer"
+        drop_down_sport = Defaults.sport.value.upper()
         for sport in sports:
             page.locator("#id_sport").filter(has_text=drop_down_sport).click()
             page.locator("#id_sport").get_by_role("combobox").fill(sport)
@@ -40,6 +43,8 @@ class TestHomePage:
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
-        page.locator("#react-select-2--value div").filter(has_text="Soccer").dblclick()
+        page.locator("#react-select-2--value div").filter(
+            has_text=Defaults.sport.value.upper()
+        ).dblclick()
         page.locator("#react-select-2--value").get_by_role("combobox").fill("fede")
         page.get_by_text("No results found").click()

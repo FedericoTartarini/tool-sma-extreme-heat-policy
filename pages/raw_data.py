@@ -52,6 +52,8 @@ def update_alert_hss_current(settings):
 
     df = df.resample("2H").mean()
 
+    df[Cols.tg] = df[Cols.tg] + df[Cols.tdb]
+
     df[float_columns] = df[float_columns].astype(float).round(2)
 
     df["time"] = df.index.strftime("%D %H:%M")

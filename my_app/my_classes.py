@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from enum import Enum
+
+from pydantic import BaseModel
 
 
 @dataclass
@@ -9,4 +12,26 @@ class IDs:
     button_country: str = "id-button-country"
     modal_country: str = "modal-select-country"
     modal_country_select: str = "modal-country-select-input"
-    modal_country_button_submit: str = "modal-country-submit-button"
+
+
+class Defaults(Enum):
+    sport = "soccer"
+    location = "Sydney_NSW_2000"
+    country = "AU"
+
+
+@dataclass()
+class PostcodesDefault:
+    AU: str = Defaults.location.value
+    US: str = "Berkeley_California_94701"
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+
+class DropDownInfo(BaseModel):
+    id: str
+    question: str
+    options: list[dict]
+    multi: bool
+    default: str

@@ -2,7 +2,7 @@ import dash_mantine_components as dmc
 from dash import html, Output, Input, State, callback
 from dash_iconify import DashIconify
 
-from my_app.my_classes import IDs
+from my_app.my_classes import IDs, Defaults
 from my_app.utils import store_country
 
 
@@ -31,12 +31,12 @@ def component_country_flag(country):
     )
 
 
-def modal_country_select():
+def modal_country_select(country=Defaults.country.value):
     return html.Div(
         [
             dmc.Center(
                 dmc.Button(
-                    component_country_flag("AU"),
+                    component_country_flag(country),
                     id=IDs.button_country,
                     variant="subtle",
                     px="xs",
@@ -60,9 +60,9 @@ def modal_country_select():
                             # {"value": "JP", "label": "Japan"},
                         ],
                         placeholder="Select a country",
+                        value=country,
                         mb=10,
                     ),
-                    dmc.Button("Submit", id=IDs.modal_country_button_submit),
                 ],
             ),
         ]
@@ -70,22 +70,22 @@ def modal_country_select():
 
 
 @callback(
-    Output(IDs.modal_country, "opened"),
+    Output(IDs.modal_country, "opened", allow_duplicate=True),
     Input(IDs.button_country, "n_clicks"),
-    Input(IDs.modal_country_button_submit, "n_clicks"),
     State(IDs.modal_country, "opened"),
     prevent_initial_call=True,
 )
-def modal_toggle_open_close(_, __, opened):
-    # todo clear the "id_postcode" value from the store after the modal is closed
+def modal_toggle_open_close(_, opened):
     return not opened
 
 
 @callback(
     Output(store_country, "data"),
     Output(IDs.button_country, "children"),
+    Output(IDs.modal_country, "opened"),
     Input(IDs.modal_country_select, "value"),
     prevent_initial_call=True,
 )
 def store_country_update_flag(country):
-    return country, component_country_flag(country)
+    """Updates the country in local storage, changes the flag, and closes the modal."""
+    return country, component_country_flag(country), False
