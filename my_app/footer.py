@@ -20,7 +20,7 @@ def my_footer():
                             
                             © 2025 - Heat and Health Research Centre, USYD
                             
-                            Version: 1.0.0
+                            Version: 1.0.1
                             
                             [Contact Us](mailto:federico.tartarini@sydney.edu.au)
                             """
