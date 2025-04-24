@@ -2,6 +2,7 @@ import dash_mantine_components as dmc
 from dash import html, Output, Input, State, callback
 from dash_iconify import DashIconify
 
+from my_app.my_classes import IDs
 from my_app.utils import store_country
 
 
@@ -36,32 +37,32 @@ def modal_country_select():
             dmc.Center(
                 dmc.Button(
                     component_country_flag("AU"),
-                    id="modal-demo-button",
+                    id=IDs.button_country,
                     variant="subtle",
                     px="xs",
                 ),
             ),
             dmc.Modal(
                 title="Select a country",
-                id="modal-select-country",
+                id=IDs.modal_country,
                 children=[
                     dmc.Select(
-                        id="modal-select-country-input",
+                        id=IDs.modal_country_select,
                         data=[
                             {"value": "AU", "label": "Australia"},
                             {"value": "US", "label": "United States"},
-                            {"value": "CA", "label": "Canada"},
-                            {"value": "GB", "label": "United Kingdom"},
-                            {"value": "FR", "label": "France"},
-                            {"value": "DE", "label": "Germany"},
-                            {"value": "IT", "label": "Italy"},
-                            {"value": "ES", "label": "Spain"},
-                            {"value": "JP", "label": "Japan"},
+                            # {"value": "CA", "label": "Canada"},
+                            # {"value": "GB", "label": "United Kingdom"},
+                            # {"value": "FR", "label": "France"},
+                            # {"value": "DE", "label": "Germany"},
+                            # {"value": "IT", "label": "Italy"},
+                            # {"value": "ES", "label": "Spain"},
+                            # {"value": "JP", "label": "Japan"},
                         ],
                         placeholder="Select a country",
                         mb=10,
                     ),
-                    dmc.Button("Submit", id="modal-submit-button"),
+                    dmc.Button("Submit", id=IDs.modal_country_button_submit),
                 ],
             ),
         ]
@@ -69,24 +70,22 @@ def modal_country_select():
 
 
 @callback(
-    Output("modal-select-country", "opened"),
-    Input("modal-demo-button", "n_clicks"),
-    Input("modal-submit-button", "n_clicks"),
-    State("modal-select-country", "opened"),
+    Output(IDs.modal_country, "opened"),
+    Input(IDs.button_country, "n_clicks"),
+    Input(IDs.modal_country_button_submit, "n_clicks"),
+    State(IDs.modal_country, "opened"),
     prevent_initial_call=True,
 )
-def modal_demo(_, __, opened):
-    print("opened", opened)
+def modal_toggle_open_close(_, __, opened):
     # todo clear the "id_postcode" value from the store after the modal is closed
     return not opened
 
 
 @callback(
     Output(store_country, "data"),
-    Output("modal-demo-button", "children"),
-    Input("modal-select-country-input", "value"),
+    Output(IDs.button_country, "children"),
+    Input(IDs.modal_country_select, "value"),
     prevent_initial_call=True,
 )
-def modal_demo(country):
-    print("country", country)
+def store_country_update_flag(country):
     return country, component_country_flag(country)
