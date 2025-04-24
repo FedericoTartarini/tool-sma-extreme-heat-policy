@@ -27,7 +27,9 @@ variable_calc_risk = "ratio_w"
 
 
 def get_postcodes(country="AU"):
-    df_postcodes = pd.read_csv(f"./assets/{country}.txt", header=None, delimiter="\t")
+    df_postcodes = pd.read_csv(
+        f"./assets/postcodes/{country}.txt", header=None, delimiter="\t"
+    )
     df_postcodes.columns = [
         "country code",
         "postcode",
