@@ -19,13 +19,19 @@ default_location = {
     "tz": tf.timezone_at(lat=-33.89, lng=151.18),
 }
 
-default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
-
 # risk classes
 variable_calc_risk = "ratio_w"
 
 
 def get_postcodes(country=Defaults.country.value):
+    """Retrieve postcodes for the specified country and return a DataFrame."""
+    return pd.read_pickle(f"./assets/postcodes/{country}.pkl.gz", compression="gzip")
+
+
+def process_postcodes(country=Defaults.country.value):
+    """
+    Process postcodes for the given country and save them as a pickle file.
+    """
     df_pc = pd.read_csv(
         f"./assets/postcodes/{country}.txt", header=None, delimiter="\t"
     )
@@ -33,8 +39,8 @@ def get_postcodes(country=Defaults.country.value):
         "country code",
         "postcode",
         "suburb",
+        "state_full",
         "state",
-        "abbreviation",
         "admin name2",
         "admin code2",
         "admin name3",
@@ -43,14 +49,17 @@ def get_postcodes(country=Defaults.country.value):
         "lon",
         "accuracy",
     ]
-    df_pc.replace("New South Wales", "NSW", inplace=True)
-    df_pc.replace("Western Australia", "WA", inplace=True)
-    df_pc.replace("Australian Capital Territory", "ACT", inplace=True)
-    df_pc.replace("Northern Territory", "NT", inplace=True)
-    df_pc.replace("South Australia", "SA", inplace=True)
-    df_pc.replace("Queensland", "QLD", inplace=True)
-    df_pc.replace("Victoria", "VIC", inplace=True)
-    df_pc.replace("Tasmania", "TAS", inplace=True)
+    if df_pc["state"].isnull().sum() == df_pc["state"].shape[0]:
+        # if all states are null, we pass the country code as state
+        df_pc["state"] = country
+    elif df_pc["state"].dtype.kind in ("i", "f"):
+        # if state is an integer, we use the state_full column
+        df_pc["state"] = df_pc["state_full"]
+    if country == "AR":  # Argentina
+        df_pc["postcode"] = df_pc["state"] + "-" + df_pc["postcode"].astype("str")
+        df_pc["state"] = df_pc["state_full"]
+        df_pc["suburb"] = df_pc["suburb"].str.capitalize()
+
     df_pc = df_pc[
         [
             "postcode",
@@ -66,7 +75,8 @@ def get_postcodes(country=Defaults.country.value):
     df_pc["sub-state-post-no-space"] = (
         df_pc["sub-state-post"].astype("str").replace(", ", "_", regex=True)
     )
-    return df_pc
+
+    df_pc.to_pickle(f"./assets/postcodes/{country}.pkl.gz", compression="gzip")
 
 
 @dataclass(order=True)
@@ -255,3 +265,82 @@ class Dropdowns:
 
     def __getitem__(self, key):
         return getattr(self, key)
+
+
+if __name__ == "__main__":
+    import os
+    import zipfile
+    import requests
+    from io import BytesIO
+
+    # Specify the output folder (create it if needed)
+    output_dir = "assets/postcodes"  # <-- Replace with your actual path
+    os.makedirs(output_dir, exist_ok=True)
+
+    # ISO 3166-1 alpha-2 country codes
+    iso_codes_url = "https://download.geonames.org/export/dump/countryInfo.txt"
+    response = requests.get(iso_codes_url)
+    iso_codes = []
+
+    for line in response.text.splitlines():
+        if line.startswith("#") or not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) > 0:
+            iso_codes.append(parts[0])
+
+    base_url = "https://download.geonames.org/export/zip"
+
+    for code in iso_codes:
+        if not Path(f"{output_dir}/{code}.txt").exists():
+            zip_url = f"{base_url}/{code}.zip"
+            try:
+                print(f"Downloading: {zip_url}")
+                r = requests.get(zip_url, timeout=10)
+                if r.status_code == 200:
+                    with zipfile.ZipFile(BytesIO(r.content)) as z:
+                        txt_filename = f"{code}.txt"
+                        if txt_filename in z.namelist():
+                            print(f"Extracting {txt_filename}")
+                            z.extract(txt_filename, path=output_dir)
+                        else:
+                            print(f"{txt_filename} not found in archive.")
+                else:
+                    print(
+                        f"Failed to download {zip_url} (status code: {r.status_code})"
+                    )
+            except Exception as e:
+                print(f"Error processing {zip_url}: {e}")
+
+    # process_postcodes(Defaults.country.value)
+    for iso_code in iso_codes:
+        if Path(f"{output_dir}/{iso_code}.txt").exists():
+            process_postcodes(country=iso_code)
+
+    # 1. Fetch country ISO codes, names and capitals
+    url = "https://download.geonames.org/export/dump/countryInfo.txt"
+    resp = requests.get(url)
+
+    capitals = []
+    for line in resp.text.splitlines():
+        if line.startswith("#") or not line.strip():
+            continue
+        parts = line.split("\t")
+        iso = parts[0]
+        country = parts[4]
+        capital = parts[5]
+        capitals.append({"iso": iso, "country": country, "capital": capital})
+
+    for iso_code in iso_codes:
+        if Path(f"{output_dir}/{iso_code}.pkl.gz").exists():
+            capital = [c["capital"] for c in capitals if c["iso"] == iso_code][
+                0
+            ].lower()
+            df = get_postcodes(country=iso_code)
+
+            try:
+                print(
+                    f"{iso_code}: str = '{df.loc[df['suburb'].str.lower() == capital, 'sub-state-post-no-space'][0]}'"
+                )
+            except KeyError:
+                print(f"{iso_code}: str = ''")
