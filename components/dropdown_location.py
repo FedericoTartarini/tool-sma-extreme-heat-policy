@@ -19,7 +19,6 @@ def display_location_dropdown(
     data_dd_location = df_postcodes[
         ["sub-state-post", "sub-state-post-no-space"]
     ].rename(columns={"sub-state-post": "label", "sub-state-post-no-space": "value"})
-    data_dd_location = data_dd_location.to_dict("records")
 
-    question.options = data_dd_location
+    question.options = data_dd_location.astype(str).to_dict("records")
     return generate_dropdown_inline(question)
