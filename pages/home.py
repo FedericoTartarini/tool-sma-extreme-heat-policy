@@ -73,7 +73,7 @@ def layout(
     Input(store_country, "data"),
     prevent_initial_call=True,
 )
-def on_settings_change(country):
+def update_location_dropdown_country_change(country):
     """Updates the location dropdown when the country is changed."""
     print("changed the country to", country)
     postcodes_default = PostcodesDefault()

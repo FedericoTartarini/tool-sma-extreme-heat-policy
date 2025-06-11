@@ -32,7 +32,8 @@ def component_map():
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def on_location_change(settings):
+def update_map_on_location_change(settings):
+    """Update the map based on the selected location in the settings."""
     loc_selected = get_info_location_selected(settings)
 
     try:
