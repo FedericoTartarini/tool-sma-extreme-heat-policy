@@ -4,23 +4,21 @@ from dash_iconify import DashIconify
 
 from my_app.my_classes import IDs, Defaults
 from my_app.utils import store_country
+import pycountry
 
+from pathlib import Path
+
+# only keep codes with an existing pickle
+iso_codes = [
+    country.alpha_2 for country in pycountry.countries if hasattr(country, "alpha_2")
+]
+available_iso_codes = [
+    code for code in iso_codes if Path(f"assets/postcodes/{code}.pkl.gz").exists()
+]
 
 icons = {
-    "AU": "emojione:flag-for-australia",
-    "US": "emojione:flag-for-united-states",
-    "CA": "emojione:flag-for-canada",
-    "GB": "emojione:flag-for-united-kingdom",
-    "FR": "emojione:flag-for-france",
-    "DE": "emojione:flag-for-germany",
-    "IT": "emojione:flag-for-italy",
-    "ES": "emojione:flag-for-spain",
-    "JP": "emojione:flag-for-japan",
-    "NZ": "emojione:flag-for-new-zealand",
-    "BR": "emojione:flag-for-brazil",
-    "IN": "emojione:flag-for-india",
-    "CN": "emojione:flag-for-china",
-    "RU": "emojione:flag-for-russia",
+    country.alpha_2: f"emojione:flag-for-{country.name.lower().replace(' ', '-').replace('\'', '')}"
+    for country in pycountry.countries
 }
 
 
@@ -35,12 +33,7 @@ def modal_country_select(country=Defaults.country.value):
     return html.Div(
         [
             dmc.Center(
-                dmc.Button(
-                    component_country_flag(country),
-                    id=IDs.button_country,
-                    variant="subtle",
-                    px="xs",
-                ),
+                id="country-button-center",
             ),
             dmc.Modal(
                 title="Select a country",
@@ -49,18 +42,15 @@ def modal_country_select(country=Defaults.country.value):
                     dmc.Select(
                         id=IDs.modal_country_select,
                         data=[
-                            {"value": "AU", "label": "Australia"},
-                            {"value": "US", "label": "United States"},
-                            # {"value": "CA", "label": "Canada"},
-                            # {"value": "GB", "label": "United Kingdom"},
-                            # {"value": "FR", "label": "France"},
-                            # {"value": "DE", "label": "Germany"},
-                            # {"value": "IT", "label": "Italy"},
-                            # {"value": "ES", "label": "Spain"},
-                            # {"value": "JP", "label": "Japan"},
+                            {"value": country.alpha_2, "label": country.name}
+                            for country in sorted(
+                                pycountry.countries, key=lambda c: c.name
+                            )
+                            if country.alpha_2 in available_iso_codes
                         ],
                         placeholder="Select a country",
                         value=country,
+                        searchable=True,
                         mb=10,
                     ),
                 ],
@@ -89,3 +79,19 @@ def modal_toggle_open_close(_, opened):
 def store_country_update_flag(country):
     """Updates the country in local storage, changes the flag, and closes the modal."""
     return country, component_country_flag(country), False
+
+
+@callback(
+    Output("country-button-center", "children"),
+    Input("url", "pathname"),
+    State(store_country, "data"),
+)
+def create_country_button(_, country):
+    """Creates the country button with the flag icon."""
+    print("the code is", country)
+    return dmc.Button(
+        component_country_flag(country),
+        id=IDs.button_country,
+        variant="subtle",
+        px="xs",
+    )
