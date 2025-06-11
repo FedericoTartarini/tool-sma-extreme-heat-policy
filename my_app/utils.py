@@ -24,7 +24,6 @@ from config import (
     sma_risk_messages,
     mrt_calculation,
     sports_info,
-    time_zones,
     default_location,
     get_postcodes,
 )
@@ -33,6 +32,7 @@ from pythermalcomfort.models import solar_gain, phs
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
+from timezonefinder import TimezoneFinder
 
 app_version = "1.0.1"
 app_version = app_version.replace(".", "")
@@ -40,6 +40,8 @@ store_settings_dict = f"local-storage-settings-{app_version}"
 store_weather_risk_df = f"session-storage-weather-{app_version}"
 store_country = "local-storage-country"
 storage_user_id = "user-id"
+
+tf = TimezoneFinder()  # reuse
 
 
 @dataclass()
@@ -461,7 +463,9 @@ def get_info_location_selected(data):
         loc_selected = {
             "lat": float(information["lat"][0]),
             "lon": float(information["lon"][0]),
-            "tz": time_zones[information["state"][0]],
+            "tz": tf.timezone_at(
+                lng=float(information["lon"][0]), lat=float(information["lat"][0])
+            ),
         }
     except TypeError:
         loc_selected = default_location

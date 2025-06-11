@@ -1,79 +1,22 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import ClassVar
 
 import pandas as pd
 from pydantic import BaseModel
+from timezonefinder import TimezoneFinder
 
 from my_app.my_classes import IDs, Defaults, DropDownInfo, PostcodesDefault
 
 # sports
 sports_info = pd.read_csv("assets/sports.csv")
 
-time_zones = {
-    "NSW": "Australia/Sydney",
-    "WA": "Australia/Perth",
-    "ACT": "Australia/Canberra",
-    "NT": "Australia/Darwin",
-    "SA": "Australia/Adelaide",
-    "QLD": "Australia/Brisbane",
-    "VIC": "Australia/Melbourne",
-    "TAS": "Australia/Hobart",
-    "Alaska": "US/Alaska",
-    "Alabama": "US/Central",
-    "Arkansas": "US/Central",
-    "American Samoa": "US/Samoa",
-    "Arizona": "US/Mountain",
-    "California": "US/Pacific",
-    "Colorado": "US/Mountain",
-    "Connecticut": "US/Eastern",
-    "District of Columbia": "US/Eastern",
-    "Delaware": "US/Eastern",
-    "Florida": "US/Eastern",
-    "Georgia": "US/Eastern",
-    "Guam": "Pacific/Guam",
-    "Hawaii": "US/Hawaii",
-    "Iowa": "US/Central",
-    "Idaho": "US/Mountain",
-    "Illinois": "US/Central",
-    "Indiana": "US/Eastern",
-    "Kansas": "US/Central",
-    "Kentucky": "US/Eastern",
-    "Louisiana": "US/Central",
-    "Massachusetts": "US/Eastern",
-    "Maryland": "US/Eastern",
-    "Maine": "US/Eastern",
-    "Michigan": "US/Eastern",
-    "Minnesota": "US/Central",
-    "Missouri": "US/Central",
-    "Northern Mariana Islands": "Pacific/Guam",
-    "Mississippi": "US/Central",
-    "Montana": "US/Mountain",
-    "North Carolina": "US/Eastern",
-    "North Dakota": "US/Central",
-    "Nebraska": "US/Central",
-    "New Hampshire": "US/Eastern",
-    "New Jersey": "US/Eastern",
-    "New Mexico": "US/Mountain",
-    "Nevada": "US/Pacific",
-    "New York": "US/Eastern",
-    "Ohio": "US/Eastern",
-    "Oklahoma": "US/Central",
-    "Oregon": "US/Pacific",
-    "Pennsylvania": "US/Eastern",
-    "Puerto Rico": "America/Puerto_Rico",
-    "Rhode Island": "US/Eastern",
-    "South Carolina": "US/Eastern",
-    "South Dakota": "US/Central",
-    "Tennessee": "US/Central",
-    "Texas": "US/Central",
-    "Utah": "US/Mountain",
-    "Virginia": "US/Eastern",
-    "Virgin Islands": "America/Virgin",
-    "Vermont": "US/Eastern",
-    "Washington": "US/Pacific",
-    "Wisconsin": "US/Central",
-    "West Virginia": "US/Eastern",
-    "Wyoming": "US/Mountain",
+tf = TimezoneFinder()  # reuse
+
+default_location = {
+    "lat": -33.89,
+    "lon": 151.18,
+    "tz": tf.timezone_at(lat=-33.89, lng=151.18),
 }
 
 default_location = {"lat": -33.89, "lon": 151.18, "tz": time_zones["NSW"]}
