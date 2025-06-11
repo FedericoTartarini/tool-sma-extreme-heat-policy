@@ -32,7 +32,7 @@ python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Ca
 ```bash
 gcloud components update --quiet
 pipenv requirements > requirements.txt
-python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_country=AU&id_postcode=Camperdown_NSW_2050&id_sport=soccer
 gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
 python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
 ```
