@@ -52,13 +52,15 @@ def process_postcodes(country=Defaults.country.value):
     if df_pc["state"].isnull().sum() == df_pc["state"].shape[0]:
         # if all states are null, we pass the country code as state
         df_pc["state"] = country
-    elif df_pc["state"].dtype.kind in ("i", "f"):
-        # if state is an integer, we use the state_full column
-        df_pc["state"] = df_pc["state_full"]
-    if country == "AR":  # Argentina
+    elif country == "AR":  # Argentina
         df_pc["postcode"] = df_pc["state"] + "-" + df_pc["postcode"].astype("str")
         df_pc["state"] = df_pc["state_full"]
         df_pc["suburb"] = df_pc["suburb"].str.capitalize()
+    elif country == "ID":  # Indonesia
+        df_pc["state"] = "ID"
+    elif df_pc["state"].dtype.kind in ("i", "f"):
+        # if state is an integer, we use the state_full column
+        df_pc["state"] = df_pc["state_full"]
 
     df_pc = df_pc[
         [
@@ -292,7 +294,8 @@ if __name__ == "__main__":
     base_url = "https://download.geonames.org/export/zip"
 
     for code in iso_codes:
-        if not Path(f"{output_dir}/{code}.txt").exists():
+        if not Path(f"{output_dir}/{code}.pkl.gz").exists():
+            print(f"Downloading {code}...")
             zip_url = f"{base_url}/{code}.zip"
             try:
                 print(f"Downloading: {zip_url}")
@@ -315,6 +318,7 @@ if __name__ == "__main__":
     # process_postcodes(Defaults.country.value)
     for iso_code in iso_codes:
         if Path(f"{output_dir}/{iso_code}.txt").exists():
+            print(f"Extracting {iso_code}...")
             process_postcodes(country=iso_code)
 
     # 1. Fetch country ISO codes, names and capitals
