@@ -1,5 +1,6 @@
 import dash
 import dash_mantine_components as dmc
+from dash import html
 
 from components.install_button import component_button_install
 from config import URLS
@@ -16,31 +17,30 @@ layout = dmc.Stack(
     [
         dmc.Paper(
             [
-                dmc.Title("Sports Medicine Australia - Extreme Heat Policy Web Tool"),
+                dmc.Title("Sports Medicine Australia"),
+                dmc.Title("Extreme Heat Risk and Response Guidelines", order=4),
                 dmc.Text(
                     "This website provides a convenient and freely accessible tool for assessing heat stress risk "
-                    "during sport and physical activity in Australia. It is based on the updated Sports Medicine "
-                    "Australia (SMA) ",
+                    "during sport and physical activity in Australia. ",
                     span=True,
                 ),
                 dmc.Anchor(
-                    "Extreme Heat Policy v2 (2024). ",
-                    href="https://www.sciencedirect.com/science/article/pii/S1440244025000696",
+                    "It is based on the SMA Extreme Heat Risk and Response Guidelines. ",
+                    href="https://sma.org.au/resources/policies-and-guidelines/hot-weather/",
                     inline=True,
-                ),
-                dmc.Text("This new policy builds upon the ", span=True),
-                dmc.Anchor(
-                    "SMA EHP v1 (2021) ",
-                    href="https://www.sciencedirect.com/science/article/pii/S1440244025000696",
-                    inline=True,
-                    span=True,
                 ),
                 dmc.Text(
-                    "by incorporating significant improvements to the underlying thermophysiological model to provide more "
-                    "accurate heat stress risk classifications and tailored mitigation strategies. The SMA EHP v2 (2024) aims "
-                    "to better protect healthy adults participating in recreational and community sports from heat-related "
-                    "illness.",
+                    "",
+                    pb="xs",
+                ),
+                dmc.Text(
+                    "The guidelines are developed by the Heat and Health Research Centre at "
+                    "the University of Sydney and the methodology is described in ",
                     span=True,
+                ),
+                dmc.Anchor(
+                    "this publication.",
+                    href="https://www.jsams.org/article/S1440-2440(25)00069-6/fulltext",
                 ),
                 component_button_install(),
             ],
@@ -53,7 +53,11 @@ layout = dmc.Stack(
                 dmc.Text(
                     "This website currently provides recommendations the most popular sports played in Australia. These "
                     "sports have been characterised based on their typical clothing insulation, metabolic rate, and expected "
-                    "activity duration. The web tool allows users to assess heat stress risk based on location-specific, "
+                    "activity duration. ",
+                    pb="xs",
+                ),
+                dmc.Text(
+                    "The web tool allows users to assess heat stress risk based on location-specific, "
                     "hour-by-hour environmental data automatically extracted from the nearest weather station. It also offers "
                     "hierarchical recommendations for risk reduction strategies and a 7-day risk forecasting feature."
                 ),
@@ -63,18 +67,40 @@ layout = dmc.Stack(
         ),
         dmc.Paper(
             [
-                dmc.Title("Key Improvements of SMA EHP v2 (2024)", order=2),
-                dmc.Text(
-                    "The updated policy addresses several limitations of the previous version (SMA EHP v1 2021):"
+                dmc.Title(
+                    "Vigorous exercise places some people at risk of heat illness, especially in hot weather.",
+                    order=2,
                 ),
                 dmc.Text(
-                    "- Improved accuracy in very hot and dry conditions: SMA EHP v2 (2024) now provides greater protection in very hot and dry extremes by better accounting for high required sweat rates and additional cardiovascular strain. The previous policy underestimated risk in these conditions."
+                    "If untreated, heat illness can lead to the more serious and potentially life-threatening condition "
+                    "of heat stroke. By understanding the causes of heat illness health professionals, coaches, players "
+                    "and anyone involved in sport or physical activity can help prevent heat illness by using the advice "
+                    "provided in the Guidelines to minimise the risks. ",
+                    pb="xs",
                 ),
                 dmc.Text(
-                    "- More appropriate recommendations in warm and humid conditions: The new policy reduces previously high rates of disruption to play in humid extremes by preferentially recommending active cooling and rest breaks."
+                    "Most of the advice involves simple rules of common "
+                    "sense. Listen to your body and stop or slow down if you feel unwell. This is particularly important "
+                    "for children. Make sure that you have access to cool drinking water, wear a good hat and take "
+                    "particular care in the hottest parts of the day or year.",
+                    pb="xs",
                 ),
                 dmc.Text(
-                    "- Sport-specific considerations: SMA EHP v2 (2024) incorporates sport-specific metabolic rates, clothing, and self-generated wind speeds to provide more precise estimations of heat stress risk, unlike the previous policy which broadly classified sports."
+                    "The target audience for the Guidelines are "
+                    "all Australians who undertake sport and physical activity, but they will be particularly useful to "
+                    "health professionals involved in the promotion of physical activity, coaches, fitness leaders and "
+                    "sports administrators.",
+                    pb="xs",
+                ),
+                html.Div(
+                    dmc.Anchor(
+                        "Beat the Heat fact sheet",
+                        href="https://sma.org.au/wp-content/uploads/2023/03/beat-the-heat-2011.pdf",
+                    ),
+                ),
+                dmc.Anchor(
+                    "Hot Weather Guidelines",
+                    href="https://sma.org.au/wp-content/uploads/2023/03/hot-weather-guidelines-web-download-doc-2007.pdf",
                 ),
             ],
             shadow="xs",
@@ -82,12 +108,22 @@ layout = dmc.Stack(
         ),
         dmc.Paper(
             [
-                dmc.Title("Aim", order=2),
-                dmc.Text(
-                    "The aim of this policy is to provide evidence-based guidance for protecting the health of those participating in sport and physical activity from the potentially ill effects of extreme heat in hot weather, while aiming to minimise unnecessary interruptions to activity."
+                dmc.Title(
+                    "UV Exposure & Heat Illness Guide",
+                    order=2,
                 ),
                 dmc.Text(
-                    " As new research findings emerge, the policy and this web tool will be updated accordingly. Intended users are sporting administrators, coaches, and sport medical teams responsible for the safety and well-being of healthy adults engaging in recreational and community sports in hot weather, as well as individuals wishing to manage heat stress risk during planned training activities. The policy is designed to protect generally fit and healthy adults aged 18 to <60 years without chronic disease."
+                    "A joint venture between Sports Medicine Australia’s Smartplay and the Cancer Council’s "
+                    "Sunsmart has produced a UV Exposure and Heat Illness Guide.  The guide provides up to date "
+                    "information on UV exposure and heat illness, tips for creating, reviewing and implementing "
+                    "local guidelines, a modifiable UV exposure and heat illness checklist and real-life examples.",
+                    pb="xs",
+                ),
+                html.Div(
+                    dmc.Anchor(
+                        "Guidelines download",
+                        href="https://sma.org.au/wp-content/uploads/2023/03/UV-Exposure-and-Heat-Illness-Guide.pdf",
+                    ),
                 ),
             ],
             shadow="xs",
@@ -100,7 +136,11 @@ layout = dmc.Stack(
                     """This Sports and Medicine Australia (SMA) - Extreme Heat Policy website (
                     https://sma-heat-policy.sydney.edu.au/) provides general information for informational and 
                     educational purposes only about heat stress risk for people engaged in various types of sports at 
-                    a particular location. The Heat and Health Research Incubator at the University of Sydney (
+                    a particular location.""",
+                    pb="xs",
+                ),
+                dmc.Text(
+                    """The Heat and Health Research Centre at the University of Sydney (
                     “University”) created and provided this website. A specific heat stress risk scale is displayed 
                     using a physiological model that provides a risk calculation for heat stress, including providing 
                     evidence-based cooling strategies."""

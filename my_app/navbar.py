@@ -19,10 +19,22 @@ def my_navbar():
                                 dbc.Row(
                                     [
                                         dbc.Col(
-                                            dbc.NavbarBrand(
-                                                "SMA Extreme Heat Policy",
-                                                className="ms-2",
-                                            ),
+                                            [
+                                                dbc.Row(
+                                                    dbc.NavbarBrand(
+                                                        "SMA Extreme Heat Risk",
+                                                        className="ms-2",
+                                                        style={"padding-bottom": 0},
+                                                    ),
+                                                ),
+                                                dbc.Row(
+                                                    dbc.NavbarBrand(
+                                                        "& Response Guidelines",
+                                                        className="ms-2",
+                                                        style={"padding-top": 0},
+                                                    ),
+                                                ),
+                                            ],
                                             width="auto",
                                         ),
                                     ],
