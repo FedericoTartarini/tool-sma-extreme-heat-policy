@@ -45,6 +45,7 @@ def component_current_risk():
 @callback(
     Output("fig-indicator", "children"),
     Input(store_weather_risk_df, "data"),
+    prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):
     colors = [x.color for x in sma_risk_messages.values()]

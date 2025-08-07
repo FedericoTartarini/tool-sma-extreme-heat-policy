@@ -79,7 +79,7 @@ class Cols:
     lat: str = "lat"
     lon: str = "lon"
     tz: str = "tz"
-    sub_state_post: str = "sub-state-post"
+    sub_state_post: str = "sub-state-post-country"
     postcode: str = "postcode"
     state: str = "state"
     suburb: str = "suburb"
@@ -441,8 +441,9 @@ class GlobeTemperatures(Enum):
     high: str = 12
 
 
-def get_weather_and_calculate_risk(settings):
-    loc_selected = get_info_location_selected(settings)
+def get_weather_and_calculate_risk(settings, country):
+    start = time.time()
+    loc_selected = get_info_location_selected(settings, country=country)
 
     df_for = get_weather(
         lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
@@ -450,16 +451,18 @@ def get_weather_and_calculate_risk(settings):
 
     df = calculate_comfort_indices_v2(df_for, settings[IDs.sport])
 
+    print("get_weather_and_calculate_risk", time.time() - start)
+
     return df
 
 
-def get_info_location_selected(data):
+def get_info_location_selected(data, country):
     try:
-        df_postcodes = get_postcodes(country=data[IDs.country])
+        df_postcodes = get_postcodes(country=country)
         information = df_postcodes[
-            df_postcodes["sub-state-post-no-space"] == data[IDs.postcode]
+            df_postcodes["sub-state-post-country-no-space"] == data[IDs.postcode]
         ].to_dict(orient="list")
-        print(information)
+        print("get_info_location_selected", information)
         loc_selected = {
             "lat": float(information["lat"][0]),
             "lon": float(information["lon"][0]),
