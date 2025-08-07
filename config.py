@@ -77,6 +77,10 @@ def process_postcodes(country=Defaults.country.value):
     df_pc["sub-state-post-no-space"] = (
         df_pc["sub-state-post"].astype("str").replace(", ", "_", regex=True)
     )
+    df_pc["sub-state-post-country"] = df_pc["sub-state-post"] + ", " + country.upper()
+    df_pc["sub-state-post-country-no-space"] = (
+        df_pc["sub-state-post-country"].astype("str").replace(", ", "_", regex=True)
+    )
 
     df_pc.to_pickle(f"./assets/postcodes/{country}.pkl.gz", compression="gzip")
 
@@ -241,8 +245,13 @@ data_dd_sport = data_dd_sport.to_dict("records")
 
 df_postcodes = get_postcodes(Defaults.country.value)
 
-data_dd_location = df_postcodes[["sub-state-post", "sub-state-post-no-space"]].rename(
-    columns={"sub-state-post": "label", "sub-state-post-no-space": "value"}
+data_dd_location = df_postcodes[
+    ["sub-state-post-country", "sub-state-post-country-no-space"]
+].rename(
+    columns={
+        "sub-state-post-country": "label",
+        "sub-state-post-country-no-space": "value",
+    }
 )
 data_dd_location = data_dd_location.to_dict("records")
 
@@ -269,7 +278,7 @@ class Dropdowns:
         return getattr(self, key)
 
 
-if __name__ == "__main__":
+if __name__ == "__main___":
     import os
     import zipfile
     import requests
@@ -344,7 +353,19 @@ if __name__ == "__main__":
 
             try:
                 print(
-                    f"{iso_code}: str = '{df.loc[df['suburb'].str.lower() == capital, 'sub-state-post-no-space'][0]}'"
+                    f"{iso_code}: str = '{df.loc[df['suburb'].str.lower() == capital, 'sub-state-post-country-no-space'][0]}'"
                 )
             except KeyError:
                 print(f"{iso_code}: str = ''")
+
+    # process_postcodes(Defaults.country.value)
+    for file in Path(output_dir).glob("*.pkl.gz"):
+        iso_code = file.name.split(".")[0]
+        df_pc = pd.read_pickle(file, compression="gzip")
+        df_pc["sub-state-post-country"] = (
+            df_pc["sub-state-post"] + ", " + iso_code.upper()
+        )
+        df_pc["sub-state-post-country-no-space"] = (
+            df_pc["sub-state-post-country"].astype("str").replace(", ", "_", regex=True)
+        )
+        df_pc.to_pickle(file, compression="gzip")
