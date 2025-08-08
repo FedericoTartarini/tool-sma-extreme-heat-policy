@@ -16,7 +16,7 @@ def component_sport_image():
         children=[
             dmc.CardSection(
                 dmc.Skeleton(height=height_image),
-                id="sport-image",
+                id=IDs.sport_image,
             ),
         ],
         withBorder=True,
@@ -27,7 +27,7 @@ def component_sport_image():
 
 
 @callback(
-    Output("sport-image", "children"),
+    Output(IDs.sport_image, "children"),
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
