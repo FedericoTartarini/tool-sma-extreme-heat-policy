@@ -5,7 +5,7 @@ from dash_extensions.enrich import (
     callback,
 )
 
-from my_app.my_classes import IDs
+from my_app.my_classes import IDs, UserSettings
 from my_app.utils import store_settings_dict
 
 height_image = 127
@@ -31,8 +31,10 @@ def component_sport_image():
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def update_image_on_sport_selection(data):
+def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
+    """Updates the sport image when the sport is selected."""
+    settings = UserSettings(**(store_settings or {}))
     return dmc.Image(
-        src=f"assets/images/{data[IDs.sport]}.webp",
+        src=f"assets/images/{settings.sport}.webp",
         height=height_image,
     )
