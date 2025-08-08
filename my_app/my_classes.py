@@ -1,20 +1,21 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
 
 class IDs(str, Enum):
-    sport = "id_sport"
     sport_image = "id-sport-image"
     map = "id-map"
     map_component = "id-map-component"
-    postcode = "id_postcode"
+    location = "id-location"
     country = "id-country"
     button_country = "id-button-country"
     modal_country = "modal-select-country"
     modal_country_select = "modal-country-select-input"
     dropdown_location_value = "dropdown-location"
+    dropdown_sport = "id-dropdown-sport"
     btn_install = "id-button-install"
 
 
@@ -22,6 +23,17 @@ class Defaults(str, Enum):
     sport = "soccer"
     location = "Sydney_NSW_2000_AU"
     country = "AU"
+
+
+class UserSettings(BaseModel):
+    location: Optional[str] = Defaults.location
+    sport: Optional[str] = Defaults.sport
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
 
 @dataclass()
