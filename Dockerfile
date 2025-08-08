@@ -27,4 +27,4 @@ EXPOSE 8080
 
 ENV DEBUG_DASH False
 
-CMD python app.py
+CMD python main.py
