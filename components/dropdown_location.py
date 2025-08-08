@@ -8,12 +8,11 @@ from config import (
 from my_app.my_classes import Defaults
 
 
-def display_location_dropdown(
-    location=Dropdowns.LOCATION.default, country=Defaults.country.value
-):
+def display_location_dropdown(location=Dropdowns.LOCATION.default):
     question = deepcopy(Dropdowns.LOCATION)
     question.default = location
 
+    country = location.split("_")[-1] if "_" in location else Defaults.country.value
     df_postcodes = get_postcodes(country)
 
     data_dd_location = df_postcodes[
