@@ -1,12 +1,13 @@
+from pathlib import Path
+
 import dash_mantine_components as dmc
+import pycountry
 from dash import html, Output, Input, State, callback
+from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
 from my_app.my_classes import IDs, Defaults
-from my_app.utils import store_country
-import pycountry
-
-from pathlib import Path
+from my_app.utils import store_settings_dict
 
 # only keep codes with an existing pickle
 iso_codes = [
@@ -33,11 +34,13 @@ def modal_country_select(country=Defaults.country.value):
     return html.Div(
         [
             dmc.Center(
+                html.Div(id=IDs.button_country),
                 id="country-button-center",
             ),
             dmc.Modal(
                 title="Select a country",
                 id=IDs.modal_country,
+                opened=False,
                 children=[
                     dmc.Select(
                         id=IDs.modal_country_select,
@@ -65,12 +68,13 @@ def modal_country_select(country=Defaults.country.value):
     State(IDs.modal_country, "opened"),
     prevent_initial_call=True,
 )
-def modal_toggle_open_close(_, opened):
+def modal_toggle_open_close(n_clicks, opened):
+    if n_clicks is None:
+        raise PreventUpdate
     return not opened
 
 
 @callback(
-    Output(store_country, "data"),
     Output(IDs.button_country, "children"),
     Output(IDs.modal_country, "opened"),
     Input(IDs.modal_country_select, "value"),
@@ -78,20 +82,30 @@ def modal_toggle_open_close(_, opened):
 )
 def store_country_update_flag(country):
     """Updates the country in local storage, changes the flag, and closes the modal."""
-    return country, component_country_flag(country), False
+    return component_country_flag(country), False
 
 
 @callback(
     Output("country-button-center", "children"),
-    Input("url", "pathname"),
-    State(store_country, "data"),
+    Input(store_settings_dict, "data"),
+    prevent_initial_call=True,
 )
-def create_country_button(_, country):
+def create_country_button(settings):
     """Creates the country button with the flag icon."""
-    print("the code is", country)
+    country = (
+        settings[IDs.postcode].split("_")[-1]
+        if IDs.postcode in settings
+        else Defaults.country.value
+    )
+    return country_button_modal(country)
+
+
+def country_button_modal(country=Defaults.country.value):
+    """Returns the button that opens the modal to select a country."""
     return dmc.Button(
         component_country_flag(country),
         id=IDs.button_country,
         variant="subtle",
         px="xs",
+        style={"marginLeft": "auto"},
     )
