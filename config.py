@@ -259,7 +259,7 @@ data_dd_location = data_dd_location.to_dict("records")
 @dataclass()
 class Dropdowns:
     SPORT: ClassVar[DropDownInfo] = DropDownInfo(
-        id=IDs.sport,
+        id=IDs.dropdown_sport,
         question="Sport:",
         options=data_dd_sport,
         multi=False,
@@ -267,7 +267,7 @@ class Dropdowns:
     )
 
     LOCATION: ClassVar[DropDownInfo] = DropDownInfo(
-        id=IDs.postcode,
+        id=IDs.dropdown_location_value,
         question="Location:",
         options=data_dd_location,
         multi=False,
