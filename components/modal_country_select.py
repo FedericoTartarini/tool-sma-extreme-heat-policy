@@ -6,7 +6,7 @@ from dash import html, Output, Input, State, callback
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
-from my_app.my_classes import IDs, Defaults
+from my_app.my_classes import IDs, Defaults, UserSettings
 from my_app.utils import store_settings_dict
 
 # only keep codes with an existing pickle
@@ -23,7 +23,7 @@ icons = {
 }
 
 
-def component_country_flag(country):
+def component_country_flag(country: str) -> DashIconify:
     return DashIconify(
         icon=icons[country],
         width=25,
@@ -68,7 +68,8 @@ def modal_country_select(country=Defaults.country.value):
     State(IDs.modal_country, "opened"),
     prevent_initial_call=True,
 )
-def modal_toggle_open_close(n_clicks, opened):
+def modal_toggle_open_close(n_clicks: int | None, opened: bool) -> bool:
+    """Toggles the modal open/close state when the button is clicked."""
     if n_clicks is None:
         raise PreventUpdate
     return not opened
@@ -80,7 +81,7 @@ def modal_toggle_open_close(n_clicks, opened):
     Input(IDs.modal_country_select, "value"),
     prevent_initial_call=True,
 )
-def store_country_update_flag(country):
+def store_country_update_flag(country: str) -> tuple[DashIconify, bool]:
     """Updates the country in local storage, changes the flag, and closes the modal."""
     return component_country_flag(country), False
 
@@ -90,13 +91,10 @@ def store_country_update_flag(country):
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def create_country_button(settings):
+def create_country_button(store_settings: dict) -> dmc.Button:
     """Creates the country button with the flag icon."""
-    country = (
-        settings[IDs.postcode].split("_")[-1]
-        if IDs.postcode in settings
-        else Defaults.country.value
-    )
+    settings = UserSettings(**store_settings)
+    country = settings.location.split("_")[-1]
     return country_button_modal(country)
 
 
