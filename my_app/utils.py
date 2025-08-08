@@ -12,7 +12,7 @@ from icecream import ic
 from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
-from my_app.my_classes import IDs
+from my_app.my_classes import UserSettings
 
 logger = logging.getLogger(__name__)
 
@@ -441,27 +441,51 @@ class GlobeTemperatures(Enum):
     high: str = 12
 
 
-def get_weather_and_calculate_risk(settings):
+def get_weather_and_calculate_risk(settings: UserSettings) -> pd.DataFrame:
+    """Get weather data and calculate risk using user settings.
+
+    Parameters
+    ----------
+    settings : UserSettings
+        User settings containing sport and location information.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with weather and risk calculations.
+
+    Raises
+    ------
+    ValueError
+        If required settings fields are missing.
+
+    Example
+    -------
+    >>> settings = UserSettings(sport="soccer", location="2000_AUS")
+    >>> df = get_weather_and_calculate_risk(settings)
+    """
     start = time.time()
+
     loc_selected = get_info_location_selected(settings)
 
     df_for = get_weather(
         lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
     )
 
-    df = calculate_comfort_indices_v2(df_for, settings[IDs.sport])
+    df = calculate_comfort_indices_v2(df_for, settings.sport)
 
     ic("get_weather_and_calculate_risk", time.time() - start)
 
     return df
 
 
-def get_info_location_selected(data):
+def get_info_location_selected(data: UserSettings):
+
     try:
-        country = data[IDs.postcode].split("_")[-1]
+        country = data.location.split("_")[-1]
         df_postcodes = get_postcodes(country=country)
         information = df_postcodes[
-            df_postcodes["sub-state-post-country-no-space"] == data[IDs.postcode]
+            df_postcodes["sub-state-post-country-no-space"] == data.location
         ].to_dict(orient="list")
         # print("get_info_location_selected", information)
         loc_selected = {
@@ -791,7 +815,7 @@ def generate_reference_table_risk():
     return df
 
 
-if __name__ == "__main__":
+if __name__ == "__main___":
 
     generate_reference_table_risk()
 

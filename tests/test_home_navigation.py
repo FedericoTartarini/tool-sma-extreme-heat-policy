@@ -1,9 +1,6 @@
 from playwright.sync_api import Page, expect
 
-from my_app.my_classes import Defaults, IDs
-from my_app.utils import sports_category
-
-expect.set_options(timeout=2_000)
+expect.set_options(timeout=1_000)
 
 
 class TestHomePage:
