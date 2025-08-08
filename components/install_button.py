@@ -2,6 +2,7 @@ import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 
 from config import URLS
+from my_app.my_classes import IDs
 
 
 def component_button_install():
@@ -14,6 +15,7 @@ def component_button_install():
                 ),
                 mt="xs",
                 color="black",
+                id=IDs.btn_install,
             ),
             href=URLS.INSTALL.url,
         ),
