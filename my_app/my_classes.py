@@ -4,17 +4,21 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-@dataclass
-class IDs:
-    sport: str = "id_sport"
-    postcode: str = "id_postcode"
-    country: str = "id_country"
-    button_country: str = "id-button-country"
-    modal_country: str = "modal-select-country"
-    modal_country_select: str = "modal-country-select-input"
+class IDs(str, Enum):
+    sport = "id_sport"
+    sport_image = "id-sport-image"
+    map = "id-map"
+    map_component = "id-map-component"
+    postcode = "id_postcode"
+    country = "id-country"
+    button_country = "id-button-country"
+    modal_country = "modal-select-country"
+    modal_country_select = "modal-country-select-input"
+    dropdown_location_value = "dropdown-location"
+    btn_install = "id-button-install"
 
 
-class Defaults(Enum):
+class Defaults(str, Enum):
     sport = "soccer"
     location = "Sydney_NSW_2000_AU"
     country = "AU"

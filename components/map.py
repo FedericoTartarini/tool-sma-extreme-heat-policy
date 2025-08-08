@@ -2,12 +2,9 @@ import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 import dash_mantine_components as dmc
 from dash.exceptions import PreventUpdate
-from dash_extensions.enrich import (
-    Output,
-    Input,
-    callback,
-)
+from dash_extensions.enrich import Output, Input, callback
 
+from my_app.my_classes import IDs
 from my_app.utils import (
     store_settings_dict,
     get_info_location_selected,
@@ -19,7 +16,7 @@ def component_map():
         children=[
             dbc.Alert("", color="dark", style={"height": "10em"}),
         ],
-        id="map-component",
+        id=IDs.map_component,
         withBorder=True,
         shadow="sm",
         radius="md",
@@ -28,7 +25,7 @@ def component_map():
 
 
 @callback(
-    Output("map-component", "children"),
+    Output(IDs.map_component, "children"),
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
@@ -43,7 +40,7 @@ def update_map_on_location_change(settings):
                 dl.Marker(position=[loc_selected["lat"], loc_selected["lon"]]),
                 dl.GestureHandling(),
             ],
-            id="map",
+            id=IDs.map,
             style={
                 "width": "100%",
                 "height": "13vh",
