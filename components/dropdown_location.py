@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from icecream import ic
+
 from components.dropdown_sport import generate_dropdown_inline
 from config import (
     Dropdowns,
@@ -8,7 +10,9 @@ from config import (
 from my_app.my_classes import Defaults
 
 
-def display_location_dropdown(location=Dropdowns.LOCATION.default):
+def display_location_dropdown(location: str | None = None):
+    """Generates a dropdown for selecting a location."""
+    ic(location)
     question = deepcopy(Dropdowns.LOCATION)
     question.default = location
 

@@ -1,3 +1,4 @@
+import os
 import uuid
 
 import dash_mantine_components as dmc
@@ -11,7 +12,7 @@ from dash_extensions.enrich import (
 
 from app import app
 from my_app.footer import my_footer
-from my_app.my_classes import IDs, Defaults
+from my_app.my_classes import UserSettings
 from my_app.navbar import my_navbar
 from my_app.utils import (
     storage_user_id,
@@ -78,6 +79,7 @@ app.index_string = """<!DOCTYPE html>
 </html>
 """
 
+default_settings = UserSettings()
 
 app.layout = html.Div(
     [
@@ -90,10 +92,7 @@ app.layout = html.Div(
                 dcc.Store(
                     id=store_settings_dict,
                     storage_type="local",
-                    data={
-                        IDs.sport: Defaults.sport,
-                        IDs.postcode: Defaults.location,
-                    },
+                    data=default_settings.dict(),
                 ),
                 dcc.Store(id=store_weather_risk_df),
                 dcc.Store(
@@ -114,8 +113,7 @@ app.layout = html.Div(
 
 if __name__ == "__main__":
     app.run_server(
-        # debug=os.environ.get("DEBUG_DASH", True),
-        debug=False,
+        debug=os.environ.get("DEBUG_DASH", True),
         host="0.0.0.0",
         port=8080,
         processes=1,

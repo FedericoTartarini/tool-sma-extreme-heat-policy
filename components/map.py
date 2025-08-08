@@ -4,7 +4,7 @@ import dash_mantine_components as dmc
 from dash.exceptions import PreventUpdate
 from dash_extensions.enrich import Output, Input, callback
 
-from my_app.my_classes import IDs
+from my_app.my_classes import IDs, UserSettings
 from my_app.utils import (
     store_settings_dict,
     get_info_location_selected,
@@ -29,8 +29,9 @@ def component_map():
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def update_map_on_location_change(settings):
+def update_map_on_location_change(store_settings: dict | None):
     """Update the map based on the selected location in the settings."""
+    settings = UserSettings(**store_settings)
     loc_selected = get_info_location_selected(settings)
 
     try:
