@@ -23,8 +23,8 @@ from components.map import component_map
 from components.sport_image import (
     component_sport_image,
 )
-from config import URLS, Dropdowns, PostcodesDefault
-from my_app.my_classes import IDs
+from config import URLS, PostcodesDefault
+from my_app.my_classes import IDs, UserSettings, Defaults
 from my_app.utils import (
     FirebaseFields,
     store_settings_dict,
@@ -46,15 +46,15 @@ dash.register_page(
 
 
 def layout(
-    id_sport=Dropdowns.SPORT.default,
-    id_postcode=Dropdowns.LOCATION.default,
+    sport=Defaults.sport,
+    location=Defaults.location,
 ):
     return dmc.Stack(
         children=[
             dcc.Location(id="url", refresh=False),
-            display_sport_dropdown(sport=id_sport),
+            display_sport_dropdown(sport=sport),
             component_sport_image(),
-            display_location_dropdown(location=id_postcode),
+            display_location_dropdown(location=location),
             component_map(),
             component_current_risk(),
             component_main_recommendation(),
@@ -67,15 +67,17 @@ def layout(
 
 
 @callback(
-    Output("dropdown-location", "children"),
+    Output(IDs.dropdown_location_value, "children"),
     Input(IDs.modal_country_select, "value"),
-    State(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def update_location_dropdown_country_change(country, settings):
+def update_location_dropdown_country_change(country):
     """Updates the location dropdown when the country is changed."""
+    # todo this could be the cause of the bug with the dropdown not updating
+    ic(country)
     print("changed the country to", country)
     postcodes_default = PostcodesDefault()
+    ic(postcodes_default)
     return display_location_dropdown(location=postcodes_default[country])
 
 
@@ -85,27 +87,31 @@ def update_location_dropdown_country_change(country, settings):
     State(store_settings_dict, "data"),
     State(storage_user_id, "data"),
     Input(IDs.dropdown_location_value, "value"),
-    Input(IDs.sport, "value"),
+    Input(IDs.dropdown_sport, "value"),
     prevent_initial_call=True,
 )
-def save_settings_in_storage_and_update_url(data, user_id, location, sport):
-    """Saves in local storage the settings selected by the participant."""
-    data = data or {}
-    data[IDs.postcode] = location
-    data[IDs.sport] = sport
+def save_settings_in_storage_and_update_url(
+    store_settings: dict, user_id: str, location: str, sport: str
+) -> tuple[dict, str]:
+    # ic(store_settings, location, sport)
+    """Saves settings using a Pydantic model and updates the URL."""
+    ic(dash.ctx.triggered_id)
+    settings = UserSettings(**store_settings)
+    settings.location = location
+    settings.sport = sport
 
-    firebase_data = deepcopy(data)
-    if any(data.values()):
+    firebase_data = deepcopy(store_settings)
+    if any(store_settings.values()):
         firebase_data[FirebaseFields.user_id] = user_id
         firebase_data[FirebaseFields.timestamp] = time.time()
         ref.push().set(firebase_data)
 
-    ic(data, location, sport)
-
-    url_data = {k: v for k, v in data.items()}
+    url_data = settings.dict()
     # return the new values and the url
     url_search = f"?{urlencode(url_data)}"
-    return data, url_search
+    # ic(settings)
+    # ic(url_search)
+    return settings.__dict__, url_search
 
 
 @callback(
@@ -113,7 +119,8 @@ def save_settings_in_storage_and_update_url(data, user_id, location, sport):
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def on_settings_change(settings):
+def on_settings_change(store_settings: dict | None):
+    settings = UserSettings(**store_settings)
     if not settings:
         raise PreventUpdate
     df = get_weather_and_calculate_risk(settings)
