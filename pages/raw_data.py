@@ -1,6 +1,7 @@
 import dash
 import dash_mantine_components as dmc
-from dash import html, callback, Input, Output
+from dash import html, callback, Input, Output, State
+from icecream import ic
 
 from my_app.utils import (
     store_settings_dict,
@@ -25,14 +26,38 @@ def create_table(df):
     return table
 
 
-layout = dmc.Stack([dmc.Center(id="id-raw-data-table")])
+layout = dmc.Stack(
+    [
+        dmc.Text(
+            "This page shows the raw data used to calculate the risk value. "
+            "It is not meant for end users, but for developers and data scientists.",
+            size="sm",
+            style={"margin-bottom": "1em"},
+        ),
+        dmc.Button(
+            "Show Raw Data",
+            id="id-show-raw-data",
+            variant="outline",
+            color="dark",
+            size="md",
+            style={"margin-bottom": "1em"},
+        ),
+        dmc.Center(id="id-raw-data-table"),
+    ]
+)
 
 
 @callback(
     Output("id-raw-data-table", "children"),
-    Input(store_settings_dict, "data"),
+    Input("id-show-raw-data", "n_clicks"),
+    State(store_settings_dict, "data"),
+    prevent_initial_call=True,
 )
-def update_alert_hss_current(settings):
+def update_alert_hss_current(button, settings):
+    """Updates the raw data table when the button is clicked."""
+    if button is None:
+        ic("Button not clicked yet, preventing update")
+        raise dash.exceptions.PreventUpdate
 
     df = get_weather_and_calculate_risk(settings)
 
