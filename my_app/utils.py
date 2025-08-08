@@ -8,6 +8,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import scipy
 from dash import html
+from icecream import ic
 from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
@@ -38,7 +39,6 @@ app_version = "1.0.1"
 app_version = app_version.replace(".", "")
 store_settings_dict = f"local-storage-settings-{app_version}"
 store_weather_risk_df = f"session-storage-weather-{app_version}"
-store_country = "local-storage-country"
 storage_user_id = "user-id"
 
 tf = TimezoneFinder()  # reuse
@@ -441,9 +441,9 @@ class GlobeTemperatures(Enum):
     high: str = 12
 
 
-def get_weather_and_calculate_risk(settings, country):
+def get_weather_and_calculate_risk(settings):
     start = time.time()
-    loc_selected = get_info_location_selected(settings, country=country)
+    loc_selected = get_info_location_selected(settings)
 
     df_for = get_weather(
         lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
@@ -451,18 +451,19 @@ def get_weather_and_calculate_risk(settings, country):
 
     df = calculate_comfort_indices_v2(df_for, settings[IDs.sport])
 
-    print("get_weather_and_calculate_risk", time.time() - start)
+    ic("get_weather_and_calculate_risk", time.time() - start)
 
     return df
 
 
-def get_info_location_selected(data, country):
+def get_info_location_selected(data):
     try:
+        country = data[IDs.postcode].split("_")[-1]
         df_postcodes = get_postcodes(country=country)
         information = df_postcodes[
             df_postcodes["sub-state-post-country-no-space"] == data[IDs.postcode]
         ].to_dict(orient="list")
-        print("get_info_location_selected", information)
+        # print("get_info_location_selected", information)
         loc_selected = {
             "lat": float(information["lat"][0]),
             "lon": float(information["lon"][0]),
