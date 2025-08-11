@@ -1,6 +1,6 @@
 from playwright.sync_api import Page, expect
 
-expect.set_options(timeout=1_000)
+expect.set_options(timeout=2_000)
 
 
 class TestHomePage:
@@ -11,8 +11,8 @@ class TestHomePage:
 
         # Check header link, default sport selection and sport image
         expect(page.get_by_role("link", name="Extreme Heat Risk")).to_be_visible()
-        expect(page.locator("#id_sport")).to_be_visible()
-        expect(page.locator("#dropdown-location")).to_be_visible()
+        expect(page.locator("#id-dropdown-sport")).to_be_visible()
+        expect(page.locator("#id-dropdown-location")).to_be_visible()
 
     def test_location_change(self, page: Page) -> None:
         """Test changing the location updates the map and recommendations."""
@@ -20,17 +20,17 @@ class TestHomePage:
         page.goto("/")
 
         # Change the location
-        page.locator("#dropdown-location").click()
-        page.locator("#dropdown-location").type("2205 arn")
-        page.locator("#dropdown-location").press("Enter")
+        page.locator("#id-dropdown-location").click()
+        page.locator("#id-dropdown-location").type("2205 arn")
+        page.locator("#id-dropdown-location").press("Enter")
 
         # check that the location is updated
         expect(page.get_by_text("Arncliffe, NSW, 2205")).to_be_visible()
 
         # change back to default location
-        page.locator("#dropdown-location").click()
-        page.locator("#dropdown-location").type("2000 sydney")
-        page.locator("#dropdown-location").press("Enter")
+        page.locator("#id-dropdown-location").click()
+        page.locator("#id-dropdown-location").type("2000 sydney")
+        page.locator("#id-dropdown-location").press("Enter")
 
         # check that the location is updated
         expect(page.get_by_text("Sydney, NSW, 2000")).to_be_visible()
@@ -42,14 +42,20 @@ class TestHomePage:
 
         # Change the country
         page.locator("#id-button-country").click()
+        page.wait_for_selector(
+            "#modal-country-select-input", state="visible", timeout=5_000
+        )
+
         page.locator("#modal-country-select-input").dblclick()
         page.locator("#modal-country-select-input").type("Italy")
         page.get_by_text("Italy").click()
 
         # change back to default country
-        page.locator("#dropdown-location").click()
-        page.locator("#dropdown-location").type("budrio 40054")
-        page.locator("#dropdown-location").press("Enter")
+        # Wait for the text "Roma" to be visible using expect (assertion)
+        expect(page.get_by_text("Roma, Lazio, 118")).to_be_visible(timeout=5_000)
+        page.locator("#id-dropdown-location").click()
+        page.locator("#id-dropdown-location").type("budrio 40054")
+        page.locator("#id-dropdown-location").press("Enter")
 
         # check that the location is updated
         expect(page.get_by_text("Budrio")).to_be_visible()

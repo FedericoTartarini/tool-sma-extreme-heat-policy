@@ -2,7 +2,7 @@
 
 from playwright.sync_api import Page, expect
 
-from my_app.my_classes import Defaults, IDs
+from my_app.my_classes import Defaults
 from my_app.utils import sports_category
 
 
@@ -14,13 +14,13 @@ class TestHomePage:
 
         # Check header link, default sport selection and sport image
         expect(page.get_by_role("link", name="Extreme Heat Risk")).to_be_visible()
-        expect(page.locator("#id_sport")).to_be_visible()
+        expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-sport-image").get_by_role("img")).to_be_visible()
 
         # Change the location
-        page.locator("#dropdown-location").click()
-        page.locator("#dropdown-location").type("2205 arn")
-        page.locator("#dropdown-location").press("Enter")
+        page.locator("#id-dropdown-location").click()
+        page.locator("#id-dropdown-location").type("2205 arn")
+        page.locator("#id-dropdown-location").press("Enter")
 
         # Validate map and recommendations sections
         expect(page.locator("#id-map")).to_be_visible()
@@ -39,9 +39,9 @@ class TestHomePage:
         sports = sports_category.keys()
         drop_down_sport = Defaults.sport.value.upper()
         for sport in sports[:4]:
-            page.locator("#id-sport").filter(has_text=drop_down_sport).click()
-            page.locator("#id-sport").get_by_role("combobox").fill(sport)
-            page.locator("#id-sport").get_by_role("combobox").press("Enter")
+            page.locator("#id-dropdown-sport").filter(has_text=drop_down_sport).click()
+            page.locator("#id-dropdown-sport").get_by_role("combobox").fill(sport)
+            page.locator("#id-dropdown-sport").get_by_role("combobox").press("Enter")
             expect(page.get_by_role("img", name="Heat stress chart")).to_be_visible()
             drop_down_sport = sport
 
