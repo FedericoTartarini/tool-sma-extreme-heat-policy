@@ -84,19 +84,28 @@ default_settings = UserSettings()
 app.layout = dmc.MantineProvider(
     children=[
         my_navbar(),
-        html.Div(id="id-google-analytics-event"),
-        dcc.Store(
-            id=store_settings_dict,
-            storage_type="local",
-            data=default_settings.dict(),
-        ),
-        dcc.Store(id=store_weather_risk_df),
-        dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
-        dmc.Container(
-            html.Div(page_container, style={"flex": 1}),
-            style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
-            className="p-2",
-            size="xs",
+        dcc.Loading(
+            children=[
+                html.Div(id="id-google-analytics-event"),
+                dcc.Store(
+                    id=store_settings_dict,
+                    storage_type="local",
+                    data=default_settings.dict(),
+                ),
+                dcc.Store(id=store_weather_risk_df),
+                dcc.Store(
+                    id=storage_user_id, storage_type="local", data=str(uuid.uuid1())
+                ),
+                dmc.Container(
+                    html.Div(page_container, style={"flex": 1}),
+                    style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
+                    className="p-2",
+                    size="xs",
+                ),
+            ],
+            overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+            color="gray",
+            type="circle",
         ),
         my_footer(),
     ]
