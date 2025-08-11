@@ -172,6 +172,7 @@ def open_weather(lat, lon):
     return df_for
 
 
+@cached(cache=TTLCache(maxsize=124, ttl=600))
 def get_weather(
     lat: float = -33.8862,
     lon: float = 151.1791,
