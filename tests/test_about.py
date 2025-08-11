@@ -2,7 +2,6 @@ from playwright.sync_api import Page, expect
 
 
 class TestAboutPage:
-
     def test_has_url(self, page: Page):
         page.goto("/about")
         expect(page.get_by_text("Functionalities")).to_be_visible()

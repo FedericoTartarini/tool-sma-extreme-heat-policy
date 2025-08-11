@@ -24,7 +24,6 @@ def gauge_chart(
     bottom: int = 1,
     height: int = 2,
 ):
-
     m = interp1d([min(thresholds), max(thresholds)], [0.0, np.pi])
     x_axis_vals = [m(x) for x in thresholds]
     width = [x - x_axis_vals[i - 1] for i, x in enumerate(x_axis_vals)][1:]
@@ -88,7 +87,6 @@ def gauge_chart(
 
     if text:
         for i, txt in enumerate(text):
-
             text_angle = 0
             if text_rotated:
                 text_angle = 180 - math.degrees(x_axis_vals[i] + width[i] / 2)
@@ -139,7 +137,6 @@ def gauge_chart(
 
 
 if __name__ == "__main__":
-
     colors = ["#0096FF", "#72c66e", "#f6ee54", "#fabd57", "#ee4d55"]
     thresholds = [0.0, 100.0, 150.0, 200.0, 250.0, 300.0]
     text = ["Low", "Moderate", "High", "Very High", "Extreme"]

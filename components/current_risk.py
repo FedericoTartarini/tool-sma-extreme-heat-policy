@@ -6,7 +6,6 @@ from dash_extensions.enrich import (
     html,
     callback,
 )
-from icecream import ic
 
 from components.gauge import gauge_chart
 from config import sma_risk_messages

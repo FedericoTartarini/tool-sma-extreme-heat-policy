@@ -13,10 +13,6 @@ from icecream import ic
 from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
 
-logger = logging.getLogger(__name__)
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
-
 import pandas as pd
 import requests
 import pytz
@@ -33,6 +29,10 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 from timezonefinder import TimezoneFinder
+
+logger = logging.getLogger(__name__)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 app_version = "1.0.1"
 app_version = app_version.replace(".", "")
@@ -212,7 +212,6 @@ def get_weather(
 
 
 def calculate_comfort_indices_v2(data_for, sport_id):
-
     array_risk_results = []
 
     sport_dict = sports_info.loc[sports_info["sport_id"] == sport_id].to_dict(
@@ -766,7 +765,6 @@ def generate_reference_table_risk():
                 )
                 for tdb in tdb_array:
                     for rh in rh_array:
-
                         rh_threshold_moderate = v2_lines["moderate"]["poly"](tdb)
                         if tdb > VarCalcRisk.t_threshold_risk_moderate:
                             rh_threshold_moderate = 0
@@ -816,7 +814,6 @@ def generate_reference_table_risk():
 
 
 if __name__ == "__main___":
-
     generate_reference_table_risk()
 
     # plot lines for different sports

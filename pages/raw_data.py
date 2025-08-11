@@ -1,6 +1,6 @@
 import dash
 import dash_mantine_components as dmc
-from dash import html, callback, Input, Output, State
+from dash import callback, Input, Output, State
 from icecream import ic
 import pandas as pd
 from typing import Any
@@ -12,7 +12,7 @@ from my_app.utils import (
 )
 from my_app.my_classes import UserSettings
 
-dash.register_page(__name__, path=f"/raw_data")
+dash.register_page(__name__, path="/raw_data")
 
 
 def create_table(df: pd.DataFrame) -> dmc.Table:

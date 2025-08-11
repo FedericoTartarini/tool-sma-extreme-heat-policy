@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 import pycountry
-from dash import html, Output, Input, State, callback
+from dash import html, Output, Input, State, callback, ctx
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
@@ -19,7 +19,7 @@ available_iso_codes = [
 ]
 
 icons = {
-    country.alpha_2: f"emojione:flag-for-{country.name.lower().replace(' ', '-').replace('\'', '')}"
+    country.alpha_2: f"emojione:flag-for-{country.name.lower().replace(' ', '-').replace("'", '')}"
     for country in pycountry.countries
 }
 
@@ -32,6 +32,12 @@ def component_country_flag(country: str) -> DashIconify:
 
 
 def modal_country_select(country=Defaults.country.value):
+    """Creates a modal with a select dropdown to choose a country."""
+    data = [
+        {"value": country.alpha_2, "label": country.name}
+        for country in sorted(pycountry.countries, key=lambda c: c.name)
+        if country.alpha_2 in available_iso_codes
+    ]
     return dbc.NavItem(
         [
             dmc.Center(
@@ -45,13 +51,7 @@ def modal_country_select(country=Defaults.country.value):
                 children=[
                     dmc.Select(
                         id=IDs.modal_country_select,
-                        data=[
-                            {"value": country.alpha_2, "label": country.name}
-                            for country in sorted(
-                                pycountry.countries, key=lambda c: c.name
-                            )
-                            if country.alpha_2 in available_iso_codes
-                        ],
+                        data=data,
                         placeholder="Select a country",
                         value=country,
                         searchable=True,
@@ -78,13 +78,29 @@ def modal_toggle_open_close(n_clicks: int | None, opened: bool) -> bool:
 
 @callback(
     Output(IDs.button_country, "children"),
+    Input(IDs.modal_country_select, "value"),
+    Input(store_settings_dict, "data"),
+)
+def update_flag_country_button(
+    country: str, store_settings: dict | None
+) -> DashIconify:
+    """Updates the country in local storage, changes the flag, and closes the modal."""
+    trigger = ctx.triggered_id
+    if trigger is None and store_settings is not None:
+        store_settings = UserSettings(**store_settings)
+        country = store_settings.location.split("_")[-1]
+
+    return component_country_flag(country)
+
+
+@callback(
     Output(IDs.modal_country, "opened"),
     Input(IDs.modal_country_select, "value"),
     prevent_initial_call=True,
 )
-def store_country_update_flag(country: str) -> tuple[DashIconify, bool]:
-    """Updates the country in local storage, changes the flag, and closes the modal."""
-    return component_country_flag(country), False
+def close_the_modal(_) -> bool:
+    """Closes the modal."""
+    return False
 
 
 @callback(

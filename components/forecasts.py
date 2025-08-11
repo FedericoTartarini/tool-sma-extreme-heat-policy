@@ -8,7 +8,6 @@ from dash import (
     callback,
     dcc,
 )
-from icecream import ic
 
 from config import (
     sma_risk_messages,
@@ -35,7 +34,7 @@ def component_forecast():
     Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
-def update_fig_hss_trend(df):
+def update_figure_today(df):
     df = pd.read_json(df, orient="split")
     df = get_data_specific_day(df, date_offset=0)
     return dcc.Graph(
@@ -49,7 +48,7 @@ def update_fig_hss_trend(df):
     Input(store_weather_risk_df, "data"),
     prevent_initial_call=True,
 )
-def update_fig_hss_trend(df):
+def update_figures_forecast(df):
     df = pd.read_json(df, orient="split")
     # ic("Forecasting for next days")
     accordions = []
@@ -61,55 +60,57 @@ def update_fig_hss_trend(df):
         ].unique()[0]
         color = sma_risk_messages[risk_value].color
 
-        accordions.append(
-            dmc.AccordionItem(
-                children=[
-                    dmc.AccordionControl(
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dmc.Stack(
-                                        [
-                                            html.H4(day_name, className="p-0 m-0"),
-                                            dmc.Text(
-                                                df_day.index.date[0].strftime(
-                                                    "%d-%m-%Y"
+        (
+            accordions.append(
+                dmc.AccordionItem(
+                    children=[
+                        dmc.AccordionControl(
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        dmc.Stack(
+                                            [
+                                                html.H4(day_name, className="p-0 m-0"),
+                                                dmc.Text(
+                                                    df_day.index.date[0].strftime(
+                                                        "%d-%m-%Y"
+                                                    ),
+                                                    className="p-0 m-0",
+                                                    size="xs",
                                                 ),
-                                                className="p-0 m-0",
-                                                size="xs",
-                                            ),
-                                        ],
-                                        gap=0,
+                                            ],
+                                            gap=0,
+                                        ),
+                                        align="center",
                                     ),
-                                    align="center",
-                                ),
-                                dbc.Col(
-                                    html.P(
-                                        "Max risk:",
+                                    dbc.Col(
+                                        html.P(
+                                            "Max risk:",
+                                            className="p-0 m-0",
+                                        ),
+                                        width="auto",
                                         className="p-0 m-0",
                                     ),
-                                    width="auto",
-                                    className="p-0 m-0",
-                                ),
-                                dbc.Col(
-                                    dbc.Badge(
-                                        risk_value,
-                                        className="ms-1 p-1 m-0",
-                                        color=color,
+                                    dbc.Col(
+                                        dbc.Badge(
+                                            risk_value,
+                                            className="ms-1 p-1 m-0",
+                                            color=color,
+                                        ),
+                                        width="auto",
                                     ),
-                                    width="auto",
-                                ),
-                            ]
-                        )
-                    ),
-                    dmc.AccordionPanel(
-                        dcc.Graph(
-                            figure=line_chart(df_day, "risk_value_interpolated"),
-                            config={"staticPlot": True},
+                                ]
+                            )
                         ),
-                    ),
-                ],
-                value=day_name,
-            )
-        ),
+                        dmc.AccordionPanel(
+                            dcc.Graph(
+                                figure=line_chart(df_day, "risk_value_interpolated"),
+                                config={"staticPlot": True},
+                            ),
+                        ),
+                    ],
+                    value=day_name,
+                )
+            ),
+        )
     return dmc.Accordion(accordions)
