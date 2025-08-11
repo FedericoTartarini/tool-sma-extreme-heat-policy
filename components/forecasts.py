@@ -51,8 +51,7 @@ def update_fig_hss_trend(df):
 )
 def update_fig_hss_trend(df):
     df = pd.read_json(df, orient="split")
-    ic("Forecasting for next days")
-    ic(df.head())
+    # ic("Forecasting for next days")
     accordions = []
     for day in [1, 2, 3, 4, 5, 6]:
         df_day = get_data_specific_day(df, date_offset=day)

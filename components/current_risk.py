@@ -52,7 +52,6 @@ def component_current_risk():
 def update_fig_hss_trend(df):
     """Update the heat stress chart based on the current risk value."""
     df = pd.read_json(df, orient="split")
-    ic(df)
     colors = [x.color for x in sma_risk_messages.values()]
     thresholds = [x.risk_value for x in sma_risk_messages.values()] + [4.0]
     text = [x.capitalize() for x in sma_risk_messages.keys()]

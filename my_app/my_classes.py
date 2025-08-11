@@ -14,7 +14,8 @@ class IDs(str, Enum):
     button_country = "id-button-country"
     modal_country = "modal-select-country"
     modal_country_select = "modal-country-select-input"
-    dropdown_location_value = "dropdown-location"
+    dropdown_location_value = "id-dropdown-location-value"
+    dropdown_location = "id-dropdown-location"
     dropdown_sport = "id-dropdown-sport"
     btn_install = "id-button-install"
 
