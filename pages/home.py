@@ -8,7 +8,7 @@ from dash import dcc
 from dash.exceptions import PreventUpdate
 
 # from dash.exceptions import PreventUpdate
-from dash_extensions.enrich import Output, Input, State, Serverside, callback
+from dash import Output, Input, State, callback
 from firebase_admin import db
 from icecream import ic
 
@@ -62,7 +62,7 @@ def layout(
             component_forecast(),
             component_button_install(),
         ],
-        spacing="xs",
+        gap="xs",
     )
 
 
@@ -124,4 +124,6 @@ def on_settings_change(store_settings: dict | None):
     if not settings:
         raise PreventUpdate
     df = get_weather_and_calculate_risk(settings)
-    return Serverside(df)
+    df.index = df.index.tz_localize(None)
+    df = df[["tdb", "rh", "risk_value", "risk_value_interpolated", "risk"]]
+    return df.to_json(date_format="iso", orient="split")

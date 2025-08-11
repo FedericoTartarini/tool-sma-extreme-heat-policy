@@ -12,7 +12,7 @@ def my_navbar():
         dmc.Container(
             dmc.Grid(
                 [
-                    dmc.Col(
+                    dmc.GridCol(
                         [
                             html.A(
                                 # Use row and col to control vertical alignment of logo / brand
@@ -24,14 +24,20 @@ def my_navbar():
                                                     dbc.NavbarBrand(
                                                         "SMA Extreme Heat Risk",
                                                         className="ms-2",
-                                                        style={"padding-bottom": 0},
+                                                        style={
+                                                            "padding-bottom": 0,
+                                                            "font-size": "0.9rem",
+                                                        },
                                                     ),
                                                 ),
                                                 dbc.Row(
                                                     dbc.NavbarBrand(
                                                         "& Response Guidelines",
                                                         className="ms-2",
-                                                        style={"padding-top": 0},
+                                                        style={
+                                                            "padding-top": 0,
+                                                            "font-size": "0.9rem",
+                                                        },
                                                     ),
                                                 ),
                                             ],
@@ -45,15 +51,15 @@ def my_navbar():
                                 style={"textDecoration": "none"},
                             ),
                         ],
-                        span="content",
+                        span={"base": 7, "xs": 4},
                         className="py-0",
                     ),
-                    dmc.Col(
-                        dbc.NavItem(modal_country_select()),
+                    dmc.GridCol(
                         span="content",
                         className="p-0",
+                        children=modal_country_select(),
                     ),
-                    dmc.Col(
+                    dmc.GridCol(
                         [
                             dbc.NavbarToggler(
                                 dmc.Burger(
@@ -63,10 +69,10 @@ def my_navbar():
                                 n_clicks=0,
                             )
                         ],
-                        span="content",
+                        span={"base": "content", "xs": 0},
                         className="py-0",
                     ),
-                    dmc.Col(
+                    dmc.GridCol(
                         [
                             dbc.Collapse(
                                 dbc.Nav(
@@ -100,8 +106,7 @@ def my_navbar():
                                 navbar=True,
                             ),
                         ],
-                        span=12,
-                        md="content",
+                        span={"base": 12, "sm": 3},
                         className="py-0",
                     ),
                 ],

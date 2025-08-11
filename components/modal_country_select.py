@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import dash_mantine_components as dmc
+import dash_bootstrap_components as dbc
 import pycountry
 from dash import html, Output, Input, State, callback
 from dash.exceptions import PreventUpdate
@@ -31,7 +32,7 @@ def component_country_flag(country: str) -> DashIconify:
 
 
 def modal_country_select(country=Defaults.country.value):
-    return html.Div(
+    return dbc.NavItem(
         [
             dmc.Center(
                 html.Div(id=IDs.button_country),
@@ -104,6 +105,6 @@ def country_button_modal(country=Defaults.country.value):
         component_country_flag(country),
         id=IDs.button_country,
         variant="subtle",
-        px="xs",
+        px="0",
         style={"marginLeft": "auto"},
     )

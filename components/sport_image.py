@@ -1,9 +1,5 @@
 import dash_mantine_components as dmc
-from dash_extensions.enrich import (
-    Output,
-    Input,
-    callback,
-)
+from dash import callback, Input, Output
 
 from my_app.my_classes import IDs, UserSettings
 from my_app.utils import store_settings_dict
@@ -36,5 +32,5 @@ def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
     settings = UserSettings(**(store_settings or {}))
     return dmc.Image(
         src=f"assets/images/{settings.sport}.webp",
-        height=height_image,
+        h=height_image,
     )

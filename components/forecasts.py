@@ -1,12 +1,14 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash_extensions.enrich import (
+import pandas as pd
+from dash import (
     Output,
     Input,
     html,
     callback,
     dcc,
 )
+from icecream import ic
 
 from config import (
     sma_risk_messages,
@@ -34,6 +36,7 @@ def component_forecast():
     prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):
+    df = pd.read_json(df, orient="split")
     df = get_data_specific_day(df, date_offset=0)
     return dcc.Graph(
         figure=line_chart(df, "risk_value_interpolated"),
@@ -47,6 +50,9 @@ def update_fig_hss_trend(df):
     prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):
+    df = pd.read_json(df, orient="split")
+    ic("Forecasting for next days")
+    ic(df.head())
     accordions = []
     for day in [1, 2, 3, 4, 5, 6]:
         df_day = get_data_specific_day(df, date_offset=day)
@@ -74,7 +80,7 @@ def update_fig_hss_trend(df):
                                                 size="xs",
                                             ),
                                         ],
-                                        spacing=0,
+                                        gap=0,
                                     ),
                                     align="center",
                                 ),

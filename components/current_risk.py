@@ -1,10 +1,12 @@
 import dash_mantine_components as dmc
+import pandas as pd
 from dash_extensions.enrich import (
     Output,
     Input,
     html,
     callback,
 )
+from icecream import ic
 
 from components.gauge import gauge_chart
 from config import sma_risk_messages
@@ -48,6 +50,9 @@ def component_current_risk():
     prevent_initial_call=True,
 )
 def update_fig_hss_trend(df):
+    """Update the heat stress chart based on the current risk value."""
+    df = pd.read_json(df, orient="split")
+    ic(df)
     colors = [x.color for x in sma_risk_messages.values()]
     thresholds = [x.risk_value for x in sma_risk_messages.values()] + [4.0]
     text = [x.capitalize() for x in sma_risk_messages.keys()]
@@ -55,7 +60,7 @@ def update_fig_hss_trend(df):
     risk_value = df.iloc[0]["risk_value_interpolated"] + 1
     thresholds = [x + 1 for x in thresholds]
     return dmc.Image(
-        gauge_chart(
+        src=gauge_chart(
             risk_value=round(risk_value, 1),
             colors=colors,
             thresholds=thresholds,
@@ -76,6 +81,7 @@ def update_fig_hss_trend(df):
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):
+    df = pd.read_json(df, orient="split")
     color = sma_risk_messages[df["risk"].iloc[0]].color
     risk_class = df["risk"].iloc[0]
     return f"{risk_class}".capitalize(), color

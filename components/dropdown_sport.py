@@ -1,11 +1,7 @@
 from copy import deepcopy
 
 import dash_bootstrap_components as dbc
-from dash_extensions.enrich import (
-    html,
-    dcc,
-)
-from icecream import ic
+from dash import html, dcc
 
 from config import Dropdowns
 

@@ -81,7 +81,7 @@ layout = dmc.Stack(
                         src="assets/img_installation/IMG_0214.jpg",
                     ),
                 ],
-                spacing="xs",
+                gap="xs",
             ),
             shadow="sm",
             p="xs",

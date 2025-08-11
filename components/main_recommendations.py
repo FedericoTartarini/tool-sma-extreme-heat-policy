@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+import pandas as pd
 from dash_extensions.enrich import (
     Output,
     Input,
@@ -37,6 +38,7 @@ def component_main_recommendation():
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):
+    df = pd.read_json(df, orient="split")
     risk_class = df["risk"].iloc[0]
     icons = [
         icon_component("../assets/icons/actions/hydration.png", "Stay hydrated"),

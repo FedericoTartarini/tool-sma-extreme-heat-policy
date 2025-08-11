@@ -17,13 +17,14 @@ dash.register_page(__name__, path=f"/raw_data")
 
 def create_table(df: pd.DataFrame) -> dmc.Table:
     columns, values = df.columns, df.values
-    header = [html.Tr([html.Th(col[:10]) for col in columns])]
-    rows = [html.Tr([html.Td(cell) for cell in row]) for row in values]
+    header = dmc.TableThead(dmc.TableTr([dmc.TableTh(col[:10]) for col in columns]))
+    rows = dmc.TableTbody(
+        [dmc.TableTr([dmc.TableTd(cell) for cell in row]) for row in values]
+    )
     table = dmc.Table(
-        [html.Thead(header), html.Tbody(rows)],
+        [header, rows],
         striped=True,
         highlightOnHover=True,
-        withBorder=True,
         # withColumnBorders=True,
     )
     return table

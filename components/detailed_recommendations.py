@@ -1,11 +1,6 @@
 import dash_bootstrap_components as dbc
-from dash_extensions.enrich import (
-    Output,
-    Input,
-    html,
-    callback,
-    dcc,
-)
+import pandas as pd
+from dash import Output, Input, html, callback, dcc
 
 from config import (
     sma_risk_messages,
@@ -49,6 +44,7 @@ def component_detailed_recommendation():
     prevent_initial_call=True,
 )
 def update_alert_hss_current(df):
+    df = pd.read_json(df, orient="split")
     risk_class = df["risk"].iloc[0]
     description = sma_risk_messages[risk_class].description.capitalize()
     suggestion = sma_risk_messages[risk_class].suggestion.capitalize()

@@ -1,5 +1,4 @@
 from dash import html, dcc
-import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 
 
@@ -8,7 +7,7 @@ def my_footer():
         dmc.Container(
             dmc.Grid(
                 [
-                    dmc.Col(
+                    dmc.GridCol(
                         dcc.Markdown(
                             """
                             [Click here to provide your feedback](https://sydney.au1.qualtrics.com/jfe/form/SV_3jAqlzAnAoAOU8S)
@@ -27,10 +26,9 @@ def my_footer():
                         ),
                         style={"color": "#111", "inherit": "none"},
                         span=12,
-                        md="auto",
                         className="markdown-footer",
                     ),
-                    dmc.Col(
+                    dmc.GridCol(
                         html.Img(
                             src="../assets/icons/usyd-logo.png",
                             width="125px",

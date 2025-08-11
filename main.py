@@ -4,8 +4,8 @@ import uuid
 import dash_mantine_components as dmc
 
 # Imports the Cloud Logging client library
-from dash import page_container
-from dash_extensions.enrich import (
+from dash import (
+    page_container,
     html,
     dcc,
 )
@@ -81,30 +81,22 @@ app.index_string = """<!DOCTYPE html>
 
 default_settings = UserSettings()
 
-app.layout = html.Div(
-    [
+app.layout = dmc.MantineProvider(
+    children=[
         my_navbar(),
-        dmc.LoadingOverlay(
-            loaderProps={"variant": "dots", "color": "#555", "size": 100},
-            exitTransitionDuration=500,
-            children=[
-                html.Div(id="id-google-analytics-event"),
-                dcc.Store(
-                    id=store_settings_dict,
-                    storage_type="local",
-                    data=default_settings.dict(),
-                ),
-                dcc.Store(id=store_weather_risk_df),
-                dcc.Store(
-                    id=storage_user_id, storage_type="local", data=str(uuid.uuid1())
-                ),
-                dmc.Container(
-                    html.Div(page_container, style={"flex": 1}),
-                    style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
-                    className="p-2",
-                    size="xs",
-                ),
-            ],
+        html.Div(id="id-google-analytics-event"),
+        dcc.Store(
+            id=store_settings_dict,
+            storage_type="local",
+            data=default_settings.dict(),
+        ),
+        dcc.Store(id=store_weather_risk_df),
+        dcc.Store(id=storage_user_id, storage_type="local", data=str(uuid.uuid1())),
+        dmc.Container(
+            html.Div(page_container, style={"flex": 1}),
+            style={"flex": 1, "marginBottom": 20, "minHeight": "100vh"},
+            className="p-2",
+            size="xs",
         ),
         my_footer(),
     ]
@@ -112,7 +104,7 @@ app.layout = html.Div(
 
 
 if __name__ == "__main__":
-    app.run_server(
+    app.run(
         debug=os.environ.get("DEBUG_DASH", True),
         host="0.0.0.0",
         port=8080,

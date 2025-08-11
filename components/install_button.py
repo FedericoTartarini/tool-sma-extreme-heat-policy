@@ -10,7 +10,7 @@ def component_button_install():
         dmc.Anchor(
             dmc.Button(
                 "Install this web application on your phone",
-                leftIcon=DashIconify(
+                leftSection=DashIconify(
                     icon="material-symbols-light:install-mobile-rounded"
                 ),
                 mt="xs",
