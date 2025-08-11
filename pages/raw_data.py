@@ -74,7 +74,9 @@ def update_alert_hss_current(button: int, settings: dict[str, Any]) -> dmc.Table
     # Convert settings dict to UserSettings instance
     user_settings = UserSettings(**settings)
 
-    df = get_weather_and_calculate_risk(user_settings)
+    df = get_weather_and_calculate_risk(
+        location=user_settings.location, sport=user_settings.sport
+    )
 
     df["risk_value_interpolated"] += 1
 

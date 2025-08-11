@@ -128,7 +128,9 @@ def on_settings_change(store_settings: dict | None):
     settings = UserSettings(**store_settings)
     if not settings:
         raise PreventUpdate
-    df = get_weather_and_calculate_risk(settings)
+    df = get_weather_and_calculate_risk(
+        location=settings.location, sport=settings.sport
+    )
     df.index = df.index.tz_localize(None)
     df = df[["tdb", "rh", "risk_value", "risk_value_interpolated", "risk"]]
     return df.to_json(date_format="iso", orient="split")

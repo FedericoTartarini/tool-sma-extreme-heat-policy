@@ -7,12 +7,11 @@ from enum import Enum
 import dash_bootstrap_components as dbc
 import numpy as np
 import scipy
+from cachetools import cached, TTLCache
 from dash import html
 from icecream import ic
 from matplotlib import pyplot as plt
 from pythermalcomfort.utilities import mean_radiant_tmp
-
-from my_app.my_classes import UserSettings
 
 logger = logging.getLogger(__name__)
 
@@ -441,13 +440,17 @@ class GlobeTemperatures(Enum):
     high: str = 12
 
 
-def get_weather_and_calculate_risk(settings: UserSettings) -> pd.DataFrame:
+# cache weather data for no longer than ten minutes
+@cached(cache=TTLCache(maxsize=124, ttl=600))
+def get_weather_and_calculate_risk(location: str, sport: str) -> pd.DataFrame:
     """Get weather data and calculate risk using user settings.
 
     Parameters
     ----------
-    settings : UserSettings
-        User settings containing sport and location information.
+    location : str
+        Location identifier, e.g., "sydney_australia".
+    sport : str
+        Sport identifier, e.g., "soccer".
 
     Returns
     -------
@@ -458,34 +461,30 @@ def get_weather_and_calculate_risk(settings: UserSettings) -> pd.DataFrame:
     ------
     ValueError
         If required settings fields are missing.
-
-    Example
-    -------
-    >>> settings = UserSettings(sport="soccer", location="2000_AUS")
-    >>> df = get_weather_and_calculate_risk(settings)
     """
     start = time.time()
 
-    loc_selected = get_info_location_selected(settings)
+    loc_selected = get_info_location_selected(location=location)
 
     df_for = get_weather(
         lat=loc_selected[Cols.lat], lon=loc_selected[Cols.lon], tz=loc_selected[Cols.tz]
     )
 
-    df = calculate_comfort_indices_v2(df_for, settings.sport)
+    df = calculate_comfort_indices_v2(df_for, sport)
 
     ic("get_weather_and_calculate_risk", time.time() - start)
 
     return df
 
 
-def get_info_location_selected(data: UserSettings):
+def get_info_location_selected(location: str) -> dict:
+    """Get information about the selected location."""
 
     try:
-        country = data.location.split("_")[-1]
+        country = location.split("_")[-1]
         df_postcodes = get_postcodes(country=country)
         information = df_postcodes[
-            df_postcodes["sub-state-post-country-no-space"] == data.location
+            df_postcodes["sub-state-post-country-no-space"] == location
         ].to_dict(orient="list")
         # print("get_info_location_selected", information)
         loc_selected = {

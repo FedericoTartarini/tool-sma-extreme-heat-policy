@@ -29,6 +29,7 @@ dash-iconify = "==0.1.2"
 timezonefinder = "*"
 pycountry = "*"
 dash = "*"
+cachetools = "*"
 
 [dev-packages]
 seaborn = "*"

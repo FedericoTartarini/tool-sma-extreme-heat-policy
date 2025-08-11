@@ -32,7 +32,7 @@ def component_map():
 def update_map_on_location_change(store_settings: dict | None):
     """Update the map based on the selected location in the settings."""
     settings = UserSettings(**store_settings)
-    loc_selected = get_info_location_selected(settings)
+    loc_selected = get_info_location_selected(location=settings.location)
 
     try:
         return dl.Map(
