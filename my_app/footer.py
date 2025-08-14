@@ -8,6 +8,25 @@ def my_footer():
             dmc.Grid(
                 [
                     dmc.GridCol(
+                        dmc.Stack(
+                            children=[
+                                html.Img(
+                                    src="../assets/icons/usyd-logo.png",
+                                    width="125px",
+                                    height="auto",
+                                    alt="USYD logo icon",
+                                ),
+                                html.Img(
+                                    src="../assets/icons/sma-black.png",
+                                    width="125px",
+                                    height="auto",
+                                    alt="USYD logo icon",
+                                ),
+                            ],
+                        ),
+                        span="content",
+                    ),
+                    dmc.GridCol(
                         dcc.Markdown(
                             """
                             [Click here to provide your feedback](https://sydney.au1.qualtrics.com/jfe/form/SV_3jAqlzAnAoAOU8S)
@@ -25,17 +44,8 @@ def my_footer():
                             """
                         ),
                         style={"color": "#111", "inherit": "none"},
-                        span=12,
+                        span=8,
                         className="markdown-footer",
-                    ),
-                    dmc.GridCol(
-                        html.Img(
-                            src="../assets/icons/usyd-logo.png",
-                            width="125px",
-                            height="43px",
-                            alt="USYD logo icon",
-                        ),
-                        span="content",
                     ),
                 ],
                 justify="space-between",
