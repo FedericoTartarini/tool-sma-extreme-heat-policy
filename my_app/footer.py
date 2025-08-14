@@ -31,12 +31,12 @@ def my_footer():
                             """
                             [Click here to provide your feedback](https://sydney.au1.qualtrics.com/jfe/form/SV_3jAqlzAnAoAOU8S)
                             
-                            Website authors: [Federico Tartarini](https://www.linkedin.com/in/federico-tartarini/), 
-                            [Ollie Jay](https://au.linkedin.com/in/ollie-jay-793a1b11), 
-                            [James Smallcombe](https://twitter.com/smallcombe2?lang=en), and
-                            [Grant Lynch](https://www.linkedin.com/in/grant-lynch-064993179/)
+                            If you use this tool, please cite the following paper:
+                            Tartarini, Federico, et al. "A modified Sports Medicine Australia extreme heat policy and web tool." Journal of Science and Medicine in Sport (2025).
                             
                             © 2025 - Heat and Health Research Centre, USYD
+                            
+                            This website was reviewed by the Sports Medicine Australia Scientific Advisory Committee in 2025
                             
                             Version: 1.0.2
                             
