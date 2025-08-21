@@ -53,10 +53,14 @@ jobs:
       - name: Install bump-my-version
         run: pip install bump-my-version
 
+      - name: Set git user
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Bump patch version
         run: bump-my-version bump patch
 
-      # Commit all changed files back to the repository
       - uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: Automated bump of patch version
