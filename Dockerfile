@@ -18,7 +18,8 @@ COPY requirements.txt ./
 
 # Install production dependencies.
 RUN python -m pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install pipenv
+RUN pipenv install
 
 # Copy the rest of the application code
 COPY . ./
