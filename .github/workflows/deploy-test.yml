@@ -14,10 +14,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # language: yaml
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_JSON }}
+          project_id: 'sma-extreme-heat-policy'
+          workload_identity_provider: projects/987661761927/locations/global/workloadIdentityPools/github/providers/my-repo
+          service_account: 987661761927-compute@developer.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
