@@ -33,4 +33,6 @@ def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
     return dmc.Image(
         src=f"./assets/images/{settings.sport}.webp",
         h=height_image,
+        fallbackSrc="https://placehold.co/816x183?text=PlaceholderSportImage",
+        alt=f"Sport image for {settings.sport}",
     )
