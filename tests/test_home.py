@@ -2,8 +2,6 @@
 
 from playwright.sync_api import Page, expect
 
-from my_app.my_classes import Defaults
-
 expect.set_options(timeout=15_000)
 
 
@@ -37,13 +35,11 @@ class TestHomePage:
 
     def test_click_dropdown(self, page: Page):
         page.goto("/")
-        drop_down_sport = Defaults.sport.value.upper()
         for sport in ["abseiling", "cricket", "fishing", "running"]:
-            page.locator("#id-dropdown-sport").filter(has_text=drop_down_sport).click()
+            page.locator("#id-dropdown-sport").click()
             page.locator("#id-dropdown-sport").get_by_role("combobox").fill(sport)
             page.locator("#id-dropdown-sport").get_by_role("combobox").press("Enter")
             expect(page.get_by_role("img", name="Heat stress chart")).to_be_visible()
-            drop_down_sport = sport
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
