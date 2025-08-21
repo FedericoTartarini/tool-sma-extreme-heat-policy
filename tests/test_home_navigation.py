@@ -1,7 +1,5 @@
 from playwright.sync_api import Page, expect
 
-expect.set_options(timeout=20_000)
-
 
 class TestHomePage:
     def test_visibility_text(self, page: Page) -> None:

@@ -2,8 +2,6 @@
 
 from playwright.sync_api import Page, expect
 
-expect.set_options(timeout=15_000)
-
 
 class TestHomePage:
     def test_visibility_text(self, page: Page) -> None:
@@ -34,12 +32,25 @@ class TestHomePage:
         ).to_be_visible()
 
     def test_click_dropdown(self, page: Page):
+        """Test that selecting a sport updates the sport image correctly."""
         page.goto("/")
-        for sport in ["abseiling", "cricket", "fishing", "running"]:
+
+        # Map display names to image slugs
+        sport_image_map = {
+            "abseiling": "abseiling",
+            "cricket": "cricket",
+            "fishing": "fishing",
+            "running": "field_athletics",  # 'running' displays 'field_athletics.webp'
+        }
+
+        for sport, image_slug in sport_image_map.items():
             page.locator("#id-dropdown-sport").click()
             page.locator("#id-dropdown-sport").get_by_role("combobox").fill(sport)
             page.locator("#id-dropdown-sport").get_by_role("combobox").press("Enter")
-            expect(page.get_by_role("img", name="Heat stress chart")).to_be_visible()
+            # Verify sport image updates to the correct slug
+            expect(
+                page.locator("#id-sport-image").get_by_role("img")
+            ).to_have_attribute("src", f"/assets/images/{image_slug}.webp")
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
