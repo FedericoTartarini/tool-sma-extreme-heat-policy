@@ -80,7 +80,7 @@ inactive_revisions = run_command(
 ).split()
 
 # Delete inactive revisions
-for revision in inactive_revisions:
+for revision in inactive_revisions[2:]:
     run_command(f"gcloud run revisions delete {revision} --quiet")
 
 # Get the list of all revisions for hss-app, sorted by creation timestamp
