@@ -22,7 +22,7 @@ def my_navbar():
                                             [
                                                 dbc.Row(
                                                     dbc.NavbarBrand(
-                                                        "SMA Extreme Heat Risk",
+                                                        "Sports Medicine Australia",
                                                         className="ms-2",
                                                         style={
                                                             "padding-bottom": 0,
@@ -32,7 +32,7 @@ def my_navbar():
                                                 ),
                                                 dbc.Row(
                                                     dbc.NavbarBrand(
-                                                        "& Response Guidelines",
+                                                        "Extreme Heat Tool",
                                                         className="ms-2",
                                                         style={
                                                             "padding-top": 0,

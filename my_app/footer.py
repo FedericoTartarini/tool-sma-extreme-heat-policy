@@ -1,5 +1,6 @@
 from dash import html, dcc
 import dash_mantine_components as dmc
+from dash import get_asset_url
 
 
 def my_footer():
@@ -8,34 +9,44 @@ def my_footer():
             dmc.Grid(
                 [
                     dmc.GridCol(
+                        dmc.Stack(
+                            children=[
+                                html.Img(
+                                    src=get_asset_url("icons/usyd-logo.png"),
+                                    width="125px",
+                                    height="auto",
+                                    alt="USYD logo icon",
+                                ),
+                                html.Img(
+                                    src=get_asset_url("icons/sma-black.png"),
+                                    width="125px",
+                                    height="auto",
+                                    alt="Sports Medicine Australia logo",
+                                ),
+                            ],
+                        ),
+                        span="content",
+                    ),
+                    dmc.GridCol(
                         dcc.Markdown(
                             """
                             [Click here to provide your feedback](https://sydney.au1.qualtrics.com/jfe/form/SV_3jAqlzAnAoAOU8S)
                             
-                            Website authors: [Federico Tartarini](https://www.linkedin.com/in/federico-tartarini/), 
-                            [Ollie Jay](https://au.linkedin.com/in/ollie-jay-793a1b11), 
-                            [James Smallcombe](https://twitter.com/smallcombe2?lang=en), and
-                            [Grant Lynch](https://www.linkedin.com/in/grant-lynch-064993179/)
+                            If you use this tool, please cite the following paper:
+                            Tartarini, Federico, et al. "A modified Sports Medicine Australia extreme heat policy and web tool." Journal of Science and Medicine in Sport (2025).
                             
                             © 2025 - Heat and Health Research Centre, USYD
                             
-                            Version: 1.0.2
+                            This website was reviewed by the Sports Medicine Australia Scientific Advisory Committee in 2025
+                            
+                            Version: 1.1.0
                             
                             [Contact Us](mailto:federico.tartarini@sydney.edu.au)
                             """
                         ),
                         style={"color": "#111", "inherit": "none"},
-                        span=12,
+                        span=8,
                         className="markdown-footer",
-                    ),
-                    dmc.GridCol(
-                        html.Img(
-                            src="../assets/icons/usyd-logo.png",
-                            width="125px",
-                            height="43px",
-                            alt="USYD logo icon",
-                        ),
-                        span="content",
                     ),
                 ],
                 justify="space-between",

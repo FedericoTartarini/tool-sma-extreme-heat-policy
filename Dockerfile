@@ -6,25 +6,28 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED True
 
 RUN apt-get update \
-&& apt-get install gcc -y \
-&& apt-get clean
+    && apt-get install --no-install-recommends -y gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
-ENV APP_HOME /app
-WORKDIR $APP_HOME
+# Install pipenv
+RUN python -m pip install --upgrade pip \
+    && python -m pip install --no-cache-dir "pipenv>=2024.0,<2026.0"
+# Set working directory
+WORKDIR /app
 
-# Copy requirements.txt first to leverage Docker cache
-COPY requirements.txt ./
+# Copy Pipfile and Pipfile.lock
+COPY Pipfile Pipfile.lock ./
 
-# Install production dependencies.
-RUN python -m pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN pipenv install --deploy --system --ignore-pipfile
 
 # Copy the rest of the application code
-COPY . ./
+COPY . .
 
 EXPOSE 8080
 
 ENV DEBUG_DASH False
 
-CMD python main.py
+# Run the application
+CMD ["python", "main.py"]

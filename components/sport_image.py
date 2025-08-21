@@ -1,17 +1,25 @@
+# python
+from __future__ import annotations
+
+from pathlib import Path
+
 import dash_mantine_components as dmc
-from dash import callback, Input, Output
+from dash import Input, Output, callback, get_asset_url
 
 from my_app.my_classes import IDs, UserSettings
 from my_app.utils import store_settings_dict
 
-height_image = 127
+HEIGHT_IMAGE = 127
+ASSETS_DIR = Path("assets")
+IMAGES_SUBDIR = "images"
 
 
-def component_sport_image():
+def component_sport_image() -> dmc.Card:
+    """Card wrapper with a skeleton placeholder for the sport image."""
     return dmc.Card(
         children=[
             dmc.CardSection(
-                dmc.Skeleton(height=height_image),
+                dmc.Skeleton(height=HEIGHT_IMAGE),
                 id=IDs.sport_image,
             ),
         ],
@@ -27,10 +35,22 @@ def component_sport_image():
     Input(store_settings_dict, "data"),
     prevent_initial_call=True,
 )
-def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
-    """Updates the sport image when the sport is selected."""
+def update_image_on_sport_selection(
+    store_settings: dict | None,
+) -> dmc.Image:
+    """Update the sport image when the sport is selected.
+
+    Uses Dash's asset resolver and falls back if the file is missing.
+    """
     settings = UserSettings(**(store_settings or {}))
+
+    filename = settings.sport
+    rel_path = f"{IMAGES_SUBDIR}/{filename}.webp"
+    img_src = get_asset_url(rel_path)  # resolves to /assets/images/...
+
     return dmc.Image(
-        src=f"assets/images/{settings.sport}.webp",
-        h=height_image,
+        src=img_src,
+        h=HEIGHT_IMAGE,
+        fallbackSrc="https://placehold.co/816x183?text=PlaceholderSportImage",
+        alt=f"Sport image for {(settings.sport or '').lower()}",
     )

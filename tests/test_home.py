@@ -2,9 +2,6 @@
 
 from playwright.sync_api import Page, expect
 
-from my_app.my_classes import Defaults
-from my_app.utils import sports_category
-
 
 class TestHomePage:
     def test_visibility_text(self, page: Page) -> None:
@@ -13,7 +10,7 @@ class TestHomePage:
         page.goto("/")
 
         # Check header link, default sport selection and sport image
-        expect(page.get_by_role("link", name="Extreme Heat Risk")).to_be_visible()
+        expect(page.get_by_role("link", name="Extreme Heat Tool")).to_be_visible()
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-sport-image").get_by_role("img")).to_be_visible()
 
@@ -35,20 +32,28 @@ class TestHomePage:
         ).to_be_visible()
 
     def test_click_dropdown(self, page: Page):
+        """Test that selecting a sport updates the sport image correctly."""
         page.goto("/")
-        sports = sports_category.keys()
-        drop_down_sport = Defaults.sport.value.upper()
-        for sport in sports[:4]:
-            page.locator("#id-dropdown-sport").filter(has_text=drop_down_sport).click()
+
+        # Map display names to image slugs
+        sport_image_map = {
+            "abseiling": "abseiling",
+            "cricket": "cricket",
+            "fishing": "fishing",
+            "running": "field_athletics",  # 'running' displays 'field_athletics.webp'
+        }
+
+        for sport, image_slug in sport_image_map.items():
+            page.locator("#id-dropdown-sport").click()
             page.locator("#id-dropdown-sport").get_by_role("combobox").fill(sport)
             page.locator("#id-dropdown-sport").get_by_role("combobox").press("Enter")
-            expect(page.get_by_role("img", name="Heat stress chart")).to_be_visible()
-            drop_down_sport = sport
+            # Verify sport image updates to the correct slug
+            expect(
+                page.locator("#id-sport-image").get_by_role("img")
+            ).to_have_attribute("src", f"/assets/images/{image_slug}.webp")
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
-        page.locator("#react-select-2--value div").filter(
-            has_text=Defaults.sport.value.upper()
-        ).dblclick()
+        page.locator("#react-select-2--value div").filter(has_text="Soccer").dblclick()
         page.locator("#react-select-2--value").get_by_role("combobox").fill("fede")
         page.get_by_text("No results found").click()
