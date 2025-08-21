@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import dash_mantine_components as dmc
-from dash import Input, Output, callback, get_asset_url, html
+from dash import Input, Output, callback, get_asset_url
 from icecream import ic
 
 from my_app.my_classes import IDs, UserSettings
@@ -40,7 +40,7 @@ def _slugify_sport(sport: str | None) -> str:
     - "3x3 Basketball" -> "3x3-basketball.webp"
     """
     sport = (sport or "").strip().lower()
-    slug = re.sub(r"[^a-z0-9]+", "_", sport).strip("-")
+    slug = re.sub(r"[^a-z0-9]+", "-", sport).strip("-")
     return f"{slug}.webp" if slug else "unknown.webp"
 
 
@@ -51,7 +51,7 @@ def _slugify_sport(sport: str | None) -> str:
 )
 def update_image_on_sport_selection(
     store_settings: dict | None,
-) -> html.Image:
+) -> dmc.Image:
     """Update the sport image when the sport is selected.
 
     Uses Dash's asset resolver and falls back if the file is missing.
@@ -66,5 +66,11 @@ def update_image_on_sport_selection(
         ic(f"Sport asset not found: {file_path}")
 
     img_src = get_asset_url(rel_path)  # resolves to /assets/images/...
+    ic(f"Serving sport asset: {img_src}")
 
-    return html.Img(src=img_src)
+    return dmc.Image(
+        src=img_src,
+        h=HEIGHT_IMAGE,
+        fallbackSrc="https://placehold.co/816x183?text=PlaceholderSportImage",
+        alt=f"Sport image for {(settings.sport or '').lower()}",
+    )
