@@ -43,4 +43,4 @@ jobs:
 
       - name: Test Clima
         run: |-
-          pipenv run python -m PYTHONPATH=. pytest --base-url="http://localhost:8080"
+          pipenv run python -m pytest --base-url="http://localhost:8080"
