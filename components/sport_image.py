@@ -1,5 +1,6 @@
 import dash_mantine_components as dmc
 from dash import callback, Input, Output
+from icecream import ic
 
 from my_app.my_classes import IDs, UserSettings
 from my_app.utils import store_settings_dict
@@ -32,13 +33,10 @@ def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
     settings = UserSettings(**(store_settings or {}))
 
     img_src = f"./assets/images/{settings.sport.lower()}.webp"
-
-    # print if the image does not exist
-    if not img_src.exists():
-        print(f"Image not found: {img_src}")
+    ic(img_src)
 
     return dmc.Image(
-        src=f"./assets/images/{settings.sport.lower()}.webp",
+        src=img_src,
         h=height_image,
         fallbackSrc="https://placehold.co/816x183?text=PlaceholderSportImage",
         alt=f"Sport image for {settings.sport.lower()}",
