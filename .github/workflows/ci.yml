@@ -70,6 +70,24 @@ jobs:
             --project=sma-extreme-heat-policy \
             --substitutions,_REPO_NAME="${{ env.REPO_NAME }}",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="${{ env.IMG_NAME }}"
 
+  prune:
+    name: 🥭 Prune
+    runs-on: ubuntu-latest
+    needs: lint
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/987661761927/locations/global/workloadIdentityPools/github/providers/my-repo
+          service_account: github-actions-deployer@sma-extreme-heat-policy.iam.gserviceaccount.com
+          project_id: sma-extreme-heat-policy
+
       - name: Prune inactive Cloud Run revisions
         run: |
           set -euo pipefail
@@ -113,7 +131,7 @@ jobs:
   test:
     name: 🧪 Testing with Playwright
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: prune
     permissions:
       id-token: write
       contents: read
