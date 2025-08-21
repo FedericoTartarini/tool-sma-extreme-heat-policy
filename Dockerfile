@@ -6,8 +6,9 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED True
 
 RUN apt-get update \
-&& apt-get install gcc -y \
-&& apt-get clean
+    && apt-get install --no-install-recommends -y gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install pipenv
 RUN python -m pip install --upgrade pip \
@@ -19,7 +20,7 @@ WORKDIR /app
 COPY Pipfile Pipfile.lock ./
 
 # Install dependencies
-RUN pipenv install --deploy --system
+RUN pipenv install --deploy --system --ignore-pipfile
 
 # Copy the rest of the application code
 COPY . .
