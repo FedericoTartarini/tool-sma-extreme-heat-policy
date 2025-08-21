@@ -11,8 +11,7 @@ RUN apt-get update \
 
 # Install pipenv
 RUN python -m pip install --upgrade pip \
-    && pip install "pipenv>=2024.0,<2026.0
-
+    && python -m pip install --no-cache-dir "pipenv>=2024.0,<2026.0"
 # Set working directory
 WORKDIR /app
 
