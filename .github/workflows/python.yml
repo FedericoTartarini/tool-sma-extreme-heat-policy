@@ -1,0 +1,36 @@
+name: Python Testing 🐍
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - development
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Build Clima
+        run: |-
+          pip install pipenv
+          pipenv install --dev
+
+      - name: Ruff Check
+        run: |-
+          pipenv run ruff check . --output-format=github
+
+      - name: Ruff Format (verify)
+        run: |-
+          pipenv run ruff format --check .
+
+      - name: Test Clima
+        run: |-
+          pipenv run python -m pytest --base-url http://0.0.0.0:8080
