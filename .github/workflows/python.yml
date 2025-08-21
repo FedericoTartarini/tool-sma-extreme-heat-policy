@@ -20,6 +20,7 @@ jobs:
 
       - name: Build Clima
         run: |-
+          python -m pip install --upgrade pip
           pip install pipenv
           pipenv install --dev
 
@@ -33,7 +34,7 @@ jobs:
 
       - name: Install Playwright and browsers
         run: |-
-          pipenv run playwright install
+          pipenv run playwright install --with-deps
 
       - name: Start Server
         run: |-
@@ -42,4 +43,4 @@ jobs:
 
       - name: Test Clima
         run: |-
-          pipenv run python -m pytest --base-url http://0.0.0.0:8080
+          pipenv run python -m PYTHONPATH=. pytest --base-url="http://localhost:8080"
