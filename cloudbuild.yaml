@@ -11,6 +11,9 @@ steps:
   args: ['run', 'deploy', '$_REPO_NAME',
          '--image', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/$_IMG_NAME',
          '--region', 'asia-southeast1',
-         '--update-secrets', 'firebase_secret=firebase-realtime-database:1',
+         '--min-instances', '0',
+         '--update-secrets', 'firebase_secret=firebase-realtime-database:latest',
          '--memory', '4Gi',
+         '--concurrency', '10',
+         '--timeout', '60s',
          '--cpu', '2',]
