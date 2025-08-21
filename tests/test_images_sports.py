@@ -12,11 +12,12 @@ def test_images_exist() -> None:
     Example:
         pytest tests/test_images_sports.py
     """
-    df_sports = pd.read_csv("assets/sports.csv")
+    repo_root = Path(__file__).resolve().parents[1]
+    df_sports = pd.read_csv(repo_root / "assets" / "sports.csv")
     missing_images = [
-        f"assets/images/{sport}.webp"
+        str(repo_root / "assets" / "images" / f"{sport}.webp")
         for sport in df_sports["sport_id"]
-        if not Path(f"assets/images/{sport}.webp").exists()
+        if not (repo_root / "assets" / "images" / f"{sport}.webp").exists()
     ]
     assert not missing_images, f"Missing images: {', '.join(missing_images)}"
 
@@ -35,14 +36,17 @@ def test_images_are_readable() -> None:
     """
     import PIL.Image
 
-    df_sports = pd.read_csv("assets/sports.csv")
+    from PIL import UnidentifiedImageError
+
+    repo_root = Path(__file__).resolve().parents[1]
+    df_sports = pd.read_csv(repo_root / "assets" / "sports.csv")
     unreadable_images = []
     for sport in df_sports["sport_id"]:
-        image_path = f"assets/images/{sport}.webp"
-        if Path(image_path).exists():
+        image_path = repo_root / "assets" / "images" / f"{sport}.webp"
+        if image_path.exists():
             try:
-                with PIL.Image.open(image_path) as img:
+                with PIL.Image.open(str(image_path)) as img:
                     img.verify()  # Check if image can be opened
-            except Exception:
-                unreadable_images.append(image_path)
+            except (UnidentifiedImageError, OSError):
+                unreadable_images.append(str(image_path))
     assert not unreadable_images, f"Unreadable images: {', '.join(unreadable_images)}"

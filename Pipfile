@@ -40,6 +40,7 @@ pytest-playwright = "*"
 bump-my-version = "*"
 pytest-xdist = "*"
 ruff = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.12"
