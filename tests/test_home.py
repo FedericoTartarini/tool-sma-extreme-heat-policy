@@ -43,8 +43,6 @@ class TestHomePage:
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
-        page.locator("#react-select-2--value div").filter(
-            has_text=Defaults.sport.value.upper()
-        ).dblclick()
+        page.locator("#react-select-2--value div").filter(has_text="Soccer").dblclick()
         page.locator("#react-select-2--value").get_by_role("combobox").fill("fede")
         page.get_by_text("No results found").click()
