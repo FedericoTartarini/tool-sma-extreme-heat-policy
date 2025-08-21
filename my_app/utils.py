@@ -184,17 +184,21 @@ def get_weather(
     provider: str
         open-meteo or yr
     """
-
     try:
         if provider == "open-meteo":
             df_weather = open_weather(lat, lon)
         else:
             df_weather = yr_weather(lat, lon)
-    except:
-        if provider == "open-meteo":
-            df_weather = yr_weather(lat, lon)
-        else:
-            df_weather = open_weather(lat, lon)
+    except Exception as e:
+        logger.error(f"Error in get_weather with provider {provider}: {e}")
+        try:
+            if provider == "open-meteo":
+                df_weather = yr_weather(lat, lon)
+            else:
+                df_weather = open_weather(lat, lon)
+        except Exception as e2:
+            logger.error(f"Fallback weather provider also failed: {e2}")
+            raise
 
     df_weather.set_index(pd.to_datetime(df_weather[Cols.time]), inplace=True)
     df_weather.drop(columns=[Cols.time], inplace=True)
@@ -253,11 +257,16 @@ def calculate_comfort_indices_v2(data_for, sport_id):
         try:
             risk_value = df_risk_parquet.loc[(tdb, rh, tg, wind_speed, sport_id)]
             risk_value = risk_value.to_dict()
-        except:
+        except KeyError as e:
             logger.error(
-                f"Parquet file - Risk value not found for {tdb=}, {rh=}, {tg=}, {wind_speed=}, {sport_id=}"
+                f"Parquet file - Risk value not found for {tdb=}, {rh=}, {tg=}, {wind_speed=}, {sport_id=}: {e}"
             )
-            # df_risk_parquet.loc[(25, 74, 4, 1.5, "astralian_football")]
+            risk_value = {
+                "risk": None,
+                "rh_threshold_moderate": None,
+                "rh_threshold_high": None,
+                "rh_threshold_extreme": None,
+            }
 
         top = 100
         if risk_value["rh_threshold_extreme"] > top:
@@ -328,8 +337,6 @@ def calculate_mean_radiant_tmp(df_for):
             mrt_calculation["posture"],
             mrt_calculation["floor_reflectance"],
         )
-        if erf_mrt["delta_mrt"] < 0:
-            print(row)
 
         def calculate_globe_temperature(x):
             return mean_radiant_tmp(
@@ -343,7 +350,8 @@ def calculate_mean_radiant_tmp(df_for):
 
         try:
             tg = scipy.optimize.brentq(calculate_globe_temperature, 0, 200)
-        except ValueError:
+        except ValueError as e:
+            logger.warning(f"Brentq failed for globe temperature: {e}")
             tg = 0
         erf_mrt_dict[Cols.tg] = tg
         # print(erf_mrt_dict, row[Cols.tdb], row[Cols.wind])
@@ -477,14 +485,12 @@ def get_weather_and_calculate_risk(location: str, sport: str) -> pd.DataFrame:
 
 def get_info_location_selected(location: str) -> dict:
     """Get information about the selected location."""
-
     try:
         country = location.split("_")[-1]
         df_postcodes = get_postcodes(country=country)
         information = df_postcodes[
             df_postcodes["sub-state-post-country-no-space"] == location
         ].to_dict(orient="list")
-        # print("get_info_location_selected", information)
         loc_selected = {
             "lat": float(information["lat"][0]),
             "lon": float(information["lon"][0]),
@@ -492,7 +498,8 @@ def get_info_location_selected(location: str) -> dict:
                 lng=float(information["lon"][0]), lat=float(information["lat"][0])
             ),
         }
-    except TypeError:
+    except (TypeError, KeyError, IndexError) as e:
+        logger.warning(f"Location selection failed for '{location}': {e}")
         loc_selected = default_location
     return loc_selected
 
@@ -644,7 +651,8 @@ def get_regression_curves_v2(tg=3, wind_speed=0.8, sport_id="soccer"):
             results.append(
                 scipy.optimize.brentq(calculate_threshold_water_loss, 0, 100)
             )
-        except:
+        except ValueError as e:
+            logger.warning(f"Brentq failed for water loss threshold: {e}")
             results.append(np.nan)
 
         def calculate_threshold_core(x):
@@ -668,7 +676,8 @@ def get_regression_curves_v2(tg=3, wind_speed=0.8, sport_id="soccer"):
 
         try:
             results.append(scipy.optimize.brentq(calculate_threshold_core, 0, 100))
-        except:
+        except ValueError as e:
+            logger.warning(f"Brentq failed for core temp threshold: {e}")
             results.append(np.nan)
 
         results.append(t)
