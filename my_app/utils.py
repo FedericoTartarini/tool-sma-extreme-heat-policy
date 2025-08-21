@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-app_version = "1.0.2"
+app_version = "1.1.0"
 app_version = app_version.replace(".", "")
 store_settings_dict = f"local-storage-settings-{app_version}"
 store_weather_risk_df = f"session-storage-weather-{app_version}"
