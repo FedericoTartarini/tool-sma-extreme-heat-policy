@@ -68,7 +68,7 @@ jobs:
 #        run: |
 #          gcloud builds submit \
 #            --project=sma-extreme-heat-policy \
-#            --substitutions=_REPO_NAME="${{ env.REPO_NAME }}",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="${{ env.IMG_NAME }}"
+#            --substitutions,_REPO_NAME="${{ env.REPO_NAME }}",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="${{ env.IMG_NAME }}"
 
       - name: Prune inactive Cloud Run revisions
         run: |
@@ -88,7 +88,6 @@ jobs:
           echo "Region:  $REGION"
           echo "Service: $SERVICE (keeping $KEEP inactive revisions)"
 
-          gcloud auth application-default set-quota-project "$PROJECT"
           gcloud config set project "$PROJECT"
           gcloud config set run/region "$REGION"
 
