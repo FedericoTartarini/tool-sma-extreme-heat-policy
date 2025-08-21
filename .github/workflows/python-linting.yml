@@ -1,5 +1,6 @@
 # language: yaml
-name: Python Testing 🐍
+name: Test code formatting and linting
+
 on:
   push:
     branches: [development]
