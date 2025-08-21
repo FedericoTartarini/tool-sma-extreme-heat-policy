@@ -32,8 +32,8 @@ jobs:
         run: pipenv run ruff format --check .
 
       # Caches browsers and installs system deps only when needed
-      - name: Playwright setup (cache browsers)
-        uses: microsoft/playwright-github-action@v1
+      - name: Install Playwright and browsers
+        run: pipenv run playwright install --with-deps
 
       # Start the server in the background and wait until it is ready
       - name: Start Server
