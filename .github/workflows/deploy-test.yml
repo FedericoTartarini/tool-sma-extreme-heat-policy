@@ -17,21 +17,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: projects/987661761927/locations/global/workloadIdentityPools/github/providers/my-repo
-          service_account: github-actions-deployer@sma-extreme-heat-policy.iam.gserviceaccount.com
-          # Optional: keep or remove; must match below if used
-          project_id: sma-extreme-heat-policy
+#      - id: auth
+#        uses: google-github-actions/auth@v2
+#        with:
+#          workload_identity_provider: projects/987661761927/locations/global/workloadIdentityPools/github/providers/my-repo
+#          service_account: github-actions-deployer@sma-extreme-heat-policy.iam.gserviceaccount.com
+#          # Optional: keep or remove; must match below if used
+#          project_id: sma-extreme-heat-policy
+#
+#      - name: Set up Cloud SDK
+#        uses: google-github-actions/setup-gcloud@v1
+#        with:
+#          project_id: sma-extreme-heat-policy
+#
+#      - name: Building (🏗️) and Deploying (🚀)
+#        run: |
+#          gcloud builds submit \
+#            --project=sma-extreme-heat-policy \
+#            --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          project_id: sma-extreme-heat-policy
+          python-version: '3.11'
 
-      - name: Building (🏗️) and Deploying (🚀)
+      - name: Install dependencies
         run: |
-          gcloud builds submit \
-            --project=sma-extreme-heat-policy \
-            --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
+          python -m pip install --upgrade pip
+          pipenv install --dev
+
+      - name: Ensure browsers are installed
+        run: python -m playwright install --with-deps
+
+      - name: Run your tests
+        run: python -m pytest --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-traces
+          path: test-results/
