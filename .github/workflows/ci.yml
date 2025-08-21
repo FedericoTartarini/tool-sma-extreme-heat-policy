@@ -2,13 +2,13 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [development]
+    branches: [development, main]
   pull_request:
-    branches: [development]
+    branches: [development, main]
 
 jobs:
   lint:
-    name: Linting
+    name: 🧽 Linting
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,7 +17,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pipenv'
 
       - name: Build SMA
@@ -33,7 +33,7 @@ jobs:
         run: pipenv run ruff format --check .
 
   deploy:
-    name: Deploying Test 🚀 SMA
+    name: 🚀 Deploying
     runs-on: ubuntu-latest
     needs: lint
     permissions:
@@ -42,6 +42,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set deployment environment variables
+        id: set_vars
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "REPO_NAME=extreme-heat-tool" >> $GITHUB_ENV
+            echo "IMG_NAME=main" >> $GITHUB_ENV
+            echo "BASE_URL=https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/" >> $GITHUB_ENV
+          else
+            echo "REPO_NAME=extreme-heat-tool-test" >> $GITHUB_ENV
+            echo "IMG_NAME=test" >> $GITHUB_ENV
+            echo "BASE_URL=https://sma-heat-policy.sydney.edu.au/" >> $GITHUB_ENV
+          fi
 
       - id: auth
         uses: google-github-actions/auth@v2
@@ -59,10 +72,10 @@ jobs:
         run: |
           gcloud builds submit \
             --project=sma-extreme-heat-policy \
-            --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
+            --substitutions=_REPO_NAME="${{ env.REPO_NAME }}",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="${{ env.IMG_NAME }}"
 
   test:
-    name: Test the test version of the Extreme Heat Tool
+    name: 🧪 Testing with Playwright
     runs-on: ubuntu-latest
     needs: deploy
     permissions:
@@ -75,7 +88,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: "pipenv"
 
       - name: Install dependencies
@@ -89,7 +102,7 @@ jobs:
         run: pipenv run playwright install --with-deps
 
       - name: Run your playwright tests
-        run: pipenv run pytest --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/
+        run: pipenv run pytest --base-url ${{ env.BASE_URL }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
