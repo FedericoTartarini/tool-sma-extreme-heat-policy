@@ -1,12 +1,10 @@
 # python
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import dash_mantine_components as dmc
 from dash import Input, Output, callback, get_asset_url
-from icecream import ic
 
 from my_app.my_classes import IDs, UserSettings
 from my_app.utils import store_settings_dict

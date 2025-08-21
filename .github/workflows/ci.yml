@@ -60,7 +60,7 @@ jobs:
           project_id: sma-extreme-heat-policy
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: sma-extreme-heat-policy
 
