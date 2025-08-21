@@ -16,6 +16,9 @@ Thank you for your interest in improving the Sports Medicine Australia Extreme H
 4. **Make your changes**
 5. **Test your changes**
     ```bash
+    # in another terminal
+    pipenv run python app.py  # or: docker compose up web
+    # then
     python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080
     ```
 6. **Commit and push**
