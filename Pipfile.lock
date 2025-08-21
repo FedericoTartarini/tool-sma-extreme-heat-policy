@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c91ed8cdddb9649c1091c3dc704bedd7242cabcbd473b1c76b460c7d78195f71"
+            "sha256": "a54273489df082637af6f988f1ffe851d9676010773926ff31afa87aecbc32fb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -578,11 +578,11 @@
         },
         "dash-mantine-components": {
             "hashes": [
-                "sha256:3a0a18c26e7373f2c465631a31688d4d25f2584da9770b650bb75da11898934a",
-                "sha256:dc75fe485c9b5e2ae9c939f8c09611778b3aad50318e63e1bd1eb3abe2a33711"
+                "sha256:28e8edfbcde1673a4824ced4fcd9c5511ec5f4456beeb8ee87569016f45a9160",
+                "sha256:5e6869eee61af3ad994dc0153f7c712d9661168b1c9ecb65cec46cafaf16bd0a"
             ],
             "index": "pypi",
-            "version": "==2.1.0"
+            "version": "==2.2.0"
         },
         "dataclass-wizard": {
             "hashes": [
@@ -774,7 +774,7 @@
                 "sha256:8a2a56c1fef82987a524371f99f3bd0143702fecc670c72e600c1cda6bf8dbb7",
                 "sha256:d2aaa0b13c78c61cb3f4282c464c046e45fbd75755683c9c525e6e8f7ed0a5e8"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "platform_python_implementation != 'PyPy'",
             "version": "==2.25.1"
         },
         "google-api-python-client": {
