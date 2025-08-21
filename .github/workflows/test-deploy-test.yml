@@ -3,7 +3,9 @@ name: Test the test version of the Extreme Heat Tool
 
 on:
   workflow_run:
-    workflows: [ "Deploy Test Version" ]
+    workflows: ["Deploy Test"]
+    branches: [development]
+    # Ensure this workflow only runs after the deploy test workflow completes successfully
     types:
       - completed
 

@@ -1,9 +1,10 @@
 # language: yaml
-name: Deploy Test Version
+name: Deploy Test
 
 on:
   workflow_run:
-    workflows: [ "Test code formatting and linting" ]
+    workflows: ["Linting"]
+    branches: [development]
     types:
       - completed
 

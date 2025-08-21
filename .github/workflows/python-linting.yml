@@ -1,5 +1,5 @@
 # language: yaml
-name: Test code formatting and linting
+name: Linting
 
 on:
   push:
