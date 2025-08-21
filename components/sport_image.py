@@ -32,18 +32,6 @@ def component_sport_image() -> dmc.Card:
     )
 
 
-def _slugify_sport(sport: str | None) -> str:
-    """Create a lowercase, safe filename (no spaces/special chars).
-
-    Examples:
-    - "Baseball" -> "baseball.webp"
-    - "3x3 Basketball" -> "3x3-basketball.webp"
-    """
-    sport = (sport or "").strip().lower()
-    slug = re.sub(r"[^a-z0-9]+", "-", sport).strip("-")
-    return f"{slug}.webp" if slug else "unknown.webp"
-
-
 @callback(
     Output(IDs.sport_image, "children"),
     Input(store_settings_dict, "data"),
@@ -58,15 +46,9 @@ def update_image_on_sport_selection(
     """
     settings = UserSettings(**(store_settings or {}))
 
-    filename = _slugify_sport(settings.sport)
-    rel_path = f"{IMAGES_SUBDIR}/{filename}"
-    file_path = ASSETS_DIR / rel_path
-
-    if not file_path.is_file():
-        ic(f"Sport asset not found: {file_path}")
-
+    filename = settings.sport
+    rel_path = f"{IMAGES_SUBDIR}/{filename}.webp"
     img_src = get_asset_url(rel_path)  # resolves to /assets/images/...
-    ic(f"Serving sport asset: {img_src}")
 
     return dmc.Image(
         src=img_src,
