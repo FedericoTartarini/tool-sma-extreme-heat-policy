@@ -12,5 +12,5 @@ steps:
          '--image', 'asia.gcr.io/$_PROJ_NAME/$_REPO_NAME/$_IMG_NAME',
          '--region', 'asia-southeast1',
          '--update-secrets', 'firebase_secret=firebase-realtime-database:1',
-         '--memory', '8Gi',
+         '--memory', '4Gi',
          '--cpu', '2',]
