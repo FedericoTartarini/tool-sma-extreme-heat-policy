@@ -32,39 +32,10 @@ jobs:
       - name: Ruff Format (verify)
         run: pipenv run ruff format --check .
 
-  version-bump:
-    name: Bump Version
-    runs-on: ubuntu-latest
-    needs: lint
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v4
-
-      - name: Set git user
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump version
-        id: bump
-        uses: callowayproject/bump-my-version@master
-        env:
-          BUMPVERSION_TAG: "true"
-        with:
-          args: patch
-          github-token: ${{ secrets.GH_TOKEN }}
-
-      - name: Check
-        if: steps.bump.outputs.bumped == 'true'
-        run: |
-          echo "Version was bumped from ${{ steps.bump.outputs.previous-version }} to ${{ steps.bump.outputs.current-version }}!"
-
   deploy:
     name: Deploying Test 🚀 SMA
     runs-on: ubuntu-latest
-    needs: version-bump
+    needs: lint
     permissions:
       id-token: write
       contents: read
