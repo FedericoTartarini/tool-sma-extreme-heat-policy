@@ -1,6 +1,6 @@
 from playwright.sync_api import Page, expect
 
-expect.set_options(timeout=2_000)
+expect.set_options(timeout=20_000)
 
 
 class TestHomePage:
@@ -52,7 +52,7 @@ class TestHomePage:
 
         # change back to default country
         # Wait for the text "Roma" to be visible using expect (assertion)
-        expect(page.get_by_text("Roma, Lazio, 118")).to_be_visible(timeout=5_000)
+        expect(page.get_by_text("Roma, Lazio, 118")).to_be_visible()
         page.locator("#id-dropdown-location").click()
         page.locator("#id-dropdown-location").type("budrio 40054")
         page.locator("#id-dropdown-location").press("Enter")

@@ -1,5 +1,5 @@
 # language: yaml
-name: Deploy 🚀 SMA to Google Cloud Run (☁🏃)
+name: Deploy Test 🚀 SMA to Google Cloud Run (☁🏃)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploying 🚀 SMA
+    name: Deploying Test 🚀 SMA
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for WIF
