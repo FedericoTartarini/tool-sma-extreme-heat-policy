@@ -11,6 +11,7 @@ class TestHomePage:
 
         # Check header link, default sport selection and sport image
         expect(page.get_by_role("link", name="Extreme Heat Tool")).to_be_visible()
+        page.wait_for_selector("#id-dropdown-sport", timeout=20_000)
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-dropdown-location")).to_be_visible()
 
@@ -20,11 +21,13 @@ class TestHomePage:
         page.goto("/")
 
         # Change the location
+        page.wait_for_selector("#id-dropdown-location", timeout=20_000)
         page.locator("#id-dropdown-location").click()
         page.locator("#id-dropdown-location").type("2205 arn")
         page.locator("#id-dropdown-location").press("Enter")
 
-        # check that the location is updated
+        # Wait for the location text to be visible
+        page.wait_for_selector("text=Arncliffe, NSW, 2205", timeout=20_000)
         expect(page.get_by_text("Arncliffe, NSW, 2205")).to_be_visible()
 
         # change back to default location
@@ -32,7 +35,8 @@ class TestHomePage:
         page.locator("#id-dropdown-location").type("2000 sydney")
         page.locator("#id-dropdown-location").press("Enter")
 
-        # check that the location is updated
+        # Wait for the location text to be visible
+        page.wait_for_selector("text=Sydney, NSW, 2000", timeout=20_000)
         expect(page.get_by_text("Sydney, NSW, 2000")).to_be_visible()
 
     def test_country_change(self, page: Page) -> None:
@@ -50,9 +54,10 @@ class TestHomePage:
         page.locator("#modal-country-select-input").type("Italy")
         page.get_by_text("Italy").click()
 
-        # change back to default country
-        # Wait for the text "Roma" to be visible using expect (assertion)
+        # Wait for the text "Roma, Lazio, 118" to be visible before assertion
+        page.wait_for_selector("text=Roma, Lazio, 118", timeout=20_000)
         expect(page.get_by_text("Roma, Lazio, 118")).to_be_visible()
+
         page.locator("#id-dropdown-location").click()
         page.locator("#id-dropdown-location").type("budrio 40054")
         page.locator("#id-dropdown-location").press("Enter")
