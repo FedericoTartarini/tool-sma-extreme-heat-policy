@@ -1,5 +1,6 @@
 from dash import html, dcc
 import dash_mantine_components as dmc
+from dash import get_asset_url
 
 
 def my_footer():
@@ -11,16 +12,16 @@ def my_footer():
                         dmc.Stack(
                             children=[
                                 html.Img(
-                                    src="../assets/icons/usyd-logo.png",
+                                    src=get_asset_url("icons/usyd-logo.png"),
                                     width="125px",
                                     height="auto",
                                     alt="USYD logo icon",
                                 ),
                                 html.Img(
-                                    src="../assets/icons/sma-black.png",
+                                    src=get_asset_url("icons/sma-black.png"),
                                     width="125px",
                                     height="auto",
-                                    alt="USYD logo icon",
+                                    alt="Sports Medicine Australia logo",
                                 ),
                             ],
                         ),
