@@ -31,6 +31,6 @@ def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
     """Updates the sport image when the sport is selected."""
     settings = UserSettings(**(store_settings or {}))
     return dmc.Image(
-        src=f"assets/images/{settings.sport}.webp",
+        src=f"./assets/images/{settings.sport}.webp",
         h=height_image,
     )
