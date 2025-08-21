@@ -30,9 +30,16 @@ def component_sport_image():
 def update_image_on_sport_selection(store_settings: dict | None) -> dmc.Image:
     """Updates the sport image when the sport is selected."""
     settings = UserSettings(**(store_settings or {}))
+
+    img_src = f"./assets/images/{settings.sport.lower()}.webp"
+
+    # print if the image does not exist
+    if not img_src.exists():
+        print(f"Image not found: {img_src}")
+
     return dmc.Image(
-        src=f"./assets/images/{settings.sport}.webp",
+        src=f"./assets/images/{settings.sport.lower()}.webp",
         h=height_image,
         fallbackSrc="https://placehold.co/816x183?text=PlaceholderSportImage",
-        alt=f"Sport image for {settings.sport}",
+        alt=f"Sport image for {settings.sport.lower()}",
     )
