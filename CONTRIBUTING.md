@@ -9,35 +9,35 @@ Thank you for your interest in improving the Sports Medicine Australia Extreme H
     ```bash
     git checkout -b feature/your-feature-name
     ```
-3. **Make your changes**
-4. **Test your changes**
+3. **Install dependencies**
     ```bash
-    python -m pytest
+    pipenv install --dev
     ```
-5. **Commit and push**
+4. **Make your changes**
+5. **Test your changes**
+    ```bash
+    python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080
+    ```
+6. **Commit and push**
     ```bash
     git commit -m "Describe your change"
     git push origin feature/your-feature-name
     ```
-6. **Open a Pull Request** on GitHub
-
-## Running Tests
-
-To run the test suite:
-```bash
-python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
-```
+7. **Open a Pull Request** on GitHub
 
 ## Deployment
+
+We use GitHub Actions for continuous integration and deployment.
+However, you can also deploy manually using the following commands.
 
 ### Build and Push Test Version
 
 ```bash
 gcloud components update --quiet
 pipenv requirements > requirements.txt
-python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_country=AU&id_postcode=Camperdown_NSW_2050&id_sport=soccer
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080
 gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool-test",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="test"
-python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
+python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-987661761927.asia-southeast1.run.app
 ```
 
 ### Publish Main Version
@@ -46,7 +46,7 @@ python -m pytest --numprocesses 3 --base-url https://extreme-heat-tool-test-9876
 gcloud components update --quiet
 bump-my-version bump patch
 pipenv requirements > requirements.txt
-python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080/?id_postcode=Camperdown_NSW_2050&id_sport=soccer
+python -m pytest --numprocesses 3 --base-url http://0.0.0.0:8080
 gcloud builds submit --project=sma-extreme-heat-policy --substitutions=_REPO_NAME="extreme-heat-tool",_PROJ_NAME="sma-extreme-heat-policy",_IMG_NAME="main"
 python -m pytest --numprocesses 3 --base-url https://sma-heat-policy.sydney.edu.au/
 ```
