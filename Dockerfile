@@ -10,8 +10,8 @@ RUN apt-get update \
 && apt-get clean
 
 # Install pipenv
-RUN python -m pip install --upgrade pip
-RUN pip install pipenv
+RUN python -m pip install --upgrade pip \
+    && pip install "pipenv>=2024.0,<2026.0
 
 # Set working directory
 WORKDIR /app
