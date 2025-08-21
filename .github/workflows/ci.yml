@@ -39,32 +39,22 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
+      - name: Checkout the code
         uses: actions/checkout@v4
+
+      - name: Bump version
+        id: bump
+        uses: callowayproject/bump-my-version@master
+        env:
+          BUMPVERSION_TAG: "true"
         with:
-          ref: ${{ github.head_ref }}
+          args: patch
+          github-token: ${{ secrets.GH_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pipenv'
-
-      - name: Install bump-my-version
-        run: pip install bump-my-version
-
-      - name: Set git user
+      - name: Check
+        if: steps.bump.outputs.bumped == 'true'
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump patch version
-        run: bump-my-version bump patch
-
-      - uses: stefanzweifel/git-auto-commit-action@v6
-        with:
-          commit_message: Automated bump of patch version
-          commit_user_name: 'GitHub Actions'
+          echo "Version was bumped from ${{ steps.bump.outputs.previous-version }} to ${{ steps.bump.outputs.current-version }}!"
 
   deploy:
     name: Deploying Test 🚀 SMA
