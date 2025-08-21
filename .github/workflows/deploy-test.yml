@@ -21,7 +21,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: projects/987661761927/locations/global/workloadIdentityPools/github/providers/my-repo
-          service_account: 987661761927-compute@developer.gserviceaccount.com
+          service_account: github-actions-deployer@sma-extreme-heat-policy.iam.gserviceaccount.com
           # Optional: keep or remove; must match below if used
           project_id: sma-extreme-heat-policy
 
