@@ -47,7 +47,7 @@ def my_footer():
                             """
                         ),
                         style={"color": "#111", "inherit": "none"},
-                        span=8,
+                        span={"base": 12, "xs": 8},
                         className="markdown-footer",
                     ),
                 ],

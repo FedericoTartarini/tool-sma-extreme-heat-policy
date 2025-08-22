@@ -16,42 +16,14 @@ def my_navbar():
                         [
                             html.A(
                                 # Use row and col to control vertical alignment of logo / brand
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            [
-                                                dbc.Row(
-                                                    dbc.NavbarBrand(
-                                                        "Sports Medicine Australia",
-                                                        className="ms-2",
-                                                        style={
-                                                            "padding-bottom": 0,
-                                                            "font-size": "0.9rem",
-                                                        },
-                                                    ),
-                                                ),
-                                                dbc.Row(
-                                                    dbc.NavbarBrand(
-                                                        "Extreme Heat Tool",
-                                                        className="ms-2",
-                                                        style={
-                                                            "padding-top": 0,
-                                                            "font-size": "0.9rem",
-                                                        },
-                                                    ),
-                                                ),
-                                            ],
-                                            width="auto",
-                                        ),
-                                    ],
-                                    align="center",
-                                    className="g-0",
+                                dbc.NavbarBrand(
+                                    "USYD Sports Heat Tool",
                                 ),
                                 href=URLS.HOME.url,
                                 style={"textDecoration": "none"},
                             ),
                         ],
-                        span={"base": 7, "xs": 4},
+                        span="content",
                         className="py-0",
                     ),
                     dmc.GridCol(
