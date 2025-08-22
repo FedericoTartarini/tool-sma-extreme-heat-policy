@@ -57,6 +57,11 @@ app.index_string = """<!DOCTYPE html>
       const analytics = getAnalytics(app);
     </script>
     <meta charset="utf-8">
+    <link rel="apple-touch-icon" href="/assets/ios/512.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/ios/180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/ios/32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/ios/16.png">
+    <link rel="manifest" href="./assets/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Federico Tartarini, Ollie Jay">
     <meta name="keywords" content="Heat Stress Risk sport, SMA Extreme Heat Policy, Sport Medicine Australia">
