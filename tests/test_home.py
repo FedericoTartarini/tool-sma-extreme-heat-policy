@@ -27,9 +27,7 @@ class TestHomePage:
             page.get_by_role("heading", name="Forecasted risk for today")
         ).to_be_visible()
         expect(page.locator("#id-button-install")).to_be_visible()
-        expect(
-            page.get_by_role("link", name="Click here to provide your")
-        ).to_be_visible()
+        expect(page.get_by_role("link", name="Provide your")).to_be_visible()
 
     def test_click_dropdown(self, page: Page):
         """Test that selecting a sport updates the sport image correctly."""
@@ -54,6 +52,5 @@ class TestHomePage:
 
     def test_selecting_non_existent_sport(self, page: Page):
         page.goto("/")
-        page.locator("#react-select-2--value div").filter(has_text="Soccer").dblclick()
-        page.locator("#react-select-2--value").get_by_role("combobox").fill("fede")
+        page.locator("#id-dropdown-sport").get_by_role("combobox").fill("fede")
         page.get_by_text("No results found").click()
