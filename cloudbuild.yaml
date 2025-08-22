@@ -13,7 +13,7 @@ steps:
          '--region', 'asia-southeast1',
          '--min-instances', '0',
          '--update-secrets', 'firebase_secret=firebase-realtime-database:latest',
-         '--memory', '4Gi',
+         '--memory', '8Gi',
          '--concurrency', '10',
          '--timeout', '60s',
-         '--cpu', '2',]
+         '--cpu', '4',]
