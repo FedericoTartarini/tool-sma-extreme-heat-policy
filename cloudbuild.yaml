@@ -16,4 +16,4 @@ steps:
          '--memory', '8Gi',
          '--concurrency', '10',
          '--timeout', '60s',
-         '--cpu', '4',]
+         '--cpu', '2',]
