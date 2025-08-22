@@ -62,6 +62,11 @@ app.index_string = """<!DOCTYPE html>
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/ios/32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/ios/16.png">
     <link rel="manifest" href="./assets/manifest.json">
+    <script>
+      if (typeof navigator.serviceWorker !== 'undefined') {
+        navigator.serviceWorker.register('sw.js')
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Federico Tartarini, Ollie Jay">
     <meta name="keywords" content="Heat Stress Risk sport, SMA Extreme Heat Policy, Sport Medicine Australia">
