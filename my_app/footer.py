@@ -33,7 +33,9 @@ def my_footer():
                             [Click here to provide your feedback](https://sydney.au1.qualtrics.com/jfe/form/SV_3jAqlzAnAoAOU8S)
                             
                             If you use this tool, please cite the following paper:
-                            Tartarini, Federico, et al. "A modified Sports Medicine Australia extreme heat policy and web tool." Journal of Science and Medicine in Sport (2025).
+                            The Sports Medicine Australia extreme heat risk and response guidelines and web tool.
+                            Tartarini F, Smallcombe JW, Lynch GP, Cross TJ, Broderick C, Jay O.
+                            J Sci Med Sport. 2025 Sep;28(9):690-699. 
                             
                             © 2025 - Heat and Health Research Centre, USYD
                             
