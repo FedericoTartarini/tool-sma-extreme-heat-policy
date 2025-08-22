@@ -25,3 +25,8 @@ replace = "Version: {new_version}"
 filename = "my_app/utils.py"
 search = "{current_version}"
 replace = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "assets/manifest.json"
+search = '"id": "{current_version}"'
+replace = '"id": "{new_version}"'
