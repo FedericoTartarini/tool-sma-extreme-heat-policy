@@ -127,6 +127,4 @@ if __name__ == "__main__":
         debug=os.environ.get("DEBUG_DASH", True),
         host="0.0.0.0",
         port=8080,
-        processes=1,
-        threaded=True,
     )

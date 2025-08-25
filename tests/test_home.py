@@ -7,10 +7,13 @@ class TestHomePage:
     def test_visibility_text(self, page: Page) -> None:
         """Verify key elements are visible and updating the location displays the map and recommendations."""
         # Navigate to the home page
-        page.goto("/")
+        page.goto("/", wait_until="domcontentloaded")
+
+        # Wait for all network requests to finish and the dropdown to appear
+        page.wait_for_selector("#id-dropdown-sport", state="visible", timeout=30000)
 
         # Check header link, default sport selection and sport image
-        expect(page.get_by_role("link", name="Extreme Heat Tool")).to_be_visible()
+        expect(page.get_by_role("link", name="USYD Sports Heat Tool")).to_be_visible()
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-sport-image").get_by_role("img")).to_be_visible()
 

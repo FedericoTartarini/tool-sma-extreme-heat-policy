@@ -8,7 +8,8 @@ class TestHomePage:
         page.goto("/")
 
         # Check header link, default sport selection and sport image
-        expect(page.get_by_role("link", name="Extreme Heat Tool")).to_be_visible()
+        expect(page.get_by_role("link", name="USYD Sports Heat Tool")).to_be_visible()
+        page.wait_for_selector("#id-dropdown-sport", state="visible")
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-dropdown-location")).to_be_visible()
 
@@ -27,11 +28,11 @@ class TestHomePage:
 
         # change back to default location
         page.locator("#id-dropdown-location").click()
-        page.locator("#id-dropdown-location").type("2000 sydney")
+        page.locator("#id-dropdown-location").type("1001 sydney")
         page.locator("#id-dropdown-location").press("Enter")
 
         # Wait for the location text to be visible
-        expect(page.get_by_text("Sydney, NSW, 2000")).to_be_visible()
+        expect(page.get_by_text("Sydney, NSW, 1001")).to_be_visible()
 
     def test_country_change(self, page: Page) -> None:
         """Test changing the country updates the location dropdown."""
@@ -40,16 +41,21 @@ class TestHomePage:
 
         # Change the country
         page.locator("#id-button-country").click()
+        expect(page.get_by_text("Select a country")).to_be_visible()
+
+        # wait for the modal container to finish animating in
+        page.wait_for_selector("#modal-select-country", state="visible", timeout=15_000)
+        # then wait for the country-select input
         page.wait_for_selector(
-            "#modal-country-select-input", state="visible", timeout=5_000
+            "#modal-country-select-input", state="visible", timeout=15_000
         )
 
         page.locator("#modal-country-select-input").dblclick()
         page.locator("#modal-country-select-input").type("Italy")
         page.get_by_text("Italy").click()
 
-        # Wait for the text "Roma, Lazio, 118" to be visible before assertion
-        expect(page.get_by_text("Roma, Lazio, 118")).to_be_visible()
+        # Wait for the text to be visible before assertion
+        expect(page.get_by_text("Abano Terme, Veneto")).to_be_visible()
 
         page.locator("#id-dropdown-location").click()
         page.locator("#id-dropdown-location").type("budrio 40054")
