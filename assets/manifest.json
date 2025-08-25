@@ -456,8 +456,8 @@
   "background_color": "#dc0b00",
   "id": "1.1.2",
   "description": "The USYD Sports Heat Tool is a web application designed to help users determine the suitability of outdoor sports activities based on current weather conditions, particularly focusing on heat and humidity levels.",
-  "start_url": "https://sma-heat-policy.sydney.edu.au",
-  "scope": "https://sma-heat-policy.sydney.edu.au",
+  "start_url": "/",
+  "scope": "/",
   "screenshots": [],
   "shortcuts": [{
     "name": "About",
