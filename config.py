@@ -276,18 +276,6 @@ data_dd_sport = sports_info[["sport", "sport_id"]].rename(
 )
 data_dd_sport = data_dd_sport.to_dict("records")
 
-df_postcodes = get_postcodes(Defaults.country.value)
-
-data_dd_location = df_postcodes[
-    ["sub-state-post-country", "sub-state-post-country-no-space"]
-].rename(
-    columns={
-        "sub-state-post-country": "label",
-        "sub-state-post-country-no-space": "value",
-    }
-)
-data_dd_location = data_dd_location.to_dict("records")
-
 
 @dataclass()
 class Dropdowns:
@@ -302,7 +290,7 @@ class Dropdowns:
     LOCATION: ClassVar[DropDownInfo] = DropDownInfo(
         id=IDs.dropdown_location_value,
         question="Location:",
-        options=data_dd_location,
+        options=[{}],
         multi=False,
         default=PostcodesDefault.AU,
     )

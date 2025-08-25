@@ -7,9 +7,11 @@ from config import (
     Dropdowns,
     get_postcodes,
 )
+from cachetools import cached, TTLCache
 from my_app.my_classes import Defaults
 
 
+@cached(cache=TTLCache(maxsize=10, ttl=600))
 def display_location_dropdown(location: str | None = None):
     """Generates a dropdown for selecting a location."""
     ic(location)
