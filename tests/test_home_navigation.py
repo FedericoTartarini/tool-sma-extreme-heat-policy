@@ -43,6 +43,13 @@ class TestHomePage:
         page.locator("#id-button-country").click()
         expect(page.get_by_text("Select a country")).to_be_visible()
 
+        # wait for the modal container to finish animating in
+        page.wait_for_selector("#modal-select-country", state="visible", timeout=15_000)
+        # then wait for the country-select input
+        page.wait_for_selector(
+            "#modal-country-select-input", state="visible", timeout=15_000
+        )
+
         page.locator("#modal-country-select-input").dblclick()
         page.locator("#modal-country-select-input").type("Italy")
         page.get_by_text("Italy").click()

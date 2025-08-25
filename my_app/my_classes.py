@@ -27,8 +27,8 @@ class Defaults(str, Enum):
 
 
 class UserSettings(BaseModel):
-    location: Optional[str] = Defaults.location
-    sport: Optional[str] = Defaults.sport
+    location: Optional[str] = Defaults.location.value
+    sport: Optional[str] = Defaults.sport.value
 
     def __getitem__(self, key):
         return getattr(self, key)

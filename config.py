@@ -505,8 +505,6 @@ if __name__ == "__main___":
         df_pc.to_pickle(file, compression="gzip")
 
     # Filter postcodes to remove close duplicates
-    from sklearn.cluster import DBSCAN
-    import numpy as np
 
     filter_postcodes()
 
