@@ -25,11 +25,40 @@ variable_calc_risk = "ratio_w"
 
 
 @cached(cache=TTLCache(maxsize=10, ttl=600))
-def get_postcodes(country=Defaults.country.value):
-    """Retrieve postcodes for the specified country and return a DataFrame."""
-    return pd.read_pickle(
-        f"./assets/postcodes_filtered/{country}.pkl.gz", compression="gzip"
-    )
+def get_postcodes(country: str = Defaults.country.value) -> pd.DataFrame:
+    """Retrieve postcodes for the specified country, preferring filtered assets.
+
+    Tries to load from './assets/postcodes_filtered/{country}.pkl.gz'.
+    Raises a descriptive error if both attempts fail.
+
+    Args
+    ----
+    country : str
+        ISO country code.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame of postcodes.
+
+    Raises
+    ------
+    FileNotFoundError
+        If neither filtered nor raw asset exists.
+
+    Example
+    -------
+    >>> df = get_postcodes('AU')
+    """
+    filtered_path = f"./assets/postcodes_filtered/{country}.pkl.gz"
+
+    try:
+        return pd.read_pickle(filtered_path, compression="gzip")
+    except (FileNotFoundError, OSError):
+        raise FileNotFoundError(
+            f"Postcode data not found for country '{country}'. "
+            "Please generate or download the required assets."
+        )
 
 
 def process_postcodes(country=Defaults.country.value):
@@ -284,6 +313,8 @@ class Dropdowns:
 
 def haversine_array(lat1, lon1, lat2, lon2):
     """Compute the great circle distance between two points on the earth (specified in decimal degrees)."""
+    import numpy as np
+
     R = 6371.0  # Earth radius in km
     lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
@@ -326,6 +357,15 @@ def drop_close_postcodes(
     except Exception as e:
         print(f"Error converting lat/lon to float: {e}")
         raise ValueError("lat/lon columns must be convertible to float.")
+
+    # Lazy imports to avoid heavy deps at app import time
+    try:
+        import numpy as np
+        from sklearn.cluster import DBSCAN
+    except Exception as e:
+        raise RuntimeError(
+            "drop_close_postcodes requires numpy and scikit-learn to be installed."
+        ) from e
 
     # Drop rows with missing coordinates
     df = df.dropna(subset=["lat", "lon", "suburb"]).copy()
