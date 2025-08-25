@@ -10,7 +10,7 @@ class TestHomePage:
         page.goto("/")
 
         # Check header link, default sport selection and sport image
-        expect(page.get_by_role("link", name="Extreme Heat Tool")).to_be_visible()
+        expect(page.get_by_role("link", name="USYD Sports Heat")).to_be_visible()
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-sport-image").get_by_role("img")).to_be_visible()
 
