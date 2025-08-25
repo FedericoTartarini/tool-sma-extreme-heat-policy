@@ -15,7 +15,9 @@ iso_codes = [
     country.alpha_2 for country in pycountry.countries if hasattr(country, "alpha_2")
 ]
 available_iso_codes = [
-    code for code in iso_codes if Path(f"assets/postcodes/{code}.pkl.gz").exists()
+    code
+    for code in iso_codes
+    if Path(f"assets/postcodes_filtered/{code}.pkl.gz").exists()
 ]
 
 icons = {

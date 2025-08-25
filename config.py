@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
+from cachetools import cached, TTLCache
 
 import pandas as pd
 from pydantic import BaseModel
@@ -23,9 +24,12 @@ default_location = {
 variable_calc_risk = "ratio_w"
 
 
+@cached(cache=TTLCache(maxsize=10, ttl=600))
 def get_postcodes(country=Defaults.country.value):
     """Retrieve postcodes for the specified country and return a DataFrame."""
-    return pd.read_pickle(f"./assets/postcodes/{country}.pkl.gz", compression="gzip")
+    return pd.read_pickle(
+        f"./assets/postcodes_filtered/{country}.pkl.gz", compression="gzip"
+    )
 
 
 def process_postcodes(country=Defaults.country.value):
@@ -278,6 +282,96 @@ class Dropdowns:
         return getattr(self, key)
 
 
+def haversine_array(lat1, lon1, lat2, lon2):
+    """Compute the great circle distance between two points on the earth (specified in decimal degrees)."""
+    R = 6371.0  # Earth radius in km
+    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = np.sin(dlat / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return R * c
+
+
+def drop_close_postcodes(
+    df: pd.DataFrame, min_distance_km: float = 2.0
+) -> pd.DataFrame:
+    """Drop postcodes that are closer than min_distance_km and have the same suburb.
+
+    Args
+    ----
+    df : pd.DataFrame
+        DataFrame with 'lat', 'lon', and 'suburb' columns.
+    min_distance_km : float, optional
+        Minimum allowed distance between postcodes (default is 2.0).
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered DataFrame with one postcode per cluster per suburb.
+
+    Raises
+    ------
+    ValueError
+        If 'lat' or 'lon' columns contain non-numeric values.
+
+    Example
+    -------
+    >>> df_filtered = drop_close_postcodes(df_postcodes, min_distance_km=2.0)
+    """
+    # Ensure lat/lon are floats
+    try:
+        df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
+        df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
+    except Exception as e:
+        print(f"Error converting lat/lon to float: {e}")
+        raise ValueError("lat/lon columns must be convertible to float.")
+
+    # Drop rows with missing coordinates
+    df = df.dropna(subset=["lat", "lon", "suburb"]).copy()
+
+    result_frames = []
+    kms_per_radian = 6371.0088
+    epsilon = min_distance_km / kms_per_radian
+
+    for suburb, group in df.groupby("suburb"):
+        coords = group[["lat", "lon"]].to_numpy()
+        if len(coords) == 0:
+            continue
+        clustering = DBSCAN(
+            eps=epsilon, min_samples=1, algorithm="ball_tree", metric="haversine"
+        )
+        labels = clustering.fit_predict(np.radians(coords))
+        group = group.copy()
+        group["cluster"] = labels
+        # Keep the first postcode in each cluster
+        result_frames.append(group.groupby("cluster").first().reset_index(drop=True))
+
+    return pd.concat(result_frames, ignore_index=True)
+
+
+def filter_postcodes():
+    """
+    Convert all pickle files in the postcodes directory to Parquet format.
+    """
+    import os
+    import pandas as pd
+
+    input_dir = "assets/postcodes"
+    output_dir = "assets/postcodes_filtered"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for file in os.listdir(input_dir):
+        if file.endswith(".pkl.gz"):
+            # file = "AE.pkl.gz"
+            df = pd.read_pickle(os.path.join(input_dir, file), compression="gzip")
+            # if the state column is empty, fill it with the country code
+            if df["state"].isnull().all():
+                df["state"] = file.split(".")[0].upper()
+            df_filtered = drop_close_postcodes(df=df, min_distance_km=4.0)
+            df_filtered.to_pickle(os.path.join(output_dir, file), compression="gzip")
+
+
 if __name__ == "__main___":
     import os
     import zipfile
@@ -368,4 +462,41 @@ if __name__ == "__main___":
         df_pc["sub-state-post-country-no-space"] = (
             df_pc["sub-state-post-country"].astype("str").replace(", ", "_", regex=True)
         )
+        df_pc.to_pickle(file, compression="gzip")
+
+    # Filter postcodes to remove close duplicates
+    from sklearn.cluster import DBSCAN
+    import numpy as np
+
+    filter_postcodes()
+
+    # #     remove all the parquet files in the postcodes directory
+    # for file in Path("assets/postcodes").glob("*.parquet"):
+    #     print(file)
+    #     file.unlink()
+
+    # for each country print a postcode in the postcode_filtered file
+    for file in Path("assets/postcodes_filtered").glob("*.pkl.gz"):
+        iso_code = file.name.split(".")[0]
+        df_pc = pd.read_pickle(file, compression="gzip")
+        try:
+            print(
+                f'{iso_code}: str = "{df_pc['sub-state-post-country-no-space'].iloc[0]}"'
+            )
+        except IndexError:
+            print(f"{iso_code}: str = ''")
+
+    # drop from the postcode files the columns that I am not using
+    for file in Path("assets/postcodes_filtered").glob("*.pkl.gz"):
+        # file = 'assets/postcodes_filtered/AE.pkl.gz'
+        df_pc = pd.read_pickle(file, compression="gzip")
+        df_pc = df_pc[
+            [
+                "lat",
+                "lon",
+                "sub-state-post-country-no-space",
+                "sub-state-post-country",
+            ]
+        ]
+        df_pc.dropna(inplace=True)
         df_pc.to_pickle(file, compression="gzip")
