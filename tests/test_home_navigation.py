@@ -9,6 +9,7 @@ class TestHomePage:
 
         # Check header link, default sport selection and sport image
         expect(page.get_by_role("link", name="USYD Sports Heat Tool")).to_be_visible()
+        page.wait_for_selector("#id-dropdown-sport", state="visible")
         expect(page.locator("#id-dropdown-sport")).to_be_visible()
         expect(page.locator("#id-dropdown-location")).to_be_visible()
 
@@ -40,9 +41,7 @@ class TestHomePage:
 
         # Change the country
         page.locator("#id-button-country").click()
-        page.wait_for_selector(
-            "#modal-country-select-input", state="visible", timeout=5_000
-        )
+        expect(page.get_by_text("Select a country")).to_be_visible()
 
         page.locator("#modal-country-select-input").dblclick()
         page.locator("#modal-country-select-input").type("Italy")

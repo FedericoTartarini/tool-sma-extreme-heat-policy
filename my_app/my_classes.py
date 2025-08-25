@@ -153,7 +153,7 @@ class PostcodesDefault:
     HU: str = "Aba_FE_8127_HU"
     MH: str = "Ebeye_Marshall Islands_96970_MH"
     JE: str = "Jersey_JE_JE4_JE"
-    AU: str = Defaults.location
+    AU: str = Defaults.location.value
 
     def __getitem__(self, key):
         return getattr(self, key)
