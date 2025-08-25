@@ -481,7 +481,7 @@ if __name__ == "__main___":
         df_pc = pd.read_pickle(file, compression="gzip")
         try:
             print(
-                f'{iso_code}: str = "{df_pc['sub-state-post-country-no-space'].iloc[0]}"'
+                f'{iso_code}: str = "{df_pc["sub-state-post-country-no-space"].iloc[0]}"'
             )
         except IndexError:
             print(f"{iso_code}: str = ''")
