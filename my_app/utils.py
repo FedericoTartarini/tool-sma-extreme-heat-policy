@@ -1,4 +1,3 @@
-import logging
 import time
 import warnings
 from dataclasses import dataclass
@@ -29,8 +28,6 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 from timezonefinder import TimezoneFinder
-
-logger = logging.getLogger(__name__)
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -190,14 +187,14 @@ def get_weather(
         else:
             df_weather = yr_weather(lat, lon)
     except Exception as e:
-        logger.error(f"Error in get_weather with provider {provider}: {e}")
+        ic(f"Error in get_weather with provider {provider}: {e}")
         try:
             if provider == "open-meteo":
                 df_weather = yr_weather(lat, lon)
             else:
                 df_weather = open_weather(lat, lon)
         except Exception as e2:
-            logger.error(f"Fallback weather provider also failed: {e2}")
+            ic(f"Fallback weather provider also failed: {e2}")
             raise
 
     df_weather.set_index(pd.to_datetime(df_weather[Cols.time]), inplace=True)
@@ -258,7 +255,7 @@ def calculate_comfort_indices_v2(data_for, sport_id):
             risk_value = df_risk_parquet.loc[(tdb, rh, tg, wind_speed, sport_id)]
             risk_value = risk_value.to_dict()
         except KeyError as e:
-            logger.error(
+            ic(
                 f"Parquet file - Risk value not found for {tdb=}, {rh=}, {tg=}, {wind_speed=}, {sport_id=}: {e}"
             )
             risk_value = {
@@ -351,7 +348,7 @@ def calculate_mean_radiant_tmp(df_for):
         try:
             tg = scipy.optimize.brentq(calculate_globe_temperature, 0, 200)
         except ValueError as e:
-            logger.warning(f"Brentq failed for globe temperature: {e}")
+            ic(f"Brentq failed for globe temperature: {e}")
             tg = 0
         erf_mrt_dict[Cols.tg] = tg
         # print(erf_mrt_dict, row[Cols.tdb], row[Cols.wind])
@@ -409,7 +406,9 @@ def get_data_specific_day(df, date_offset=0):
 @dataclass()
 class FirebaseFields:
     database_name: str = "/Users/Test"
-    database_url: str = "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
+    database_url: str = (
+        "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
+    )
     risk_profile: str = "risk-profile"
     user_id: str = "user-id"
     timestamp: str = "timestamp"
@@ -500,7 +499,7 @@ def get_info_location_selected(location: str) -> dict:
             ),
         }
     except (TypeError, KeyError, IndexError) as e:
-        logger.warning(f"Location selection failed for '{location}': {e}")
+        ic(f"Location selection failed for '{location}': {e}")
         loc_selected = default_location
     return loc_selected
 
@@ -653,7 +652,7 @@ def get_regression_curves_v2(tg=3, wind_speed=0.8, sport_id="soccer"):
                 scipy.optimize.brentq(calculate_threshold_water_loss, 0, 100)
             )
         except ValueError as e:
-            logger.warning(f"Brentq failed for water loss threshold: {e}")
+            ic(f"Brentq failed for water loss threshold: {e}")
             results.append(np.nan)
 
         def calculate_threshold_core(x):
@@ -678,7 +677,7 @@ def get_regression_curves_v2(tg=3, wind_speed=0.8, sport_id="soccer"):
         try:
             results.append(scipy.optimize.brentq(calculate_threshold_core, 0, 100))
         except ValueError as e:
-            logger.warning(f"Brentq failed for core temp threshold: {e}")
+            ic(f"Brentq failed for core temp threshold: {e}")
             results.append(np.nan)
 
         results.append(t)
