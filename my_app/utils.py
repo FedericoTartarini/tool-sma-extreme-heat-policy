@@ -406,9 +406,7 @@ def get_data_specific_day(df, date_offset=0):
 @dataclass()
 class FirebaseFields:
     database_name: str = "/Users/Test"
-    database_url: str = (
-        "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
-    )
+    database_url: str = "https://sma-extreme-heat-policy-default-rtdb.asia-southeast1.firebasedatabase.app"
     risk_profile: str = "risk-profile"
     user_id: str = "user-id"
     timestamp: str = "timestamp"

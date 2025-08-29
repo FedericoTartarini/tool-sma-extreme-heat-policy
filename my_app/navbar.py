@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash import Input, Output, State, html, ctx
+from dash import Input, Output, State, ctx
 from dash import callback
 
 from components.modal_country_select import modal_country_select
