@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash import Input, Output, State, html, ctx
+from dash import Input, Output, State, ctx
 from dash import callback
 
 from components.modal_country_select import modal_country_select
@@ -13,35 +13,38 @@ def my_navbar():
             dmc.Grid(
                 [
                     dmc.GridCol(
-                        [
-                            html.A(
-                                # Use row and col to control vertical alignment of logo / brand
-                                dbc.NavbarBrand(
-                                    "USYD Sports Heat Tool",
-                                ),
-                                href=URLS.HOME.url,
-                                style={"textDecoration": "none"},
-                            ),
-                        ],
-                        span="content",
-                        className="py-0",
+                        dmc.Image(
+                            src="../assets/icons/logo-usyd-black.png",
+                            h=35,
+                            flex=0,
+                            fit="contain",
+                        ),
+                        span={"base": 4, "xs": 3},
+                        style={"textAlign": "left"},
                     ),
                     dmc.GridCol(
-                        span="content",
+                        dmc.Text(
+                            "Sports Heat Tool",
+                            fw=700,
+                        ),
+                        span={"base": 5, "xs": 3},
+                        px=0,
+                        style={"textAlign": "center"},
+                    ),
+                    dmc.GridCol(
+                        span={"base": 1, "xs": 1},
                         className="p-0",
                         children=modal_country_select(),
                     ),
                     dmc.GridCol(
                         [
                             dbc.NavbarToggler(
-                                dmc.Burger(
-                                    id="burger-button", opened=False, color="white"
-                                ),
+                                dmc.Burger(id="burger-button", opened=False),
                                 id="navbar-toggler",
                                 n_clicks=0,
                             )
                         ],
-                        span={"base": "content", "xs": 0},
+                        span={"base": 2, "xs": 0},
                         className="py-0",
                     ),
                     dmc.GridCol(
@@ -55,7 +58,7 @@ def my_navbar():
                                                 href=URLS.HOME.url,
                                                 style={
                                                     "textAlign": "center",
-                                                    "color": "white",
+                                                    "color": "black",
                                                 },
                                                 id="id-nav-home",
                                             ),
@@ -66,7 +69,7 @@ def my_navbar():
                                                 href=URLS.ABOUT.url,
                                                 style={
                                                     "textAlign": "center",
-                                                    "color": "white",
+                                                    "color": "black",
                                                 },
                                                 id="id-nav-about",
                                             )
@@ -89,8 +92,7 @@ def my_navbar():
             className="p-2",
             size="xs",
         ),
-        color="#dc0b00",
-        dark=True,
+        color="#F1F1F1",
     )
 
 

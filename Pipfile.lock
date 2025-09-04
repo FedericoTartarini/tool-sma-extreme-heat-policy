@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6f0d90f1184ee98e800a1b4f98f55dd0307b0f9a5a8c483807b14c490c768b3f"
+            "sha256": "c034120e6693187b2fabf929fc53375a515eda27e258208001ebd76897a30974"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -800,22 +800,6 @@
             ],
             "version": "==0.2.0"
         },
-        "google-cloud-appengine-logging": {
-            "hashes": [
-                "sha256:2b28ed715e92b67e334c6fcfe1deb523f001919560257b25fc8fcda95fd63938",
-                "sha256:4890928464c98da9eecc7bf4e0542eba2551512c0265462c10f3a3d2a6424b90"
-            ],
-            "markers": "python_version >= '3.7'",
-            "version": "==1.6.2"
-        },
-        "google-cloud-audit-log": {
-            "hashes": [
-                "sha256:2598f1533a7d7cdd6c7bf448c12e5519c1d53162d78784e10bcdd1df67791bc3",
-                "sha256:daaedfb947a0d77f524e1bd2b560242ab4836fe1afd6b06b92f152b9658554ed"
-            ],
-            "markers": "python_version >= '3.7'",
-            "version": "==0.3.2"
-        },
         "google-cloud-core": {
             "hashes": [
                 "sha256:1fab62d7102844b278fe6dead3af32408b1df3eb06f5c7e8634cbd40edc4da53",
@@ -831,15 +815,6 @@
             ],
             "markers": "platform_python_implementation != 'PyPy'",
             "version": "==2.21.0"
-        },
-        "google-cloud-logging": {
-            "hashes": [
-                "sha256:1d465ac62df29fb94bba4d6b4891035e57d573d84541dd8a40eebbc74422b2f0",
-                "sha256:32305d989323f3c58603044e2ac5d9cf23e9465ede511bbe90b4309270d3195c"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.7'",
-            "version": "==3.11.4"
         },
         "google-cloud-storage": {
             "hashes": [
@@ -907,14 +882,6 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==1.70.0"
-        },
-        "grpc-google-iam-v1": {
-            "hashes": [
-                "sha256:a3171468459770907926d56a440b2bb643eec1d7ba215f48f3ecece42b4d8351",
-                "sha256:b3e1fc387a1a329e41672197d0ace9de22c78dd7d215048c4c78712073f7bd20"
-            ],
-            "markers": "python_version >= '3.7'",
-            "version": "==0.14.2"
         },
         "grpcio": {
             "hashes": [
@@ -1556,14 +1523,6 @@
             ],
             "markers": "python_full_version >= '3.8.1'",
             "version": "==1.20.1"
-        },
-        "opentelemetry-api": {
-            "hashes": [
-                "sha256:02f20bcacf666e1333b6b1f04e647dc1d5111f86b8e510238fcc56d7762cda8c",
-                "sha256:9a72572b9c416d004d492cbc6e61962c0501eaf945ece9b5a0f56597d8348aa0"
-            ],
-            "markers": "python_version >= '3.9'",
-            "version": "==1.36.0"
         },
         "packaging": {
             "hashes": [

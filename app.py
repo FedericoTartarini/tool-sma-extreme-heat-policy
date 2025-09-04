@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import warnings
 
@@ -7,7 +6,6 @@ import dash_bootstrap_components as dbc
 import firebase_admin
 
 # Imports the Cloud Logging client library
-import google.cloud.logging
 from dash_extensions.enrich import (
     DashProxy,
     ServersideOutputTransform,
@@ -18,20 +16,6 @@ from flask_caching import Cache
 from my_app.utils import (
     FirebaseFields,
 )
-
-# Instantiates a client
-client = google.cloud.logging.Client()
-
-# Retrieves a Cloud Logging handler based on the environment
-# you're running in and integrates the handler with the
-# Python logging module. By default this captures all logs
-# at INFO level and higher
-client.setup_logging(log_level=logging.INFO)
-
-logger = logging.getLogger()
-
-if os.getenv("DEBUG_DASH", True):
-    logger.addHandler(logging.StreamHandler())
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 

@@ -97,10 +97,6 @@ layout = dmc.Stack(
                         href="https://sma.org.au/wp-content/uploads/2023/03/beat-the-heat-2011.pdf",
                     ),
                 ),
-                dmc.Anchor(
-                    "Hot Weather Guidelines",
-                    href="https://sma.org.au/wp-content/uploads/2023/03/hot-weather-guidelines-web-download-doc-2007.pdf",
-                ),
             ],
             shadow="xs",
             p="xs",

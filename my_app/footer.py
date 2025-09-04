@@ -12,7 +12,7 @@ def my_footer():
                         dmc.Stack(
                             children=[
                                 html.Img(
-                                    src=get_asset_url("icons/usyd-logo.png"),
+                                    src=get_asset_url("icons/logo-usyd-black.png"),
                                     width="125px",
                                     height="auto",
                                     alt="USYD logo icon",
@@ -57,6 +57,6 @@ def my_footer():
             className="p-2",
             size="xs",
         ),
-        style={"background": "#fcd200"},
+        style={"background": "#e64626"},
         className="p-2",
     )
