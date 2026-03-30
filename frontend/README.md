@@ -79,14 +79,17 @@ Import rules:
 - Risk API response returns a non-empty `forecast[]` plus a nested `request` block containing `sport`, `profile`, and `location`; backend defines `forecast[0]` as the earliest complete forecast point, and frontend derives the current risk from that point while grouping forecast days in the selected location timezone when available, otherwise browser local timezone.
 - Risk is fetched automatically when:
   - a location suggestion is selected (manual or auto-resolved) and coordinates are resolved, and
-  - the sport changes.
+  - the sport changes, and
+  - the selected profile changes.
 - Risk API failures are shown in UI and keep the last valid result (no silent fallback to fixtures).
 - After a successful fetch:
-  - URL query params update (`sport`, `loc`) and
+  - URL query params update (`profile`, `sport`, `loc`) and
   - the last selection is persisted to localStorage only for direct visits (not shared links).
 - Dates are formatted in the selected location timezone when available, otherwise browser local timezone.
 - API time contract: if datetime fields are introduced in request/response payloads, they must use ISO-8601 UTC format (`...Z`).
-- The frontend currently sends `profile: "ADULT"` by default; no kids/adults selector is exposed in the UI yet.
+- The Home filters expose a Profile select above Location and Sport.
+- Public profile values are `ADULT`, `UNDER_10`, `AGE_10_13`, and `AGE_14_17`.
+- The current profile is sent to the backend and restored from shared URLs or local persistence.
 
 ## i18n
 

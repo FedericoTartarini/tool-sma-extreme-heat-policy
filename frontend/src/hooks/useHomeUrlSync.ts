@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { HeatRiskProfile } from "@/domain/heatRiskProfile";
 import { savePersistedHomeFilters } from "@/pages/home/browserState";
 import type { SetQueryStates } from "@/pages/home/useHomeBootstrap";
 import { useHomeStore } from "@/store/homeStore";
@@ -16,9 +17,14 @@ export function useHomeUrlSync({
   canSyncSelection,
 }: UseHomeUrlSyncParams): void {
   const channel = useHomeStore((state) => state.channel);
+  const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  const lastAppliedRef = useRef<{ sport: string; loc: string } | null>(null);
+  const lastAppliedRef = useRef<{
+    profile: HeatRiskProfile;
+    sport: string;
+    loc: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!canSyncSelection || !selectedLocation) {
@@ -26,11 +32,13 @@ export function useHomeUrlSync({
     }
 
     const nextSelection = {
+      profile,
       sport,
       loc: selectedLocation.formattedLocation,
     };
     const hasSelectionChanged =
       !lastAppliedRef.current ||
+      lastAppliedRef.current.profile !== nextSelection.profile ||
       lastAppliedRef.current.sport !== nextSelection.sport ||
       lastAppliedRef.current.loc !== nextSelection.loc;
 
@@ -41,6 +49,7 @@ export function useHomeUrlSync({
     void (async () => {
       await setQueryStates(
         {
+          profile: nextSelection.profile,
           sport: nextSelection.sport,
           location: nextSelection.loc,
         },
@@ -53,5 +62,12 @@ export function useHomeUrlSync({
 
       lastAppliedRef.current = nextSelection;
     })();
-  }, [canSyncSelection, channel, selectedLocation, setQueryStates, sport]);
+  }, [
+    canSyncSelection,
+    channel,
+    profile,
+    selectedLocation,
+    setQueryStates,
+    sport,
+  ]);
 }

@@ -13,7 +13,9 @@ class RiskProfile(StrEnum):
     """Public profile values accepted by the home-risk API."""
 
     ADULT = "ADULT"
-    KIDS = "KIDS"
+    UNDER_10 = "UNDER_10"
+    AGE_10_13 = "AGE_10_13"
+    AGE_14_17 = "AGE_14_17"
 
 
 class RiskRequest(BaseModel):

@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import type { LocationSuggestion } from "@/domain/location";
+import {
+  DEFAULT_HEAT_RISK_PROFILE,
+  type HeatRiskProfile,
+} from "@/domain/heatRiskProfile";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 
 export type HomeChannel = "shared" | "direct";
@@ -7,6 +11,7 @@ export type LocationPrefillSource = "url" | "persisted" | "default" | "none";
 
 export interface HomeStoreBootstrapPayload {
   channel: HomeChannel;
+  profile: HeatRiskProfile;
   sport: SportType;
   locationSearchInput: string;
   locationPrefillSource: LocationPrefillSource;
@@ -16,6 +21,7 @@ export interface HomeStoreBootstrapPayload {
 interface HomeStoreState {
   isBootstrapped: boolean;
   channel: HomeChannel;
+  profile: HeatRiskProfile;
   sport: SportType;
   locationSearchInput: string;
   locationPrefillSource: LocationPrefillSource;
@@ -25,6 +31,7 @@ interface HomeStoreState {
   locationSessionToken: string;
 
   bootstrap: (payload: HomeStoreBootstrapPayload) => void;
+  setProfile: (profile: HeatRiskProfile) => void;
   setSport: (sport: SportType) => void;
   setLocationSearchInput: (value: string) => void;
   selectLocation: (suggestion: LocationSuggestion) => void;
@@ -49,6 +56,7 @@ function createSessionToken(): string {
 export const useHomeStore = create<HomeStoreState>((set) => ({
   isBootstrapped: false,
   channel: "direct",
+  profile: DEFAULT_HEAT_RISK_PROFILE,
   sport: DEFAULT_SPORT_TYPE,
   locationSearchInput: "",
   locationPrefillSource: "none",
@@ -59,6 +67,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
 
   bootstrap: ({
     channel,
+    profile,
     sport,
     locationSearchInput,
     locationPrefillSource,
@@ -67,6 +76,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
     set({
       isBootstrapped: true,
       channel,
+      profile,
       sport,
       locationSearchInput,
       locationPrefillSource,
@@ -75,6 +85,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       hasPrefilledLocationNotMatched: false,
       locationSessionToken: createSessionToken(),
     }),
+  setProfile: (profile) => set({ profile }),
   setSport: (sport) => set({ sport }),
   setLocationSearchInput: (value) =>
     set((state) => {

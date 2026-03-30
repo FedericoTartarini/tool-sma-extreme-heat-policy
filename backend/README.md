@@ -76,9 +76,9 @@ Request body:
 - `longitude: number`
   Range `[-180, 180]`.
 - `profile: string`
-  Must be `ADULT` or `KIDS`. Both profiles currently use the same pythermalcomfort
-  model path; the field is included to reserve the public contract for future
-  profile-specific behaviour.
+  Must be one of `ADULT`, `UNDER_10`, `AGE_10_13`, or `AGE_14_17`. All profiles
+  currently use the same pythermalcomfort model path; the field is included to
+  preserve the public contract for future profile-specific behaviour.
 
 Example request:
 
@@ -87,7 +87,7 @@ Example request:
   "sport": "SOCCER",
   "latitude": -33.847,
   "longitude": 151.067,
-  "profile": "ADULT"
+  "profile": "AGE_10_13"
 }
 ```
 
@@ -105,7 +105,7 @@ Example response:
 {
   "request": {
     "sport": "SOCCER",
-    "profile": "ADULT",
+    "profile": "AGE_10_13",
     "location": {
       "latitude": -33.847,
       "longitude": 151.067,
