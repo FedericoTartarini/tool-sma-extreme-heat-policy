@@ -106,7 +106,7 @@ Import rules:
 
 ## GitHub Pages deployment
 
-Frontend deploys to GitHub Pages from pushes to `dev/front-back-end` via
+Frontend deploys to GitHub Pages from pushes to `development` via
 the workflow at `.github/workflows/frontend-pages.yml`.
 
 Repository settings:
