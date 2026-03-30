@@ -25,6 +25,7 @@ export function useHomeUrlSync({
     sport: string;
     loc: string;
   } | null>(null);
+  const syncRunRef = useRef(0);
 
   useEffect(() => {
     if (!canSyncSelection || !selectedLocation) {
@@ -46,6 +47,8 @@ export function useHomeUrlSync({
       return;
     }
 
+    const runId = ++syncRunRef.current;
+
     void (async () => {
       await setQueryStates(
         {
@@ -55,6 +58,10 @@ export function useHomeUrlSync({
         },
         { history: "replace" },
       );
+
+      if (runId !== syncRunRef.current) {
+        return;
+      }
 
       if (channel !== "shared") {
         savePersistedHomeFilters(nextSelection);
