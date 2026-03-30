@@ -3,13 +3,13 @@ name: Frontend Pages
 on:
   pull_request:
     branches:
-      - dev/front-back-end
+      - development
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-pages.yml"
   push:
     branches:
-      - dev/front-back-end
+      - development
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-pages.yml"
@@ -53,7 +53,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate GitHub Pages variables
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev/front-back-end'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_MAPBOX_ACCESS_TOKEN: ${{ vars.VITE_MAPBOX_ACCESS_TOKEN }}
@@ -82,13 +82,13 @@ jobs:
         run: pnpm run build
 
       - name: Upload GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev/front-back-end'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
         uses: actions/upload-pages-artifact@v4
         with:
           path: frontend/dist
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev/front-back-end'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     needs: build
     runs-on: ubuntu-latest
     permissions:
