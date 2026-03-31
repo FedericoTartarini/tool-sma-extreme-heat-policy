@@ -1,21 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { buildHeatRiskRequest, isHeatRiskApiResponse } from "@/api/heatRisk";
+import { HEAT_RISK_PROFILE_VALUES } from "@/domain/heatRiskProfile";
 
 describe("buildHeatRiskRequest", () => {
-  it("adds the default ADULT profile to the Home risk payload", () => {
-    expect(
-      buildHeatRiskRequest({
+  it.each(HEAT_RISK_PROFILE_VALUES)(
+    "preserves the caller-provided %s profile in the Home risk payload",
+    (profile) => {
+      expect(
+        buildHeatRiskRequest({
+          sport: "SOCCER",
+          latitude: -33.847,
+          longitude: 151.067,
+          profile,
+        }),
+      ).toEqual({
         sport: "SOCCER",
         latitude: -33.847,
         longitude: 151.067,
-      }),
-    ).toEqual({
-      sport: "SOCCER",
-      latitude: -33.847,
-      longitude: 151.067,
-      profile: "ADULT",
-    });
-  });
+        profile,
+      });
+    },
+  );
 });
 
 describe("isHeatRiskApiResponse", () => {
@@ -24,7 +29,7 @@ describe("isHeatRiskApiResponse", () => {
       isHeatRiskApiResponse({
         request: {
           sport: "SOCCER",
-          profile: "ADULT",
+          profile: "AGE_10_13",
           location: {
             latitude: -33.847,
             longitude: 151.067,

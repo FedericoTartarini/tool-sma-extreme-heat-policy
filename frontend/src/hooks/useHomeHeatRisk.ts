@@ -1,7 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@mantine/hooks";
 import {
-  DEFAULT_HEAT_RISK_PROFILE,
   buildHeatRiskRequest,
   fetchHeatRisk,
   type HeatRiskApiResponse,
@@ -82,9 +81,11 @@ function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
  * Keeps the last successful risk visible on API errors.
  */
 export function useHomeHeatRisk(): UseHomeHeatRiskResult {
+  const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const [debouncedSport] = useDebouncedValue(sport, 250);
+  const [debouncedProfile] = useDebouncedValue(profile, 250);
 
   const locationCoordinates = toCoordinatesOrNull({
     latitude: selectedLocation?.latitude,
@@ -95,7 +96,7 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
     queryKey: [
       "heatRisk",
       debouncedSport,
-      DEFAULT_HEAT_RISK_PROFILE,
+      debouncedProfile,
       locationCoordinates?.latitude.toFixed(6) ?? "",
       locationCoordinates?.longitude.toFixed(6) ?? "",
     ],
@@ -105,6 +106,7 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
           sport: debouncedSport,
           latitude: locationCoordinates!.latitude,
           longitude: locationCoordinates!.longitude,
+          profile: debouncedProfile,
         }),
         { signal },
       );
@@ -134,7 +136,9 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
     if (
       !locationCoordinates ||
       !debouncedSport ||
+      !debouncedProfile ||
       sport !== debouncedSport ||
+      profile !== debouncedProfile ||
       !selectedLocation
     ) {
       return false;
@@ -150,6 +154,7 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
     locationCoordinates &&
     calculated &&
     !riskQuery.isPlaceholderData &&
+    profile === debouncedProfile &&
     sport === debouncedSport,
   );
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from sma_extreme_heat_backend.api.routes import get_risk_service
@@ -15,6 +16,8 @@ from sma_extreme_heat_backend.schemas.home import (
     RiskResponse,
 )
 
+VALID_PROFILES = ("ADULT", "UNDER_10", "AGE_10_13", "AGE_14_17")
+
 
 class SuccessfulRiskService:
     """Route test double that returns a valid forecast-centric response."""
@@ -25,11 +28,11 @@ class SuccessfulRiskService:
         assert payload.sport == "SOCCER"
         assert payload.latitude == -33.847
         assert payload.longitude == 151.067
-        assert payload.profile == "ADULT"
+        assert payload.profile in VALID_PROFILES
         return RiskResponse(
             request=RequestSummary(
                 sport="SOCCER",
-                profile="ADULT",
+                profile=payload.profile,
                 location=LocationSummary(
                     latitude=-33.847,
                     longitude=151.067,
@@ -105,7 +108,8 @@ class MissingInputRiskService:
         )
 
 
-def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
+@pytest.mark.parametrize("profile", VALID_PROFILES)
+def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) -> None:
     """The route should serialize the new forecast-centric response contract."""
 
     app = create_app()
@@ -115,7 +119,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
         "sport": "SOCCER",
         "latitude": -33.847,
         "longitude": 151.067,
-        "profile": "ADULT",
+        "profile": profile,
     }
 
     with TestClient(app) as client:
@@ -125,7 +129,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
     assert response.json() == {
         "request": {
             "sport": "SOCCER",
-            "profile": "ADULT",
+            "profile": profile,
             "location": {
                 "latitude": -33.847,
                 "longitude": 151.067,
@@ -259,7 +263,7 @@ def test_post_home_risk_invalid_profile_returns_422() -> None:
                 "sport": "SOCCER",
                 "latitude": -33.847,
                 "longitude": 151.067,
-                "profile": "Adult",
+                "profile": "KIDS",
             },
         )
 

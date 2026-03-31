@@ -184,7 +184,7 @@
           {
             "runs": [
               {
-                "text": "Any personal information given to the University will be dealt with in accordance with the University’s Privacy Policy. Any information provided may be accessed by any employee of the University in accordance with the requirements of the University’s Privacy Policy. No personal information is collected by this website. The website stores the user indicated location and sport in local file storage. Some or all of the information provided by the user may be stored in a cloud database in the future. The University may use this information for research and non-commercial purpose only, such as to study the types of users and their usage of the website. The website uses Google Analytics to collect anonymous statistics on the number of visitors to the website, record user activity and approximate location of users based on the detected IP address. All this data is de-identified by Google."
+                "text": "Any personal information given to the University will be dealt with in accordance with the University’s Privacy Policy. Any information provided may be accessed by any employee of the University in accordance with the requirements of the University’s Privacy Policy. No personal information is collected by this website. The website stores the user indicated location, sport, and age group in local file storage. Some or all of the information provided by the user may be stored in a cloud database in the future. The University may use this information for research and non-commercial purpose only, such as to study the types of users and their usage of the website. The website uses Google Analytics to collect anonymous statistics on the number of visitors to the website, record user activity and approximate location of users based on the detected IP address. All this data is de-identified by Google."
               }
             ]
           }
@@ -239,6 +239,11 @@
     },
     "sections": {
       "filters": {
+        "profileLabel": "Age",
+        "profileAdult": "Adult",
+        "profileUnder10": "< 10y",
+        "profileAge10To13": "10–13y",
+        "profileAge14To17": "14–17y",
         "sportLabel": "Sport",
         "locationLabel": "Location",
         "defaultLocation": "North Sydney, Sydney, AU",

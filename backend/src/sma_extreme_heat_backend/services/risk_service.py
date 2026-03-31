@@ -110,8 +110,8 @@ class RiskService:
         if hourly_mrt_df.empty:
             raise WeatherProviderError("No hourly record after 30-minute resample")
 
-        # `ADULT` and `KIDS` already flow through the public contract and cache key,
-        # but both profiles currently use the same pythermalcomfort model path.
+        # Profiles already flow through the public contract and cache key, but
+        # all supported age groups currently use the same pythermalcomfort model path.
         response = RiskResponse(
             request=RequestSummary(
                 sport=payload.sport,

@@ -22,6 +22,7 @@ export function HomePage() {
   const { t } = useTranslation();
   const { setQueryStates } = useHomeBootstrap();
   const { canSyncSelection, hasCalculatedRisk, refresh } = useHomeHeatRisk();
+  const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const [refreshToastEventId, setRefreshToastEventId] = useState(0);
@@ -66,7 +67,7 @@ export function HomePage() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [hasCalculatedRisk, selectedLocation, sport]);
+  }, [hasCalculatedRisk, profile, selectedLocation, sport]);
 
   return (
     <>

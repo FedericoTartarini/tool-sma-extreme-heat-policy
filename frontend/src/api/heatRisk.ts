@@ -1,10 +1,10 @@
 import type { SportType } from "@/domain/sport";
 import { endpoints } from "@/api/endpoints";
 import { httpClient } from "@/api/httpClient";
-
-export type HeatRiskProfile = "ADULT" | "KIDS";
-
-export const DEFAULT_HEAT_RISK_PROFILE: HeatRiskProfile = "ADULT";
+import {
+  isHeatRiskProfile,
+  type HeatRiskProfile,
+} from "@/domain/heatRiskProfile";
 
 export interface HeatRiskRequest {
   sport: SportType;
@@ -69,17 +69,15 @@ export type HeatRiskApiResult =
     };
 
 /**
- * Builds the Home heat-risk request payload using the current default profile.
+ * Builds the Home heat-risk request payload.
  */
 export function buildHeatRiskRequest(payload: {
   sport: SportType;
   latitude: number;
   longitude: number;
+  profile: HeatRiskProfile;
 }): HeatRiskRequest {
-  return {
-    ...payload,
-    profile: DEFAULT_HEAT_RISK_PROFILE,
-  };
+  return payload;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -96,10 +94,6 @@ function isValidIsoDateTime(value: unknown): value is string {
     value.length > 0 &&
     !Number.isNaN(Date.parse(value))
   );
-}
-
-function isHeatRiskProfile(value: unknown): value is HeatRiskProfile {
-  return value === "ADULT" || value === "KIDS";
 }
 
 function isHeatRiskApiData(value: unknown): value is HeatRiskApiData {

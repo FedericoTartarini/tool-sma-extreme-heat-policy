@@ -14,6 +14,8 @@ from sma_extreme_heat_backend.core.errors import ModelInputUnavailableError
 from sma_extreme_heat_backend.schemas.home import RiskRequest
 from sma_extreme_heat_backend.services.risk_service import RiskService
 
+VALID_PROFILES = ("ADULT", "UNDER_10", "AGE_10_13", "AGE_14_17")
+
 
 class FakeWeatherClient:
     """Test double that returns a deterministic hourly forecast."""
@@ -291,8 +293,17 @@ async def test_risk_service_cache_key_changes_with_coordinates(
     assert calculator.calls == 6
 
 
+@pytest.mark.parametrize(
+    ("first_profile", "second_profile"),
+    [
+        ("ADULT", "UNDER_10"),
+        ("AGE_10_13", "AGE_14_17"),
+    ],
+)
 async def test_risk_service_cache_key_changes_with_profile(
     monkeypatch: pytest.MonkeyPatch,
+    first_profile: str,
+    second_profile: str,
 ) -> None:
     """Profile changes should produce independent cache entries."""
 
@@ -310,7 +321,7 @@ async def test_risk_service_cache_key_changes_with_profile(
             sport="SOCCER",
             latitude=-33.847,
             longitude=151.067,
-            profile="ADULT",
+            profile=first_profile,
         )
     )
     await service.calculate_home_risk(
@@ -318,7 +329,7 @@ async def test_risk_service_cache_key_changes_with_profile(
             sport="SOCCER",
             latitude=-33.847,
             longitude=151.067,
-            profile="KIDS",
+            profile=second_profile,
         )
     )
 
@@ -326,10 +337,12 @@ async def test_risk_service_cache_key_changes_with_profile(
     assert calculator.calls == 6
 
 
-async def test_risk_service_returns_same_forecast_for_adult_and_kids_profiles(
+@pytest.mark.parametrize("profile", VALID_PROFILES)
+async def test_risk_service_returns_same_forecast_for_all_profiles(
     monkeypatch: pytest.MonkeyPatch,
+    profile: str,
 ) -> None:
-    """Adult and kids currently map to the same pythermalcomfort model path."""
+    """All supported profiles currently map to the same pythermalcomfort model path."""
 
     _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
 
@@ -338,7 +351,7 @@ async def test_risk_service_returns_same_forecast_for_adult_and_kids_profiles(
         calculator=FakeCalculator(),
         ttl_seconds=600,
     )
-    kids_service = RiskService(
+    comparison_service = RiskService(
         weather_client=FakeWeatherClient(),
         calculator=FakeCalculator(),
         ttl_seconds=600,
@@ -352,19 +365,19 @@ async def test_risk_service_returns_same_forecast_for_adult_and_kids_profiles(
             profile="ADULT",
         )
     )
-    kids = await kids_service.calculate_home_risk(
+    comparison = await comparison_service.calculate_home_risk(
         RiskRequest(
             sport="SOCCER",
             latitude=-33.847,
             longitude=151.067,
-            profile="KIDS",
+            profile=profile,
         )
     )
 
     assert adult.request.profile == "ADULT"
-    assert kids.request.profile == "KIDS"
+    assert comparison.request.profile == profile
     assert [point.model_dump() for point in adult.forecast] == [
-        point.model_dump() for point in kids.forecast
+        point.model_dump() for point in comparison.forecast
     ]
 
 
