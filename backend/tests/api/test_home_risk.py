@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from sma_extreme_heat_backend.api.routes import get_risk_service
+from sma_extreme_heat_backend.core.config import get_settings
 from sma_extreme_heat_backend.core.errors import ModelInputUnavailableError, WeatherProviderError
 from sma_extreme_heat_backend.main import create_app
 from sma_extreme_heat_backend.schemas.home import (
@@ -171,6 +172,38 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
             },
         ],
     }
+
+
+def test_options_home_risk_allows_netlify_preview_origin_via_regex(monkeypatch) -> None:
+    """CORS regex settings should allow Netlify preview deploy origins."""
+
+    monkeypatch.setenv("CORS_ORIGINS", '["https://sports-heat-tool.sydney.edu.au"]')
+    monkeypatch.setenv(
+        "CORS_ORIGIN_REGEX",
+        r"^https://([a-z0-9-]+--)?sports-heat-tool\.netlify\.app$",
+    )
+    get_settings.cache_clear()
+
+    app = create_app()
+
+    try:
+        with TestClient(app) as client:
+            response = client.options(
+                "/home/risk",
+                headers={
+                    "Origin": "https://deploy-preview-30--sports-heat-tool.netlify.app",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                },
+            )
+    finally:
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert (
+        response.headers["access-control-allow-origin"]
+        == "https://deploy-preview-30--sports-heat-tool.netlify.app"
+    )
 
 
 def test_post_home_risk_missing_latitude_returns_422() -> None:
