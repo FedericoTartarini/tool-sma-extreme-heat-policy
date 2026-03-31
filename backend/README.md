@@ -36,6 +36,9 @@ uv sync
 
 ### Environment
 Copy `backend/.env.example` to `backend/.env` using the command `cp .env.example .env`.
+If you need to allow Netlify preview or branch deploy URLs, set
+`CORS_ORIGIN_REGEX` to a strict regex such as
+`^https://([a-z0-9-]+--)?sports-heat-tool\.netlify\.app$`.
 
 ### Run locally
 ```bash

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173"],
         alias="CORS_ORIGINS",
     )
+    cors_origin_regex: str | None = Field(default=None, alias="CORS_ORIGIN_REGEX")
     open_meteo_base_url: str = Field(
         default="https://api.open-meteo.com/v1",
         alias="OPEN_METEO_BASE_URL",
@@ -34,6 +35,16 @@ class Settings(BaseSettings):
 
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
+        return value
+
+    @field_validator("cors_origin_regex", mode="before")
+    @classmethod
+    def parse_cors_origin_regex(cls, value: object) -> object:
+        """Treat empty regex settings as disabled."""
+
+        if isinstance(value, str):
+            stripped_value = value.strip()
+            return stripped_value or None
         return value
 
 
