@@ -1,0 +1,411 @@
+{
+  "app": {
+    "title": "Sports Heat Tool"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "detailedRecommendations": "Recommendations",
+    "drawerTitle": "Navigation",
+    "toggleAriaLabel": "Toggle navigation",
+    "logoAlt": "University of Sydney"
+  },
+  "footer": {
+    "developedBy": "Developed by:",
+    "endorsedBy": "Endorsed by:",
+    "feedbackLink": "Provide your feedback",
+    "citePrompt": "If you use this tool, please cite the following paper:",
+    "paperTitle": "The Sports Medicine Australia extreme heat risk and response guidelines and web tool.",
+    "authors": "Tartarini F, Smallcombe JW, Lynch GP, Cross TJ, Broderick C, Jay O.",
+    "journal": "J Sci Med Sport. 2025 Sep;28(9):690-699.",
+    "copyright": "© {{year}} - Heat and Health Research Centre, The University of Sydney.",
+    "reviewedBy": "This website was reviewed by the Sports Medicine Australia Scientific Advisory Committee in {{year}}",
+    "version": "Version: {{version}}",
+    "contactUs": "Contact Us",
+    "usydLogoAlt": "University of Sydney logo",
+    "smaLogoAlt": "Sports Medicine Australia logo"
+  },
+  "about": {
+    "sections": [
+      {
+        "iconKey": "overview",
+        "title": "The University of Sydney Sports Heat Tool",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "This website provides a convenient and freely accessible tool for assessing heat stress risk during sport and physical activity in Australia. "
+              },
+              {
+                "text": "It is based on the SMA Extreme Heat Risk and Response Guidelines. ",
+                "href": "https://sma.org.au/resources/policies-and-guidelines/hot-weather/"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "The guidelines are developed by the Heat and Health Research Centre at the University of Sydney and the methodology is described in "
+              },
+              {
+                "text": "this publication.",
+                "href": "https://www.jsams.org/article/S1440-2440(25)00069-6/fulltext"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "functionalities",
+        "title": "Functionalities",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "This website currently provides recommendations the most popular sports played in Australia. These sports have been characterised based on their typical clothing insulation, metabolic rate, and expected activity duration."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "The web tool allows users to assess heat stress risk based on location-specific, hour-by-hour environmental data automatically extracted from the nearest weather station. It also offers hierarchical recommendations for risk reduction strategies and a 7-day risk forecasting feature."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "heat-risk",
+        "title": "Vigorous exercise places some people at risk of heat illness, especially in hot weather.",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "If untreated, heat illness can lead to the more serious and potentially life-threatening condition of heat stroke. By understanding the causes of heat illness health professionals, coaches, players and anyone involved in sport or physical activity can help prevent heat illness by using the advice provided in the Guidelines to minimise the risks."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "Most of the advice involves simple rules of common sense. Listen to your body and stop or slow down if you feel unwell. This is particularly important for children. Make sure that you have access to cool drinking water, wear a good hat and take particular care in the hottest parts of the day or year."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "The target audience for the Guidelines are all Australians who undertake sport and physical activity, but they will be particularly useful to health professionals involved in the promotion of physical activity, coaches, fitness leaders and sports administrators."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "Beat the Heat fact sheet",
+                "href": "https://sma.org.au/wp-content/uploads/2023/03/beat-the-heat-2011.pdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "uv-guide",
+        "title": "UV Exposure & Heat Illness Guide",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "A joint venture between Sports Medicine Australia’s Smartplay and the Cancer Council’s Sunsmart has produced a UV Exposure and Heat Illness Guide. The guide provides up to date information on UV exposure and heat illness, tips for creating, reviewing and implementing local guidelines, a modifiable UV exposure and heat illness checklist and real-life examples."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "Guidelines download",
+                "href": "https://sma.org.au/wp-content/uploads/2023/03/UV-Exposure-and-Heat-Illness-Guide.pdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "terms",
+        "title": "Terms and conditions",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "This Sports and Medicine Australia (SMA) - Extreme Heat Policy website (https://sma-heat-policy.sydney.edu.au/) provides general information for informational and educational purposes only about heat stress risk for people engaged in various types of sports at a particular location."
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "The Heat and Health Research Centre at the University of Sydney (“University”) created and provided this website. A specific heat stress risk scale is displayed using a physiological model that provides a risk calculation for heat stress, including providing evidence-based cooling strategies."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "medical-disclaimer",
+        "title": "Medical disclaimer",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "No medical advice is provided in the information accessed through this website. If you believe you or any other individual has a medical emergency or any other health problem, you should promptly call an emergency medical service provider or consult your physician or healthcare provider. You should seek immediate medical attention if you think you may be suffering from any medical condition."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "warranty",
+        "title": "Warranty and general disclaimer",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "To the maximum extent permitted by law, including the Australian Consumer Law, we make no warranties or representations about this website or its content, including but not limited to warranties or representations that they will be complete, accurate or up-to-date, that access will be uninterrupted or error-free or free from viruses, or that this website will be secure. We reserve the right to restrict, suspend or terminate without notice your access to this website, any content, or any feature of this website at any time without notice, and we will not be responsible for any loss, cost, damage or liability that may arise as a result."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "privacy",
+        "title": "Privacy",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "Any personal information given to the University will be dealt with in accordance with the University’s Privacy Policy. Any information provided may be accessed by any employee of the University in accordance with the requirements of the University’s Privacy Policy. No personal information is collected by this website. The website stores the user indicated location and sport in local file storage. Some or all of the information provided by the user may be stored in a cloud database in the future. The University may use this information for research and non-commercial purpose only, such as to study the types of users and their usage of the website. The website uses Google Analytics to collect anonymous statistics on the number of visitors to the website, record user activity and approximate location of users based on the detected IP address. All this data is de-identified by Google."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "unacceptable-activity",
+        "title": "Unacceptable Activity",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "You must not do any act that we would deem to be inappropriate, is unlawful or is prohibited by any laws applicable to our website, including but not limited to:"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- any act that would constitute a breach of either the privacy (including uploading private or personal information without an individual's consent) or any other of the legal rights of individuals;"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- using this website to defame or libel us, our employees or other individuals;"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- uploading files that contain viruses that may cause damage to our property or the property of other individuals; OR"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- posting or transmitting to this website any non-authorised material including, but not limited to, material that is, in our opinion, likely to cause annoyance, or which is defamatory, racist, obscene, threatening, pornographic or otherwise or which is detrimental to or in violation of our systems or a third party's systems or network security."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "home": {
+    "notifications": {
+      "forecastUpdated": "Forecast data has been updated"
+    },
+    "sections": {
+      "filters": {
+        "sportLabel": "Sport",
+        "locationLabel": "Location",
+        "defaultLocation": "North Sydney, Sydney, AU",
+        "locationPlaceholder": "Search suburb, address, city, or venue",
+        "sportNotFound": "No sport found",
+        "selectedSportFallback": "Selected sport",
+        "sportImageUnavailable": "Sport image unavailable",
+        "sportImageHelp": "Add an image for {{sportLabel}} at {{path}}.",
+        "sportImageAlt": "{{sportLabel}} preview",
+        "helperText": "Search and select a location to calculate risk automatically"
+      },
+      "currentRisk": {
+        "title": "Current Sport Heat Score"
+      },
+      "keyRecommendations": {
+        "title": "Key recommendations:"
+      },
+      "detailedSuggestions": {
+        "title": "Detailed suggestions:"
+      },
+      "forecast": {
+        "title": "Forecasted risk",
+        "maxRiskLabel": "Max risk:"
+      },
+      "map": {
+        "title": "Location Map",
+        "missingCoordinatesTitle": "Map unavailable",
+        "missingCoordinatesBody": "Coordinates for {{location}} are unavailable, so the map cannot be displayed.",
+        "locationFallback": "Select a location"
+      }
+    }
+  },
+  "errors": {
+    "mapbox": {
+      "missingToken": "Mapbox access token is required to search locations. Please configure VITE_MAPBOX_ACCESS_TOKEN.",
+      "unavailable": "Location suggestions are temporarily unavailable. Please try again.",
+      "noResults": "No location found for this query.",
+      "retrieveFailed": "Unable to resolve coordinates for the selected location. Please try another suggestion."
+    },
+    "location": {
+      "missingCoordinates": "Selected location is missing coordinates. Please select a suggestion again.",
+      "prefilledNotMatched": "Unable to auto-match this prefilled location. Please select a suggestion manually."
+    },
+    "risk": {
+      "missingApiBaseUrl": "Risk API is not configured. Set VITE_API_BASE_URL.",
+      "invalidResponse": "Risk API returned an invalid response. Please try again.",
+      "network": "Risk calculation is temporarily unavailable. Please try again."
+    }
+  },
+  "providers": {
+    "mapbox": "Mapbox"
+  },
+  "risk": {
+    "level": {
+      "low": "Low",
+      "moderate": "Moderate",
+      "high": "High",
+      "extreme": "Extreme"
+    },
+    "levelShort": {
+      "low": "Low",
+      "moderate": "Mod",
+      "high": "High",
+      "extreme": "Ext"
+    }
+  },
+  "charts": {
+    "gauge": {
+      "seriesName": "Heat Score",
+      "riskLabel": "Heat Risk",
+      "riskUnavailable": "N/A"
+    },
+    "forecast": {
+      "xAxisName": "Time",
+      "yAxisRiskName": "Risk",
+      "tooltipRiskLabel": "Risk"
+    }
+  },
+  "sports": {
+    "abseiling": "Abseiling",
+    "archery": "Archery",
+    "australian_football": "Australian football",
+    "baseball": "Baseball",
+    "basketball": "Basketball",
+    "bowls": "Bowls",
+    "canoeing": "Canoeing",
+    "cricket": "Cricket",
+    "cycling": "Cycling",
+    "equestrian": "Equestrian",
+    "field_athletics": "Running (Athletics)",
+    "field_hockey": "Field hockey",
+    "fishing": "Fishing",
+    "golf": "Golf",
+    "horseback": "Horseback riding",
+    "kayaking": "Kayaking",
+    "running": "Long distance running",
+    "mtb": "Mountain biking",
+    "netball": "Netball",
+    "oztag": "Oztag",
+    "pickleball": "Pickleball",
+    "climbing": "Rock climbing",
+    "rowing": "Rowing",
+    "rugby_league": "Rugby league",
+    "rugby_union": "Rugby union",
+    "sailing": "Sailing",
+    "shooting": "Shooting",
+    "soccer": "Soccer",
+    "softball": "Softball",
+    "tennis": "Tennis",
+    "touch": "Touch football",
+    "volleyball": "Volleyball",
+    "walking": "Brisk walking"
+  },
+  "recommendations": {
+    "key": {
+      "low": ["Stay hydrated", "Wear light clothing"],
+      "moderate": ["Stay hydrated", "Wear light clothing", "Rest Breaks"],
+      "high": [
+        "Stay hydrated",
+        "Wear light clothing",
+        "Rest Breaks",
+        "Active Cooling"
+      ],
+      "extreme": ["Consider Suspending Play"]
+    },
+    "manual": {
+      "title": "Heat Stress Risk Categories"
+    },
+    "detailed": {
+      "youShouldLabel": "You should:",
+      "low": {
+        "description": "Maintaining hydration through regular fluid consumption and modifying clothing is still a simple, yet effective, way of keeping cool and preserving health and performance during the summer months.",
+        "suggestions": [
+          "Ensure pre-exercise hydration by consuming 6 ml of water per kilogram of body weight every 2-3 hours before exercise. For a 70kg individual, this equates to 420ml of fluid every 2-3 hours (a standard sports drink bottle contains 500ml).",
+          "Drink regularly throughout exercise. You should aim to drink enough to offset sweat losses, but it is important to avoid over-drinking because this can also have negative health effects. To familiarise yourself with how much you typically sweat, become accustomed to weighing yourself before and after practice or competition.",
+          "Where possible, select light-weight and breathable clothing with extra ventilation.",
+          "Remove unnecessary clothing/equipment and/or excess clothing layers.",
+          "Reduce the amount of skin that is covered by clothing - this will help increase your sweat evaporation, which will help you dissipate heat."
+        ]
+      },
+      "moderate": {
+        "description": "Increasing the frequency and/or duration of your rest breaks exercise or sporting activities is an effective way of reducing your risk for heat illness even if minimal resources are available.",
+        "suggestions": [
+          "During training sessions, provide a minimum of 15 minutes of rest for every 45 minutes of practice.",
+          "Extend scheduled rest breaks that naturally occur during match-play of a particular sport (e.g. half-time) by ~10 minutes. This is effective for sports such as soccer/football and rugby and can be implemented across other sports such as field hockey.",
+          "Implement additional rest breaks that are not normally scheduled to occur. For example, 3 to 5-min “quarter-time” breaks can be introduced mid-way through each half of a football or rugby match, or an extended 10-min drinks break can be introduced every hour of a cricket match or after the second set of a tennis match.",
+          "For sports with continuous play without any scheduled breaks, courses or play duration can be shortened.",
+          "During all breaks in play or practice, everyone should seek shade - if natural shade is not available, portable sun shelters should be provided, and water freely available."
+        ]
+      },
+      "high": {
+        "description": "Active cooling strategies should be applied during scheduled and additional rest breaks, or before and during activity if play is continuous. Below are strategies that have been shown to effectively reduce body temperature. The suitability and feasibility of each strategy will depend on the type of sport or exercise you are performing.",
+        "suggestions": [
+          "Drinking cold fluids and/or ice slushies before exercise commences. Note that cold water and ice slushy ingestion during exercise is less effective for cooling.",
+          "Submerging your arms/feet in cold water.",
+          "Water dousing - wetting your skin with cool water using a sponge or a spray bottle helps increase evaporation, which is the most effective cooling mechanism in the heat.",
+          "Ice packs/towels - placing an ice pack or damp towel filled with crushed ice around your neck.",
+          "Electric (misting) fans - outdoor fans can help keep your body cool, especially when combined with a water misting system."
+        ]
+      },
+      "extreme": {
+        "description": "Exercise/play should be suspended. If play has commenced, then all activities should be stopped as soon as possible.",
+        "suggestions": [
+          "All players should seek shade or cool refuge in an air-conditioned space if available.",
+          "Active cooling strategies should be applied."
+        ]
+      }
+    }
+  }
+}

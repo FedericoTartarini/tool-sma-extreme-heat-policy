@@ -1,0 +1,103 @@
+name: Frontend Pages
+
+on:
+  pull_request:
+    branches:
+      - development
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-pages.yml"
+  push:
+    branches:
+      - development
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate GitHub Pages variables
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ vars.VITE_MAPBOX_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "Missing repository variable VITE_API_BASE_URL"
+            exit 1
+          fi
+
+          if [ -z "$VITE_MAPBOX_ACCESS_TOKEN" ]; then
+            echo "Missing repository variable VITE_MAPBOX_ACCESS_TOKEN"
+            exit 1
+          fi
+
+      - name: Lint frontend
+        run: pnpm run lint:ci
+
+      - name: Run frontend tests
+        run: pnpm run test:ci
+
+      - name: Build frontend
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ vars.VITE_MAPBOX_ACCESS_TOKEN }}
+        run: pnpm run build
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: frontend/dist
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

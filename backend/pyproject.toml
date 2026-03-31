@@ -1,0 +1,44 @@
+[project]
+name = "sma-extreme-heat-backend"
+version = "0.1.0"
+description = "FastAPI backend for SMA Extreme Heat Policy risk calculation"
+readme = "README.md"
+authors = [
+    { name = "Yehui Huang", email = "yehui.usyd@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.129.0",
+    "httpx>=0.28.1",
+    "pandas>=2.3.3",
+    "pvlib>=0.13.1",
+    "pydantic-settings>=2.13.0",
+    "pythermalcomfort>=3.9.0",
+    "timezonefinder>=8.1.0",
+    "uvicorn[standard]>=0.41.0",
+]
+
+[project.scripts]
+sma-extreme-heat-backend = "sma_extreme_heat_backend.main:main"
+
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.15.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
