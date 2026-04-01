@@ -43,6 +43,7 @@ class SuccessfulRiskService:
             forecast=[
                 ForecastPoint(
                     time_utc="2026-03-09T00:00:00Z",
+                    time_local="2026-03-09T11:00:00+11:00",
                     inputs=ForecastInputs(
                         air_temperature_c=31.0,
                         mean_radiant_temperature_c=37.25,
@@ -61,6 +62,7 @@ class SuccessfulRiskService:
                 ),
                 ForecastPoint(
                     time_utc="2026-03-09T01:00:00Z",
+                    time_local="2026-03-09T12:00:00+11:00",
                     inputs=ForecastInputs(
                         air_temperature_c=32.0,
                         mean_radiant_temperature_c=38.1,
@@ -140,6 +142,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) 
         "forecast": [
             {
                 "time_utc": "2026-03-09T00:00:00Z",
+                "time_local": "2026-03-09T11:00:00+11:00",
                 "inputs": {
                     "air_temperature_c": 31.0,
                     "mean_radiant_temperature_c": 37.25,
@@ -158,6 +161,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) 
             },
             {
                 "time_utc": "2026-03-09T01:00:00Z",
+                "time_local": "2026-03-09T12:00:00+11:00",
                 "inputs": {
                     "air_temperature_c": 32.0,
                     "mean_radiant_temperature_c": 38.1,

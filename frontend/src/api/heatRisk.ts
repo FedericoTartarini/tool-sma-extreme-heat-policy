@@ -5,6 +5,7 @@ import {
   isHeatRiskProfile,
   type HeatRiskProfile,
 } from "@/domain/heatRiskProfile";
+import { parseOffsetIsoDateTime } from "@/lib/offsetIsoDateTime";
 
 export interface HeatRiskRequest {
   sport: SportType;
@@ -32,6 +33,7 @@ export interface ForecastInputsApiData {
 
 export interface ForecastApiPoint {
   time_utc: string;
+  time_local: string;
   inputs: ForecastInputsApiData;
   heat_risk: HeatRiskApiData;
 }
@@ -96,6 +98,10 @@ function isValidIsoDateTime(value: unknown): value is string {
   );
 }
 
+function isValidOffsetIsoDateTime(value: unknown): value is string {
+  return parseOffsetIsoDateTime(value) !== null;
+}
+
 function isHeatRiskApiData(value: unknown): value is HeatRiskApiData {
   if (!isRecord(value)) {
     return false;
@@ -134,6 +140,7 @@ function isForecastApiPoint(value: unknown): value is ForecastApiPoint {
 
   return (
     isValidIsoDateTime(value.time_utc) &&
+    isValidOffsetIsoDateTime(value.time_local) &&
     isForecastInputsApiData(value.inputs) &&
     isHeatRiskApiData(value.heat_risk)
   );

@@ -7,14 +7,6 @@ interface WeekdayFormatOptions extends DateFormatOptions {
   weekday?: "long" | "short";
 }
 
-function getBrowserTimeZone(): string | undefined {
-  if (typeof Intl === "undefined") {
-    return undefined;
-  }
-
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
 function formatWithIntl(
   date: string,
   locale: string,
@@ -34,14 +26,13 @@ function formatWithIntl(
 }
 
 /**
- * Formats ISO dates into short, AU-style labels in browser local time by default.
+ * Formats ISO dates into short, AU-style labels, optionally pinned to a specific timezone.
  */
 export function formatDateLabel(
   date: string,
   options?: DateFormatOptions,
 ): string {
   const locale = options?.locale ?? "en-AU";
-  const timeZone = options?.timeZone ?? getBrowserTimeZone();
 
   return formatWithIntl(
     date,
@@ -51,19 +42,18 @@ export function formatDateLabel(
       day: "2-digit",
       month: "short",
     },
-    timeZone,
+    options?.timeZone,
   );
 }
 
 /**
- * Formats ISO dates into weekday labels in browser local time by default.
+ * Formats ISO dates into weekday labels, optionally pinned to a specific timezone.
  */
 export function formatWeekdayLabel(
   date: string,
   options?: WeekdayFormatOptions,
 ): string {
   const locale = options?.locale ?? "en-AU";
-  const timeZone = options?.timeZone ?? getBrowserTimeZone();
 
   return formatWithIntl(
     date,
@@ -71,6 +61,6 @@ export function formatWeekdayLabel(
     {
       weekday: options?.weekday ?? "long",
     },
-    timeZone,
+    options?.timeZone,
   );
 }

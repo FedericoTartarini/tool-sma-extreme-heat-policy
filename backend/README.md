@@ -118,6 +118,7 @@ Example response:
   "forecast": [
     {
       "time_utc": "2026-03-09T00:00:00Z",
+      "time_local": "2026-03-09T11:00:00+11:00",
       "inputs": {
         "air_temperature_c": 31.0,
         "mean_radiant_temperature_c": 37.25,
@@ -145,18 +146,19 @@ Example response:
    - `relative_humidity_2m`
    - `wind_speed_10m`
    - `direct_normal_irradiance`
-   - `timezone=GMT`
+   - `timezone=<resolved IANA timezone>`
    - `wind_speed_unit=ms`
 2. Validate provider units at runtime:
    - `temperature_2m: °C`
    - `relative_humidity_2m: %`
    - `wind_speed_10m: m/s`
    - `direct_normal_irradiance: W/m²`
-3. Resolve the IANA timezone from `latitude` and `longitude`.
+3. Resolve the IANA timezone from `latitude` and `longitude`, then require the
+   provider response to echo back the same timezone.
 4. Keep hourly records where `time >= now_utc - 1h` inside the 7-day forecast window.
 5. Convert the retained rows into the resolved local timezone.
-6. Drop rows missing `tdb`, resample to `30min`, and interpolate numeric weather fields.
-7. Build MRT values with `pvlib` + `pythermalcomfort`:
+6. Drop rows missing `tdb`.
+7. Build MRT values with `pvlib` + `pythermalcomfort` on the provider-native hourly points:
    - compute solar elevation for each local timestamp
    - clamp negative solar elevations to `0`
    - derive `dni = direct_normal_irradiance * 0.75`
@@ -193,4 +195,5 @@ Example response:
 - Mean radiant temperature is not assumed to equal dry-bulb air temperature.
   The backend derives MRT through the solar-gain pipeline and returns the final
   `mean_radiant_temperature_c` in each forecast point.
-- The public response does not expose the raw Open-Meteo payload.
+- Each forecast point exposes both `time_utc` and `time_local`; `time_utc` is the
+  canonical instant, while `time_local` is the location-local display time.

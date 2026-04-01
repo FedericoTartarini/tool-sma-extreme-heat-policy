@@ -32,7 +32,6 @@ from sma_extreme_heat_backend.schemas.home import (
 from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
     resolve_timezone_name,
-    select_hourly_forecast_rows,
 )
 
 
@@ -92,13 +91,14 @@ class RiskService:
         if cached and cached.expires_at > now:
             return cached.value
 
-        weather = await self.weather_client.fetch_weather_forecast(
-            latitude=payload.latitude,
-            longitude=payload.longitude,
-        )
         timezone_name = resolve_timezone_name(
             latitude=payload.latitude,
             longitude=payload.longitude,
+        )
+        weather = await self.weather_client.fetch_weather_forecast(
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            timezone_name=timezone_name,
         )
         mrt_df = build_mrt_dataframe(
             points=weather.points,
@@ -106,9 +106,6 @@ class RiskService:
             longitude=payload.longitude,
             timezone_name=timezone_name,
         )
-        hourly_mrt_df = select_hourly_forecast_rows(mrt_df)
-        if hourly_mrt_df.empty:
-            raise WeatherProviderError("No hourly record after 30-minute resample")
 
         # Profiles already flow through the public contract and cache key, but
         # all supported age groups currently use the same pythermalcomfort model path.
@@ -122,7 +119,7 @@ class RiskService:
                     timezone=timezone_name,
                 ),
             ),
-            forecast=self._build_forecast(hourly_mrt_df=hourly_mrt_df, sport=payload.sport),
+            forecast=self._build_forecast(forecast_mrt_df=mrt_df, sport=payload.sport),
         )
 
         self._cache[key] = CacheEntry(value=response, expires_at=now + self.ttl_seconds)
@@ -142,14 +139,16 @@ class RiskService:
     def _build_forecast(
         self,
         *,
-        hourly_mrt_df: pd.DataFrame,
+        forecast_mrt_df: pd.DataFrame,
         sport: str,
     ) -> list[ForecastPoint]:
         """Convert MRT rows into forecast points, using the earliest complete row as current."""
 
-        first_candidate_point = self._first_candidate_forecast_point(hourly_mrt_df=hourly_mrt_df)
+        first_candidate_point = self._first_candidate_forecast_point(
+            forecast_mrt_df=forecast_mrt_df
+        )
         forecast: list[ForecastPoint] = []
-        for timestamp, point in hourly_mrt_df.iterrows():
+        for timestamp, point in forecast_mrt_df.iterrows():
             missing_inputs = self._missing_required_input_fields(point)
             if missing_inputs:
                 # Skip incomplete leading/future rows so `forecast[0]` is always the earliest
@@ -161,11 +160,6 @@ class RiskService:
                 point=point,
                 sport=sport,
             )
-            if not forecast:
-                # The first appended point becomes the canonical current reading for the UI.
-                forecast.append(forecast_point)
-                continue
-
             forecast.append(forecast_point)
 
         if forecast:
@@ -196,12 +190,12 @@ class RiskService:
         return missing_inputs
 
     @staticmethod
-    def _first_candidate_forecast_point(*, hourly_mrt_df: pd.DataFrame) -> pd.Series:
+    def _first_candidate_forecast_point(*, forecast_mrt_df: pd.DataFrame) -> pd.Series:
         """Return the earliest candidate row, used for fallback 422 error details."""
 
-        for _, point in hourly_mrt_df.iterrows():
+        for _, point in forecast_mrt_df.iterrows():
             return point
-        raise WeatherProviderError("No hourly record after 30-minute resample")
+        raise WeatherProviderError("No hourly record after MRT enrichment")
 
     def _missing_input_error_for_point(
         self,
@@ -274,7 +268,8 @@ class RiskService:
         )
 
         return ForecastPoint(
-            time_utc=self._to_time_utc(timestamp),
+            time_utc=timestamp.astimezone(UTC),
+            time_local=timestamp,
             inputs=ForecastInputs(
                 air_temperature_c=float(point.tdb),
                 mean_radiant_temperature_c=float(point.tr),
@@ -285,12 +280,6 @@ class RiskService:
             ),
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )
-
-    @staticmethod
-    def _to_time_utc(timestamp: datetime) -> str:
-        """Serialize a timestamp to the API's UTC ISO-8601 format."""
-
-        return timestamp.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
     @staticmethod
     def _resolve_model_wind_speed(*, vr: float, sport: str) -> float:
