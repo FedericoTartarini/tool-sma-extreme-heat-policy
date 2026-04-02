@@ -25,14 +25,15 @@ class FakeWeatherClient:
         *,
         expected_latitude: float | None = -33.847,
         expected_longitude: float | None = 151.067,
+        expected_timezone_name: str | None = "Australia/Sydney",
     ) -> None:
         self.calls = 0
         self.expected_latitude = expected_latitude
         self.expected_longitude = expected_longitude
+        self.expected_timezone_name = expected_timezone_name
         base_time = datetime(2026, 3, 9, 0, 0, tzinfo=UTC)
         self.points = [
             HourlyWeatherPoint(
-                raw_time=(base_time + timedelta(hours=offset)).strftime("%Y-%m-%dT%H:%M"),
                 time_utc=base_time + timedelta(hours=offset),
                 tdb=31.0 + offset,
                 rh=62.0 + offset,
@@ -42,7 +43,13 @@ class FakeWeatherClient:
             for offset in range(3)
         ]
 
-    async def fetch_weather_forecast(self, *, latitude: float, longitude: float) -> WeatherForecast:
+    async def fetch_weather_forecast(
+        self,
+        *,
+        latitude: float,
+        longitude: float,
+        timezone_name: str,
+    ) -> WeatherForecast:
         """Return the deterministic forecast and track request counts."""
 
         self.calls += 1
@@ -50,11 +57,9 @@ class FakeWeatherClient:
             assert latitude == self.expected_latitude
         if self.expected_longitude is not None:
             assert longitude == self.expected_longitude
-        return WeatherForecast(
-            points=self.points,
-            raw={"provider": "open-meteo", "timezone": "GMT"},
-            provider_timezone="GMT",
-        )
+        if self.expected_timezone_name is not None:
+            assert timezone_name == self.expected_timezone_name
+        return WeatherForecast(points=self.points)
 
     async def aclose(self) -> None:
         """Match the real client shutdown interface."""
@@ -91,6 +96,7 @@ class FakeCalculator:
 def _build_mrt_dataframe(
     *,
     timezone_name: str = "Australia/Sydney",
+    utc_start: str = "2026-03-09T00:00:00Z",
     wind_start: float = 1.5,
     tr_offset: float = 6.25,
     current_missing: set[str] | None = None,
@@ -101,7 +107,7 @@ def _build_mrt_dataframe(
     current_missing = current_missing or set()
     future_missing_by_row = future_missing_by_row or {}
     index_utc = pd.date_range(
-        start="2026-03-09T00:00:00Z",
+        start=utc_start,
         periods=3,
         freq="1h",
     )
@@ -200,9 +206,10 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         "t_extreme": 39.2,
         "recommendation": "Increase hydration & modify clothing",
     }
-    assert first.model_dump()["forecast"] == [
+    assert first.model_dump(mode="json")["forecast"] == [
         {
             "time_utc": "2026-03-09T00:00:00Z",
+            "time_local": "2026-03-09T11:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 31.0,
                 "mean_radiant_temperature_c": 37.25,
@@ -221,6 +228,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         },
         {
             "time_utc": "2026-03-09T01:00:00Z",
+            "time_local": "2026-03-09T12:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 32.0,
                 "mean_radiant_temperature_c": 38.25,
@@ -239,6 +247,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         },
         {
             "time_utc": "2026-03-09T02:00:00Z",
+            "time_local": "2026-03-09T13:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 33.0,
                 "mean_radiant_temperature_c": 39.25,
@@ -291,6 +300,50 @@ async def test_risk_service_cache_key_changes_with_coordinates(
 
     assert weather_client.calls == 2
     assert calculator.calls == 6
+
+
+async def test_risk_service_returns_local_hourly_times_for_quarter_hour_timezone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Forecast points should expose local hourly labels for quarter-hour timezones."""
+
+    _install_mrt_pipeline(
+        monkeypatch,
+        df=_build_mrt_dataframe(
+            timezone_name="Australia/Eucla",
+            utc_start="2026-03-09T00:15:00Z",
+        ),
+        timezone_name="Australia/Eucla",
+    )
+    service = RiskService(
+        weather_client=FakeWeatherClient(
+            expected_latitude=-31.721,
+            expected_longitude=128.883,
+            expected_timezone_name="Australia/Eucla",
+        ),
+        calculator=FakeCalculator(),
+        ttl_seconds=600,
+    )
+
+    response = await service.calculate_home_risk(
+        RiskRequest(
+            sport="SOCCER",
+            latitude=-31.721,
+            longitude=128.883,
+            profile="ADULT",
+        )
+    )
+
+    assert [point.model_dump(mode="json")["time_utc"] for point in response.forecast] == [
+        "2026-03-09T00:15:00Z",
+        "2026-03-09T01:15:00Z",
+        "2026-03-09T02:15:00Z",
+    ]
+    assert [point.model_dump(mode="json")["time_local"] for point in response.forecast] == [
+        "2026-03-09T09:00:00+08:45",
+        "2026-03-09T10:00:00+08:45",
+        "2026-03-09T11:00:00+08:45",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -462,7 +515,7 @@ async def test_risk_service_skips_future_points_with_missing_inputs(
     )
 
     assert calculator.calls == 2
-    assert [point.time_utc for point in response.forecast] == [
+    assert [point.model_dump(mode="json")["time_utc"] for point in response.forecast] == [
         "2026-03-09T00:00:00Z",
         "2026-03-09T02:00:00Z",
     ]
@@ -491,7 +544,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
     )
 
     assert calculator.calls == 2
-    assert [point.time_utc for point in response.forecast] == [
+    assert [point.model_dump(mode="json")["time_utc"] for point in response.forecast] == [
         "2026-03-09T01:00:00Z",
         "2026-03-09T02:00:00Z",
     ]

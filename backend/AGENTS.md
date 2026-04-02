@@ -47,9 +47,8 @@
 - Request requires `latitude` and `longitude`.
 - `sport` must be official pythermalcomfort `Sports` enum name (e.g. `SOCCER`).
 - Response shape:
-  - `heat_risk` -> raw pythermalcomfort output keys
-  - `meta_data` -> context and source payload references, including `location.timezone` when resolved (no mapbox payload)
-  - `forecast` -> UTC hourly points with `time_utc` and `risk_level_interpolated`
+  - `request` -> request context including `sport`, `profile`, and `location.timezone`
+  - `forecast` -> hourly points with `time_utc`, `time_local`, explicit inputs, and raw pythermalcomfort output keys under `heat_risk`
 - API contract style is snake_case only; do not default to camelCase request keys or legacy `data/meta` response keys.
 - Validate request/response schemas at boundaries; do not rely on implicit dict shapes in route handlers.
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from typing import ClassVar
 
@@ -78,9 +79,10 @@ class ForecastHeatRisk(BaseModel):
 
 
 class ForecastPoint(BaseModel):
-    """One forecast point with UTC time, explicit inputs, and calculated risk."""
+    """One forecast point with UTC and location-local time plus calculated risk."""
 
-    time_utc: str = Field(min_length=1)
+    time_utc: datetime
+    time_local: datetime
     inputs: ForecastInputs
     heat_risk: ForecastHeatRisk
 

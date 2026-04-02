@@ -91,7 +91,7 @@
 - Risk API failures must be surfaced and keep the last valid result.
 - On successful fetch, update `sport` and `loc` query params with replace history.
 - Persist to localStorage only for direct visits (not shared links).
-- Forecast time display uses selected location timezone first; browser timezone is fallback only.
+- Forecast time display uses backend-provided `time_local` for point labels/grouping and `request.location.timezone` for date formatting.
 
 ## Testing Expectations
 

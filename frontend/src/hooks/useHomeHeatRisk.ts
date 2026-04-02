@@ -70,7 +70,7 @@ function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
   return {
     risk,
     riskLevel: toRiskLevel(risk.riskLevelInterpolated),
-    forecast: toForecastDays(data.forecast, meta.timeZone),
+    forecast: toForecastDays(data.forecast),
     meta,
   };
 }
