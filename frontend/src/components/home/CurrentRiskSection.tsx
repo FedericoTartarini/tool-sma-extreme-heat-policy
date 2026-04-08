@@ -1,8 +1,9 @@
 import { IconInfoCircle } from "@tabler/icons-react";
-import { Badge, Stack } from "@mantine/core";
+import { Badge, Box, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CONTENT_GAP } from "@/config/uiLayout";
+import { getHeatRiskProfileMeta } from "@/domain/heatRiskProfile";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import { createRiskLevelLabels } from "@/domain/riskLabels";
@@ -14,6 +15,7 @@ import { CurrentRiskSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RiskGauge } from "@/components/home/RiskGauge";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
+import { useHomeStore } from "@/store/homeStore";
 
 const RISK_BADGE_SHADOW = "0 10px 24px rgba(15, 23, 42, 0.08)";
 
@@ -24,12 +26,36 @@ export function CurrentRiskSection() {
   const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const heatRisk = useHomeHeatRisk();
+  const profile = useHomeStore((state) => state.profile);
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
+  const profileLabel = t(getHeatRiskProfileMeta(profile).labelKey);
+  const currentRiskTitle = t("home.sections.currentRisk.title");
+  const profileBadge = (
+    <Box
+      style={{
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <Badge
+        color="blue"
+        variant="light"
+        size={isMobile ? "lg" : "xl"}
+        radius="xl"
+        tt="none"
+      >
+        {profileLabel}
+      </Badge>
+    </Box>
+  );
 
   if (!heatRisk.hasCalculatedRisk) {
     return (
-      <SectionCard title={t("home.sections.currentRisk.title")}>
-        <CurrentRiskSkeleton />
+      <SectionCard title={currentRiskTitle}>
+        <Stack gap={CONTENT_GAP} align="center">
+          {profileBadge}
+          <CurrentRiskSkeleton />
+        </Stack>
       </SectionCard>
     );
   }
@@ -41,8 +67,9 @@ export function CurrentRiskSection() {
   const riskBadgeValue = longRiskLabels[heatRisk.riskLevel].toUpperCase();
 
   return (
-    <SectionCard title={t("home.sections.currentRisk.title")}>
+    <SectionCard title={currentRiskTitle}>
       <Stack gap={CONTENT_GAP} align="center">
+        {profileBadge}
         <RiskGauge
           score={heatRisk.risk.riskLevelInterpolated}
           title={t("charts.gauge.seriesName")}

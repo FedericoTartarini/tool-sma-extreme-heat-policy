@@ -60,14 +60,7 @@ describe("riskGauge helpers", () => {
   });
 
   it("builds a semicircle echarts gauge with legacy-style band labels", () => {
-    const option = buildRiskGaugeOption(
-      2.4,
-      riskGaugeLabels,
-      "Heat Score",
-      "N/A",
-      false,
-      400,
-    );
+    const option = buildRiskGaugeOption(2.4, riskGaugeLabels, false, 400);
     const [bandSeries, overlaySeries] = Array.isArray(option.series)
       ? option.series
       : [];
@@ -125,23 +118,23 @@ describe("riskGauge helpers", () => {
 
   it("derives tighter chart geometry from the clamped gauge width", () => {
     expect(getRiskGaugeGeometry(false, 200)).toEqual({
-      bottomInset: 4,
-      centerY: 98,
-      height: 102,
+      bottomInset: 6,
+      centerY: 94,
+      height: 100,
       radius: 90,
       sideInset: 10,
-      topInset: 8,
+      topInset: 4,
       valueBottomOffset: 4,
       width: 200,
     });
     expect(getRiskGaugeGeometry(false, 400)).toEqual({
-      bottomInset: 8,
-      centerY: 202,
-      height: 210,
+      bottomInset: 6,
+      centerY: 194,
+      height: 200,
       radius: 190,
       sideInset: 10,
-      topInset: 12,
-      valueBottomOffset: 6,
+      topInset: 4,
+      valueBottomOffset: 4,
       width: 400,
     });
     expect(getRiskGaugeGeometry(false, 200).height).toBeLessThan(116);
@@ -156,13 +149,13 @@ describe("riskGauge helpers", () => {
       lineHeight: 0.82,
     });
     expect(getRiskGaugeValueLayout(2.4, false, 400)).toEqual({
-      bottomOffset: 6,
+      bottomOffset: 4,
       fontSize: 48,
       fontWeight: 800,
       lineHeight: 0.82,
     });
     expect(getRiskGaugeValueLayout(Number.NaN, false, 400)).toEqual({
-      bottomOffset: 6,
+      bottomOffset: 4,
       fontSize: 24,
       fontWeight: 800,
       lineHeight: 0.82,
@@ -170,14 +163,7 @@ describe("riskGauge helpers", () => {
   });
 
   it("keeps the chart graphic free of center text so DOM can control alignment", () => {
-    const option = buildRiskGaugeOption(
-      2.4,
-      riskGaugeLabels,
-      "Heat Score",
-      "N/A",
-      false,
-      400,
-    );
+    const option = buildRiskGaugeOption(2.4, riskGaugeLabels, false, 400);
 
     expect(getGraphicElements(option)).not.toEqual(
       expect.arrayContaining([
@@ -192,8 +178,6 @@ describe("riskGauge helpers", () => {
     const option = buildRiskGaugeOption(
       Number.NaN,
       riskGaugeLabels,
-      "Heat Score",
-      "N/A",
       false,
       400,
     );

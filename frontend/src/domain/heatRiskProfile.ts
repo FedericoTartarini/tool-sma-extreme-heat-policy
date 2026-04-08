@@ -44,3 +44,13 @@ export function isHeatRiskProfile(value: unknown): value is HeatRiskProfile {
     HEAT_RISK_PROFILE_VALUES.includes(value as HeatRiskProfile)
   );
 }
+
+export function getHeatRiskProfileMeta(
+  profile: HeatRiskProfile,
+): HeatRiskProfileMeta {
+  const profileMeta = heatRiskProfiles.find(
+    (profileMeta) => profileMeta.type === profile,
+  );
+
+  return profileMeta ?? heatRiskProfiles[0];
+}

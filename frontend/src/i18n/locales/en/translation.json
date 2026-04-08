@@ -240,10 +240,10 @@
     "sections": {
       "filters": {
         "profileLabel": "Age",
-        "profileAdult": "Adult",
-        "profileUnder10": "< 10y",
-        "profileAge10To13": "10–13y",
-        "profileAge14To17": "14–17y",
+        "profileAdult": "Adults",
+        "profileUnder10": "Younger than 10 years",
+        "profileAge10To13": "10 to 13 years",
+        "profileAge14To17": "14 to 17 years",
         "sportLabel": "Sport",
         "locationLabel": "Location",
         "defaultLocation": "North Sydney, Sydney, AU",
@@ -256,7 +256,7 @@
         "helperText": "Search and select a location to calculate risk automatically"
       },
       "currentRisk": {
-        "title": "Current Sport Heat Score"
+        "title": "Current Sport Heat Risk"
       },
       "keyRecommendations": {
         "title": "Key recommendations:"
@@ -312,7 +312,7 @@
   },
   "charts": {
     "gauge": {
-      "seriesName": "Heat Score",
+      "seriesName": "Heat Risk",
       "riskLabel": "Heat Risk",
       "riskUnavailable": "N/A"
     },
