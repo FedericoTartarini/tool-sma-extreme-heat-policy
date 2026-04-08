@@ -1,9 +1,11 @@
-import type { LocationSuggestion } from "@/domain/location";
+import type {
+  LocationFeatureType,
+  LocationSuggestion,
+} from "@/domain/location";
+import { normalizeLocationSearchText } from "@/domain/locationSearch";
 
 const MAPBOX_SUGGEST_ENDPOINT =
   "https://api.mapbox.com/search/searchbox/v1/suggest";
-const MAPBOX_TYPES =
-  "address,street,neighborhood,locality,place,district,region,postcode,country,poi";
 
 interface MapboxSuggestResponse {
   suggestions?: MapboxSuggestItem[];
@@ -12,6 +14,7 @@ interface MapboxSuggestResponse {
 interface MapboxSuggestItem {
   id?: string;
   mapbox_id?: string;
+  feature_type?: string;
   full_address?: string;
   place_formatted?: string;
   name?: string;
@@ -25,6 +28,7 @@ export interface MapboxSuggestParams {
   query: string;
   accessToken: string;
   sessionToken: string;
+  types?: string;
   signal?: AbortSignal;
   limit?: number;
   language?: string;
@@ -75,6 +79,28 @@ function toCountry(context: unknown): string {
   }
 
   return toTrimmedString(countryEntry.name);
+}
+
+function toFeatureType(value: unknown): LocationFeatureType | undefined {
+  const normalizedValue = toTrimmedString(value);
+
+  switch (normalizedValue) {
+    case "country":
+    case "region":
+    case "postcode":
+    case "district":
+    case "place":
+    case "city":
+    case "locality":
+    case "neighborhood":
+    case "street":
+    case "address":
+    case "poi":
+    case "category":
+      return normalizedValue;
+    default:
+      return undefined;
+  }
 }
 
 function toLabel(suggestion: MapboxSuggestItem): string {
@@ -140,6 +166,15 @@ function toLocationSuggestion(
     return null;
   }
 
+  const primaryName = toTrimmedString(
+    suggestion.name_preferred ?? suggestion.name ?? "",
+  );
+  const placeNameNormalized = normalizeLocationSearchText(
+    toContextName(suggestion.context, "place"),
+  );
+  const localityNameNormalized = normalizeLocationSearchText(
+    toContextName(suggestion.context, "locality"),
+  );
   const formattedLocation = toFormattedLocation(suggestion, label);
   const mapboxId = suggestion.mapbox_id ?? suggestion.id;
   const id = mapboxId ?? `${label}-${index}`;
@@ -149,7 +184,14 @@ function toLocationSuggestion(
     label,
     formattedLocation,
     source: "mapbox",
+    featureType: toFeatureType(suggestion.feature_type),
+    primaryName,
+    primaryNameNormalized: normalizeLocationSearchText(primaryName),
+    placeNameNormalized,
+    localityNameNormalized,
     mapboxId,
+    countryCode: toCountry(suggestion.context),
+    region: toContextName(suggestion.context, "region"),
     sessionToken,
   };
 }
@@ -158,19 +200,23 @@ function toSuggestQueryString({
   query,
   accessToken,
   sessionToken,
+  types,
   limit,
   language,
 }: Required<
   Pick<MapboxSuggestParams, "query" | "accessToken" | "sessionToken">
 > &
-  Pick<MapboxSuggestParams, "limit" | "language">): string {
+  Pick<MapboxSuggestParams, "types" | "limit" | "language">): string {
   const params = new URLSearchParams({
     q: query,
     access_token: accessToken,
     session_token: sessionToken,
-    types: MAPBOX_TYPES,
     limit: String(limit ?? 8),
   });
+
+  if (types) {
+    params.set("types", types);
+  }
 
   if (language) {
     params.set("language", language);
@@ -186,6 +232,7 @@ export async function suggestLocations({
   query,
   accessToken,
   sessionToken,
+  types,
   signal,
   limit = 8,
   language,
@@ -194,6 +241,7 @@ export async function suggestLocations({
     query,
     accessToken,
     sessionToken,
+    types,
     limit,
     language,
   });
