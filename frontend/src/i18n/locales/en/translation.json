@@ -259,7 +259,9 @@
         "title": "Current Sport Heat Risk"
       },
       "keyRecommendations": {
-        "title": "Key recommendations:"
+        "title": "Key recommendations:",
+        "panelHint": "Tap icons for detailed advice",
+        "panelAriaLabel": "Open detailed advice"
       },
       "detailedSuggestions": {
         "title": "Detailed suggestions:"
@@ -370,7 +372,12 @@
       "extreme": ["Consider Suspending Play"]
     },
     "manual": {
-      "title": "Heat Stress Risk Categories"
+      "title": "Heat Stress Risk Categories",
+      "intro": "Browse the heat stress risk categories below to understand how recommendations escalate from low to extreme conditions. Use these categories as a quick reference when reviewing suitable actions for training, competition, and recovery in hot weather."
+    },
+    "modal": {
+      "title": "Detailed recommendations",
+      "viewAllCta": "View all risk categories"
     },
     "detailed": {
       "youShouldLabel": "You should:",

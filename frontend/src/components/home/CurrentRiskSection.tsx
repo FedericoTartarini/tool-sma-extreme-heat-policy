@@ -1,4 +1,3 @@
-import { IconInfoCircle } from "@tabler/icons-react";
 import { Badge, Box, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -14,7 +13,6 @@ import {
 import { CurrentRiskSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RiskGauge } from "@/components/home/RiskGauge";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
 import { useHomeStore } from "@/store/homeStore";
 
 const RISK_BADGE_SHADOW = "0 10px 24px rgba(15, 23, 42, 0.08)";
@@ -38,7 +36,6 @@ export function CurrentRiskSection() {
       }}
     >
       <Badge
-        color="blue"
         variant="light"
         size={isMobile ? "lg" : "xl"}
         radius="xl"
@@ -82,13 +79,6 @@ export function CurrentRiskSection() {
           color={riskBadgeColor}
           size={isMobile ? "lg" : "xl"}
           radius="xl"
-          rightSection={
-            <IconInfoCircle
-              size={UI_INLINE_ICON_SIZE}
-              stroke={UI_INLINE_ICON_STROKE}
-              aria-hidden={true}
-            />
-          }
           style={{
             textDecoration: "none",
           }}
@@ -96,8 +86,6 @@ export function CurrentRiskSection() {
             root: {
               color: riskBadgeForegroundColor,
               boxShadow: RISK_BADGE_SHADOW,
-              paddingInlineStart: 16,
-              paddingInlineEnd: 12,
             },
             label: {
               fontSize: isMobile
@@ -105,10 +93,6 @@ export function CurrentRiskSection() {
                 : "var(--mantine-font-size-lg)",
               fontWeight: 700,
               letterSpacing: "0.06em",
-              textAlign: "left",
-            },
-            section: {
-              marginInlineStart: 4,
             },
           }}
         >

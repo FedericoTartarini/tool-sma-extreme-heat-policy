@@ -3,8 +3,8 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { CurrentRiskSection } from "@/components/home/CurrentRiskSection";
 import { FiltersSection } from "@/components/home/FiltersSection";
 import { ForecastSection } from "@/components/home/ForecastSection";
-import { KeyRecommendationsSection } from "@/components/home/KeyRecommendationsSection";
 import { LocationMapSection } from "@/components/home/LocationMapSection";
+import { CurrentRiskRecommendationsSection } from "@/components/home/recommendations/CurrentRiskRecommendationsSection";
 import { BottomToast } from "@/components/ui/BottomToast";
 import { SECTION_STACK_GAP } from "@/config/uiLayout";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
@@ -74,7 +74,7 @@ export function HomePage() {
       <Stack gap={SECTION_STACK_GAP}>
         <FiltersSection />
         <CurrentRiskSection />
-        <KeyRecommendationsSection />
+        <CurrentRiskRecommendationsSection />
         <ForecastSection />
         <LocationMapSection />
       </Stack>

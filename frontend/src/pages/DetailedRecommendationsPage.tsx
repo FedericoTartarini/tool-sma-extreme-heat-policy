@@ -1,5 +1,5 @@
 import { Stack } from "@mantine/core";
-import { DetailedRecommendationsSection } from "@/components/home/DetailedRecommendationsSection";
+import { AllRiskRecommendationsSection } from "@/components/home/recommendations/AllRiskRecommendationsSection";
 import { SECTION_STACK_GAP } from "@/config/uiLayout";
 
 /**
@@ -8,7 +8,7 @@ import { SECTION_STACK_GAP } from "@/config/uiLayout";
 export function DetailedRecommendationsPage() {
   return (
     <Stack gap={SECTION_STACK_GAP}>
-      <DetailedRecommendationsSection />
+      <AllRiskRecommendationsSection />
     </Stack>
   );
 }

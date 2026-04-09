@@ -36,7 +36,7 @@ export function CurrentRiskSkeleton() {
 /**
  * Renders recommendation-card skeleton tiles while recommendations reload.
  */
-export function KeyRecommendationsSkeleton() {
+export function CurrentRiskRecommendationsSkeleton() {
   return (
     <SimpleGrid
       cols={{ base: 2, xs: SKELETON_RECOMMENDATION_COUNT }}
