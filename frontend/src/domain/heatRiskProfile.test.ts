@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   HEAT_RISK_PROFILE_VALUES,
+  getHeatRiskProfileMeta,
   heatRiskProfiles,
 } from "@/domain/heatRiskProfile";
 
@@ -35,5 +36,13 @@ describe("heatRiskProfiles", () => {
         sortOrder: 3,
       },
     ]);
+  });
+
+  it("returns the profile metadata for a selected age group", () => {
+    expect(getHeatRiskProfileMeta("AGE_14_17")).toEqual({
+      type: "AGE_14_17",
+      labelKey: "home.sections.filters.profileAge14To17",
+      sortOrder: 1,
+    });
   });
 });
