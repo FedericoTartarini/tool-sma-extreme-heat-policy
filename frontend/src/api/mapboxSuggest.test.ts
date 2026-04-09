@@ -61,6 +61,7 @@ describe("suggestLocations", () => {
     );
     expect(suggestions).toEqual([
       expect.objectContaining({
+        formattedLocation: "Darwin, Northern Territory, AU",
         mapboxId: "place-darwin",
         featureType: "place",
         primaryName: "Darwin",
@@ -71,6 +72,7 @@ describe("suggestLocations", () => {
         region: "Northern Territory",
       }),
       expect.objectContaining({
+        formattedLocation: "Milsons Point Wharf, Milsons Point, Sydney, AU",
         mapboxId: "poi-wharf",
         featureType: "poi",
         primaryName: "Milsons Point Wharf",
@@ -81,6 +83,50 @@ describe("suggestLocations", () => {
         region: "New South Wales",
       }),
     ]);
+  });
+
+  it("adds region to otherwise-ambiguous same-name place suggestions", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "richmond-vic",
+              feature_type: "place",
+              name: "Richmond",
+              context: {
+                country: { country_code: "au" },
+                region: { name: "Victoria" },
+                place: { name: "Richmond" },
+              },
+            },
+            {
+              mapbox_id: "richmond-nsw",
+              feature_type: "place",
+              name: "Richmond",
+              context: {
+                country: { country_code: "au" },
+                region: { name: "New South Wales" },
+                place: { name: "Richmond" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Richmond",
+      accessToken: "token",
+      sessionToken: "session",
+      types: "place",
+      language: "en",
+    });
+
+    expect(
+      suggestions.map((suggestion) => suggestion.formattedLocation),
+    ).toEqual(["Richmond, Victoria, AU", "Richmond, New South Wales, AU"]);
   });
 
   it("throws when Mapbox suggest returns a non-OK response", async () => {

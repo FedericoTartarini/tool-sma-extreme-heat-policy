@@ -74,7 +74,6 @@ export function RecommendationActionGrid({
               style={{
                 minWidth: 0,
                 whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
               }}
             >
               {item.label}

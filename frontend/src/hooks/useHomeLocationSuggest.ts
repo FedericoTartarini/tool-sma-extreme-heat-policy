@@ -7,6 +7,7 @@ import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
 import type { LocationSuggestion } from "@/domain/location";
 import {
   createLocationSuggestRequestPlan,
+  type LocationSuggestRequestPlan,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
   shouldFallbackToExpandedSuggest,
@@ -107,6 +108,14 @@ function toSuggestErrorReason(params: {
   return null;
 }
 
+function isAbortError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("name" in error)) {
+    return false;
+  }
+
+  return (error as { name?: unknown }).name === "AbortError";
+}
+
 function findSubmittedSuggestion(
   suggestions: LocationSuggestion[],
   value: string,
@@ -153,6 +162,67 @@ async function retrieveAndSelectLocation(params: {
     });
   } catch {
     setHasRetrieveError(true);
+  }
+}
+
+export async function loadCombinedLocationSuggestions(params: {
+  query: string;
+  mapboxAccessToken: string;
+  sessionToken: string;
+  signal?: AbortSignal;
+  language?: string;
+  requestPlan: LocationSuggestRequestPlan;
+}): Promise<LocationSuggestion[]> {
+  const {
+    query,
+    mapboxAccessToken,
+    sessionToken,
+    signal,
+    language,
+    requestPlan,
+  } = params;
+  const primarySuggestions = await suggestLocations({
+    query,
+    accessToken: mapboxAccessToken,
+    sessionToken,
+    signal,
+    language,
+    types: requestPlan.primaryTypes,
+  });
+  const shouldRunExpandedSuggest =
+    requestPlan.fallbackTypes !== null &&
+    shouldFallbackToExpandedSuggest({
+      queryNormalized: requestPlan.queryNormalized,
+      isAddressLike: requestPlan.isAddressLike,
+      suggestions: primarySuggestions,
+    });
+
+  if (!shouldRunExpandedSuggest || !requestPlan.fallbackTypes) {
+    return primarySuggestions;
+  }
+
+  try {
+    const fallbackSuggestions = await suggestLocations({
+      query,
+      accessToken: mapboxAccessToken,
+      sessionToken,
+      signal,
+      language,
+      types: requestPlan.fallbackTypes,
+    });
+
+    return [...primarySuggestions, ...fallbackSuggestions];
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    console.warn(
+      "Expanded Mapbox suggest failed; continuing with primary suggestions.",
+      error,
+    );
+
+    return primarySuggestions;
   }
 }
 
@@ -219,36 +289,14 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       requestPlan.fallbackTypes,
     ],
     queryFn: async ({ signal }) => {
-      const primarySuggestions = await suggestLocations({
+      const combinedSuggestions = await loadCombinedLocationSuggestions({
         query: queryForRequest,
-        accessToken: mapboxAccessToken,
+        mapboxAccessToken,
         sessionToken,
         signal,
         language,
-        types: requestPlan.primaryTypes,
+        requestPlan,
       });
-
-      const shouldRunExpandedSuggest =
-        requestPlan.fallbackTypes !== null &&
-        shouldFallbackToExpandedSuggest({
-          queryNormalized: requestPlan.queryNormalized,
-          isAddressLike: requestPlan.isAddressLike,
-          suggestions: primarySuggestions,
-        });
-      const combinedSuggestions =
-        shouldRunExpandedSuggest && requestPlan.fallbackTypes
-          ? [
-              ...primarySuggestions,
-              ...(await suggestLocations({
-                query: queryForRequest,
-                accessToken: mapboxAccessToken,
-                sessionToken,
-                signal,
-                language,
-                types: requestPlan.fallbackTypes,
-              })),
-            ]
-          : primarySuggestions;
 
       return prepareLocationSuggestions({
         query: queryForRequest,

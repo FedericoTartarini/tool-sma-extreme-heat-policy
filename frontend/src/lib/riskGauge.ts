@@ -549,25 +549,6 @@ export function getRiskGaugePointerAngle(score: number): number | null {
 }
 
 /**
- * Returns the start/end/midpoint angles for a band index across the half gauge.
- */
-export function getRiskGaugeSegmentAngles(index: number): {
-  startAngle: number;
-  endAngle: number;
-  midpointAngle: number;
-} {
-  const segmentSpan = RISK_GAUGE_TOTAL_ANGLE / RISK_GAUGE_SEGMENT_COUNT;
-  const startAngle = RISK_GAUGE_TOTAL_ANGLE - index * segmentSpan;
-  const endAngle = startAngle - segmentSpan;
-
-  return {
-    startAngle,
-    endAngle,
-    midpointAngle: startAngle - segmentSpan / 2,
-  };
-}
-
-/**
  * Formats the center gauge value with a fallback label when unavailable.
  */
 export function formatRiskGaugeValue(

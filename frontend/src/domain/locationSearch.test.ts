@@ -215,6 +215,34 @@ describe("prepareLocationSuggestions", () => {
     ]);
   });
 
+  it("keeps same-name places from different regions visible", () => {
+    const prepared = prepareLocationSuggestions({
+      query: "Richmond",
+      suggestions: [
+        createSuggestion({
+          id: "richmond-vic",
+          formattedLocation: "Richmond, Victoria, AU",
+          featureType: "place",
+          primaryName: "Richmond",
+          placeNameNormalized: "richmond",
+          region: "Victoria",
+        }),
+        createSuggestion({
+          id: "richmond-nsw",
+          formattedLocation: "Richmond, New South Wales, AU",
+          featureType: "place",
+          primaryName: "Richmond",
+          placeNameNormalized: "richmond",
+          region: "New South Wales",
+        }),
+      ],
+    });
+
+    expect(
+      prepared.visibleSuggestions.map((suggestion) => suggestion.id),
+    ).toEqual(["richmond-vic", "richmond-nsw"]);
+  });
+
   it("keeps address suggestions available for address-like queries", () => {
     const prepared = prepareLocationSuggestions({
       query: "123 Broome St",
@@ -320,5 +348,55 @@ describe("prepareLocationSuggestions", () => {
       }),
     );
     expect(prepared.visibleSuggestions).toHaveLength(1);
+  });
+
+  it("matches a unique legacy prefill value after region is added to the display label", () => {
+    expect(
+      resolvePrefilledLocationSuggestion({
+        suggestions: [
+          createSuggestion({
+            id: "darwin-place",
+            formattedLocation: "Darwin, Northern Territory, AU",
+            featureType: "place",
+            primaryName: "Darwin",
+            placeNameNormalized: "darwin",
+            region: "Northern Territory",
+          }),
+        ],
+        value: "Darwin, AU",
+        prefillSource: "url",
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        id: "darwin-place",
+      }),
+    );
+  });
+
+  it("rejects ambiguous legacy prefill values when multiple region-specific matches exist", () => {
+    expect(
+      resolvePrefilledLocationSuggestion({
+        suggestions: [
+          createSuggestion({
+            id: "richmond-vic",
+            formattedLocation: "Richmond, Victoria, AU",
+            featureType: "place",
+            primaryName: "Richmond",
+            placeNameNormalized: "richmond",
+            region: "Victoria",
+          }),
+          createSuggestion({
+            id: "richmond-nsw",
+            formattedLocation: "Richmond, New South Wales, AU",
+            featureType: "place",
+            primaryName: "Richmond",
+            placeNameNormalized: "richmond",
+            region: "New South Wales",
+          }),
+        ],
+        value: "Richmond, AU",
+        prefillSource: "url",
+      }),
+    ).toBeNull();
   });
 });

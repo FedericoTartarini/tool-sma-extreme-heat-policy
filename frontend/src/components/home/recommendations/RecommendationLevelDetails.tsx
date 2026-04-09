@@ -26,7 +26,7 @@ export function RecommendationLevelDetails({
   showLevelBadge = false,
   footer,
 }: RecommendationLevelDetailsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <Stack gap={PARAGRAPH_GAP}>
@@ -47,7 +47,7 @@ export function RecommendationLevelDetails({
             },
           }}
         >
-          {content.levelLabel.toUpperCase()}
+          {content.levelLabel.toLocaleUpperCase(i18n.language || undefined)}
         </Badge>
       ) : null}
       <RecommendationActionGrid items={content.items} />

@@ -127,26 +127,68 @@ function toLabel(suggestion: MapboxSuggestItem): string {
 }
 
 function toFormattedLocation(
-  suggestion: MapboxSuggestItem,
+  parts: {
+    country: string;
+    locality: string;
+    localityNameNormalized: string;
+    name: string;
+    place: string;
+    placeNameNormalized: string;
+    postcode: string;
+    postcodeNormalized: string;
+    primaryNameNormalized: string;
+    region: string;
+    regionNormalized: string;
+  },
   fallbackLabel: string,
 ): string {
-  const name = toTrimmedString(suggestion.name_preferred ?? suggestion.name);
-  const locality = toContextName(suggestion.context, "locality");
-  const place = toContextName(suggestion.context, "place");
-  const postcode = toContextName(suggestion.context, "postcode");
-  const country = toCountry(suggestion.context);
-
-  const parts = [name, locality, place, postcode, country];
+  const {
+    country,
+    locality,
+    localityNameNormalized,
+    name,
+    place,
+    placeNameNormalized,
+    postcode,
+    postcodeNormalized,
+    primaryNameNormalized,
+    region,
+    regionNormalized,
+  } = parts;
+  const hasDisambiguatingContext = [
+    localityNameNormalized,
+    placeNameNormalized,
+    postcodeNormalized,
+  ].some((value) => value && value !== primaryNameNormalized);
+  const visibleParts = [
+    name,
+    locality,
+    place,
+    postcode,
+    !hasDisambiguatingContext &&
+    regionNormalized &&
+    regionNormalized !== primaryNameNormalized
+      ? region
+      : "",
+    country,
+  ];
   const formattedParts: string[] = [];
+  const seenNormalizedParts = new Set<string>();
 
-  for (const part of parts) {
-    const normalizedPart = part.trim();
+  for (const part of visibleParts) {
+    const trimmedPart = toTrimmedString(part);
+    const normalizedPart = normalizeLocationSearchText(trimmedPart);
 
-    if (!normalizedPart || formattedParts.includes(normalizedPart)) {
+    if (
+      !trimmedPart ||
+      !normalizedPart ||
+      seenNormalizedParts.has(normalizedPart)
+    ) {
       continue;
     }
 
-    formattedParts.push(normalizedPart);
+    seenNormalizedParts.add(normalizedPart);
+    formattedParts.push(trimmedPart);
   }
 
   if (formattedParts.length === 0) {
@@ -169,13 +211,31 @@ function toLocationSuggestion(
   const primaryName = toTrimmedString(
     suggestion.name_preferred ?? suggestion.name ?? "",
   );
-  const placeNameNormalized = normalizeLocationSearchText(
-    toContextName(suggestion.context, "place"),
+  const primaryNameNormalized = normalizeLocationSearchText(primaryName);
+  const locality = toContextName(suggestion.context, "locality");
+  const place = toContextName(suggestion.context, "place");
+  const localityNameNormalized = normalizeLocationSearchText(locality);
+  const placeNameNormalized = normalizeLocationSearchText(place);
+  const postcode = toContextName(suggestion.context, "postcode");
+  const region = toContextName(suggestion.context, "region");
+  const regionNormalized = normalizeLocationSearchText(region);
+  const country = toCountry(suggestion.context);
+  const formattedLocation = toFormattedLocation(
+    {
+      country,
+      locality,
+      localityNameNormalized,
+      name: primaryName,
+      place,
+      placeNameNormalized,
+      postcode,
+      postcodeNormalized: normalizeLocationSearchText(postcode),
+      primaryNameNormalized,
+      region,
+      regionNormalized,
+    },
+    label,
   );
-  const localityNameNormalized = normalizeLocationSearchText(
-    toContextName(suggestion.context, "locality"),
-  );
-  const formattedLocation = toFormattedLocation(suggestion, label);
   const mapboxId = suggestion.mapbox_id ?? suggestion.id;
   const id = mapboxId ?? `${label}-${index}`;
 
@@ -186,12 +246,12 @@ function toLocationSuggestion(
     source: "mapbox",
     featureType: toFeatureType(suggestion.feature_type),
     primaryName,
-    primaryNameNormalized: normalizeLocationSearchText(primaryName),
+    primaryNameNormalized,
     placeNameNormalized,
     localityNameNormalized,
     mapboxId,
-    countryCode: toCountry(suggestion.context),
-    region: toContextName(suggestion.context, "region"),
+    countryCode: country,
+    region,
     sessionToken,
   };
 }

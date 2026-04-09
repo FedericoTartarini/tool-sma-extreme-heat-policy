@@ -109,13 +109,48 @@ function toLocalityNameNormalized(suggestion: LocationSuggestion): string {
   return suggestion.localityNameNormalized ?? "";
 }
 
+function toRegionNameNormalized(suggestion: LocationSuggestion): string {
+  return normalizeLocationSearchText(suggestion.region ?? "");
+}
+
 function toPlaceCollapseKey(suggestion: LocationSuggestion): string {
   return [
     toPrimaryNameNormalized(suggestion),
     toPlaceNameNormalized(suggestion),
     toLocalityNameNormalized(suggestion),
+    toRegionNameNormalized(suggestion),
     toNormalizedCountryCode(suggestion.countryCode),
   ].join("|");
+}
+
+function toLegacyNormalizedFormattedLocation(
+  suggestion: LocationSuggestion,
+): string {
+  const regionNameNormalized = toRegionNameNormalized(suggestion);
+  if (!regionNameNormalized) {
+    return toNormalizedFormattedLocation(suggestion);
+  }
+
+  const parts = suggestion.formattedLocation
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  let regionIndex = -1;
+
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    if (
+      normalizeLocationSearchText(parts[index] ?? "") === regionNameNormalized
+    ) {
+      regionIndex = index;
+      break;
+    }
+  }
+
+  if (regionIndex >= Math.max(parts.length - 2, 0)) {
+    parts.splice(regionIndex, 1);
+  }
+
+  return normalizeLocationSearchText(parts.join(", "));
 }
 
 function getPlaceMatchBucket(
@@ -409,9 +444,23 @@ export function resolvePrefilledLocationSuggestion(params: {
   prefillSource: LocationPrefillSource;
 }): LocationSuggestion | null {
   const { suggestions, value, prefillSource } = params;
+  const exactSuggestion = findExactNormalizedSuggestion(suggestions, value);
 
-  return (
-    findExactNormalizedSuggestion(suggestions, value) ??
-    (prefillSource === "default" ? (suggestions[0] ?? null) : null)
-  );
+  if (exactSuggestion) {
+    return exactSuggestion;
+  }
+
+  const normalizedValue = normalizeLocationSearchText(value);
+  const legacyMatches = normalizedValue
+    ? suggestions.filter(
+        (suggestion) =>
+          toLegacyNormalizedFormattedLocation(suggestion) === normalizedValue,
+      )
+    : [];
+
+  if (legacyMatches.length === 1) {
+    return legacyMatches[0] ?? null;
+  }
+
+  return prefillSource === "default" ? (suggestions[0] ?? null) : null;
 }
