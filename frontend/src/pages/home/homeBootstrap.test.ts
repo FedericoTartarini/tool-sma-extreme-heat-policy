@@ -5,7 +5,7 @@ import type { PersistedHomeFilters } from "@/pages/home/browserState";
 import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
 
 describe("resolveHomeBootstrapState", () => {
-  it("prefers URL profile and filters over persisted values", () => {
+  it("keeps the default adult profile when URL state provides a younger profile", () => {
     expect(
       resolveHomeBootstrapState({
         hasUrlState: true,
@@ -23,7 +23,7 @@ describe("resolveHomeBootstrapState", () => {
       }),
     ).toEqual({
       channel: "shared",
-      profile: "AGE_10_13",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
       sport: SportType.Basketball,
       locationSearchInput: "Perth, AU",
       locationPrefillSource: "url",
@@ -31,7 +31,7 @@ describe("resolveHomeBootstrapState", () => {
     });
   });
 
-  it("uses persisted filters when no URL state is present", () => {
+  it("keeps the default adult profile when persisted filters store a younger profile", () => {
     expect(
       resolveHomeBootstrapState({
         hasUrlState: false,
@@ -49,7 +49,7 @@ describe("resolveHomeBootstrapState", () => {
       }),
     ).toEqual({
       channel: "direct",
-      profile: "AGE_14_17",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
       sport: SportType.Running,
       locationSearchInput: "Dampier, AU",
       locationPrefillSource: "persisted",
