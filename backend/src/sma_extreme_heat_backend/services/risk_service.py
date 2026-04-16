@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 from functools import cache
 
 import pandas as pd
-from pythermalcomfort.models.sports_heat_stress_risk import Sports
 from pythermalcomfort.utils.scale_wind_speed_log import scale_wind_speed_log
 
 from sma_extreme_heat_backend.calculators.sports_heat_stress import (
@@ -169,7 +168,6 @@ class RiskService:
         # the backend could not produce any usable current/forecast point.
         raise self._missing_input_error_for_point(
             point=first_candidate_point,
-            sport=sport,
         )
 
     @staticmethod
@@ -201,7 +199,6 @@ class RiskService:
         self,
         *,
         point: pd.Series,
-        sport: str,
     ) -> ModelInputUnavailableError:
         """Build the public 422 error for a candidate row with missing required inputs."""
 
@@ -209,7 +206,6 @@ class RiskService:
             unknown_inputs=self._missing_required_input_fields(point),
             available_inputs=self._available_inputs_for_point(
                 point=point,
-                sport=sport,
             ),
         )
 
@@ -217,22 +213,15 @@ class RiskService:
         self,
         *,
         point: pd.Series,
-        sport: str,
     ) -> dict[str, float | None]:
         """Expose the current point inputs using public API field names."""
 
         wind_speed_10m_ms = _to_optional_float(point.wind)
-        wind_speed_effective_ms = (
-            self._resolve_model_wind_speed(vr=wind_speed_10m_ms, sport=sport)
-            if wind_speed_10m_ms is not None
-            else None
-        )
         return {
             "air_temperature_c": _to_optional_float(point.tdb),
             "mean_radiant_temperature_c": _to_optional_float(point.tr),
             "relative_humidity_pct": _to_optional_float(point.rh),
             "wind_speed_10m_ms": wind_speed_10m_ms,
-            "wind_speed_effective_ms": wind_speed_effective_ms,
             "direct_normal_irradiance_wm2": _to_optional_float(point.radiation),
         }
 
@@ -253,16 +242,13 @@ class RiskService:
 
         wind_speed_10m_ms = float(point.wind)
         # Convert the provider's 10 m wind speed into the model's required 1.1 m input.
-        wind_speed_effective_ms = self._resolve_model_wind_speed(
-            vr=wind_speed_10m_ms,
-            sport=sport,
-        )
+        wind_speed_model_ms = self._resolve_model_wind_speed(vr=wind_speed_10m_ms)
         computed = self.calculator.model_sports_heat_stress(
             SportsHeatStressInput(
                 sport=sport,
                 tdb=float(point.tdb),
                 rh=float(point.rh),
-                vr=wind_speed_effective_ms,
+                vr=wind_speed_model_ms,
                 tr=float(point.tr),
             )
         )
@@ -275,17 +261,16 @@ class RiskService:
                 mean_radiant_temperature_c=float(point.tr),
                 relative_humidity_pct=float(point.rh),
                 wind_speed_10m_ms=wind_speed_10m_ms,
-                wind_speed_effective_ms=wind_speed_effective_ms,
                 direct_normal_irradiance_wm2=float(point.radiation),
             ),
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )
 
     @staticmethod
-    def _resolve_model_wind_speed(*, vr: float, sport: str) -> float:
-        """Convert 10 m wind speed to the effective model wind speed."""
+    def _resolve_model_wind_speed(*, vr: float) -> float:
+        """Convert 10 m wind speed to the model's required 1.1 m wind speed."""
 
-        scaled_vr = float(
+        return float(
             scale_wind_speed_log(
                 v_z1=vr,
                 z2=WIND_SPEED_REFACTOR_CONFIG.model_height_meters,
@@ -295,8 +280,6 @@ class RiskService:
                 round_output=True,
             ).v_z2
         )
-        sport_default_vr = getattr(Sports, sport).vr
-        return max(scaled_vr, sport_default_vr)
 
 
 @cache

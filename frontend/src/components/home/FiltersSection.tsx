@@ -13,11 +13,6 @@ import {
 import { type MouseEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  heatRiskProfiles,
-  isHeatRiskProfile,
-  type HeatRiskProfile,
-} from "@/domain/heatRiskProfile";
-import {
   isSportType,
   sports,
   toSportAssetName,
@@ -43,13 +38,16 @@ const SPORT_IMAGE_HEIGHT = 104;
 export function FiltersSection() {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
+  /*
   const profile = useHomeStore((state) => state.profile);
+  const setProfile = useHomeStore((state) => state.setProfile);
+  */
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  const setProfile = useHomeStore((state) => state.setProfile);
   const setSport = useHomeStore((state) => state.setSport);
   const [hasSportImageError, setHasSportImageError] = useState(false);
 
+  /*
   const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
     () =>
       heatRiskProfiles.map((profileMeta) => ({
@@ -58,7 +56,7 @@ export function FiltersSection() {
       })),
     [t],
   );
-
+  */
   const sportOptions = useMemo<SelectOption<SportType>[]>(
     () =>
       sports.map((sportMeta) => ({
@@ -105,12 +103,13 @@ export function FiltersSection() {
     </Combobox.Option>
   ));
 
+  /*
   const handleProfileChange = (value: string | null) => {
     if (value !== null && isHeatRiskProfile(value)) {
       setProfile(value);
     }
   };
-
+  */
   const handleLocationInputClick = (event: MouseEvent<HTMLInputElement>) => {
     if (isShowingCommittedLocation) {
       event.currentTarget.select();
@@ -141,6 +140,7 @@ export function FiltersSection() {
   return (
     <SectionCard>
       <Stack gap={CONTENT_GAP}>
+        {/*
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
           <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
             {t("home.sections.filters.profileLabel")}:
@@ -157,7 +157,7 @@ export function FiltersSection() {
             />
           </Box>
         </Group>
-
+        */}
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
           <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
             {t("home.sections.filters.locationLabel")}:

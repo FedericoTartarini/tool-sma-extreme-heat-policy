@@ -15,7 +15,7 @@ const forecastLabels = {
 };
 
 describe("buildForecastOption", () => {
-  it("adds threshold crossing points to the visual forecast series", () => {
+  it("adds remapped threshold crossing points to the visual forecast series", () => {
     const option = buildForecastOption(
       [
         { time: "08:00", value: 0.5 },
@@ -77,33 +77,32 @@ describe("buildForecastOption", () => {
     });
     expect(visualSeries).toMatchObject({
       data: [
-        [480, 0.5],
-        [495, 1],
-        [525, 2],
-        [540, 2.5],
+        [480, 0],
+        [520, 1],
+        [540, 1.5],
       ],
     });
     expect(tooltipSeries).toMatchObject({
       data: [
-        [480, 0.5],
-        [540, 2.5],
+        [480, 0],
+        [540, 1.5],
       ],
     });
     expect(pointSeries).toMatchObject({
       symbol: "circle",
       symbolSize: 6,
       data: [
-        [480, 0.5],
-        [540, 2.5],
+        [480, 0],
+        [540, 1.5],
       ],
     });
   });
 
-  it("renders zero-risk forecasts with the standard line styling and point markers", () => {
+  it("pins sub-1 forecasts to the low baseline while keeping the line styling", () => {
     const option = buildForecastOption(
       [
-        { time: "08:00", value: 0 },
-        { time: "09:00", value: 0 },
+        { time: "08:00", value: 0.2 },
+        { time: "09:00", value: 0.8 },
       ],
       forecastLabels,
     );
@@ -155,6 +154,86 @@ describe("buildForecastOption", () => {
         [540, 0],
       ],
     });
+  });
+
+  it("keeps tooltip values on the raw risk scale", () => {
+    const option = buildForecastOption(
+      [
+        { time: "08:00", value: 0.5 },
+        { time: "09:00", value: 2.5 },
+      ],
+      forecastLabels,
+      "Today",
+    );
+    const tooltip =
+      option.tooltip && !Array.isArray(option.tooltip) ? option.tooltip : null;
+
+    expect(typeof tooltip?.formatter).toBe("function");
+
+    const formatter = tooltip?.formatter as (params: unknown) => string;
+    const rendered = formatter([
+      {
+        axisValue: 540,
+        name: "09:00",
+        value: [540, 1.5],
+      },
+    ]);
+
+    expect(rendered).toContain("2.5");
+    expect(rendered).not.toContain("1.5");
+  });
+
+  it("renders a max score point on the high/extreme boundary", () => {
+    const option = buildForecastOption(
+      [
+        { time: "08:00", value: 3.5 },
+        { time: "09:00", value: 4.0 },
+      ],
+      forecastLabels,
+      "Today",
+    );
+    const series = Array.isArray(option.series) ? option.series : [];
+    const visualSeries = series.find(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        entry.name === "Risk-visual",
+    );
+    const pointSeries = series.find(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        entry.name === "Risk-points",
+    );
+    const tooltip =
+      option.tooltip && !Array.isArray(option.tooltip) ? option.tooltip : null;
+
+    expect(visualSeries).toMatchObject({
+      data: [
+        [480, 2.5],
+        [540, 3],
+      ],
+    });
+    expect(pointSeries).toMatchObject({
+      data: [
+        [480, 2.5],
+        [540, 3],
+      ],
+    });
+
+    const formatter = tooltip?.formatter as (params: unknown) => string;
+    const rendered = formatter([
+      {
+        axisValue: 540,
+        name: "09:00",
+        value: [540, 3],
+      },
+    ]);
+
+    expect(rendered).toContain("4.0");
+    expect(rendered).not.toContain("3.0");
   });
 
   it("keeps mobile x-axis labels on a regular cadence", () => {

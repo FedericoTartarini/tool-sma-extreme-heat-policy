@@ -36,7 +36,7 @@ export const RISK_LEVEL_META: Record<RiskLevel, LegacyRiskMetaEntry> =
   );
 
 /**
- * Converts an interpolated risk score (0-4) into a discrete risk level.
+ * Converts an interpolated risk score into a discrete risk level.
  */
 export function toRiskLevel(score: number): RiskLevel {
   return toRiskLevelFromRegistry(score);

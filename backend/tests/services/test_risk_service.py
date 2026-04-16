@@ -196,7 +196,6 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         "mean_radiant_temperature_c": 37.25,
         "relative_humidity_pct": 62.0,
         "wind_speed_10m_ms": 1.5,
-        "wind_speed_effective_ms": 1.02,
         "direct_normal_irradiance_wm2": 700.0,
     }
     assert first.forecast[0].heat_risk.model_dump() == {
@@ -215,7 +214,6 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "mean_radiant_temperature_c": 37.25,
                 "relative_humidity_pct": 62.0,
                 "wind_speed_10m_ms": 1.5,
-                "wind_speed_effective_ms": 1.02,
                 "direct_normal_irradiance_wm2": 700.0,
             },
             "heat_risk": {
@@ -234,7 +232,6 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "mean_radiant_temperature_c": 38.25,
                 "relative_humidity_pct": 63.0,
                 "wind_speed_10m_ms": 1.6,
-                "wind_speed_effective_ms": 1.09,
                 "direct_normal_irradiance_wm2": 750.0,
             },
             "heat_risk": {
@@ -253,7 +250,6 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "mean_radiant_temperature_c": 39.25,
                 "relative_humidity_pct": 64.0,
                 "wind_speed_10m_ms": 1.7,
-                "wind_speed_effective_ms": 1.16,
                 "direct_normal_irradiance_wm2": 800.0,
             },
             "heat_risk": {
@@ -434,10 +430,10 @@ async def test_risk_service_returns_same_forecast_for_all_profiles(
     ]
 
 
-async def test_risk_service_uses_sport_default_when_scaled_wind_is_lower(
+async def test_risk_service_uses_only_height_scaled_wind_for_lower_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Sport wind-speed floors should override slower scaled wind speeds."""
+    """Lower wind speeds should only be scaled to the model height."""
 
     weather_client = FakeWeatherClient()
     calculator = FakeCalculator()
@@ -448,7 +444,7 @@ async def test_risk_service_uses_sport_default_when_scaled_wind_is_lower(
         ttl_seconds=600,
     )
 
-    response = await service.calculate_home_risk(
+    await service.calculate_home_risk(
         RiskRequest(
             sport="SOCCER",
             latitude=-33.847,
@@ -457,14 +453,13 @@ async def test_risk_service_uses_sport_default_when_scaled_wind_is_lower(
         )
     )
 
-    assert calculator.payloads[0].vr == 1.0
-    assert response.forecast[0].inputs.wind_speed_effective_ms == 1.0
+    assert calculator.payloads[0].vr == pytest.approx(0.61)
 
 
-async def test_risk_service_preserves_scaled_wind_when_above_sport_default(
+async def test_risk_service_uses_only_height_scaled_wind_for_higher_values(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Scaled wind speed should pass through when already above the sport floor."""
+    """Higher wind speeds should still only use the height-scaled value."""
 
     weather_client = FakeWeatherClient()
     calculator = FakeCalculator()
@@ -485,7 +480,7 @@ async def test_risk_service_preserves_scaled_wind_when_above_sport_default(
     )
 
     assert calculator.payloads[0].vr == pytest.approx(2.72)
-    assert response.forecast[0].inputs.wind_speed_effective_ms == pytest.approx(2.72)
+    assert response.forecast[0].inputs.wind_speed_10m_ms == pytest.approx(4.0)
 
 
 async def test_risk_service_skips_future_points_with_missing_inputs(
@@ -553,7 +548,6 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
         "mean_radiant_temperature_c": 38.25,
         "relative_humidity_pct": 63.0,
         "wind_speed_10m_ms": 1.6,
-        "wind_speed_effective_ms": 1.09,
         "direct_normal_irradiance_wm2": 750.0,
     }
 
@@ -593,7 +587,6 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
             "mean_radiant_temperature_c": 37.25,
             "relative_humidity_pct": 62.0,
             "wind_speed_10m_ms": None,
-            "wind_speed_effective_ms": None,
             "direct_normal_irradiance_wm2": 700.0,
         }
     else:

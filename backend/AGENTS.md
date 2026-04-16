@@ -16,14 +16,13 @@
 - Model inputs are `tdb`, `tr`, `rh`, `vr`, `sport`.
 - Compute `tr` from the MRT pipeline, not by setting `tr = tdb`.
 - Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before model call.
-- Apply a sport wind-speed floor after scaling: `vr = max(scaled_vr, Sports.<sport>.vr)`.
 - Resolve the location timezone from coordinates in backend orchestration; do not require frontend `tz`.
 - Use Open-Meteo `direct_normal_irradiance` as the radiation source and derive MRT with `pvlib` + `pythermalcomfort.models.solar_gain`.
 - Globe temperature (`tg`) is out of scope and must not be introduced.
 - Do not introduce assumptions before model call:
   - no clamping
   - no default fill
-  - no business-side input remapping beyond the approved MRT pipeline, wind-height scaling, and sport default floor
+  - no business-side input remapping beyond the approved MRT pipeline and wind-height scaling
 - If required weather or MRT inputs are missing/uncertain (`tdb`, `rh`, `wind`, `radiation`, `tr`), return `422` with `unknown_inputs` under `response.forecast[*].heat_risk`.
 - Return pythermalcomfort output in `response.heat_risk` with original field names.
 

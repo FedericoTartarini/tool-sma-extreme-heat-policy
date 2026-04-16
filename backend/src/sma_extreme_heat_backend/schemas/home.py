@@ -62,7 +62,6 @@ class ForecastInputs(BaseModel):
     mean_radiant_temperature_c: FiniteFloat
     relative_humidity_pct: FiniteFloat
     wind_speed_10m_ms: FiniteFloat
-    wind_speed_effective_ms: FiniteFloat
     direct_normal_irradiance_wm2: FiniteFloat
 
 

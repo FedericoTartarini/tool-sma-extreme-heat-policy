@@ -124,7 +124,6 @@ Example response:
         "mean_radiant_temperature_c": 37.25,
         "relative_humidity_pct": 62.0,
         "wind_speed_10m_ms": 1.5,
-        "wind_speed_effective_ms": 1.02,
         "direct_normal_irradiance_wm2": 700.0
       },
       "heat_risk": {
@@ -164,9 +163,8 @@ Example response:
    - derive `dni = direct_normal_irradiance * 0.75`
    - compute `delta_mrt` with `pythermalcomfort.models.solar_gain`
    - derive `tr = tdb + delta_mrt`
-8. Convert `wind_speed_10m_ms` to `wind_speed_effective_ms` using
-   `pythermalcomfort.utils.scale_wind_speed_log(...)`, then apply the sport floor
-   with `max(scaled_vr, Sports.<sport>.vr)`.
+8. Convert `wind_speed_10m_ms` to the model's required 1.1 m wind speed using
+   `pythermalcomfort.utils.scale_wind_speed_log(...)`.
 9. Run `sports_heat_stress_risk` for each complete forecast row.
 10. Skip incomplete rows and treat the earliest complete row as `forecast[0]`.
 11. Return `422` only when no complete forecast row exists; the error payload is derived

@@ -29,25 +29,30 @@ function getGraphicElements(option: ReturnType<typeof buildRiskGaugeOption>) {
 describe("riskGauge helpers", () => {
   it("maps threshold scores to the expected active levels", () => {
     expect(getRiskGaugeActiveLevel(0)).toBe("low");
-    expect(getRiskGaugeActiveLevel(1)).toBe("moderate");
-    expect(getRiskGaugeActiveLevel(2)).toBe("high");
-    expect(getRiskGaugeActiveLevel(3)).toBe("extreme");
+    expect(getRiskGaugeActiveLevel(1.5)).toBe("low");
+    expect(getRiskGaugeActiveLevel(2.5)).toBe("moderate");
+    expect(getRiskGaugeActiveLevel(3.5)).toBe("high");
     expect(getRiskGaugeActiveLevel(4)).toBe("extreme");
   });
 
-  it("maps threshold scores to the expected pointer angles", () => {
-    expect(getRiskGaugePointerAngle(0)).toBe(180);
-    expect(getRiskGaugePointerAngle(1)).toBe(135);
-    expect(getRiskGaugePointerAngle(2)).toBe(90);
-    expect(getRiskGaugePointerAngle(3)).toBe(45);
-    expect(getRiskGaugePointerAngle(4)).toBe(0);
+  it("maps raw scores onto the expected pointer angles", () => {
+    expect(getRiskGaugePointerAngle(0.5)).toBe(180);
+    expect(getRiskGaugePointerAngle(1)).toBe(180);
+    expect(getRiskGaugePointerAngle(1.5)).toBe(157.5);
+    expect(getRiskGaugePointerAngle(2.5)).toBe(112.5);
+    expect(getRiskGaugePointerAngle(3.5)).toBe(67.5);
+    expect(getRiskGaugePointerAngle(4)).toBe(45);
   });
 
-  it("clamps out-of-range scores and falls back to N/A for unavailable values", () => {
+  it("remaps raw scores into the display range and falls back to N/A when unavailable", () => {
     expect(normalizeRiskGaugeScore(-1)).toBe(0);
+    expect(normalizeRiskGaugeScore(0.8)).toBe(0);
+    expect(normalizeRiskGaugeScore(1.5)).toBe(0.5);
+    expect(normalizeRiskGaugeScore(4)).toBe(3);
     expect(normalizeRiskGaugeScore(6)).toBe(4);
     expect(getRiskGaugePointerAngle(Number.NaN)).toBeNull();
     expect(formatRiskGaugeValue(Number.NaN, "N/A")).toBe("N/A");
+    expect(formatRiskGaugeValue(4, "N/A")).toBe("4.0");
   });
 
   it("resolves default and clamped gauge widths from a single helper", () => {
@@ -59,7 +64,7 @@ describe("riskGauge helpers", () => {
     expect(getRiskGaugeWidth(true, Number.NaN)).toBe(RISK_GAUGE_MIN_WIDTH);
   });
 
-  it("builds a semicircle echarts gauge with legacy-style band labels", () => {
+  it("builds a semicircle echarts gauge with remapped display coordinates", () => {
     const option = buildRiskGaugeOption(2.4, riskGaugeLabels, false, 400);
     const [bandSeries, overlaySeries] = Array.isArray(option.series)
       ? option.series
@@ -80,7 +85,7 @@ describe("riskGauge helpers", () => {
       splitLine: {
         show: false,
       },
-      data: [{ value: 2.4 }],
+      data: [{ value: 1.4 }],
     });
     expect(overlaySeries).toMatchObject({
       type: "gauge",
@@ -102,14 +107,14 @@ describe("riskGauge helpers", () => {
       title: {
         show: false,
       },
-      data: [{ value: 2.4 }],
+      data: [{ value: 1.4 }],
     });
     expect(graphicElements).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: "polygon",
           style: expect.objectContaining({
-            fill: getRiskColor("high"),
+            fill: getRiskColor("moderate"),
           }),
         }),
       ]),
