@@ -27,7 +27,6 @@ export interface ForecastInputsApiData {
   mean_radiant_temperature_c: number;
   relative_humidity_pct: number;
   wind_speed_10m_ms: number;
-  wind_speed_effective_ms: number;
   direct_normal_irradiance_wm2: number;
 }
 
@@ -128,7 +127,6 @@ function isForecastInputsApiData(
     isFiniteNumber(value.mean_radiant_temperature_c) &&
     isFiniteNumber(value.relative_humidity_pct) &&
     isFiniteNumber(value.wind_speed_10m_ms) &&
-    isFiniteNumber(value.wind_speed_effective_ms) &&
     isFiniteNumber(value.direct_normal_irradiance_wm2)
   );
 }

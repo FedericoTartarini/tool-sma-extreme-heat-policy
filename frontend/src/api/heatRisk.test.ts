@@ -45,7 +45,6 @@ describe("isHeatRiskApiResponse", () => {
               mean_radiant_temperature_c: 37.25,
               relative_humidity_pct: 62,
               wind_speed_10m_ms: 1.5,
-              wind_speed_effective_ms: 1.02,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {
@@ -82,7 +81,6 @@ describe("isHeatRiskApiResponse", () => {
               mean_radiant_temperature_c: 37.25,
               relative_humidity_pct: 62,
               wind_speed_10m_ms: 1.5,
-              wind_speed_effective_ms: 1.02,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {
@@ -118,7 +116,6 @@ describe("isHeatRiskApiResponse", () => {
               mean_radiant_temperature_c: 37.25,
               relative_humidity_pct: 62,
               wind_speed_10m_ms: 1.5,
-              wind_speed_effective_ms: 1.02,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {
