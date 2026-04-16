@@ -6,6 +6,7 @@ import {
   getRiskBands,
   getRiskColor,
   MAX_RISK_SCORE,
+  toRiskDisplayScore,
 } from "@/domain/riskRegistry";
 
 export const RISK_GAUGE_MIN_SCORE = 0;
@@ -62,9 +63,9 @@ type RiskGaugeGraphic = {
 };
 type RiskGaugeMeasurements = {
   activeLevel: RiskLevel | null;
+  displayScore: number | null;
   geometry: RiskGaugeGeometry;
   layout: RiskGaugeLayout;
-  normalizedScore: number | null;
   pointerAngle: number | null;
   valueLayout: RiskGaugeValueLayout;
 };
@@ -306,27 +307,25 @@ function getRiskGaugeMeasurements(
   containerWidth?: number,
 ): RiskGaugeMeasurements {
   const { geometry, layout } = getRiskGaugeSizing(isMobile, containerWidth);
-  const normalizedScore = normalizeRiskGaugeScore(score);
+  const displayScore = normalizeRiskGaugeScore(score);
   const valueLayout: RiskGaugeValueLayout = {
     bottomOffset: geometry.valueBottomOffset,
     fontSize:
-      normalizedScore === null
-        ? layout.unavailableFontSize
-        : layout.valueFontSize,
+      displayScore === null ? layout.unavailableFontSize : layout.valueFontSize,
     fontWeight: 800,
     lineHeight: 0.82,
   };
   const pointerAngle =
-    normalizedScore === null
+    displayScore === null
       ? null
       : RISK_GAUGE_TOTAL_ANGLE -
-        (normalizedScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE;
+        (displayScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE;
 
   return {
-    activeLevel: normalizedScore === null ? null : toRiskLevel(normalizedScore),
+    activeLevel: displayScore === null ? null : toRiskLevel(score),
+    displayScore,
     geometry,
     layout,
-    normalizedScore,
     pointerAngle,
     valueLayout,
   };
@@ -394,7 +393,7 @@ function buildRiskGaugeOptionFromMeasurements(
   labels: RiskGaugeLabels,
   measurements: RiskGaugeMeasurements,
 ): EChartsOption {
-  const { activeLevel, geometry, layout, normalizedScore, pointerAngle } =
+  const { activeLevel, displayScore, geometry, layout, pointerAngle } =
     measurements;
   const center = [geometry.width / 2, geometry.centerY];
 
@@ -446,7 +445,7 @@ function buildRiskGaugeOptionFromMeasurements(
         detail: {
           show: false,
         },
-        data: [{ value: normalizedScore ?? RISK_GAUGE_MIN_SCORE }],
+        data: [{ value: displayScore ?? RISK_GAUGE_MIN_SCORE }],
       },
       {
         type: "gauge",
@@ -504,7 +503,7 @@ function buildRiskGaugeOptionFromMeasurements(
         },
         data: [
           {
-            value: normalizedScore ?? RISK_GAUGE_MIN_SCORE,
+            value: displayScore ?? RISK_GAUGE_MIN_SCORE,
           },
         ],
       },
@@ -513,38 +512,34 @@ function buildRiskGaugeOptionFromMeasurements(
 }
 
 /**
- * Clamps a score into the supported gauge range or returns null when unavailable.
+ * Maps a raw risk score into the gauge display range or returns null when unavailable.
  */
 export function normalizeRiskGaugeScore(score: number): number | null {
-  if (!Number.isFinite(score)) {
-    return null;
-  }
-
-  return Math.min(Math.max(score, RISK_GAUGE_MIN_SCORE), RISK_GAUGE_MAX_SCORE);
+  return toRiskDisplayScore(score);
 }
 
 /**
- * Returns the active risk level for a clamped gauge score.
+ * Returns the active risk level for the raw gauge score.
  */
 export function getRiskGaugeActiveLevel(score: number): RiskLevel | null {
-  const normalizedScore = normalizeRiskGaugeScore(score);
+  const displayScore = normalizeRiskGaugeScore(score);
 
-  return normalizedScore === null ? null : toRiskLevel(normalizedScore);
+  return displayScore === null ? null : toRiskLevel(score);
 }
 
 /**
- * Maps the gauge score onto the semicircle needle angle.
+ * Maps the raw gauge score onto the semicircle needle angle.
  */
 export function getRiskGaugePointerAngle(score: number): number | null {
-  const normalizedScore = normalizeRiskGaugeScore(score);
+  const displayScore = normalizeRiskGaugeScore(score);
 
-  if (normalizedScore === null) {
+  if (displayScore === null) {
     return null;
   }
 
   return (
     RISK_GAUGE_TOTAL_ANGLE -
-    (normalizedScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE
+    (displayScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE
   );
 }
 
@@ -555,11 +550,7 @@ export function formatRiskGaugeValue(
   score: number,
   unavailableLabel: string,
 ): string {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-
-  return normalizedScore === null
-    ? unavailableLabel
-    : normalizedScore.toFixed(1);
+  return Number.isFinite(score) ? score.toFixed(1) : unavailableLabel;
 }
 
 export function getRiskGaugeValueLayout(

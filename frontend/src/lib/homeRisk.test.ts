@@ -96,7 +96,7 @@ describe("toForecastDays", () => {
           direct_normal_irradiance_wm2: 650,
         },
         heat_risk: {
-          risk_level_interpolated: 0.8,
+          risk_level_interpolated: 1.8,
           t_medium: 34.5,
           t_high: 37.1,
           t_extreme: 39.2,
@@ -114,7 +114,7 @@ describe("toForecastDays", () => {
           direct_normal_irradiance_wm2: 670,
         },
         heat_risk: {
-          risk_level_interpolated: 1.2,
+          risk_level_interpolated: 2.2,
           t_medium: 34.5,
           t_high: 37.1,
           t_extreme: 39.2,
@@ -132,7 +132,7 @@ describe("toForecastDays", () => {
           direct_normal_irradiance_wm2: 690,
         },
         heat_risk: {
-          risk_level_interpolated: 1.4,
+          risk_level_interpolated: 2.4,
           t_medium: 34.5,
           t_high: 37.1,
           t_extreme: 39.2,
@@ -146,9 +146,9 @@ describe("toForecastDays", () => {
         date: "2026-03-10T00:00:00+08:45",
         risk: "moderate",
         points: [
-          { time: "00:00", value: 0.8 },
-          { time: "01:00", value: 1.2 },
-          { time: "02:00", value: 1.4 },
+          { time: "00:00", value: 1.8 },
+          { time: "01:00", value: 2.2 },
+          { time: "02:00", value: 2.4 },
         ],
       },
     ]);
@@ -168,7 +168,7 @@ describe("toForecastDays", () => {
             direct_normal_irradiance_wm2: 650,
           },
           heat_risk: {
-            risk_level_interpolated: 0.8,
+            risk_level_interpolated: 1.8,
             t_medium: 34.5,
             t_high: 37.1,
             t_extreme: 39.2,

@@ -27,7 +27,7 @@ export const RISK_LEVELS: readonly RiskLevel[] = [
   "moderate",
   "high",
   "extreme",
-];
+] as const;
 export const MAX_RISK_SCORE = 4;
 
 export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
@@ -90,18 +90,46 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
 };
 
 /**
- * Converts an interpolated risk score (0-4) into a discrete risk level.
+ * Converts an interpolated risk score into a discrete risk level.
  */
 export function toRiskLevel(score: number): RiskLevel {
   const safeScore = Number.isFinite(score) ? score : 0;
 
-  for (const level of RISK_LEVELS) {
-    if (safeScore < RISK_REGISTRY[level].scoreUpperExclusive) {
-      return level;
-    }
+  if (safeScore < 2) {
+    return "low";
+  }
+  if (safeScore < 3) {
+    return "moderate";
+  }
+  if (safeScore < 4) {
+    return "high";
+  }
+  return "extreme";
+}
+
+/**
+ * Maps a raw risk score onto the shared chart display coordinate system.
+ * The pythermalcomfort 3.9.2 model caps scores at 4.0, and that maximum score
+ * should render on the High/Extreme boundary rather than within the Extreme band.
+ */
+export function toRiskDisplayScore(score: number): number | null {
+  if (!Number.isFinite(score)) {
+    return null;
   }
 
-  return "extreme";
+  if (score <= 1) {
+    return 0;
+  }
+
+  if (score === MAX_RISK_SCORE) {
+    return MAX_RISK_SCORE - 1;
+  }
+
+  if (score > MAX_RISK_SCORE) {
+    return MAX_RISK_SCORE;
+  }
+
+  return score - 1;
 }
 
 /**
