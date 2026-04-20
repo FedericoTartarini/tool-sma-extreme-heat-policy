@@ -1,8 +1,14 @@
+import {
+  DEFAULT_HEAT_RISK_PROFILE,
+  isHeatRiskProfile,
+  type HeatRiskProfile,
+} from "@/domain/heatRiskProfile";
 import type { SportType } from "@/domain/sport";
 
 const HOME_FILTERS_STORAGE_KEY = "home-filters:v1";
 
 export interface PersistedHomeFilters {
+  profile: HeatRiskProfile;
   sport: SportType;
   loc: string;
 }
@@ -28,6 +34,7 @@ export function isValidPersistedSport(
  */
 export function loadPersistedHomeFilters(
   allowedSports: readonly SportType[],
+  allowedProfiles: readonly HeatRiskProfile[],
 ): PersistedHomeFilters | null {
   if (typeof window === "undefined") {
     return null;
@@ -44,6 +51,7 @@ export function loadPersistedHomeFilters(
       return null;
     }
 
+    const profile = parsed.profile;
     const sport = parsed.sport;
     const loc = parsed.loc;
 
@@ -61,6 +69,10 @@ export function loadPersistedHomeFilters(
     }
 
     return {
+      profile:
+        isHeatRiskProfile(profile) && allowedProfiles.includes(profile)
+          ? profile
+          : DEFAULT_HEAT_RISK_PROFILE,
       sport,
       loc: trimmedLoc,
     };
@@ -84,6 +96,7 @@ export function savePersistedHomeFilters(filters: PersistedHomeFilters): void {
 
   try {
     const payload: PersistedHomeFilters = {
+      profile: filters.profile,
       sport: filters.sport,
       loc: trimmedLoc,
     };

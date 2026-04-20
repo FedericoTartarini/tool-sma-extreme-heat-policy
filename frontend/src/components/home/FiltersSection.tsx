@@ -1,14 +1,16 @@
 import {
-  Autocomplete,
   Box,
-  Group,
+  Combobox,
   Image,
+  InputBase,
   Loader,
+  Group,
   Select,
   Stack,
   Text,
+  useCombobox,
 } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { type MouseEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   isSportType,
@@ -35,11 +37,26 @@ const SPORT_IMAGE_HEIGHT = 104;
  */
 export function FiltersSection() {
   const { t } = useTranslation();
+  const locationCombobox = useCombobox();
+  /*
+  const profile = useHomeStore((state) => state.profile);
+  const setProfile = useHomeStore((state) => state.setProfile);
+  */
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const setSport = useHomeStore((state) => state.setSport);
   const [hasSportImageError, setHasSportImageError] = useState(false);
 
+  /*
+  const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
+    () =>
+      heatRiskProfiles.map((profileMeta) => ({
+        value: profileMeta.type,
+        label: t(profileMeta.labelKey),
+      })),
+    [t],
+  );
+  */
   const sportOptions = useMemo<SelectOption<SportType>[]>(
     () =>
       sports.map((sportMeta) => ({
@@ -74,6 +91,39 @@ export function FiltersSection() {
   const isShowingCommittedLocation =
     selectedLocation !== null &&
     locationSearchInput === selectedLocation.formattedLocation;
+  const shouldRenderLocationDropdown = suggestionLabels.length > 0;
+  const locationRightSection = isSuggestLoading ? (
+    <Loader size={16} />
+  ) : (
+    <Combobox.Chevron size="md" />
+  );
+  const locationOptions = suggestionLabels.map((label) => (
+    <Combobox.Option value={label} key={label}>
+      {label}
+    </Combobox.Option>
+  ));
+
+  /*
+  const handleProfileChange = (value: string | null) => {
+    if (value !== null && isHeatRiskProfile(value)) {
+      setProfile(value);
+    }
+  };
+  */
+  const handleLocationInputClick = (event: MouseEvent<HTMLInputElement>) => {
+    if (isShowingCommittedLocation) {
+      event.currentTarget.select();
+    }
+
+    if (shouldRenderLocationDropdown) {
+      locationCombobox.openDropdown();
+    }
+  };
+
+  const closeLocationDropdown = () => {
+    locationCombobox.closeDropdown();
+    locationCombobox.resetSelectedOption();
+  };
 
   const handleSportChange = (value: string | null) => {
     setHasSportImageError(false);
@@ -90,29 +140,67 @@ export function FiltersSection() {
   return (
     <SectionCard>
       <Stack gap={CONTENT_GAP}>
+        {/*
+        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
+          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
+            {t("home.sections.filters.profileLabel")}:
+          </Text>
+          <Box flex={1}>
+            <Select
+              aria-label={t("home.sections.filters.profileLabel")}
+              size="md"
+              data={profileOptions}
+              value={profile}
+              onChange={handleProfileChange}
+              searchable={false}
+              allowDeselect={false}
+            />
+          </Box>
+        </Group>
+        */}
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
           <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
             {t("home.sections.filters.locationLabel")}:
           </Text>
           <Box flex={1}>
-            <Autocomplete
-              aria-label={t("home.sections.filters.locationLabel")}
-              size="md"
-              placeholder={t("home.sections.filters.locationPlaceholder")}
-              value={locationSearchInput}
-              onChange={onLocationSearchInputChange}
-              onOptionSubmit={onLocationOptionSubmit}
-              onClick={(event) => {
-                if (isShowingCommittedLocation) {
-                  event.currentTarget.select();
-                }
+            <Combobox
+              store={locationCombobox}
+              onOptionSubmit={(value) => {
+                onLocationOptionSubmit(value);
+                closeLocationDropdown();
               }}
-              data={suggestionLabels}
-              filter={({ options }) => options}
-              clearable={false}
-              rightSection={isSuggestLoading ? <Loader size={16} /> : undefined}
-              autoComplete="off"
-            />
+              size="md"
+            >
+              <Combobox.Target targetType="input">
+                <InputBase
+                  __staticSelector="Select"
+                  aria-label={t("home.sections.filters.locationLabel")}
+                  size="md"
+                  placeholder={t("home.sections.filters.locationPlaceholder")}
+                  value={locationSearchInput}
+                  onChange={(event) => {
+                    onLocationSearchInputChange(event.currentTarget.value);
+                    locationCombobox.openDropdown();
+                  }}
+                  onFocus={() => {
+                    if (shouldRenderLocationDropdown) {
+                      locationCombobox.openDropdown();
+                    }
+                  }}
+                  onBlur={closeLocationDropdown}
+                  onClick={handleLocationInputClick}
+                  rightSection={locationRightSection}
+                  rightSectionPointerEvents="none"
+                  autoComplete="off"
+                />
+              </Combobox.Target>
+
+              {shouldRenderLocationDropdown ? (
+                <Combobox.Dropdown>
+                  <Combobox.Options>{locationOptions}</Combobox.Options>
+                </Combobox.Dropdown>
+              ) : null}
+            </Combobox>
           </Box>
         </Group>
 

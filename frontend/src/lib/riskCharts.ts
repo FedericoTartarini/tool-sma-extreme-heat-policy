@@ -10,6 +10,7 @@ import {
   getRiskBands,
   getRiskColor,
   MAX_RISK_SCORE,
+  toRiskDisplayScore,
 } from "@/domain/riskRegistry";
 
 const FORECAST_LINE_COLOR = USYD_ORANGE_HEX;
@@ -71,6 +72,7 @@ interface ForecastLabels {
 }
 
 interface ForecastChartPoint extends ForecastPoint {
+  displayValue: number;
   minuteOffset: number;
 }
 
@@ -139,6 +141,7 @@ function toForecastCoordinatePoints(
 
     return {
       ...point,
+      displayValue: toRiskDisplayScore(point.value) ?? 0,
       minuteOffset,
     };
   });
@@ -159,20 +162,26 @@ function toForecastChartPoints(
   for (let index = 1; index < points.length; index += 1) {
     const previousPoint = points[index - 1];
     const nextPoint = points[index];
-    const valueDelta = nextPoint.value - previousPoint.value;
+    const valueDelta = nextPoint.displayValue - previousPoint.displayValue;
     const minuteDelta = nextPoint.minuteOffset - previousPoint.minuteOffset;
 
     if (valueDelta !== 0 && minuteDelta > 0) {
       const crossingPoints = thresholds
         .filter((threshold) => {
-          const lowerValue = Math.min(previousPoint.value, nextPoint.value);
-          const upperValue = Math.max(previousPoint.value, nextPoint.value);
+          const lowerValue = Math.min(
+            previousPoint.displayValue,
+            nextPoint.displayValue,
+          );
+          const upperValue = Math.max(
+            previousPoint.displayValue,
+            nextPoint.displayValue,
+          );
 
           return threshold > lowerValue && threshold < upperValue;
         })
         .map((threshold) => ({
           threshold,
-          ratio: (threshold - previousPoint.value) / valueDelta,
+          ratio: (threshold - previousPoint.displayValue) / valueDelta,
         }))
         .filter(({ ratio }) => ratio > 0 && ratio < 1)
         .sort((left, right) => left.ratio - right.ratio);
@@ -182,8 +191,11 @@ function toForecastChartPoints(
           previousPoint.minuteOffset + minuteDelta * crossingPoint.ratio;
 
         expandedPoints.push({
+          value:
+            previousPoint.value +
+            (nextPoint.value - previousPoint.value) * crossingPoint.ratio,
+          displayValue: crossingPoint.threshold,
           time: formatForecastMinutesLabel(minuteOffset),
-          value: crossingPoint.threshold,
           minuteOffset,
         });
       }
@@ -226,7 +238,7 @@ function findNearestForecastPoint(
 }
 
 function toForecastPointDatum(point: ForecastChartPoint): [number, number] {
-  return [point.minuteOffset, point.value];
+  return [point.minuteOffset, point.displayValue];
 }
 
 function isForecastAxisTickAligned(
@@ -323,7 +335,7 @@ function toRiskBandValues(
 ): Array<[number, number]> {
   return points.map((point) => [
     point.minuteOffset,
-    getBandUpperValue(point.value, upper),
+    getBandUpperValue(point.displayValue, upper),
   ]);
 }
 

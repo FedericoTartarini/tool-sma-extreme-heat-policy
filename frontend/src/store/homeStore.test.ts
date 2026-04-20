@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { DEFAULT_HEAT_RISK_PROFILE } from "@/domain/heatRiskProfile";
 import type { LocationSuggestion } from "@/domain/location";
 import { DEFAULT_SPORT_TYPE } from "@/domain/sport";
 import { useHomeStore } from "@/store/homeStore";
@@ -31,6 +32,7 @@ function resetHomeStore() {
   useHomeStore.setState({
     isBootstrapped: false,
     channel: "direct",
+    profile: DEFAULT_HEAT_RISK_PROFILE,
     sport: DEFAULT_SPORT_TYPE,
     locationSearchInput: "",
     locationPrefillSource: "none",
@@ -98,6 +100,20 @@ describe("homeStore location search", () => {
     expect(useHomeStore.getState()).toMatchObject({
       locationSearchInput: PERTH_LOCATION.formattedLocation,
       selectedLocation: PERTH_LOCATION,
+    });
+  });
+
+  it("keeps the current sport and location selection when the profile changes", () => {
+    useHomeStore.getState().setSport("RUNNING");
+    useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+
+    useHomeStore.getState().setProfile("AGE_14_17");
+
+    expect(useHomeStore.getState()).toMatchObject({
+      profile: "AGE_14_17",
+      sport: "RUNNING",
+      locationSearchInput: DAMPER_LOCATION.formattedLocation,
+      selectedLocation: DAMPER_LOCATION,
     });
   });
 });

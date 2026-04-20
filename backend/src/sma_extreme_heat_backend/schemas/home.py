@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from typing import ClassVar
 
@@ -13,7 +14,9 @@ class RiskProfile(StrEnum):
     """Public profile values accepted by the home-risk API."""
 
     ADULT = "ADULT"
-    KIDS = "KIDS"
+    UNDER_10 = "UNDER_10"
+    AGE_10_13 = "AGE_10_13"
+    AGE_14_17 = "AGE_14_17"
 
 
 class RiskRequest(BaseModel):
@@ -59,7 +62,6 @@ class ForecastInputs(BaseModel):
     mean_radiant_temperature_c: FiniteFloat
     relative_humidity_pct: FiniteFloat
     wind_speed_10m_ms: FiniteFloat
-    wind_speed_effective_ms: FiniteFloat
     direct_normal_irradiance_wm2: FiniteFloat
 
 
@@ -76,9 +78,10 @@ class ForecastHeatRisk(BaseModel):
 
 
 class ForecastPoint(BaseModel):
-    """One forecast point with UTC time, explicit inputs, and calculated risk."""
+    """One forecast point with UTC and location-local time plus calculated risk."""
 
-    time_utc: str = Field(min_length=1)
+    time_utc: datetime
+    time_local: datetime
     inputs: ForecastInputs
     heat_risk: ForecastHeatRisk
 

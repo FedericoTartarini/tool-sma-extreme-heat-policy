@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from sma_extreme_heat_backend.api.routes import get_risk_service
@@ -16,6 +17,8 @@ from sma_extreme_heat_backend.schemas.home import (
     RiskResponse,
 )
 
+VALID_PROFILES = ("ADULT", "UNDER_10", "AGE_10_13", "AGE_14_17")
+
 
 class SuccessfulRiskService:
     """Route test double that returns a valid forecast-centric response."""
@@ -26,11 +29,11 @@ class SuccessfulRiskService:
         assert payload.sport == "SOCCER"
         assert payload.latitude == -33.847
         assert payload.longitude == 151.067
-        assert payload.profile == "ADULT"
+        assert payload.profile in VALID_PROFILES
         return RiskResponse(
             request=RequestSummary(
                 sport="SOCCER",
-                profile="ADULT",
+                profile=payload.profile,
                 location=LocationSummary(
                     latitude=-33.847,
                     longitude=151.067,
@@ -40,12 +43,12 @@ class SuccessfulRiskService:
             forecast=[
                 ForecastPoint(
                     time_utc="2026-03-09T00:00:00Z",
+                    time_local="2026-03-09T11:00:00+11:00",
                     inputs=ForecastInputs(
                         air_temperature_c=31.0,
                         mean_radiant_temperature_c=37.25,
                         relative_humidity_pct=62.0,
                         wind_speed_10m_ms=1.5,
-                        wind_speed_effective_ms=1.02,
                         direct_normal_irradiance_wm2=700.0,
                     ),
                     heat_risk=ForecastHeatRisk(
@@ -58,12 +61,12 @@ class SuccessfulRiskService:
                 ),
                 ForecastPoint(
                     time_utc="2026-03-09T01:00:00Z",
+                    time_local="2026-03-09T12:00:00+11:00",
                     inputs=ForecastInputs(
                         air_temperature_c=32.0,
                         mean_radiant_temperature_c=38.1,
                         relative_humidity_pct=61.0,
                         wind_speed_10m_ms=1.6,
-                        wind_speed_effective_ms=1.09,
                         direct_normal_irradiance_wm2=740.0,
                     ),
                     heat_risk=ForecastHeatRisk(
@@ -100,13 +103,13 @@ class MissingInputRiskService:
                 "mean_radiant_temperature_c": 35.0,
                 "relative_humidity_pct": 60.0,
                 "wind_speed_10m_ms": None,
-                "wind_speed_effective_ms": None,
                 "direct_normal_irradiance_wm2": 700.0,
             },
         )
 
 
-def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
+@pytest.mark.parametrize("profile", VALID_PROFILES)
+def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) -> None:
     """The route should serialize the new forecast-centric response contract."""
 
     app = create_app()
@@ -116,7 +119,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
         "sport": "SOCCER",
         "latitude": -33.847,
         "longitude": 151.067,
-        "profile": "ADULT",
+        "profile": profile,
     }
 
     with TestClient(app) as client:
@@ -126,7 +129,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
     assert response.json() == {
         "request": {
             "sport": "SOCCER",
-            "profile": "ADULT",
+            "profile": profile,
             "location": {
                 "latitude": -33.847,
                 "longitude": 151.067,
@@ -136,12 +139,12 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
         "forecast": [
             {
                 "time_utc": "2026-03-09T00:00:00Z",
+                "time_local": "2026-03-09T11:00:00+11:00",
                 "inputs": {
                     "air_temperature_c": 31.0,
                     "mean_radiant_temperature_c": 37.25,
                     "relative_humidity_pct": 62.0,
                     "wind_speed_10m_ms": 1.5,
-                    "wind_speed_effective_ms": 1.02,
                     "direct_normal_irradiance_wm2": 700.0,
                 },
                 "heat_risk": {
@@ -154,12 +157,12 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
             },
             {
                 "time_utc": "2026-03-09T01:00:00Z",
+                "time_local": "2026-03-09T12:00:00+11:00",
                 "inputs": {
                     "air_temperature_c": 32.0,
                     "mean_radiant_temperature_c": 38.1,
                     "relative_humidity_pct": 61.0,
                     "wind_speed_10m_ms": 1.6,
-                    "wind_speed_effective_ms": 1.09,
                     "direct_normal_irradiance_wm2": 740.0,
                 },
                 "heat_risk": {
@@ -172,6 +175,20 @@ def test_post_home_risk_success_returns_forecast_centric_contract() -> None:
             },
         ],
     }
+
+
+def test_forecast_heat_risk_accepts_legacy_scale_score() -> None:
+    """The public schema should continue accepting finite model scores."""
+
+    heat_risk = ForecastHeatRisk(
+        risk_level_interpolated=0.8,
+        t_medium=34.5,
+        t_high=37.1,
+        t_extreme=39.2,
+        recommendation="Increase hydration & modify clothing",
+    )
+
+    assert heat_risk.risk_level_interpolated == 0.8
 
 
 def test_options_home_risk_allows_netlify_preview_origin_via_regex(monkeypatch) -> None:
@@ -292,7 +309,7 @@ def test_post_home_risk_invalid_profile_returns_422() -> None:
                 "sport": "SOCCER",
                 "latitude": -33.847,
                 "longitude": 151.067,
-                "profile": "Adult",
+                "profile": "KIDS",
             },
         )
 

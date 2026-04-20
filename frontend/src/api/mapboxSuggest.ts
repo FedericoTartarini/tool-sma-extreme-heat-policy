@@ -1,9 +1,11 @@
-import type { LocationSuggestion } from "@/domain/location";
+import type {
+  LocationFeatureType,
+  LocationSuggestion,
+} from "@/domain/location";
+import { normalizeLocationSearchText } from "@/domain/locationSearch";
 
 const MAPBOX_SUGGEST_ENDPOINT =
   "https://api.mapbox.com/search/searchbox/v1/suggest";
-const MAPBOX_TYPES =
-  "address,street,neighborhood,locality,place,district,region,postcode,country,poi";
 
 interface MapboxSuggestResponse {
   suggestions?: MapboxSuggestItem[];
@@ -12,6 +14,7 @@ interface MapboxSuggestResponse {
 interface MapboxSuggestItem {
   id?: string;
   mapbox_id?: string;
+  feature_type?: string;
   full_address?: string;
   place_formatted?: string;
   name?: string;
@@ -25,6 +28,7 @@ export interface MapboxSuggestParams {
   query: string;
   accessToken: string;
   sessionToken: string;
+  types?: string;
   signal?: AbortSignal;
   limit?: number;
   language?: string;
@@ -77,6 +81,28 @@ function toCountry(context: unknown): string {
   return toTrimmedString(countryEntry.name);
 }
 
+function toFeatureType(value: unknown): LocationFeatureType | undefined {
+  const normalizedValue = toTrimmedString(value);
+
+  switch (normalizedValue) {
+    case "country":
+    case "region":
+    case "postcode":
+    case "district":
+    case "place":
+    case "city":
+    case "locality":
+    case "neighborhood":
+    case "street":
+    case "address":
+    case "poi":
+    case "category":
+      return normalizedValue;
+    default:
+      return undefined;
+  }
+}
+
 function toLabel(suggestion: MapboxSuggestItem): string {
   const primary =
     suggestion.name_preferred ??
@@ -101,26 +127,68 @@ function toLabel(suggestion: MapboxSuggestItem): string {
 }
 
 function toFormattedLocation(
-  suggestion: MapboxSuggestItem,
+  parts: {
+    country: string;
+    locality: string;
+    localityNameNormalized: string;
+    name: string;
+    place: string;
+    placeNameNormalized: string;
+    postcode: string;
+    postcodeNormalized: string;
+    primaryNameNormalized: string;
+    region: string;
+    regionNormalized: string;
+  },
   fallbackLabel: string,
 ): string {
-  const name = toTrimmedString(suggestion.name_preferred ?? suggestion.name);
-  const locality = toContextName(suggestion.context, "locality");
-  const place = toContextName(suggestion.context, "place");
-  const postcode = toContextName(suggestion.context, "postcode");
-  const country = toCountry(suggestion.context);
-
-  const parts = [name, locality, place, postcode, country];
+  const {
+    country,
+    locality,
+    localityNameNormalized,
+    name,
+    place,
+    placeNameNormalized,
+    postcode,
+    postcodeNormalized,
+    primaryNameNormalized,
+    region,
+    regionNormalized,
+  } = parts;
+  const hasDisambiguatingContext = [
+    localityNameNormalized,
+    placeNameNormalized,
+    postcodeNormalized,
+  ].some((value) => value && value !== primaryNameNormalized);
+  const visibleParts = [
+    name,
+    locality,
+    place,
+    postcode,
+    !hasDisambiguatingContext &&
+    regionNormalized &&
+    regionNormalized !== primaryNameNormalized
+      ? region
+      : "",
+    country,
+  ];
   const formattedParts: string[] = [];
+  const seenNormalizedParts = new Set<string>();
 
-  for (const part of parts) {
-    const normalizedPart = part.trim();
+  for (const part of visibleParts) {
+    const trimmedPart = toTrimmedString(part);
+    const normalizedPart = normalizeLocationSearchText(trimmedPart);
 
-    if (!normalizedPart || formattedParts.includes(normalizedPart)) {
+    if (
+      !trimmedPart ||
+      !normalizedPart ||
+      seenNormalizedParts.has(normalizedPart)
+    ) {
       continue;
     }
 
-    formattedParts.push(normalizedPart);
+    seenNormalizedParts.add(normalizedPart);
+    formattedParts.push(trimmedPart);
   }
 
   if (formattedParts.length === 0) {
@@ -140,7 +208,34 @@ function toLocationSuggestion(
     return null;
   }
 
-  const formattedLocation = toFormattedLocation(suggestion, label);
+  const primaryName = toTrimmedString(
+    suggestion.name_preferred ?? suggestion.name ?? "",
+  );
+  const primaryNameNormalized = normalizeLocationSearchText(primaryName);
+  const locality = toContextName(suggestion.context, "locality");
+  const place = toContextName(suggestion.context, "place");
+  const localityNameNormalized = normalizeLocationSearchText(locality);
+  const placeNameNormalized = normalizeLocationSearchText(place);
+  const postcode = toContextName(suggestion.context, "postcode");
+  const region = toContextName(suggestion.context, "region");
+  const regionNormalized = normalizeLocationSearchText(region);
+  const country = toCountry(suggestion.context);
+  const formattedLocation = toFormattedLocation(
+    {
+      country,
+      locality,
+      localityNameNormalized,
+      name: primaryName,
+      place,
+      placeNameNormalized,
+      postcode,
+      postcodeNormalized: normalizeLocationSearchText(postcode),
+      primaryNameNormalized,
+      region,
+      regionNormalized,
+    },
+    label,
+  );
   const mapboxId = suggestion.mapbox_id ?? suggestion.id;
   const id = mapboxId ?? `${label}-${index}`;
 
@@ -149,7 +244,14 @@ function toLocationSuggestion(
     label,
     formattedLocation,
     source: "mapbox",
+    featureType: toFeatureType(suggestion.feature_type),
+    primaryName,
+    primaryNameNormalized,
+    placeNameNormalized,
+    localityNameNormalized,
     mapboxId,
+    countryCode: country,
+    region,
     sessionToken,
   };
 }
@@ -158,19 +260,23 @@ function toSuggestQueryString({
   query,
   accessToken,
   sessionToken,
+  types,
   limit,
   language,
 }: Required<
   Pick<MapboxSuggestParams, "query" | "accessToken" | "sessionToken">
 > &
-  Pick<MapboxSuggestParams, "limit" | "language">): string {
+  Pick<MapboxSuggestParams, "types" | "limit" | "language">): string {
   const params = new URLSearchParams({
     q: query,
     access_token: accessToken,
     session_token: sessionToken,
-    types: MAPBOX_TYPES,
     limit: String(limit ?? 8),
   });
+
+  if (types) {
+    params.set("types", types);
+  }
 
   if (language) {
     params.set("language", language);
@@ -186,6 +292,7 @@ export async function suggestLocations({
   query,
   accessToken,
   sessionToken,
+  types,
   signal,
   limit = 8,
   language,
@@ -194,6 +301,7 @@ export async function suggestLocations({
     query,
     accessToken,
     sessionToken,
+    types,
     limit,
     language,
   });

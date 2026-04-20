@@ -1,3 +1,4 @@
+import type { HeatRiskProfile } from "@/domain/heatRiskProfile";
 import type { SportType } from "@/domain/sport";
 import type { PersistedHomeFilters } from "@/pages/home/browserState";
 import type {
@@ -8,8 +9,10 @@ import type {
 
 interface ResolveHomeBootstrapStateParams {
   hasUrlState: boolean;
+  defaultProfile: HeatRiskProfile;
   defaultSport: SportType;
   defaultLocationLabel: string;
+  urlProfile: HeatRiskProfile | null;
   urlSport: SportType | null;
   urlLocation: string | null;
   persistedFilters: PersistedHomeFilters | null;
@@ -29,6 +32,7 @@ export function resolveInitialLocationLabel(
  */
 export function resolveHomeBootstrapState({
   hasUrlState,
+  defaultProfile,
   defaultSport,
   defaultLocationLabel,
   urlSport,
@@ -37,11 +41,20 @@ export function resolveHomeBootstrapState({
 }: ResolveHomeBootstrapStateParams): HomeStoreBootstrapPayload {
   const channel: HomeChannel = hasUrlState ? "shared" : "direct";
 
+  const profile = defaultProfile;
+  /*
+  let profile = defaultProfile;
+  */
   let sport = defaultSport;
   let locationSearchInput = "";
   let locationPrefillSource: LocationPrefillSource = "none";
 
   if (channel === "shared") {
+    /*
+    if (urlProfile) {
+      profile = urlProfile;
+    }
+    */
     if (urlSport) {
       sport = urlSport;
     }
@@ -51,6 +64,9 @@ export function resolveHomeBootstrapState({
       locationPrefillSource = "url";
     }
   } else if (persistedFilters) {
+    /*
+    profile = persistedFilters.profile ?? defaultProfile;
+    */
     sport = persistedFilters.sport;
     locationSearchInput = resolveInitialLocationLabel(persistedFilters.loc);
     if (locationSearchInput.length > 0) {
@@ -67,6 +83,7 @@ export function resolveHomeBootstrapState({
 
   return {
     channel,
+    profile,
     sport,
     locationSearchInput,
     locationPrefillSource,

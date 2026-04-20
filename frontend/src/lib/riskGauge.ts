@@ -6,6 +6,7 @@ import {
   getRiskBands,
   getRiskColor,
   MAX_RISK_SCORE,
+  toRiskDisplayScore,
 } from "@/domain/riskRegistry";
 
 export const RISK_GAUGE_MIN_SCORE = 0;
@@ -45,8 +46,32 @@ export type RiskGaugeGeometry = {
   valueBottomOffset: number;
   width: number;
 };
+export type RiskGaugeValueLayout = {
+  bottomOffset: number;
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+};
+export type RiskGaugeRenderModel = {
+  displayValue: string;
+  geometry: RiskGaugeGeometry;
+  option: EChartsOption;
+  valueLayout: RiskGaugeValueLayout;
+};
 type RiskGaugeGraphic = {
   elements: Array<Record<string, unknown>>;
+};
+type RiskGaugeMeasurements = {
+  activeLevel: RiskLevel | null;
+  displayScore: number | null;
+  geometry: RiskGaugeGeometry;
+  layout: RiskGaugeLayout;
+  pointerAngle: number | null;
+  valueLayout: RiskGaugeValueLayout;
+};
+type RiskGaugeSizing = {
+  geometry: RiskGaugeGeometry;
+  layout: RiskGaugeLayout;
 };
 
 const RISK_GAUGE_LAYOUTS: {
@@ -55,28 +80,28 @@ const RISK_GAUGE_LAYOUTS: {
 } = {
   min: {
     arcWidth: 56,
-    bottomInset: 4,
+    bottomInset: 6,
     labelDistance: 28,
     labelFontSize: 12,
     pointerBorderWidth: 1.5,
     pointerWidth: 5,
     sideInset: 10,
-    topInset: 8,
+    topInset: 4,
     unavailableFontSize: 20,
     valueBottomOffset: 4,
     valueFontSize: 32,
   },
   max: {
     arcWidth: 108,
-    bottomInset: 8,
+    bottomInset: 6,
     labelDistance: 54,
     labelFontSize: 16,
     pointerBorderWidth: 2,
     pointerWidth: 7,
     sideInset: 10,
-    topInset: 12,
+    topInset: 4,
     unavailableFontSize: 24,
-    valueBottomOffset: 6,
+    valueBottomOffset: 4,
     valueFontSize: 48,
   },
 };
@@ -251,16 +276,15 @@ function getRiskGaugeRichLabelStyles(layout: RiskGaugeLayout): Record<
   );
 }
 
-export function getRiskGaugeGeometry(
+function getRiskGaugeSizing(
   isMobile = false,
   containerWidth?: number,
-): RiskGaugeGeometry {
+): RiskGaugeSizing {
   const width = getRiskGaugeWidth(isMobile, containerWidth);
   const layout = getRiskGaugeLayout(isMobile, width);
   const radius = Math.max(width / 2 - layout.sideInset, layout.arcWidth);
   const centerY = layout.topInset + radius;
-
-  return {
+  const geometry: RiskGaugeGeometry = {
     bottomInset: layout.bottomInset,
     centerY,
     height: Math.ceil(centerY + layout.bottomInset),
@@ -270,10 +294,52 @@ export function getRiskGaugeGeometry(
     valueBottomOffset: layout.valueBottomOffset,
     width,
   };
+
+  return {
+    geometry,
+    layout,
+  };
+}
+
+function getRiskGaugeMeasurements(
+  score: number,
+  isMobile = false,
+  containerWidth?: number,
+): RiskGaugeMeasurements {
+  const { geometry, layout } = getRiskGaugeSizing(isMobile, containerWidth);
+  const displayScore = normalizeRiskGaugeScore(score);
+  const valueLayout: RiskGaugeValueLayout = {
+    bottomOffset: geometry.valueBottomOffset,
+    fontSize:
+      displayScore === null ? layout.unavailableFontSize : layout.valueFontSize,
+    fontWeight: 800,
+    lineHeight: 0.82,
+  };
+  const pointerAngle =
+    displayScore === null
+      ? null
+      : RISK_GAUGE_TOTAL_ANGLE -
+        (displayScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE;
+
+  return {
+    activeLevel: displayScore === null ? null : toRiskLevel(score),
+    displayScore,
+    geometry,
+    layout,
+    pointerAngle,
+    valueLayout,
+  };
+}
+
+export function getRiskGaugeGeometry(
+  isMobile = false,
+  containerWidth?: number,
+): RiskGaugeGeometry {
+  return getRiskGaugeSizing(isMobile, containerWidth).geometry;
 }
 
 function buildRiskGaugeGraphic(
-  score: number,
+  pointerAngle: number | null,
   activeLevel: RiskLevel | null,
   layout: RiskGaugeLayout,
   geometry: RiskGaugeGeometry,
@@ -282,8 +348,6 @@ function buildRiskGaugeGraphic(
   const centerX = width / 2;
   const innerRadius = Math.max(radius - layout.arcWidth, 0);
   const elements: RiskGaugeGraphic = { elements: [] };
-
-  const pointerAngle = getRiskGaugePointerAngle(score);
 
   if (pointerAngle === null || !activeLevel) {
     return elements;
@@ -325,116 +389,12 @@ function buildRiskGaugeGraphic(
   return elements;
 }
 
-/**
- * Clamps a score into the supported gauge range or returns null when unavailable.
- */
-export function normalizeRiskGaugeScore(score: number): number | null {
-  if (!Number.isFinite(score)) {
-    return null;
-  }
-
-  return Math.min(Math.max(score, RISK_GAUGE_MIN_SCORE), RISK_GAUGE_MAX_SCORE);
-}
-
-/**
- * Returns the active risk level for a clamped gauge score.
- */
-export function getRiskGaugeActiveLevel(score: number): RiskLevel | null {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-
-  return normalizedScore === null ? null : toRiskLevel(normalizedScore);
-}
-
-/**
- * Maps the gauge score onto the semicircle needle angle.
- */
-export function getRiskGaugePointerAngle(score: number): number | null {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-
-  if (normalizedScore === null) {
-    return null;
-  }
-
-  return (
-    RISK_GAUGE_TOTAL_ANGLE -
-    (normalizedScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE
-  );
-}
-
-/**
- * Returns the start/end/midpoint angles for a band index across the half gauge.
- */
-export function getRiskGaugeSegmentAngles(index: number): {
-  startAngle: number;
-  endAngle: number;
-  midpointAngle: number;
-} {
-  const segmentSpan = RISK_GAUGE_TOTAL_ANGLE / RISK_GAUGE_SEGMENT_COUNT;
-  const startAngle = RISK_GAUGE_TOTAL_ANGLE - index * segmentSpan;
-  const endAngle = startAngle - segmentSpan;
-
-  return {
-    startAngle,
-    endAngle,
-    midpointAngle: startAngle - segmentSpan / 2,
-  };
-}
-
-/**
- * Formats the center gauge value with a fallback label when unavailable.
- */
-export function formatRiskGaugeValue(
-  score: number,
-  unavailableLabel: string,
-): string {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-
-  return normalizedScore === null
-    ? unavailableLabel
-    : normalizedScore.toFixed(1);
-}
-
-export function getRiskGaugeValueLayout(
-  score: number,
-  isMobile = false,
-  containerWidth?: number,
-): {
-  bottomOffset: number;
-  fontSize: number;
-  fontWeight: number;
-  lineHeight: number;
-} {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-  const layout = getRiskGaugeLayout(isMobile, containerWidth);
-  const geometry = getRiskGaugeGeometry(isMobile, containerWidth);
-  const fontSize =
-    normalizedScore === null
-      ? layout.unavailableFontSize
-      : layout.valueFontSize;
-
-  return {
-    bottomOffset: geometry.valueBottomOffset,
-    fontSize,
-    fontWeight: 800,
-    lineHeight: 0.82,
-  };
-}
-
-/**
- * Builds the current-risk gauge option in an ECharts layout close to the legacy design.
- */
-export function buildRiskGaugeOption(
-  score: number,
+function buildRiskGaugeOptionFromMeasurements(
   labels: RiskGaugeLabels,
-  _centerLabel: string,
-  _unavailableLabel: string,
-  isMobile = false,
-  containerWidth?: number,
+  measurements: RiskGaugeMeasurements,
 ): EChartsOption {
-  const normalizedScore = normalizeRiskGaugeScore(score);
-  const activeLevel = getRiskGaugeActiveLevel(score);
-  const layout = getRiskGaugeLayout(isMobile, containerWidth);
-  const geometry = getRiskGaugeGeometry(isMobile, containerWidth);
+  const { activeLevel, displayScore, geometry, layout, pointerAngle } =
+    measurements;
   const center = [geometry.width / 2, geometry.centerY];
 
   return {
@@ -442,7 +402,7 @@ export function buildRiskGaugeOption(
     tooltip: {
       show: false,
     },
-    graphic: buildRiskGaugeGraphic(score, activeLevel, layout, geometry),
+    graphic: buildRiskGaugeGraphic(pointerAngle, activeLevel, layout, geometry),
     series: [
       {
         type: "gauge",
@@ -485,7 +445,7 @@ export function buildRiskGaugeOption(
         detail: {
           show: false,
         },
-        data: [{ value: normalizedScore ?? RISK_GAUGE_MIN_SCORE }],
+        data: [{ value: displayScore ?? RISK_GAUGE_MIN_SCORE }],
       },
       {
         type: "gauge",
@@ -543,10 +503,96 @@ export function buildRiskGaugeOption(
         },
         data: [
           {
-            value: normalizedScore ?? RISK_GAUGE_MIN_SCORE,
+            value: displayScore ?? RISK_GAUGE_MIN_SCORE,
           },
         ],
       },
     ],
+  };
+}
+
+/**
+ * Maps a raw risk score into the gauge display range or returns null when unavailable.
+ */
+export function normalizeRiskGaugeScore(score: number): number | null {
+  return toRiskDisplayScore(score);
+}
+
+/**
+ * Returns the active risk level for the raw gauge score.
+ */
+export function getRiskGaugeActiveLevel(score: number): RiskLevel | null {
+  const displayScore = normalizeRiskGaugeScore(score);
+
+  return displayScore === null ? null : toRiskLevel(score);
+}
+
+/**
+ * Maps the raw gauge score onto the semicircle needle angle.
+ */
+export function getRiskGaugePointerAngle(score: number): number | null {
+  const displayScore = normalizeRiskGaugeScore(score);
+
+  if (displayScore === null) {
+    return null;
+  }
+
+  return (
+    RISK_GAUGE_TOTAL_ANGLE -
+    (displayScore / RISK_GAUGE_MAX_SCORE) * RISK_GAUGE_TOTAL_ANGLE
+  );
+}
+
+/**
+ * Formats the center gauge value with a fallback label when unavailable.
+ */
+export function formatRiskGaugeValue(
+  score: number,
+  unavailableLabel: string,
+): string {
+  return Number.isFinite(score) ? score.toFixed(1) : unavailableLabel;
+}
+
+export function getRiskGaugeValueLayout(
+  score: number,
+  isMobile = false,
+  containerWidth?: number,
+): RiskGaugeValueLayout {
+  return getRiskGaugeMeasurements(score, isMobile, containerWidth).valueLayout;
+}
+
+/**
+ * Builds the current-risk gauge option in an ECharts layout close to the legacy design.
+ */
+export function buildRiskGaugeOption(
+  score: number,
+  labels: RiskGaugeLabels,
+  isMobile = false,
+  containerWidth?: number,
+): EChartsOption {
+  return buildRiskGaugeOptionFromMeasurements(
+    labels,
+    getRiskGaugeMeasurements(score, isMobile, containerWidth),
+  );
+}
+
+export function getRiskGaugeRenderModel(
+  score: number,
+  labels: RiskGaugeLabels,
+  unavailableLabel: string,
+  isMobile = false,
+  containerWidth?: number,
+): RiskGaugeRenderModel {
+  const measurements = getRiskGaugeMeasurements(
+    score,
+    isMobile,
+    containerWidth,
+  );
+
+  return {
+    displayValue: formatRiskGaugeValue(score, unavailableLabel),
+    geometry: measurements.geometry,
+    option: buildRiskGaugeOptionFromMeasurements(labels, measurements),
+    valueLayout: measurements.valueLayout,
   };
 }

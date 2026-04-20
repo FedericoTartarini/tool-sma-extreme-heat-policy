@@ -1,10 +1,11 @@
 import type { SportType } from "@/domain/sport";
 import { endpoints } from "@/api/endpoints";
 import { httpClient } from "@/api/httpClient";
-
-export type HeatRiskProfile = "ADULT" | "KIDS";
-
-export const DEFAULT_HEAT_RISK_PROFILE: HeatRiskProfile = "ADULT";
+import {
+  isHeatRiskProfile,
+  type HeatRiskProfile,
+} from "@/domain/heatRiskProfile";
+import { parseOffsetIsoDateTime } from "@/lib/offsetIsoDateTime";
 
 export interface HeatRiskRequest {
   sport: SportType;
@@ -26,12 +27,12 @@ export interface ForecastInputsApiData {
   mean_radiant_temperature_c: number;
   relative_humidity_pct: number;
   wind_speed_10m_ms: number;
-  wind_speed_effective_ms: number;
   direct_normal_irradiance_wm2: number;
 }
 
 export interface ForecastApiPoint {
   time_utc: string;
+  time_local: string;
   inputs: ForecastInputsApiData;
   heat_risk: HeatRiskApiData;
 }
@@ -69,17 +70,15 @@ export type HeatRiskApiResult =
     };
 
 /**
- * Builds the Home heat-risk request payload using the current default profile.
+ * Builds the Home heat-risk request payload.
  */
 export function buildHeatRiskRequest(payload: {
   sport: SportType;
   latitude: number;
   longitude: number;
+  profile: HeatRiskProfile;
 }): HeatRiskRequest {
-  return {
-    ...payload,
-    profile: DEFAULT_HEAT_RISK_PROFILE,
-  };
+  return payload;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -98,8 +97,8 @@ function isValidIsoDateTime(value: unknown): value is string {
   );
 }
 
-function isHeatRiskProfile(value: unknown): value is HeatRiskProfile {
-  return value === "ADULT" || value === "KIDS";
+function isValidOffsetIsoDateTime(value: unknown): value is string {
+  return parseOffsetIsoDateTime(value) !== null;
 }
 
 function isHeatRiskApiData(value: unknown): value is HeatRiskApiData {
@@ -128,7 +127,6 @@ function isForecastInputsApiData(
     isFiniteNumber(value.mean_radiant_temperature_c) &&
     isFiniteNumber(value.relative_humidity_pct) &&
     isFiniteNumber(value.wind_speed_10m_ms) &&
-    isFiniteNumber(value.wind_speed_effective_ms) &&
     isFiniteNumber(value.direct_normal_irradiance_wm2)
   );
 }
@@ -140,6 +138,7 @@ function isForecastApiPoint(value: unknown): value is ForecastApiPoint {
 
   return (
     isValidIsoDateTime(value.time_utc) &&
+    isValidOffsetIsoDateTime(value.time_local) &&
     isForecastInputsApiData(value.inputs) &&
     isHeatRiskApiData(value.heat_risk)
   );

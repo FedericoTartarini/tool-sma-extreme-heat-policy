@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import UTC
 from functools import cache
 from typing import Any
 
@@ -104,25 +103,18 @@ def build_mrt_dataframe(
     longitude: float,
     timezone_name: str,
 ) -> pd.DataFrame:
-    """Build the MRT-enriched half-hourly DataFrame used by the risk service."""
+    """Build the MRT-enriched hourly DataFrame used by the risk service."""
 
     df_weather = _points_to_dataframe(points)
     df_weather = df_weather.set_index("time").sort_index()
     df_weather = df_weather.copy()
-    # Convert provider UTC timestamps into the resolved local timezone before resampling.
+    # The provider window is already trimmed upstream in UTC. From here on we only need the
+    # resolved local timezone so solar geometry is computed against location-local timestamps.
     df_weather.index = df_weather.index.tz_convert(timezone_name)
-
-    now = pd.Timestamp.now(tz=timezone_name) - pd.Timedelta(hours=1)
-    df_weather = df_weather[df_weather.index >= now]
-    if df_weather.empty:
-        raise WeatherProviderError("No hourly record after now-1h")
 
     df_weather = df_weather.dropna(subset=["tdb"])
     if df_weather.empty:
-        raise WeatherProviderError("No hourly record with tdb after now-1h")
-
-    # Interpolate onto a 30-minute grid so forecast charts and current selection share one pipeline.
-    df_weather = df_weather.resample("30min").interpolate()
+        raise WeatherProviderError("No hourly record with tdb in provider forecast window")
 
     site = location.Location(
         latitude,
@@ -177,13 +169,3 @@ def build_mrt_dataframe(
     df_result["tr"] = df_result["tdb"] + df_result["delta_mrt"]
 
     return df_result.loc[:, list(MRT_COLUMNS)].copy()
-
-
-def select_hourly_forecast_rows(df: pd.DataFrame) -> pd.DataFrame:
-    """Keep only rows aligned to UTC hour boundaries for the public forecast."""
-
-    if df.empty:
-        return df.copy()
-
-    utc_index = df.index.tz_convert(UTC)
-    return df.loc[utc_index.minute == 0].copy()

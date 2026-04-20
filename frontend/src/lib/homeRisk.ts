@@ -7,6 +7,7 @@ import type {
 import type { ForecastDay, HeatRisk } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
 import { toCoordinatesOrNull } from "@/lib/coordinates";
+import { parseOffsetIsoDateTime } from "@/lib/offsetIsoDateTime";
 
 export interface HeatRiskMeta {
   latitude?: number;
@@ -68,50 +69,14 @@ export function toHeatRiskMeta(location: HeatRiskApiLocation): HeatRiskMeta {
   };
 }
 
-function getBrowserTimeZone(): string | undefined {
-  if (typeof Intl === "undefined") {
-    return undefined;
-  }
-
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
-function formatDateParts(
-  date: Date,
-  timeZone?: string,
-): Record<"year" | "month" | "day" | "hour" | "minute", string> {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone,
-  });
-  const parts = formatter.formatToParts(date);
-
-  return {
-    year: parts.find((part) => part.type === "year")?.value ?? "",
-    month: parts.find((part) => part.type === "month")?.value ?? "",
-    day: parts.find((part) => part.type === "day")?.value ?? "",
-    hour: parts.find((part) => part.type === "hour")?.value ?? "",
-    minute: parts.find((part) => part.type === "minute")?.value ?? "",
-  };
-}
-
 /**
  * Groups forecast points into location-local daily chart data for the UI.
  */
-export function toForecastDays(
-  points: ForecastApiPoint[],
-  timeZone?: string,
-): ForecastDay[] {
+export function toForecastDays(points: ForecastApiPoint[]): ForecastDay[] {
   if (points.length === 0) {
     return [];
   }
 
-  const resolvedTimeZone = timeZone ?? getBrowserTimeZone();
   const groupedDays = new Map<
     string,
     {
@@ -122,25 +87,24 @@ export function toForecastDays(
   >();
 
   for (const point of points) {
-    const parsedDate = new Date(point.time_utc);
+    const localDateTimeParts = parseOffsetIsoDateTime(point.time_local);
 
-    if (Number.isNaN(parsedDate.getTime())) {
-      continue;
+    if (!localDateTimeParts) {
+      throw new Error(
+        "Heat-risk forecast point contained an invalid time_local value.",
+      );
     }
 
-    const dateParts = formatDateParts(parsedDate, resolvedTimeZone);
-    const dateKey = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
-    const timeLabel = `${dateParts.hour}:${dateParts.minute}`;
     const pointRisk = point.heat_risk.risk_level_interpolated;
-    const existingDay = groupedDays.get(dateKey);
+    const existingDay = groupedDays.get(localDateTimeParts.dateKey);
 
     if (!existingDay) {
-      groupedDays.set(dateKey, {
-        date: point.time_utc,
+      groupedDays.set(localDateTimeParts.dateKey, {
+        date: point.time_local,
         maxRisk: pointRisk,
         points: [
           {
-            time: timeLabel,
+            time: localDateTimeParts.timeLabel,
             value: pointRisk,
           },
         ],
@@ -150,7 +114,7 @@ export function toForecastDays(
 
     existingDay.maxRisk = Math.max(existingDay.maxRisk, pointRisk);
     existingDay.points.push({
-      time: timeLabel,
+      time: localDateTimeParts.timeLabel,
       value: pointRisk,
     });
   }

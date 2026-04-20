@@ -79,9 +79,9 @@ Request body:
 - `longitude: number`
   Range `[-180, 180]`.
 - `profile: string`
-  Must be `ADULT` or `KIDS`. Both profiles currently use the same pythermalcomfort
-  model path; the field is included to reserve the public contract for future
-  profile-specific behaviour.
+  Must be one of `ADULT`, `UNDER_10`, `AGE_10_13`, or `AGE_14_17`. All profiles
+  currently use the same pythermalcomfort model path; the field is included to
+  preserve the public contract for future profile-specific behaviour.
 
 Example request:
 
@@ -90,7 +90,7 @@ Example request:
   "sport": "SOCCER",
   "latitude": -33.847,
   "longitude": 151.067,
-  "profile": "ADULT"
+  "profile": "AGE_10_13"
 }
 ```
 
@@ -108,7 +108,7 @@ Example response:
 {
   "request": {
     "sport": "SOCCER",
-    "profile": "ADULT",
+    "profile": "AGE_10_13",
     "location": {
       "latitude": -33.847,
       "longitude": 151.067,
@@ -118,12 +118,12 @@ Example response:
   "forecast": [
     {
       "time_utc": "2026-03-09T00:00:00Z",
+      "time_local": "2026-03-09T11:00:00+11:00",
       "inputs": {
         "air_temperature_c": 31.0,
         "mean_radiant_temperature_c": 37.25,
         "relative_humidity_pct": 62.0,
         "wind_speed_10m_ms": 1.5,
-        "wind_speed_effective_ms": 1.02,
         "direct_normal_irradiance_wm2": 700.0
       },
       "heat_risk": {
@@ -145,26 +145,26 @@ Example response:
    - `relative_humidity_2m`
    - `wind_speed_10m`
    - `direct_normal_irradiance`
-   - `timezone=GMT`
+   - `timezone=<resolved IANA timezone>`
    - `wind_speed_unit=ms`
 2. Validate provider units at runtime:
    - `temperature_2m: °C`
    - `relative_humidity_2m: %`
    - `wind_speed_10m: m/s`
    - `direct_normal_irradiance: W/m²`
-3. Resolve the IANA timezone from `latitude` and `longitude`.
+3. Resolve the IANA timezone from `latitude` and `longitude`, then require the
+   provider response to echo back the same timezone.
 4. Keep hourly records where `time >= now_utc - 1h` inside the 7-day forecast window.
 5. Convert the retained rows into the resolved local timezone.
-6. Drop rows missing `tdb`, resample to `30min`, and interpolate numeric weather fields.
-7. Build MRT values with `pvlib` + `pythermalcomfort`:
+6. Drop rows missing `tdb`.
+7. Build MRT values with `pvlib` + `pythermalcomfort` on the provider-native hourly points:
    - compute solar elevation for each local timestamp
    - clamp negative solar elevations to `0`
    - derive `dni = direct_normal_irradiance * 0.75`
    - compute `delta_mrt` with `pythermalcomfort.models.solar_gain`
    - derive `tr = tdb + delta_mrt`
-8. Convert `wind_speed_10m_ms` to `wind_speed_effective_ms` using
-   `pythermalcomfort.utils.scale_wind_speed_log(...)`, then apply the sport floor
-   with `max(scaled_vr, Sports.<sport>.vr)`.
+8. Convert `wind_speed_10m_ms` to the model's required 1.1 m wind speed using
+   `pythermalcomfort.utils.scale_wind_speed_log(...)`.
 9. Run `sports_heat_stress_risk` for each complete forecast row.
 10. Skip incomplete rows and treat the earliest complete row as `forecast[0]`.
 11. Return `422` only when no complete forecast row exists; the error payload is derived
@@ -193,4 +193,5 @@ Example response:
 - Mean radiant temperature is not assumed to equal dry-bulb air temperature.
   The backend derives MRT through the solar-gain pipeline and returns the final
   `mean_radiant_temperature_c` in each forecast point.
-- The public response does not expose the raw Open-Meteo payload.
+- Each forecast point exposes both `time_utc` and `time_local`; `time_utc` is the
+  canonical instant, while `time_local` is the location-local display time.

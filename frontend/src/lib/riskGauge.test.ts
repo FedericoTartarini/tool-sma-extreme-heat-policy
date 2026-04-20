@@ -29,25 +29,30 @@ function getGraphicElements(option: ReturnType<typeof buildRiskGaugeOption>) {
 describe("riskGauge helpers", () => {
   it("maps threshold scores to the expected active levels", () => {
     expect(getRiskGaugeActiveLevel(0)).toBe("low");
-    expect(getRiskGaugeActiveLevel(1)).toBe("moderate");
-    expect(getRiskGaugeActiveLevel(2)).toBe("high");
-    expect(getRiskGaugeActiveLevel(3)).toBe("extreme");
+    expect(getRiskGaugeActiveLevel(1.5)).toBe("low");
+    expect(getRiskGaugeActiveLevel(2.5)).toBe("moderate");
+    expect(getRiskGaugeActiveLevel(3.5)).toBe("high");
     expect(getRiskGaugeActiveLevel(4)).toBe("extreme");
   });
 
-  it("maps threshold scores to the expected pointer angles", () => {
-    expect(getRiskGaugePointerAngle(0)).toBe(180);
-    expect(getRiskGaugePointerAngle(1)).toBe(135);
-    expect(getRiskGaugePointerAngle(2)).toBe(90);
-    expect(getRiskGaugePointerAngle(3)).toBe(45);
-    expect(getRiskGaugePointerAngle(4)).toBe(0);
+  it("maps raw scores onto the expected pointer angles", () => {
+    expect(getRiskGaugePointerAngle(0.5)).toBe(180);
+    expect(getRiskGaugePointerAngle(1)).toBe(180);
+    expect(getRiskGaugePointerAngle(1.5)).toBe(157.5);
+    expect(getRiskGaugePointerAngle(2.5)).toBe(112.5);
+    expect(getRiskGaugePointerAngle(3.5)).toBe(67.5);
+    expect(getRiskGaugePointerAngle(4)).toBe(45);
   });
 
-  it("clamps out-of-range scores and falls back to N/A for unavailable values", () => {
+  it("remaps raw scores into the display range and falls back to N/A when unavailable", () => {
     expect(normalizeRiskGaugeScore(-1)).toBe(0);
+    expect(normalizeRiskGaugeScore(0.8)).toBe(0);
+    expect(normalizeRiskGaugeScore(1.5)).toBe(0.5);
+    expect(normalizeRiskGaugeScore(4)).toBe(3);
     expect(normalizeRiskGaugeScore(6)).toBe(4);
     expect(getRiskGaugePointerAngle(Number.NaN)).toBeNull();
     expect(formatRiskGaugeValue(Number.NaN, "N/A")).toBe("N/A");
+    expect(formatRiskGaugeValue(4, "N/A")).toBe("4.0");
   });
 
   it("resolves default and clamped gauge widths from a single helper", () => {
@@ -59,15 +64,8 @@ describe("riskGauge helpers", () => {
     expect(getRiskGaugeWidth(true, Number.NaN)).toBe(RISK_GAUGE_MIN_WIDTH);
   });
 
-  it("builds a semicircle echarts gauge with legacy-style band labels", () => {
-    const option = buildRiskGaugeOption(
-      2.4,
-      riskGaugeLabels,
-      "Heat Score",
-      "N/A",
-      false,
-      400,
-    );
+  it("builds a semicircle echarts gauge with remapped display coordinates", () => {
+    const option = buildRiskGaugeOption(2.4, riskGaugeLabels, false, 400);
     const [bandSeries, overlaySeries] = Array.isArray(option.series)
       ? option.series
       : [];
@@ -87,7 +85,7 @@ describe("riskGauge helpers", () => {
       splitLine: {
         show: false,
       },
-      data: [{ value: 2.4 }],
+      data: [{ value: 1.4 }],
     });
     expect(overlaySeries).toMatchObject({
       type: "gauge",
@@ -109,14 +107,14 @@ describe("riskGauge helpers", () => {
       title: {
         show: false,
       },
-      data: [{ value: 2.4 }],
+      data: [{ value: 1.4 }],
     });
     expect(graphicElements).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: "polygon",
           style: expect.objectContaining({
-            fill: getRiskColor("high"),
+            fill: getRiskColor("moderate"),
           }),
         }),
       ]),
@@ -125,23 +123,23 @@ describe("riskGauge helpers", () => {
 
   it("derives tighter chart geometry from the clamped gauge width", () => {
     expect(getRiskGaugeGeometry(false, 200)).toEqual({
-      bottomInset: 4,
-      centerY: 98,
-      height: 102,
+      bottomInset: 6,
+      centerY: 94,
+      height: 100,
       radius: 90,
       sideInset: 10,
-      topInset: 8,
+      topInset: 4,
       valueBottomOffset: 4,
       width: 200,
     });
     expect(getRiskGaugeGeometry(false, 400)).toEqual({
-      bottomInset: 8,
-      centerY: 202,
-      height: 210,
+      bottomInset: 6,
+      centerY: 194,
+      height: 200,
       radius: 190,
       sideInset: 10,
-      topInset: 12,
-      valueBottomOffset: 6,
+      topInset: 4,
+      valueBottomOffset: 4,
       width: 400,
     });
     expect(getRiskGaugeGeometry(false, 200).height).toBeLessThan(116);
@@ -156,13 +154,13 @@ describe("riskGauge helpers", () => {
       lineHeight: 0.82,
     });
     expect(getRiskGaugeValueLayout(2.4, false, 400)).toEqual({
-      bottomOffset: 6,
+      bottomOffset: 4,
       fontSize: 48,
       fontWeight: 800,
       lineHeight: 0.82,
     });
     expect(getRiskGaugeValueLayout(Number.NaN, false, 400)).toEqual({
-      bottomOffset: 6,
+      bottomOffset: 4,
       fontSize: 24,
       fontWeight: 800,
       lineHeight: 0.82,
@@ -170,14 +168,7 @@ describe("riskGauge helpers", () => {
   });
 
   it("keeps the chart graphic free of center text so DOM can control alignment", () => {
-    const option = buildRiskGaugeOption(
-      2.4,
-      riskGaugeLabels,
-      "Heat Score",
-      "N/A",
-      false,
-      400,
-    );
+    const option = buildRiskGaugeOption(2.4, riskGaugeLabels, false, 400);
 
     expect(getGraphicElements(option)).not.toEqual(
       expect.arrayContaining([
@@ -192,8 +183,6 @@ describe("riskGauge helpers", () => {
     const option = buildRiskGaugeOption(
       Number.NaN,
       riskGaugeLabels,
-      "Heat Score",
-      "N/A",
       false,
       400,
     );
