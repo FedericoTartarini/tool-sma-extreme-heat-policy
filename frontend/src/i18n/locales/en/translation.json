@@ -23,7 +23,8 @@
     "version": "Version: {{version}}",
     "contactUs": "Contact Us",
     "usydLogoAlt": "University of Sydney logo",
-    "smaLogoAlt": "Sports Medicine Australia logo"
+    "smaLogoAlt": "Sports Medicine Australia logo",
+    "weatherAttribution": "Weather data by <openMeteoLink>Open-Meteo.com</openMeteoLink>. Processed for heat risk outputs. Licensed under <licenceLink>CC BY 4.0</licenceLink>."
   },
   "about": {
     "sections": [

@@ -8,7 +8,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { CONTENT_GAP, CONTENT_PADDING } from "@/config/uiLayout";
 import {
   PARAGRAPH_GAP,
@@ -20,6 +20,8 @@ const APP_VERSION = "1.2.2";
 const COPYRIGHT_YEAR = 2025;
 const REVIEW_YEAR = 2025;
 const FOOTER_LOGO_SLOT_HEIGHT = 50;
+const OPEN_METEO_URL = "https://open-meteo.com/";
+const CC_BY_4_URL = "https://creativecommons.org/licenses/by/4.0/";
 const FOOTER_TEXT_PROPS = {
   inherit: true,
   lh: STANDARD_TEXT_LINE_HEIGHT,
@@ -125,6 +127,31 @@ export function SiteFooter() {
               <Text {...FOOTER_TEXT_PROPS}>{t("footer.authors")}</Text>
               <Text {...FOOTER_TEXT_PROPS} fs="italic">
                 {t("footer.journal")}
+              </Text>
+              <Text {...FOOTER_TEXT_PROPS}>
+                <Trans
+                  i18nKey="footer.weatherAttribution"
+                  components={{
+                    openMeteoLink: (
+                      <Anchor
+                        inherit
+                        styles={footerLinkStyles}
+                        href={OPEN_METEO_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    ),
+                    licenceLink: (
+                      <Anchor
+                        inherit
+                        styles={footerLinkStyles}
+                        href={CC_BY_4_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    ),
+                  }}
+                />
               </Text>
               <Text {...FOOTER_TEXT_PROPS}>
                 {t("footer.copyright", { year: COPYRIGHT_YEAR })}
