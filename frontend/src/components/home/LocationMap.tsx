@@ -5,6 +5,7 @@ import { USYD_ORANGE_HEX } from "@/config/uiColors";
 
 const MAP_HEIGHT = 160;
 const DEFAULT_MAP_ZOOM = 11;
+const MARKER_OFFSET: [number, number] = [0, -30];
 const OPEN_FREE_MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 const ATTRIBUTION_SELECTOR = ".maplibregl-ctrl-attrib";
 const ATTRIBUTION_INNER_SELECTOR = ".maplibregl-ctrl-attrib-inner";
@@ -35,7 +36,7 @@ export interface LocationMapProps {
 }
 
 /**
- * Renders a read-only OpenFreeMap centered on the provided coordinates.
+ * Renders an OpenFreeMap preview with zoom controls centered on the provided coordinates.
  */
 export function LocationMap({ latitude, longitude, label }: LocationMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -58,7 +59,18 @@ export function LocationMap({ latitude, longitude, label }: LocationMapProps) {
       },
     });
 
-    const marker = new maplibregl.Marker({ color: USYD_ORANGE_HEX })
+    map.addControl(
+      new maplibregl.NavigationControl({
+        showZoom: true,
+        showCompass: false,
+      }),
+      "top-right",
+    );
+
+    const marker = new maplibregl.Marker({
+      color: USYD_ORANGE_HEX,
+      offset: MARKER_OFFSET,
+    })
       .setLngLat([longitude, latitude])
       .addTo(map);
 
