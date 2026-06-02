@@ -1,8 +1,5 @@
-import type {
-  LocationFeatureType,
-  LocationSuggestion,
-} from "@/domain/location";
-import { normalizeLocationSearchText } from "@/domain/locationSearch";
+import type { LocationSuggestion } from "@/domain/location";
+import { LOCATION_SUGGEST_TYPES } from "@/domain/locationSearch";
 
 const MAPBOX_SUGGEST_ENDPOINT =
   "https://api.mapbox.com/search/searchbox/v1/suggest";
@@ -12,17 +9,15 @@ interface MapboxSuggestResponse {
 }
 
 interface MapboxSuggestItem {
-  id?: string;
   mapbox_id?: string;
   feature_type?: string;
-  full_address?: string;
-  place_formatted?: string;
   name?: string;
   name_preferred?: string;
   context?: unknown;
 }
 
 type UnknownRecord = Record<string, unknown>;
+const LOCATION_SUGGEST_TYPE_SET = new Set<string>(LOCATION_SUGGEST_TYPES);
 
 export interface MapboxSuggestParams {
   query: string;
@@ -50,8 +45,7 @@ function toContextEntry(context: unknown, key: string): UnknownRecord | null {
   const entry = context[key];
 
   if (Array.isArray(entry)) {
-    const firstObjectEntry = entry.find((item) => isRecord(item));
-    return firstObjectEntry ?? null;
+    return entry.find((item) => isRecord(item)) ?? null;
   }
 
   return isRecord(entry) ? entry : null;
@@ -66,192 +60,60 @@ function toContextName(context: unknown, key: string): string {
   return toTrimmedString(entry.name);
 }
 
-function toCountry(context: unknown): string {
+function toCountryCode(context: unknown): string {
   const countryEntry = toContextEntry(context, "country");
   if (!countryEntry) {
     return "";
   }
 
-  const rawCountryCode = countryEntry.country_code;
-  const countryCode = toTrimmedString(rawCountryCode);
-  if (countryCode) {
-    return countryCode.toUpperCase();
-  }
-
-  return toTrimmedString(countryEntry.name);
+  return toTrimmedString(countryEntry.country_code).toUpperCase();
 }
 
-function toFeatureType(value: unknown): LocationFeatureType | undefined {
+function isSupportedFeatureType(value: unknown): boolean {
   const normalizedValue = toTrimmedString(value);
-
-  switch (normalizedValue) {
-    case "country":
-    case "region":
-    case "postcode":
-    case "district":
-    case "place":
-    case "city":
-    case "locality":
-    case "neighborhood":
-    case "street":
-    case "address":
-    case "poi":
-    case "category":
-      return normalizedValue;
-    default:
-      return undefined;
-  }
+  return LOCATION_SUGGEST_TYPE_SET.has(normalizedValue);
 }
 
-function toLabel(suggestion: MapboxSuggestItem): string {
-  const primary =
-    suggestion.name_preferred ??
-    suggestion.name ??
-    suggestion.full_address ??
-    suggestion.place_formatted ??
-    suggestion.mapbox_id ??
-    suggestion.id ??
-    "";
+function toDisplayLabel(parts: {
+  name: string;
+  regionName: string;
+  countryName: string;
+}): string {
+  const { name, regionName, countryName } = parts;
+  const visibleParts = [name, regionName, countryName].filter(Boolean);
 
-  const secondary = suggestion.place_formatted ?? suggestion.full_address ?? "";
-
-  if (!primary) {
-    return "";
-  }
-
-  if (!secondary || secondary === primary) {
-    return primary;
-  }
-
-  return `${primary}, ${secondary}`;
-}
-
-function toFormattedLocation(
-  parts: {
-    country: string;
-    locality: string;
-    localityNameNormalized: string;
-    name: string;
-    place: string;
-    placeNameNormalized: string;
-    postcode: string;
-    postcodeNormalized: string;
-    primaryNameNormalized: string;
-    region: string;
-    regionNormalized: string;
-  },
-  fallbackLabel: string,
-): string {
-  const {
-    country,
-    locality,
-    localityNameNormalized,
-    name,
-    place,
-    placeNameNormalized,
-    postcode,
-    postcodeNormalized,
-    primaryNameNormalized,
-    region,
-    regionNormalized,
-  } = parts;
-  const hasDisambiguatingContext = [
-    localityNameNormalized,
-    placeNameNormalized,
-    postcodeNormalized,
-  ].some((value) => value && value !== primaryNameNormalized);
-  const visibleParts = [
-    name,
-    locality,
-    place,
-    postcode,
-    !hasDisambiguatingContext &&
-    regionNormalized &&
-    regionNormalized !== primaryNameNormalized
-      ? region
-      : "",
-    country,
-  ];
-  const formattedParts: string[] = [];
-  const seenNormalizedParts = new Set<string>();
-
-  for (const part of visibleParts) {
-    const trimmedPart = toTrimmedString(part);
-    const normalizedPart = normalizeLocationSearchText(trimmedPart);
-
-    if (
-      !trimmedPart ||
-      !normalizedPart ||
-      seenNormalizedParts.has(normalizedPart)
-    ) {
-      continue;
-    }
-
-    seenNormalizedParts.add(normalizedPart);
-    formattedParts.push(trimmedPart);
-  }
-
-  if (formattedParts.length === 0) {
-    return fallbackLabel;
-  }
-
-  return formattedParts.join(", ");
+  return visibleParts.join(", ");
 }
 
 function toLocationSuggestion(
   suggestion: MapboxSuggestItem,
   sessionToken: string,
-  index: number,
 ): LocationSuggestion | null {
-  const label = toLabel(suggestion).trim();
-  if (!label) {
+  const mapboxId = suggestion.mapbox_id;
+  const name = toTrimmedString(suggestion.name_preferred ?? suggestion.name);
+  const regionName = toContextName(suggestion.context, "region");
+  const countryName = toContextName(suggestion.context, "country");
+  const countryCode = toCountryCode(suggestion.context);
+
+  if (
+    !mapboxId ||
+    !isSupportedFeatureType(suggestion.feature_type) ||
+    !name ||
+    !countryName
+  ) {
     return null;
   }
 
-  const primaryName = toTrimmedString(
-    suggestion.name_preferred ?? suggestion.name ?? "",
-  );
-  const primaryNameNormalized = normalizeLocationSearchText(primaryName);
-  const locality = toContextName(suggestion.context, "locality");
-  const place = toContextName(suggestion.context, "place");
-  const localityNameNormalized = normalizeLocationSearchText(locality);
-  const placeNameNormalized = normalizeLocationSearchText(place);
-  const postcode = toContextName(suggestion.context, "postcode");
-  const region = toContextName(suggestion.context, "region");
-  const regionNormalized = normalizeLocationSearchText(region);
-  const country = toCountry(suggestion.context);
-  const formattedLocation = toFormattedLocation(
-    {
-      country,
-      locality,
-      localityNameNormalized,
-      name: primaryName,
-      place,
-      placeNameNormalized,
-      postcode,
-      postcodeNormalized: normalizeLocationSearchText(postcode),
-      primaryNameNormalized,
-      region,
-      regionNormalized,
-    },
-    label,
-  );
-  const mapboxId = suggestion.mapbox_id ?? suggestion.id;
-  const id = mapboxId ?? `${label}-${index}`;
+  const displayLabel = toDisplayLabel({ name, regionName, countryName });
 
   return {
-    id,
-    label,
-    formattedLocation,
-    source: "mapbox",
-    featureType: toFeatureType(suggestion.feature_type),
-    primaryName,
-    primaryNameNormalized,
-    placeNameNormalized,
-    localityNameNormalized,
+    id: mapboxId,
+    displayLabel,
+    name,
+    ...(regionName ? { regionName } : {}),
+    countryName,
     mapboxId,
-    countryCode: country,
-    region,
+    ...(countryCode ? { countryCode } : {}),
     sessionToken,
   };
 }
@@ -286,7 +148,7 @@ function toSuggestQueryString({
 }
 
 /**
- * Calls Mapbox Search Box `suggest` API and maps results into app location suggestions.
+ * Calls Mapbox Search Box `suggest` API and maps neighborhood, locality, place, and city results.
  */
 export async function suggestLocations({
   query,
@@ -316,9 +178,8 @@ export async function suggestLocations({
 
   const data = (await response.json()) as MapboxSuggestResponse;
   const suggestions = data.suggestions ?? [];
-  const mappedSuggestions: Array<LocationSuggestion | null> = suggestions.map(
-    (suggestion, index) =>
-      toLocationSuggestion(suggestion, sessionToken, index),
+  const mappedSuggestions = suggestions.map((suggestion) =>
+    toLocationSuggestion(suggestion, sessionToken),
   );
 
   return mappedSuggestions.filter(

@@ -1,239 +1,80 @@
 import { describe, expect, it } from "vitest";
 import type { LocationSuggestion } from "@/domain/location";
 import {
-  createLocationSuggestRequestPlan,
-  isAddressLikeLocationQuery,
   normalizeLocationSearchText,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
-  shouldFallbackToExpandedSuggest,
 } from "@/domain/locationSearch";
 
 function createSuggestion(
   overrides: Partial<LocationSuggestion> & {
     id: string;
-    formattedLocation: string;
-    featureType?: LocationSuggestion["featureType"];
-    primaryName?: string;
+    displayLabel: string;
+    name: string;
+    countryName?: string;
   },
 ): LocationSuggestion {
-  const primaryName =
-    overrides.primaryName ?? overrides.formattedLocation.split(",")[0] ?? "";
-
   return {
     id: overrides.id,
-    label: overrides.label ?? overrides.formattedLocation,
-    formattedLocation: overrides.formattedLocation,
-    source: "mapbox",
-    featureType: overrides.featureType ?? "place",
-    primaryName,
-    primaryNameNormalized:
-      overrides.primaryNameNormalized ??
-      normalizeLocationSearchText(primaryName),
-    placeNameNormalized: overrides.placeNameNormalized ?? "",
-    localityNameNormalized: overrides.localityNameNormalized ?? "",
+    displayLabel: overrides.displayLabel,
+    name: overrides.name,
+    regionName: overrides.regionName,
+    countryName: overrides.countryName ?? "Australia",
     mapboxId: overrides.mapboxId ?? overrides.id,
     countryCode: overrides.countryCode ?? "AU",
-    region: overrides.region,
     sessionToken: overrides.sessionToken ?? "session-test",
     latitude: overrides.latitude,
     longitude: overrides.longitude,
   };
 }
 
-describe("createLocationSuggestRequestPlan", () => {
-  it("uses place-first types for generic location queries", () => {
-    expect(createLocationSuggestRequestPlan("Milsons Point")).toEqual({
-      queryNormalized: "milsons point",
-      isAddressLike: false,
-      primaryTypes: "place,city,locality,neighborhood,postcode,region,district",
-      fallbackTypes:
-        "place,city,locality,neighborhood,postcode,region,district,address,street,poi",
-    });
-  });
-
-  it("uses address-inclusive types for address-like queries", () => {
-    expect(createLocationSuggestRequestPlan("10 Downing St")).toEqual({
-      queryNormalized: "10 downing st",
-      isAddressLike: true,
-      primaryTypes:
-        "place,city,locality,neighborhood,postcode,region,district,address,street",
-      fallbackTypes: null,
-    });
-  });
-});
-
-describe("isAddressLikeLocationQuery", () => {
-  it("detects leading street numbers and street suffixes", () => {
-    expect(isAddressLikeLocationQuery("10 Downing St")).toBe(true);
-    expect(isAddressLikeLocationQuery("221B Baker Street")).toBe(true);
-  });
-
-  it("does not treat generic place names as addresses", () => {
-    expect(isAddressLikeLocationQuery("Milsons Point")).toBe(false);
-    expect(isAddressLikeLocationQuery("Charles Darwin University")).toBe(false);
-  });
-});
-
-describe("shouldFallbackToExpandedSuggest", () => {
-  it("keeps venue-like queries eligible for fallback when only weak place matches exist", () => {
-    expect(
-      shouldFallbackToExpandedSuggest({
-        queryNormalized: normalizeLocationSearchText(
-          "Charles Darwin University",
-        ),
-        isAddressLike: false,
-        suggestions: [
-          createSuggestion({
-            id: "darwin-place",
-            formattedLocation: "Darwin, AU",
-            featureType: "place",
-            primaryName: "Darwin",
-          }),
-        ],
-      }),
-    ).toBe(true);
-  });
-
-  it("skips fallback when a strong place match is already available", () => {
-    expect(
-      shouldFallbackToExpandedSuggest({
-        queryNormalized: normalizeLocationSearchText("Darwin"),
-        isAddressLike: false,
-        suggestions: [
-          createSuggestion({
-            id: "darwin-place",
-            formattedLocation: "Darwin, AU",
-            featureType: "place",
-            primaryName: "Darwin",
-          }),
-        ],
-      }),
-    ).toBe(false);
+describe("normalizeLocationSearchText", () => {
+  it("normalizes case and punctuation for matching", () => {
+    expect(normalizeLocationSearchText(" Auburn, NSW / AU ")).toBe(
+      "auburn nsw au",
+    );
   });
 });
 
 describe("prepareLocationSuggestions", () => {
-  it("ranks exact place matches ahead of Darwin-named addresses and POIs", () => {
+  it("collapses duplicate location suggestions by name, region, and country", () => {
     const prepared = prepareLocationSuggestions({
-      query: "Darwin",
       suggestions: [
         createSuggestion({
-          id: "poi",
-          formattedLocation: "Charles Darwin University, Sydney, AU",
-          featureType: "poi",
-          primaryName: "Charles Darwin University",
-          placeNameNormalized: "sydney",
+          id: "auburn-a",
+          displayLabel: "Auburn, New South Wales, Australia",
+          name: "Auburn",
+          regionName: "New South Wales",
         }),
         createSuggestion({
-          id: "street",
-          formattedLocation: "Darwin Street, Sydney, AU",
-          featureType: "street",
-          primaryName: "Darwin Street",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "place",
-          formattedLocation: "Darwin, AU",
-          featureType: "place",
-          primaryName: "Darwin",
+          id: "auburn-b",
+          displayLabel: "Auburn, New South Wales, Australia",
+          name: "Auburn",
+          regionName: "New South Wales",
         }),
       ],
     });
 
-    expect(prepared.visibleSuggestions[0]?.formattedLocation).toBe(
-      "Darwin, AU",
-    );
-  });
-
-  it("reduces Broome street clutter to the exact place result", () => {
-    const prepared = prepareLocationSuggestions({
-      query: "Broome",
-      suggestions: [
-        createSuggestion({
-          id: "place",
-          formattedLocation: "Broome, AU",
-          featureType: "place",
-          primaryName: "Broome",
-        }),
-        createSuggestion({
-          id: "street-1",
-          formattedLocation: "10 Broome St, Sydney, AU",
-          featureType: "address",
-          primaryName: "10 Broome St",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "street-2",
-          formattedLocation: "20 Broome Ave, Sydney, AU",
-          featureType: "address",
-          primaryName: "20 Broome Ave",
-          placeNameNormalized: "sydney",
-        }),
-      ],
-    });
-
-    expect(prepared.visibleSuggestions).toHaveLength(1);
-    expect(prepared.visibleSuggestions[0]?.formattedLocation).toBe(
-      "Broome, AU",
-    );
-  });
-
-  it("collapses Milsons Point variants to a single visible result", () => {
-    const prepared = prepareLocationSuggestions({
-      query: "Milsons Point",
-      suggestions: [
-        createSuggestion({
-          id: "place",
-          formattedLocation: "Milsons Point, Sydney, AU",
-          featureType: "place",
-          primaryName: "Milsons Point",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "postcode-variant",
-          formattedLocation: "Milsons Point, Sydney, 2061, AU",
-          featureType: "place",
-          primaryName: "Milsons Point",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "wharf",
-          formattedLocation: "Milsons Point Wharf, Milsons Point, Sydney, AU",
-          featureType: "poi",
-          primaryName: "Milsons Point Wharf",
-          placeNameNormalized: "sydney",
-          localityNameNormalized: "milsons point",
-        }),
-      ],
-    });
-
+    expect(prepared.dedupedSuggestions).toHaveLength(1);
     expect(prepared.visibleSuggestions).toEqual([
-      expect.objectContaining({
-        formattedLocation: "Milsons Point, Sydney, AU",
-      }),
+      expect.objectContaining({ id: "auburn-a" }),
     ]);
   });
 
-  it("keeps same-name places from different regions visible", () => {
+  it("keeps same-name locations from different regions visible", () => {
     const prepared = prepareLocationSuggestions({
-      query: "Richmond",
       suggestions: [
         createSuggestion({
           id: "richmond-vic",
-          formattedLocation: "Richmond, Victoria, AU",
-          featureType: "place",
-          primaryName: "Richmond",
-          placeNameNormalized: "richmond",
-          region: "Victoria",
+          displayLabel: "Richmond, Victoria, Australia",
+          name: "Richmond",
+          regionName: "Victoria",
         }),
         createSuggestion({
           id: "richmond-nsw",
-          formattedLocation: "Richmond, New South Wales, AU",
-          featureType: "place",
-          primaryName: "Richmond",
-          placeNameNormalized: "richmond",
-          region: "New South Wales",
+          displayLabel: "Richmond, New South Wales, Australia",
+          name: "Richmond",
+          regionName: "New South Wales",
         }),
       ],
     });
@@ -243,160 +84,134 @@ describe("prepareLocationSuggestions", () => {
     ).toEqual(["richmond-vic", "richmond-nsw"]);
   });
 
-  it("keeps address suggestions available for address-like queries", () => {
-    const prepared = prepareLocationSuggestions({
-      query: "123 Broome St",
-      suggestions: [
-        createSuggestion({
-          id: "address-1",
-          formattedLocation: "123 Broome St, Sydney, AU",
-          featureType: "address",
-          primaryName: "123 Broome St",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "address-2",
-          formattedLocation: "125 Broome St, Sydney, AU",
-          featureType: "address",
-          primaryName: "125 Broome St",
-          placeNameNormalized: "sydney",
-        }),
-      ],
-    });
-
-    expect(
-      prepared.visibleSuggestions.some(
-        (suggestion) => suggestion.featureType === "address",
-      ),
-    ).toBe(true);
-  });
-
   it("caps the visible list at three suggestions", () => {
     const prepared = prepareLocationSuggestions({
-      query: "Sydney",
       suggestions: [
         createSuggestion({
-          id: "sydney-place",
-          formattedLocation: "Sydney, AU",
-          featureType: "place",
-          primaryName: "Sydney",
+          id: "sydney",
+          displayLabel: "Sydney, New South Wales, Australia",
+          name: "Sydney",
+          regionName: "New South Wales",
         }),
         createSuggestion({
           id: "north-sydney",
-          formattedLocation: "North Sydney, AU",
-          featureType: "place",
-          primaryName: "North Sydney",
-        }),
-        createSuggestion({
-          id: "sydney-cbd",
-          formattedLocation: "Sydney CBD, Sydney, AU",
-          featureType: "neighborhood",
-          primaryName: "Sydney CBD",
-          placeNameNormalized: "sydney",
+          displayLabel: "North Sydney, New South Wales, Australia",
+          name: "North Sydney",
+          regionName: "New South Wales",
         }),
         createSuggestion({
           id: "sydney-olympic-park",
-          formattedLocation: "Sydney Olympic Park, Sydney, AU",
-          featureType: "neighborhood",
-          primaryName: "Sydney Olympic Park",
-          placeNameNormalized: "sydney",
+          displayLabel: "Sydney Olympic Park, New South Wales, Australia",
+          name: "Sydney Olympic Park",
+          regionName: "New South Wales",
+        }),
+        createSuggestion({
+          id: "sydney-mines",
+          displayLabel: "Sydney Mines, Nova Scotia, Canada",
+          name: "Sydney Mines",
+          regionName: "Nova Scotia",
+          countryName: "Canada",
+          countryCode: "CA",
         }),
       ],
     });
 
     expect(prepared.visibleSuggestions).toHaveLength(3);
   });
+});
 
-  it("preserves exact prefilled matches in the ranked list after visible collapse", () => {
-    const prepared = prepareLocationSuggestions({
-      query: "Milsons Point",
-      suggestions: [
-        createSuggestion({
-          id: "canonical",
-          formattedLocation: "Milsons Point, Sydney, AU",
-          featureType: "place",
-          primaryName: "Milsons Point",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "exact-prefill",
-          formattedLocation: "Milsons Point, Sydney, 2061, AU",
-          featureType: "place",
-          primaryName: "Milsons Point",
-          placeNameNormalized: "sydney",
-        }),
-        createSuggestion({
-          id: "wharf",
-          formattedLocation: "Milsons Point Wharf, Milsons Point, Sydney, AU",
-          featureType: "poi",
-          primaryName: "Milsons Point Wharf",
-          placeNameNormalized: "sydney",
-          localityNameNormalized: "milsons point",
-        }),
-      ],
-    });
+describe("resolvePrefilledLocationSuggestion", () => {
+  it.each(["url", "persisted"] as const)(
+    "matches exact canonical readable labels from %s prefill",
+    (prefillSource) => {
+      const suggestion = createSuggestion({
+        id: "auburn",
+        displayLabel: "Auburn, New South Wales, Australia",
+        name: "Auburn",
+        regionName: "New South Wales",
+      });
 
-    expect(
-      resolvePrefilledLocationSuggestion({
-        suggestions: prepared.rankedSuggestions,
-        value: "Milsons Point, Sydney, 2061, AU",
-        prefillSource: "url",
-      }),
-    ).toEqual(
-      expect.objectContaining({
-        formattedLocation: "Milsons Point, Sydney, 2061, AU",
-      }),
-    );
-    expect(prepared.visibleSuggestions).toHaveLength(1);
-  });
+      expect(
+        resolvePrefilledLocationSuggestion({
+          suggestions: [suggestion],
+          value: "Auburn, New South Wales, Australia",
+          prefillSource,
+        }),
+      ).toBe(suggestion);
+    },
+  );
 
-  it("matches a unique legacy prefill value after region is added to the display label", () => {
+  it("rejects non-canonical URL prefill labels", () => {
     expect(
       resolvePrefilledLocationSuggestion({
         suggestions: [
           createSuggestion({
-            id: "darwin-place",
-            formattedLocation: "Darwin, Northern Territory, AU",
-            featureType: "place",
-            primaryName: "Darwin",
-            placeNameNormalized: "darwin",
-            region: "Northern Territory",
+            id: "darwin",
+            displayLabel: "Darwin, Northern Territory, Australia",
+            name: "Darwin",
+            regionName: "Northern Territory",
           }),
         ],
         value: "Darwin, AU",
         prefillSource: "url",
       }),
-    ).toEqual(
-      expect.objectContaining({
-        id: "darwin-place",
-      }),
-    );
+    ).toBeNull();
   });
 
-  it("rejects ambiguous legacy prefill values when multiple region-specific matches exist", () => {
+  it("rejects non-canonical persisted prefill labels", () => {
+    expect(
+      resolvePrefilledLocationSuggestion({
+        suggestions: [
+          createSuggestion({
+            id: "auburn",
+            displayLabel: "Auburn, New South Wales, Australia",
+            name: "Auburn",
+            regionName: "New South Wales",
+          }),
+        ],
+        value: "Auburn, NSW, AU",
+        prefillSource: "persisted",
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects non-canonical labels even when multiple suggestions could match by name", () => {
     expect(
       resolvePrefilledLocationSuggestion({
         suggestions: [
           createSuggestion({
             id: "richmond-vic",
-            formattedLocation: "Richmond, Victoria, AU",
-            featureType: "place",
-            primaryName: "Richmond",
-            placeNameNormalized: "richmond",
-            region: "Victoria",
+            displayLabel: "Richmond, Victoria, Australia",
+            name: "Richmond",
+            regionName: "Victoria",
           }),
           createSuggestion({
             id: "richmond-nsw",
-            formattedLocation: "Richmond, New South Wales, AU",
-            featureType: "place",
-            primaryName: "Richmond",
-            placeNameNormalized: "richmond",
-            region: "New South Wales",
+            displayLabel: "Richmond, New South Wales, Australia",
+            name: "Richmond",
+            regionName: "New South Wales",
           }),
         ],
         value: "Richmond, AU",
         prefillSource: "url",
       }),
     ).toBeNull();
+  });
+
+  it("uses the first result only for default prefill fallback", () => {
+    const suggestion = createSuggestion({
+      id: "sydney",
+      displayLabel: "Sydney, New South Wales, Australia",
+      name: "Sydney",
+      regionName: "New South Wales",
+    });
+
+    expect(
+      resolvePrefilledLocationSuggestion({
+        suggestions: [suggestion],
+        value: "Default Sydney label",
+        prefillSource: "default",
+      }),
+    ).toBe(suggestion);
   });
 });

@@ -89,8 +89,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
   setSport: (sport) => set({ sport }),
   setLocationSearchInput: (value) =>
     set((state) => {
-      const selectedLocationValue =
-        state.selectedLocation?.formattedLocation ?? "";
+      const selectedLocationValue = state.selectedLocation?.displayLabel ?? "";
       const shouldClearSelectedLocation =
         Boolean(state.selectedLocation) && value !== selectedLocationValue;
       const isStartingNewSearch =
@@ -112,7 +111,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
   selectLocation: (suggestion) =>
     set({
       selectedLocation: suggestion,
-      locationSearchInput: suggestion.formattedLocation,
+      locationSearchInput: suggestion.displayLabel,
       locationPrefillSource: "none",
       shouldAutoResolvePrefilledLocation: false,
       hasPrefilledLocationNotMatched: false,

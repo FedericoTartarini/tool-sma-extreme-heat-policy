@@ -8,10 +8,12 @@ const INITIAL_SESSION_TOKEN = "session-initial";
 
 const DAMPER_LOCATION: LocationSuggestion = {
   id: "loc-dampier",
-  label: "Dampier, AU",
-  formattedLocation: "Dampier, AU",
-  source: "mapbox",
+  displayLabel: "Dampier, Western Australia, Australia",
+  name: "Dampier",
+  regionName: "Western Australia",
+  countryName: "Australia",
   mapboxId: "mapbox-dampier",
+  countryCode: "AU",
   latitude: -20.6628,
   longitude: 116.7127,
   sessionToken: "session-dampier",
@@ -19,10 +21,12 @@ const DAMPER_LOCATION: LocationSuggestion = {
 
 const PERTH_LOCATION: LocationSuggestion = {
   id: "loc-perth",
-  label: "Perth, AU",
-  formattedLocation: "Perth, AU",
-  source: "mapbox",
+  displayLabel: "Perth, Western Australia, Australia",
+  name: "Perth",
+  regionName: "Western Australia",
+  countryName: "Australia",
   mapboxId: "mapbox-perth",
+  countryCode: "AU",
   latitude: -31.9523,
   longitude: 115.8613,
   sessionToken: "session-perth",
@@ -82,10 +86,10 @@ describe("homeStore location search", () => {
 
     useHomeStore
       .getState()
-      .setLocationSearchInput(DAMPER_LOCATION.formattedLocation);
+      .setLocationSearchInput(DAMPER_LOCATION.displayLabel);
 
     expect(useHomeStore.getState()).toMatchObject({
-      locationSearchInput: DAMPER_LOCATION.formattedLocation,
+      locationSearchInput: DAMPER_LOCATION.displayLabel,
       selectedLocation: DAMPER_LOCATION,
       locationSessionToken: INITIAL_SESSION_TOKEN,
     });
@@ -98,7 +102,7 @@ describe("homeStore location search", () => {
     useHomeStore.getState().selectLocation(PERTH_LOCATION);
 
     expect(useHomeStore.getState()).toMatchObject({
-      locationSearchInput: PERTH_LOCATION.formattedLocation,
+      locationSearchInput: PERTH_LOCATION.displayLabel,
       selectedLocation: PERTH_LOCATION,
     });
   });
@@ -112,7 +116,7 @@ describe("homeStore location search", () => {
     expect(useHomeStore.getState()).toMatchObject({
       profile: "AGE_14_17",
       sport: "RUNNING",
-      locationSearchInput: DAMPER_LOCATION.formattedLocation,
+      locationSearchInput: DAMPER_LOCATION.displayLabel,
       selectedLocation: DAMPER_LOCATION,
     });
   });
