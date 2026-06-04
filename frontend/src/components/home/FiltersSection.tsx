@@ -83,23 +83,23 @@ export function FiltersSection() {
 
   const {
     locationSearchInput,
-    suggestionLabels,
+    locationSuggestions,
     isSuggestLoading,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
   } = useHomeLocationSuggest();
   const isShowingCommittedLocation =
     selectedLocation !== null &&
-    locationSearchInput === selectedLocation.formattedLocation;
-  const shouldRenderLocationDropdown = suggestionLabels.length > 0;
+    locationSearchInput === selectedLocation.displayLabel;
+  const shouldRenderLocationDropdown = locationSuggestions.length > 0;
   const locationRightSection = isSuggestLoading ? (
     <Loader size={16} />
   ) : (
     <Combobox.Chevron size="md" />
   );
-  const locationOptions = suggestionLabels.map((label) => (
-    <Combobox.Option value={label} key={label}>
-      {label}
+  const locationOptions = locationSuggestions.map((suggestion) => (
+    <Combobox.Option value={suggestion.id} key={suggestion.id}>
+      {suggestion.displayLabel}
     </Combobox.Option>
   ));
 

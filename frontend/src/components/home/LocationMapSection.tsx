@@ -24,8 +24,7 @@ export function LocationMapSection() {
   }
 
   const locationLabel =
-    selectedLocation?.formattedLocation ??
-    t("home.sections.map.locationFallback");
+    selectedLocation?.displayLabel ?? t("home.sections.map.locationFallback");
   const latitude = meta.latitude ?? selectedLocation?.latitude;
   const longitude = meta.longitude ?? selectedLocation?.longitude;
   const hasCoordinates =

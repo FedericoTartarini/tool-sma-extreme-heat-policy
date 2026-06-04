@@ -35,7 +35,7 @@ export function useHomeUrlSync({
     const nextSelection = {
       profile,
       sport,
-      loc: selectedLocation.formattedLocation,
+      loc: selectedLocation.displayLabel,
     };
     const hasSelectionChanged =
       !lastAppliedRef.current ||

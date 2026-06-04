@@ -6,27 +6,25 @@ import { suggestLocations } from "@/api/mapboxSuggest";
 import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
 import type { LocationSuggestion } from "@/domain/location";
 import {
-  createLocationSuggestRequestPlan,
-  type LocationSuggestRequestPlan,
+  LOCATION_SUGGEST_TYPES_PARAM,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
-  shouldFallbackToExpandedSuggest,
 } from "@/domain/locationSearch";
 import { useHomeStore } from "@/store/homeStore";
 
-const MIN_LOCATION_QUERY_LENGTH = 2;
-const SUGGEST_DEBOUNCE_MS = 500;
+const MIN_LOCATION_QUERY_LENGTH = 3;
+const SUGGEST_DEBOUNCE_MS = 800;
 const EMPTY_SUGGESTIONS: LocationSuggestion[] = [];
 
 export type LocationSuggestErrorReason = HomeSuggestErrorReason;
 
 interface UseHomeLocationSuggestResult {
   locationSearchInput: string;
-  suggestionLabels: string[];
+  locationSuggestions: LocationSuggestion[];
   isSuggestLoading: boolean;
   suggestErrorReason: LocationSuggestErrorReason | null;
   onLocationSearchInputChange: (value: string) => void;
-  onLocationOptionSubmit: (value: string) => void;
+  onLocationOptionSubmit: (suggestionId: string) => void;
 }
 
 function getLanguagePreference(): string | undefined {
@@ -108,21 +106,12 @@ function toSuggestErrorReason(params: {
   return null;
 }
 
-function isAbortError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !("name" in error)) {
-    return false;
-  }
-
-  return (error as { name?: unknown }).name === "AbortError";
-}
-
 function findSubmittedSuggestion(
   suggestions: LocationSuggestion[],
-  value: string,
+  suggestionId: string,
 ): LocationSuggestion | null {
   return (
-    suggestions.find((suggestion) => suggestion.formattedLocation === value) ??
-    null
+    suggestions.find((suggestion) => suggestion.id === suggestionId) ?? null
   );
 }
 
@@ -165,67 +154,6 @@ async function retrieveAndSelectLocation(params: {
   }
 }
 
-export async function loadCombinedLocationSuggestions(params: {
-  query: string;
-  mapboxAccessToken: string;
-  sessionToken: string;
-  signal?: AbortSignal;
-  language?: string;
-  requestPlan: LocationSuggestRequestPlan;
-}): Promise<LocationSuggestion[]> {
-  const {
-    query,
-    mapboxAccessToken,
-    sessionToken,
-    signal,
-    language,
-    requestPlan,
-  } = params;
-  const primarySuggestions = await suggestLocations({
-    query,
-    accessToken: mapboxAccessToken,
-    sessionToken,
-    signal,
-    language,
-    types: requestPlan.primaryTypes,
-  });
-  const shouldRunExpandedSuggest =
-    requestPlan.fallbackTypes !== null &&
-    shouldFallbackToExpandedSuggest({
-      queryNormalized: requestPlan.queryNormalized,
-      isAddressLike: requestPlan.isAddressLike,
-      suggestions: primarySuggestions,
-    });
-
-  if (!shouldRunExpandedSuggest || !requestPlan.fallbackTypes) {
-    return primarySuggestions;
-  }
-
-  try {
-    const fallbackSuggestions = await suggestLocations({
-      query,
-      accessToken: mapboxAccessToken,
-      sessionToken,
-      signal,
-      language,
-      types: requestPlan.fallbackTypes,
-    });
-
-    return [...primarySuggestions, ...fallbackSuggestions];
-  } catch (error) {
-    if (isAbortError(error)) {
-      throw error;
-    }
-
-    console.warn(
-      "Expanded Mapbox suggest failed; continuing with primary suggestions.",
-      error,
-    );
-
-    return primarySuggestions;
-  }
-}
-
 /**
  * Query-driven location suggest hook for Home.
  */
@@ -261,16 +189,11 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
 
   const query = locationSearchInput.trim();
-  const selectedLocationValue =
-    selectedLocation?.formattedLocation.trim() ?? "";
+  const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
   const language = useMemo(() => getLanguagePreference(), []);
   const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
   const queryForRequest = debouncedQuery.trim();
   const hasDebounced = queryForRequest === query;
-  const requestPlan = useMemo(
-    () => createLocationSuggestRequestPlan(queryForRequest),
-    [queryForRequest],
-  );
 
   const shouldSuggest = shouldRunSuggestQuery({
     hasMapboxToken,
@@ -285,35 +208,29 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       queryForRequest,
       sessionToken,
       language,
-      requestPlan.primaryTypes,
-      requestPlan.fallbackTypes,
+      LOCATION_SUGGEST_TYPES_PARAM,
     ],
     queryFn: async ({ signal }) => {
-      const combinedSuggestions = await loadCombinedLocationSuggestions({
+      const suggestions = await suggestLocations({
         query: queryForRequest,
-        mapboxAccessToken,
+        accessToken: mapboxAccessToken,
         sessionToken,
         signal,
         language,
-        requestPlan,
+        types: LOCATION_SUGGEST_TYPES_PARAM,
       });
 
       return prepareLocationSuggestions({
-        query: queryForRequest,
-        suggestions: combinedSuggestions,
+        suggestions,
       });
     },
     enabled: shouldSuggest,
   });
 
-  const rankedSuggestions =
-    suggestQuery.data?.rankedSuggestions ?? EMPTY_SUGGESTIONS;
+  const dedupedSuggestions =
+    suggestQuery.data?.dedupedSuggestions ?? EMPTY_SUGGESTIONS;
   const visibleSuggestions =
     suggestQuery.data?.visibleSuggestions ?? EMPTY_SUGGESTIONS;
-  const suggestionLabels = useMemo(
-    () => visibleSuggestions.map((item) => item.formattedLocation),
-    [visibleSuggestions],
-  );
 
   useEffect(() => {
     if (!shouldAutoResolvePrefilledLocation) {
@@ -330,13 +247,13 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
 
     consumeAutoResolvePrefilledLocation();
 
-    if (rankedSuggestions.length === 0) {
+    if (dedupedSuggestions.length === 0) {
       setHasPrefilledLocationNotMatched(false);
       return;
     }
 
     const selectedSuggestion = resolvePrefilledLocationSuggestion({
-      suggestions: rankedSuggestions,
+      suggestions: dedupedSuggestions,
       value: query,
       prefillSource: locationPrefillSource,
     });
@@ -362,7 +279,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     mapboxAccessToken,
     query,
     queryForRequest,
-    rankedSuggestions,
+    dedupedSuggestions,
     setHasPrefilledLocationNotMatched,
     selectLocation,
     selectedLocation,
@@ -377,7 +294,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     shouldSuggest,
     isSuggestError: suggestQuery.isError,
     isSuggestSuccess: suggestQuery.isSuccess,
-    suggestionCount: rankedSuggestions.length,
+    suggestionCount: dedupedSuggestions.length,
   });
 
   const onLocationSearchInputChange = (value: string) => {
@@ -390,13 +307,13 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     setLocationSearchInput(value);
   };
 
-  const onLocationOptionSubmit = (value: string) => {
+  const onLocationOptionSubmit = (suggestionId: string) => {
     if (hasPrefilledNotMatched) {
       setHasPrefilledLocationNotMatched(false);
     }
     const selectedSuggestion = findSubmittedSuggestion(
-      rankedSuggestions,
-      value,
+      dedupedSuggestions,
+      suggestionId,
     );
 
     if (!selectedSuggestion) {
@@ -414,7 +331,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
 
   return {
     locationSearchInput,
-    suggestionLabels,
+    locationSuggestions: visibleSuggestions,
     isSuggestLoading: shouldSuggest && suggestQuery.isFetching,
     suggestErrorReason,
     onLocationSearchInputChange,

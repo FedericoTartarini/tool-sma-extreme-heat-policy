@@ -52,7 +52,7 @@ describe("home browserState", () => {
       JSON.stringify({
         profile: "UNDER_10",
         sport: SportType.Running,
-        loc: "  Perth, AU  ",
+        loc: "  Perth, Western Australia, Australia  ",
       }),
     );
 
@@ -61,7 +61,7 @@ describe("home browserState", () => {
     ).toEqual({
       profile: "UNDER_10",
       sport: SportType.Running,
-      loc: "Perth, AU",
+      loc: "Perth, Western Australia, Australia",
     });
   });
 
@@ -70,7 +70,7 @@ describe("home browserState", () => {
       HOME_FILTERS_STORAGE_KEY,
       JSON.stringify({
         sport: SportType.Basketball,
-        loc: "North Sydney, AU",
+        loc: "North Sydney, New South Wales, Australia",
       }),
     );
 
@@ -79,7 +79,7 @@ describe("home browserState", () => {
     ).toEqual({
       profile: "ADULT",
       sport: SportType.Basketball,
-      loc: "North Sydney, AU",
+      loc: "North Sydney, New South Wales, Australia",
     });
   });
 
@@ -89,7 +89,7 @@ describe("home browserState", () => {
       JSON.stringify({
         profile: "KIDS",
         sport: SportType.Basketball,
-        loc: "North Sydney, AU",
+        loc: "North Sydney, New South Wales, Australia",
       }),
     );
 
@@ -98,7 +98,7 @@ describe("home browserState", () => {
     ).toEqual({
       profile: "ADULT",
       sport: SportType.Basketball,
-      loc: "North Sydney, AU",
+      loc: "North Sydney, New South Wales, Australia",
     });
   });
 
@@ -106,14 +106,14 @@ describe("home browserState", () => {
     savePersistedHomeFilters({
       profile: "AGE_14_17",
       sport: SportType.Soccer,
-      loc: "Campbell Creek, QLD, 4625",
+      loc: "Campbell Creek, Queensland, Australia",
     });
 
     expect(storage.get(HOME_FILTERS_STORAGE_KEY)).toBe(
       JSON.stringify({
         profile: "AGE_14_17",
         sport: SportType.Soccer,
-        loc: "Campbell Creek, QLD, 4625",
+        loc: "Campbell Creek, Queensland, Australia",
       }),
     );
   });

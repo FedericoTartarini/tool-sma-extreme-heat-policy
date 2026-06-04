@@ -13,7 +13,94 @@ describe("suggestLocations", () => {
     vi.clearAllMocks();
   });
 
-  it("passes the requested types and maps feature metadata needed for ranking", async () => {
+  it("passes supported weather location types and maps readable display labels", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "locality-auburn",
+              feature_type: "locality",
+              name: "Auburn",
+              context: {
+                country: { name: "Australia", country_code: "au" },
+                region: {
+                  name: "New South Wales",
+                  region_code: "NSW",
+                  region_code_full: "AU-NSW",
+                },
+                place: { name: "Sydney" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Auburn",
+      accessToken: "token",
+      sessionToken: "session",
+      types: "locality,neighborhood,place,city",
+      language: "en",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      "types=locality%2Cneighborhood%2Cplace%2Ccity",
+    );
+    expect(suggestions).toEqual([
+      {
+        id: "locality-auburn",
+        displayLabel: "Auburn, New South Wales, Australia",
+        name: "Auburn",
+        regionName: "New South Wales",
+        countryName: "Australia",
+        mapboxId: "locality-auburn",
+        countryCode: "AU",
+        sessionToken: "session",
+      },
+    ]);
+  });
+
+  it("accepts neighborhood results", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "neighborhood-surry-hills",
+              feature_type: "neighborhood",
+              name: "Surry Hills",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+                region: { name: "New South Wales" },
+                place: { name: "Sydney" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Surry Hills",
+      accessToken: "token",
+      sessionToken: "session",
+      types: "locality,neighborhood,place,city",
+    });
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: "neighborhood-surry-hills",
+        displayLabel: "Surry Hills, New South Wales, Australia",
+      }),
+    ]);
+  });
+
+  it("does not expose region or country codes in the display label", async () => {
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -22,23 +109,9 @@ describe("suggestLocations", () => {
               mapbox_id: "place-darwin",
               feature_type: "place",
               name: "Darwin",
-              place_formatted: "Northern Territory, Australia",
               context: {
-                country: { country_code: "au" },
-                region: { name: "Northern Territory" },
-                place: { name: "Darwin" },
-              },
-            },
-            {
-              mapbox_id: "poi-wharf",
-              feature_type: "poi",
-              name: "Milsons Point Wharf",
-              place_formatted: "Milsons Point, Sydney, 2060, Australia",
-              context: {
-                country: { country_code: "au" },
-                region: { name: "New South Wales" },
-                locality: { name: "Milsons Point" },
-                place: { name: "Sydney" },
+                country: { name: "Australia", country_code: "AU" },
+                region: { name: "Northern Territory", region_code: "NT" },
               },
             },
           ],
@@ -51,63 +124,27 @@ describe("suggestLocations", () => {
       query: "Darwin",
       accessToken: "token",
       sessionToken: "session",
-      types: "place,locality",
-      language: "en",
+      types: "locality,neighborhood,place,city",
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
-      "types=place%2Clocality",
+    expect(suggestions[0]?.displayLabel).toBe(
+      "Darwin, Northern Territory, Australia",
     );
-    expect(suggestions).toEqual([
-      expect.objectContaining({
-        formattedLocation: "Darwin, Northern Territory, AU",
-        mapboxId: "place-darwin",
-        featureType: "place",
-        primaryName: "Darwin",
-        primaryNameNormalized: "darwin",
-        placeNameNormalized: "darwin",
-        localityNameNormalized: "",
-        countryCode: "AU",
-        region: "Northern Territory",
-      }),
-      expect.objectContaining({
-        formattedLocation: "Milsons Point Wharf, Milsons Point, Sydney, AU",
-        mapboxId: "poi-wharf",
-        featureType: "poi",
-        primaryName: "Milsons Point Wharf",
-        primaryNameNormalized: "milsons point wharf",
-        placeNameNormalized: "sydney",
-        localityNameNormalized: "milsons point",
-        countryCode: "AU",
-        region: "New South Wales",
-      }),
-    ]);
+    expect(suggestions[0]?.displayLabel).not.toContain("AU");
+    expect(suggestions[0]?.displayLabel).not.toContain("NT");
   });
 
-  it("adds region to otherwise-ambiguous same-name place suggestions", async () => {
+  it("falls back to name and country when region is missing", async () => {
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
           suggestions: [
             {
-              mapbox_id: "richmond-vic",
-              feature_type: "place",
-              name: "Richmond",
+              mapbox_id: "city-singapore",
+              feature_type: "city",
+              name: "Singapore",
               context: {
-                country: { country_code: "au" },
-                region: { name: "Victoria" },
-                place: { name: "Richmond" },
-              },
-            },
-            {
-              mapbox_id: "richmond-nsw",
-              feature_type: "place",
-              name: "Richmond",
-              context: {
-                country: { country_code: "au" },
-                region: { name: "New South Wales" },
-                place: { name: "Richmond" },
+                country: { name: "Singapore", country_code: "SG" },
               },
             },
           ],
@@ -117,16 +154,106 @@ describe("suggestLocations", () => {
     );
 
     const suggestions = await suggestLocations({
-      query: "Richmond",
+      query: "Singapore",
       accessToken: "token",
       sessionToken: "session",
-      types: "place",
-      language: "en",
+      types: "locality,neighborhood,place,city",
     });
 
-    expect(
-      suggestions.map((suggestion) => suggestion.formattedLocation),
-    ).toEqual(["Richmond, Victoria, AU", "Richmond, New South Wales, AU"]);
+    expect(suggestions[0]?.displayLabel).toBe("Singapore, Singapore");
+    expect(suggestions[0]).not.toHaveProperty("regionName");
+  });
+
+  it("drops results outside supported weather location types or without readable identity", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "address-result",
+              feature_type: "address",
+              name: "10 George Street",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "street-result",
+              feature_type: "street",
+              name: "George Street",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "postcode-result",
+              feature_type: "postcode",
+              name: "2000",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "district-result",
+              feature_type: "district",
+              name: "Greater Sydney",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "region-result",
+              feature_type: "region",
+              name: "New South Wales",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "country-result",
+              feature_type: "country",
+              name: "Australia",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "poi-wharf",
+              feature_type: "poi",
+              name: "Milsons Point Wharf",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              feature_type: "locality",
+              name: "Auburn",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "locality-without-country-name",
+              feature_type: "locality",
+              name: "Auburn",
+              context: {
+                country: { country_code: "AU" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Auburn",
+      accessToken: "token",
+      sessionToken: "session",
+      types: "locality,neighborhood,place,city",
+    });
+
+    expect(suggestions).toEqual([]);
   });
 
   it("throws when Mapbox suggest returns a non-OK response", async () => {
@@ -137,7 +264,7 @@ describe("suggestLocations", () => {
         query: "Darwin",
         accessToken: "token",
         sessionToken: "session",
-        types: "place",
+        types: "locality,neighborhood,place,city",
       }),
     ).rejects.toThrow("Mapbox suggest failed with HTTP 502");
   });
