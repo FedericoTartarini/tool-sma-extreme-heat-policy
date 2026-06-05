@@ -1,0 +1,119 @@
+substitutions:
+  _SERVICE_NAME: REQUIRED
+  _RUN_REGION: REQUIRED
+  _ARTIFACT_REGION: REQUIRED
+  _ARTIFACT_REPOSITORY: REQUIRED
+
+steps:
+  - id: resolve-deployment
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        set -eu
+
+        SERVICE_NAME="${_SERVICE_NAME}"
+        RUN_REGION="${_RUN_REGION}"
+        ARTIFACT_REGION="${_ARTIFACT_REGION}"
+        ARTIFACT_REPOSITORY="${_ARTIFACT_REPOSITORY}"
+
+        if [ -z "$$SERVICE_NAME" ] || [ "$$SERVICE_NAME" = "REQUIRED" ]; then
+          echo "Missing Cloud Build trigger substitution: _SERVICE_NAME" >&2
+          exit 1
+        fi
+        if [ -z "$$RUN_REGION" ] || [ "$$RUN_REGION" = "REQUIRED" ]; then
+          echo "Missing Cloud Build trigger substitution: _RUN_REGION" >&2
+          exit 1
+        fi
+        if [ -z "$$ARTIFACT_REGION" ] || [ "$$ARTIFACT_REGION" = "REQUIRED" ]; then
+          echo "Missing Cloud Build trigger substitution: _ARTIFACT_REGION" >&2
+          exit 1
+        fi
+        if [ -z "$$ARTIFACT_REPOSITORY" ] || [ "$$ARTIFACT_REPOSITORY" = "REQUIRED" ]; then
+          echo "Missing Cloud Build trigger substitution: _ARTIFACT_REPOSITORY" >&2
+          exit 1
+        fi
+
+        IMAGE_URI="$${ARTIFACT_REGION}-docker.pkg.dev/$PROJECT_ID/$${ARTIFACT_REPOSITORY}/$${SERVICE_NAME}:$COMMIT_SHA"
+
+        {
+          printf 'SERVICE_NAME=%s\n' "$$SERVICE_NAME"
+          printf 'RUN_REGION=%s\n' "$$RUN_REGION"
+          printf 'ARTIFACT_REGION=%s\n' "$$ARTIFACT_REGION"
+          printf 'ARTIFACT_REPOSITORY=%s\n' "$$ARTIFACT_REPOSITORY"
+          printf 'IMAGE_URI=%s\n' "$$IMAGE_URI"
+        } > /workspace/backend-deployment.env
+
+        echo "Backend deployment summary"
+        echo "Service: $$SERVICE_NAME"
+        echo "Cloud Run region: $$RUN_REGION"
+        echo "Artifact Registry region: $$ARTIFACT_REGION"
+        echo "Artifact Registry repository: $$ARTIFACT_REPOSITORY"
+        echo "Image: $$IMAGE_URI"
+
+  - id: backend-ruff
+    name: python:3.12-slim
+    dir: backend
+    entrypoint: sh
+    env:
+      - UV_CACHE_DIR=/workspace/.uv-cache
+    args:
+      - -c
+      - |
+        python -m pip install --quiet --upgrade pip uv==0.10.2
+        uv sync --frozen --all-groups
+        uv run ruff check .
+
+  - id: backend-pytest
+    name: python:3.12-slim
+    dir: backend
+    entrypoint: sh
+    env:
+      - UV_CACHE_DIR=/workspace/.uv-cache
+    args:
+      - -c
+      - |
+        python -m pip install --quiet --upgrade pip uv==0.10.2
+        uv sync --frozen --all-groups
+        uv run pytest
+
+  - id: docker-build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        set -eu
+        . /workspace/backend-deployment.env
+        docker build -f backend/Dockerfile -t "$$IMAGE_URI" backend
+
+  - id: docker-push
+    name: gcr.io/cloud-builders/docker
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        set -eu
+        . /workspace/backend-deployment.env
+        docker push "$$IMAGE_URI"
+
+  - id: deploy-cloud-run
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        set -eu
+        . /workspace/backend-deployment.env
+        gcloud run deploy "$$SERVICE_NAME" \
+          --image "$$IMAGE_URI" \
+          --region "$$RUN_REGION" \
+          --platform managed \
+          --quiet
+
+images:
+  - ${_ARTIFACT_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/${_SERVICE_NAME}:$COMMIT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY

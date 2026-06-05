@@ -28,19 +28,23 @@ pipeline remains testable without HTTP or FastAPI.
 ## How to get started locally
 
 ### Setup
+
 To complete the following action you need to have UV installed on your computer.
+
 ```bash
 cd backend
 uv sync
 ```
 
 ### Environment
+
 Copy `backend/.env.example` to `backend/.env` using the command `cp .env.example .env`.
-If you need to allow Netlify preview or branch deploy URLs, set
-`CORS_ORIGIN_REGEX` to a strict regex such as
-`^https://([a-z0-9-]+--)?sports-heat-tool\.netlify\.app$`.
+Set `CORS_ORIGINS` to the production frontend origin. If you need to allow
+Netlify preview or branch deploy URLs, set `CORS_ORIGIN_REGEX` to a strict regex
+such as `^https://([a-z0-9-]+--)?sports-heat-tool\.netlify\.app$`.
 
 ### Run locally
+
 ```bash
 uv run uvicorn sma_extreme_heat_backend.main:app --reload --port 8000
 ```
@@ -51,6 +55,28 @@ uv run uvicorn sma_extreme_heat_backend.main:app --reload --port 8000
 uv run ruff check .
 uv run pytest
 ```
+
+## Cloud Build And Cloud Run Deployment
+
+Backend deployment logic lives in `backend/cloudbuild.yaml`. Cloud Build
+triggers should use that config file, not Dockerfile autodetection.
+
+Trigger settings:
+
+- Branches: `development` for dev/staging, `main` for production.
+- Included files: `backend/**`.
+- Config file path: `backend/cloudbuild.yaml`.
+- Production triggers should require manual approval.
+
+Required trigger substitutions:
+
+- `_SERVICE_NAME`
+- `_RUN_REGION`
+- `_ARTIFACT_REGION`
+- `_ARTIFACT_REPOSITORY`
+
+Cloud Run owns runtime settings such as `CORS_ORIGINS` and
+`CORS_ORIGIN_REGEX`.
 
 ## Pre-commit
 

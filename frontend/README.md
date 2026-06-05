@@ -108,28 +108,25 @@ Import rules:
 - `pnpm test` (Vitest watch mode)
 - `pnpm test:ci` (Vitest single run)
 - `pnpm build`
+- `pnpm ci` (lint, test, and build for deployment checks)
 
-## GitHub Pages deployment
+## Netlify deployment
 
-Frontend deploys to GitHub Pages from pushes to `development` via
-the workflow at `.github/workflows/frontend-pages.yml`.
+Frontend production and pull-request previews deploy through Netlify.
 
-Repository settings:
+`frontend/netlify.toml` is the source of truth for the build command, publish
+directory, and SPA fallback.
 
-- Settings -> Pages -> Source: `GitHub Actions`
+Netlify project settings:
 
-Repository Variables required for deploy builds:
+- Base directory: `frontend`.
+- Package directory: `frontend` if Netlify requires it.
+- Environment variables for production and deploy-preview contexts:
+  - `VITE_API_BASE_URL`
+  - `VITE_MAPBOX_ACCESS_TOKEN`
 
-- `VITE_API_BASE_URL`
-- `VITE_MAPBOX_ACCESS_TOKEN`
-
-Notes:
-
-- GitHub Pages builds inject the repo subpath automatically so Vite assets and
-  React Router routes resolve correctly under
-  `https://yehui-h.github.io/tool-sma-extreme-heat-policy/`.
-- The app includes a `404.html` SPA fallback so direct visits and refreshes on
-  routes like `/about` keep working on GitHub Pages.
+Set both variables in Netlify with the Builds scope. GitHub Actions runs
+frontend quality checks but does not deploy the frontend.
 
 ## Frontend Conventions Compliance
 
