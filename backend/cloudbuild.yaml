@@ -61,6 +61,7 @@ steps:
     args:
       - -c
       - |
+        set -eu
         python -m pip install --quiet --upgrade pip uv==0.11.19
         uv sync --frozen --all-groups
         uv run ruff check .
@@ -74,6 +75,7 @@ steps:
     args:
       - -c
       - |
+        set -eu
         python -m pip install --quiet --upgrade pip uv==0.11.19
         uv sync --frozen --all-groups
         uv run pytest

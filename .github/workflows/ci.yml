@@ -29,16 +29,18 @@ jobs:
       VITE_MAPBOX_ACCESS_TOKEN: ci_dummy_mapbox_token
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v6.0.8
         with:
           version: 11.5.2
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -66,18 +68,36 @@ jobs:
       UV_CACHE_DIR: /tmp/uv-cache
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.12"
+
+      - name: Restore uv cache
+        id: restore-uv-cache
+        uses: actions/cache/restore@v5.0.5
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock', 'backend/pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
 
       - name: Install uv
         run: python -m pip install --upgrade pip uv==0.11.19
 
       - name: Install dependencies
         run: uv sync --frozen --all-groups
+
+      - name: Save uv cache
+        if: steps.restore-uv-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5.0.5
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock', 'backend/pyproject.toml') }}
 
       - name: Lint backend
         run: uv run ruff check .

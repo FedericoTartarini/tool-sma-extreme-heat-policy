@@ -16,8 +16,6 @@ Based on:
 - SMA Extreme Heat Risk and Response Guidelines: https://sma.org.au/resources/policies-and-guidelines/hot-weather/
 - Tartarini, F. et al., 2025. A modified sports medicine Australia extreme heat policy and web tool. _Journal of Science and Medicine in Sport_. https://www.sciencedirect.com/science/article/pii/S1440244025000696
 
-## Setup
-
 ## Requirements
 
 - Node.js 24 LTS
