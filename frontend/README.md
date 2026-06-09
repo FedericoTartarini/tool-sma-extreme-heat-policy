@@ -18,10 +18,22 @@ Based on:
 
 ## Setup
 
-1. Install deps: `pnpm install`
-2. Create local env file: `cp .env.example .env.local`
-3. Run dev server: `pnpm dev`
-4. Run tests: `pnpm test`
+## Requirements
+
+- Node.js 24 LTS
+- pnpm 11.5.2 via Corepack
+
+`package.json` and `netlify.toml` are the source of truth for the frontend
+Node.js and pnpm versions.
+
+## Setup
+
+1. Select Node 24: `nvm install 24 && nvm use 24`
+2. Enable Corepack: `corepack enable`
+3. Install deps: `pnpm install`
+4. Create local env file: `cp .env.example .env.local`
+5. Run dev server: `pnpm dev`
+6. Run tests: `pnpm test`
 
 ## Environment (`.env.local`)
 

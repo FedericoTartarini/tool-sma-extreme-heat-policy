@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY pyproject.toml uv.lock README.md ./
 
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir uv==0.10.2 \
+    && pip install --no-cache-dir uv==0.11.19 \
     && uv sync --frozen --no-dev --no-install-project \
     && rm -rf "$UV_CACHE_DIR"
 

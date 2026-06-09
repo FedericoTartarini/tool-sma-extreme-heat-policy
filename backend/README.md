@@ -61,6 +61,17 @@ uv run pytest
 Backend deployment logic lives in `backend/cloudbuild.yaml`. Cloud Build
 triggers should use that config file, not Dockerfile autodetection.
 
+The Cloud Build pipeline first resolves and validates the required deployment
+substitutions, then runs backend linting and tests before any image is built. If
+those checks pass, it builds the image from `backend/Dockerfile`, pushes that
+exact image to Artifact Registry, and deploys the same image digest to Cloud
+Run.
+
+This explicit config is preferred over Dockerfile autodetection because it keeps
+the deployment steps reproducible, avoids hidden builder defaults, validates
+required substitutions before deployment work begins, and makes the lint/test
+gates part of the release path.
+
 Trigger settings:
 
 - Branches: `development` for dev/staging, `main` for production.

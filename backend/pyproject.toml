@@ -13,23 +13,23 @@ dependencies = [
     "pandas==3.0.3",
     "pvlib==0.15.1",
     "pydantic-settings==2.14.1",
-    "pythermalcomfort==3.9.2",
+    "pythermalcomfort==3.9.8",
     "timezonefinder==8.2.4",
-    "uvicorn[standard]==0.48.0",
+    "uvicorn[standard]==0.49.0",
 ]
 
 [project.scripts]
 sma-extreme-heat-backend = "sma_extreme_heat_backend.main:main"
 
 [build-system]
-requires = ["uv_build==0.10.2"]
+requires = ["uv_build==0.11.19"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "pytest==9.0.3",
     "pytest-asyncio==1.4.0",
-    "ruff==0.15.15",
+    "ruff==0.15.16",
 ]
 
 [tool.ruff]

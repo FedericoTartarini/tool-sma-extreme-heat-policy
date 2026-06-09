@@ -109,7 +109,7 @@ export function toRiskLevel(score: number): RiskLevel {
 
 /**
  * Maps a raw risk score onto the shared chart display coordinate system.
- * The pythermalcomfort 3.9.2 model caps scores at 4.0, and that maximum score
+ * The pythermalcomfort sports heat-risk model caps scores at 4.0, and that maximum score
  * should render on the High/Extreme boundary rather than within the Extreme band.
  */
 export function toRiskDisplayScore(score: number): number | null {

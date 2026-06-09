@@ -3,8 +3,8 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22"
-  PNPM_VERSION = "10.10.0"
+  NODE_VERSION = "24"
+  PNPM_VERSION = "11.5.2"
 
 [[redirects]]
   from = "/*"
