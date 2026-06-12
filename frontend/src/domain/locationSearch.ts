@@ -14,7 +14,7 @@ export interface PreparedLocationSuggestions {
   visibleSuggestions: LocationSuggestion[];
 }
 
-type LocationPrefillSource = "url" | "persisted" | "default" | "none";
+export type LocationPrefillSource = "url" | "persisted" | "default" | "none";
 
 function toLocationIdentityKey(suggestion: LocationSuggestion): string {
   return [suggestion.name, suggestion.regionName ?? "", suggestion.countryName]
@@ -92,4 +92,33 @@ export function resolvePrefilledLocationSuggestion(params: {
   }
 
   return prefillSource === "default" ? (suggestions[0] ?? null) : null;
+}
+
+/**
+ * Determines whether unmatched URL/storage prefill values should reveal manual choices.
+ */
+export function shouldOpenPrefilledLocationDropdown(params: {
+  suggestions: LocationSuggestion[];
+  visibleSuggestions: LocationSuggestion[];
+  value: string;
+  prefillSource: LocationPrefillSource;
+  isSuggestSuccess: boolean;
+}): boolean {
+  const {
+    suggestions,
+    visibleSuggestions,
+    value,
+    prefillSource,
+    isSuggestSuccess,
+  } = params;
+
+  if (
+    !isSuggestSuccess ||
+    visibleSuggestions.length === 0 ||
+    (prefillSource !== "url" && prefillSource !== "persisted")
+  ) {
+    return false;
+  }
+
+  return findExactNormalizedSuggestion(suggestions, value) === null;
 }

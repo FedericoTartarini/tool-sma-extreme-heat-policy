@@ -9,10 +9,11 @@ import {
   LOCATION_SUGGEST_TYPES_PARAM,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
+  shouldOpenPrefilledLocationDropdown,
 } from "@/domain/locationSearch";
 import { useHomeStore } from "@/store/homeStore";
 
-const MIN_LOCATION_QUERY_LENGTH = 3;
+const MIN_LOCATION_QUERY_LENGTH = 2;
 const SUGGEST_DEBOUNCE_MS = 800;
 const EMPTY_SUGGESTIONS: LocationSuggestion[] = [];
 
@@ -22,6 +23,7 @@ interface UseHomeLocationSuggestResult {
   locationSearchInput: string;
   locationSuggestions: LocationSuggestion[];
   isSuggestLoading: boolean;
+  shouldOpenLocationDropdown: boolean;
   suggestErrorReason: LocationSuggestErrorReason | null;
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
@@ -296,6 +298,15 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     isSuggestSuccess: suggestQuery.isSuccess,
     suggestionCount: dedupedSuggestions.length,
   });
+  const shouldOpenLocationDropdown =
+    hasPrefilledNotMatched &&
+    shouldOpenPrefilledLocationDropdown({
+      suggestions: dedupedSuggestions,
+      visibleSuggestions,
+      value: query,
+      prefillSource: locationPrefillSource,
+      isSuggestSuccess: suggestQuery.isSuccess,
+    });
 
   const onLocationSearchInputChange = (value: string) => {
     if (hasRetrieveError) {
@@ -333,6 +344,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     locationSearchInput,
     locationSuggestions: visibleSuggestions,
     isSuggestLoading: shouldSuggest && suggestQuery.isFetching,
+    shouldOpenLocationDropdown,
     suggestErrorReason,
     onLocationSearchInputChange,
     onLocationOptionSubmit,

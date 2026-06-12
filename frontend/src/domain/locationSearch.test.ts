@@ -4,6 +4,7 @@ import {
   normalizeLocationSearchText,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
+  shouldOpenPrefilledLocationDropdown,
 } from "@/domain/locationSearch";
 
 function createSuggestion(
@@ -213,5 +214,89 @@ describe("resolvePrefilledLocationSuggestion", () => {
         prefillSource: "default",
       }),
     ).toBe(suggestion);
+  });
+});
+
+describe("shouldOpenPrefilledLocationDropdown", () => {
+  it.each(["url", "persisted"] as const)(
+    "opens candidates for non-canonical %s prefill values",
+    (prefillSource) => {
+      const suggestion = createSuggestion({
+        id: "darwin",
+        displayLabel: "Darwin, Northern Territory, Australia",
+        name: "Darwin",
+        regionName: "Northern Territory",
+      });
+
+      expect(
+        shouldOpenPrefilledLocationDropdown({
+          suggestions: [suggestion],
+          visibleSuggestions: [suggestion],
+          value: "Darwin, AU",
+          prefillSource,
+          isSuggestSuccess: true,
+        }),
+      ).toBe(true);
+    },
+  );
+
+  it.each(["url", "persisted"] as const)(
+    "does not open candidates for exact %s prefill matches",
+    (prefillSource) => {
+      const suggestion = createSuggestion({
+        id: "auburn",
+        displayLabel: "Auburn, New South Wales, Australia",
+        name: "Auburn",
+        regionName: "New South Wales",
+      });
+
+      expect(
+        shouldOpenPrefilledLocationDropdown({
+          suggestions: [suggestion],
+          visibleSuggestions: [suggestion],
+          value: "Auburn, New South Wales, Australia",
+          prefillSource,
+          isSuggestSuccess: true,
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it("does not open candidates for default prefill fallback", () => {
+    const suggestion = createSuggestion({
+      id: "sydney",
+      displayLabel: "Sydney, New South Wales, Australia",
+      name: "Sydney",
+      regionName: "New South Wales",
+    });
+
+    expect(
+      shouldOpenPrefilledLocationDropdown({
+        suggestions: [suggestion],
+        visibleSuggestions: [suggestion],
+        value: "Default Sydney label",
+        prefillSource: "default",
+        isSuggestSuccess: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not open candidates when no visible suggestions are available", () => {
+    const suggestion = createSuggestion({
+      id: "darwin",
+      displayLabel: "Darwin, Northern Territory, Australia",
+      name: "Darwin",
+      regionName: "Northern Territory",
+    });
+
+    expect(
+      shouldOpenPrefilledLocationDropdown({
+        suggestions: [suggestion],
+        visibleSuggestions: [],
+        value: "Darwin, AU",
+        prefillSource: "url",
+        isSuggestSuccess: true,
+      }),
+    ).toBe(false);
   });
 });

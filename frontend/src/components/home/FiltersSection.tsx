@@ -10,7 +10,7 @@ import {
   Text,
   useCombobox,
 } from "@mantine/core";
-import { type MouseEvent, useMemo, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   isSportType,
@@ -85,6 +85,7 @@ export function FiltersSection() {
     locationSearchInput,
     locationSuggestions,
     isSuggestLoading,
+    shouldOpenLocationDropdown,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
   } = useHomeLocationSuggest();
@@ -102,6 +103,16 @@ export function FiltersSection() {
       {suggestion.displayLabel}
     </Combobox.Option>
   ));
+
+  useEffect(() => {
+    if (shouldOpenLocationDropdown && shouldRenderLocationDropdown) {
+      locationCombobox.openDropdown();
+    }
+  }, [
+    locationCombobox,
+    shouldOpenLocationDropdown,
+    shouldRenderLocationDropdown,
+  ]);
 
   /*
   const handleProfileChange = (value: string | null) => {
