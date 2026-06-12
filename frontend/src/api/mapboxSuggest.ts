@@ -84,12 +84,18 @@ function toCountryName(params: {
     return countryName;
   }
 
+  const normalizedFeatureType = toTrimmedString(featureType);
   const placeName = toContextName(context, "place");
-  if (placeName) {
+  const normalizedPlaceName = toTrimmedString(placeName);
+  const normalizedFallbackName = toTrimmedString(fallbackName);
+  if (
+    normalizedPlaceName &&
+    (normalizedPlaceName === normalizedFallbackName ||
+      COUNTRY_NAME_FALLBACK_FEATURE_TYPE_SET.has(normalizedFeatureType))
+  ) {
     return placeName;
   }
 
-  const normalizedFeatureType = toTrimmedString(featureType);
   return COUNTRY_NAME_FALLBACK_FEATURE_TYPE_SET.has(normalizedFeatureType)
     ? fallbackName
     : "";

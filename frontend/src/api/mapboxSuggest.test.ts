@@ -222,6 +222,43 @@ describe("suggestLocations", () => {
     expect(suggestions[1]).not.toHaveProperty("countryCode");
   });
 
+  it("does not use broader place context as the country fallback for local results", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "locality-fortitude-valley",
+              feature_type: "locality",
+              name: "Fortitude Valley",
+              context: {
+                place: { name: "Brisbane" },
+              },
+            },
+            {
+              mapbox_id: "neighborhood-south-bank",
+              feature_type: "neighborhood",
+              name: "South Bank",
+              context: {
+                place: { name: "Brisbane" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Brisbane",
+      accessToken: "token",
+      sessionToken: "session",
+      types: SUPPORTED_LOCATION_TYPES,
+    });
+
+    expect(suggestions).toEqual([]);
+  });
+
   it("uses the suggestion name as the country fallback for whole-place features", async () => {
     fetchMock.mockResolvedValue(
       new Response(
