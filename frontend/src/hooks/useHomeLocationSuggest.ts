@@ -10,6 +10,7 @@ import {
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
   shouldOpenPrefilledLocationDropdown,
+  toPrefilledLocationSuggestQuery,
 } from "@/domain/locationSearch";
 import { useHomeStore } from "@/store/homeStore";
 
@@ -194,8 +195,14 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
   const language = useMemo(() => getLanguagePreference(), []);
   const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
-  const queryForRequest = debouncedQuery.trim();
-  const hasDebounced = queryForRequest === query;
+  const debouncedQueryValue = debouncedQuery.trim();
+  const shouldUsePrefilledSuggestQuery =
+    shouldAutoResolvePrefilledLocation &&
+    (locationPrefillSource === "url" || locationPrefillSource === "persisted");
+  const queryForRequest = shouldUsePrefilledSuggestQuery
+    ? toPrefilledLocationSuggestQuery(debouncedQueryValue)
+    : debouncedQueryValue;
+  const hasDebounced = debouncedQueryValue === query;
 
   const shouldSuggest = shouldRunSuggestQuery({
     hasMapboxToken,

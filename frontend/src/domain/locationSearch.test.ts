@@ -5,6 +5,7 @@ import {
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
   shouldOpenPrefilledLocationDropdown,
+  toPrefilledLocationSuggestQuery,
 } from "@/domain/locationSearch";
 
 function createSuggestion(
@@ -34,6 +35,22 @@ describe("normalizeLocationSearchText", () => {
     expect(normalizeLocationSearchText(" Auburn, NSW / AU ")).toBe(
       "auburn nsw au",
     );
+  });
+});
+
+describe("toPrefilledLocationSuggestQuery", () => {
+  it.each([
+    ["Hong Kong, Hong Kong", "Hong Kong"],
+    ["Singapore, Singapore", "Singapore"],
+    ["  Hong Kong , hong   kong  ", "Hong Kong"],
+  ])("simplifies repeated location labels from %s", (value, expected) => {
+    expect(toPrefilledLocationSuggestQuery(value)).toBe(expected);
+  });
+
+  it("keeps non-repeated location labels unchanged", () => {
+    expect(
+      toPrefilledLocationSuggestQuery("Perth, Western Australia, Australia"),
+    ).toBe("Perth, Western Australia, Australia");
   });
 });
 
@@ -136,6 +153,27 @@ describe("resolvePrefilledLocationSuggestion", () => {
         resolvePrefilledLocationSuggestion({
           suggestions: [suggestion],
           value: "Auburn, New South Wales, Australia",
+          prefillSource,
+        }),
+      ).toBe(suggestion);
+    },
+  );
+
+  it.each(["url", "persisted"] as const)(
+    "matches repeated %s prefill labels through the simplified suggest query",
+    (prefillSource) => {
+      const suggestion = createSuggestion({
+        id: "hong-kong",
+        displayLabel: "Hong Kong",
+        name: "Hong Kong",
+        countryName: "Hong Kong",
+        countryCode: "HK",
+      });
+
+      expect(
+        resolvePrefilledLocationSuggestion({
+          suggestions: [suggestion],
+          value: "Hong Kong, Hong Kong",
           prefillSource,
         }),
       ).toBe(suggestion);

@@ -18,6 +18,10 @@ interface MapboxSuggestItem {
 
 type UnknownRecord = Record<string, unknown>;
 const LOCATION_SUGGEST_TYPE_SET = new Set<string>(LOCATION_SUGGEST_TYPES);
+const COUNTRY_NAME_FALLBACK_FEATURE_TYPE_SET = new Set<string>([
+  "place",
+  "city",
+]);
 
 export interface MapboxSuggestParams {
   query: string;
@@ -69,6 +73,28 @@ function toCountryCode(context: unknown): string {
   return toTrimmedString(countryEntry.country_code).toUpperCase();
 }
 
+function toCountryName(params: {
+  context: unknown;
+  fallbackName: string;
+  featureType: unknown;
+}): string {
+  const { context, fallbackName, featureType } = params;
+  const countryName = toContextName(context, "country");
+  if (countryName) {
+    return countryName;
+  }
+
+  const placeName = toContextName(context, "place");
+  if (placeName) {
+    return placeName;
+  }
+
+  const normalizedFeatureType = toTrimmedString(featureType);
+  return COUNTRY_NAME_FALLBACK_FEATURE_TYPE_SET.has(normalizedFeatureType)
+    ? fallbackName
+    : "";
+}
+
 function isSupportedFeatureType(value: unknown): boolean {
   const normalizedValue = toTrimmedString(value);
   return LOCATION_SUGGEST_TYPE_SET.has(normalizedValue);
@@ -92,7 +118,11 @@ function toLocationSuggestion(
   const mapboxId = suggestion.mapbox_id;
   const name = toTrimmedString(suggestion.name_preferred ?? suggestion.name);
   const regionName = toContextName(suggestion.context, "region");
-  const countryName = toContextName(suggestion.context, "country");
+  const countryName = toCountryName({
+    context: suggestion.context,
+    fallbackName: name,
+    featureType: suggestion.feature_type,
+  });
   const countryCode = toCountryCode(suggestion.context);
 
   if (
@@ -148,7 +178,7 @@ function toSuggestQueryString({
 }
 
 /**
- * Calls Mapbox Search Box `suggest` API and maps neighborhood, locality, place, and city results.
+ * Calls Mapbox Search Box `suggest` API and maps supported weather location results.
  */
 export async function suggestLocations({
   query,

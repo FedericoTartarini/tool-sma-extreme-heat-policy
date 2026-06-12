@@ -83,7 +83,7 @@ Import rules:
 - Client state lives in `src/store/homeStore.ts` (Zustand).
 - Uses the official `zustand` npm package.
 - Server state uses React Query (`@tanstack/react-query`).
-- Location search uses Mapbox Search Box `suggest` with neighborhood, locality, place, and city types (`locality,neighborhood,place,city`); selecting a suggestion triggers Mapbox `retrieve` in frontend to resolve coordinates.
+- Location search uses Mapbox Search Box `suggest` with neighborhood, locality, place, and city types (`neighborhood,locality,place,city`); selecting a suggestion triggers Mapbox `retrieve` in frontend to resolve coordinates. City-state and special-place results without a country context fall back to their place/name so results such as Singapore remain selectable.
 - Location labels shown in the input, dropdown, URL, and local persistence use readable `Name, Region, Country` text, for example `Auburn, New South Wales, Australia`.
 - The visible location dropdown is capped to the first 3 unique Mapbox suggestions after dedupe by name, region, and country.
 - Prefilled location labels restored from shared URL (`loc`) or local persistence automatically attempt `suggest + retrieve` once using exact normalized canonical label matching; old or non-canonical labels show Mapbox candidates for manual selection when suggestions are available.
