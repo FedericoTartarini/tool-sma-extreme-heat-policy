@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { suggestLocations } from "@/api/mapboxSuggest";
 
+const SUPPORTED_LOCATION_TYPES = "neighborhood,locality,place,city";
+
 describe("suggestLocations", () => {
   const fetchMock = vi.fn<typeof fetch>();
 
@@ -42,13 +44,13 @@ describe("suggestLocations", () => {
       query: "Auburn",
       accessToken: "token",
       sessionToken: "session",
-      types: "locality,neighborhood,place,city",
+      types: SUPPORTED_LOCATION_TYPES,
       language: "en",
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
-      "types=locality%2Cneighborhood%2Cplace%2Ccity",
+      "types=neighborhood%2Clocality%2Cplace%2Ccity",
     );
     expect(suggestions).toEqual([
       {
@@ -89,7 +91,7 @@ describe("suggestLocations", () => {
       query: "Surry Hills",
       accessToken: "token",
       sessionToken: "session",
-      types: "locality,neighborhood,place,city",
+      types: SUPPORTED_LOCATION_TYPES,
     });
 
     expect(suggestions).toEqual([
@@ -124,7 +126,7 @@ describe("suggestLocations", () => {
       query: "Darwin",
       accessToken: "token",
       sessionToken: "session",
-      types: "locality,neighborhood,place,city",
+      types: SUPPORTED_LOCATION_TYPES,
     });
 
     expect(suggestions[0]?.displayLabel).toBe(
@@ -157,11 +159,184 @@ describe("suggestLocations", () => {
       query: "Singapore",
       accessToken: "token",
       sessionToken: "session",
-      types: "locality,neighborhood,place,city",
+      types: SUPPORTED_LOCATION_TYPES,
     });
 
     expect(suggestions[0]?.displayLabel).toBe("Singapore, Singapore");
     expect(suggestions[0]).not.toHaveProperty("regionName");
+  });
+
+  it("uses place context as the country fallback for city-state results", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "place-hong-kong",
+              feature_type: "place",
+              name: "Hong Kong",
+              context: {
+                place: { name: "Hong Kong" },
+              },
+            },
+            {
+              mapbox_id: "locality-singapore",
+              feature_type: "locality",
+              name: "Singapore",
+              context: {
+                place: { name: "Singapore" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Hong Kong",
+      accessToken: "token",
+      sessionToken: "session",
+      types: SUPPORTED_LOCATION_TYPES,
+    });
+
+    expect(suggestions).toEqual([
+      {
+        id: "place-hong-kong",
+        displayLabel: "Hong Kong, Hong Kong",
+        name: "Hong Kong",
+        countryName: "Hong Kong",
+        mapboxId: "place-hong-kong",
+        sessionToken: "session",
+      },
+      {
+        id: "locality-singapore",
+        displayLabel: "Singapore, Singapore",
+        name: "Singapore",
+        countryName: "Singapore",
+        mapboxId: "locality-singapore",
+        sessionToken: "session",
+      },
+    ]);
+    expect(suggestions[0]).not.toHaveProperty("countryCode");
+    expect(suggestions[1]).not.toHaveProperty("countryCode");
+  });
+
+  it("does not use broader place context as the country fallback for local results", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "locality-fortitude-valley",
+              feature_type: "locality",
+              name: "Fortitude Valley",
+              context: {
+                place: { name: "Brisbane" },
+              },
+            },
+            {
+              mapbox_id: "neighborhood-south-bank",
+              feature_type: "neighborhood",
+              name: "South Bank",
+              context: {
+                place: { name: "Brisbane" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Brisbane",
+      accessToken: "token",
+      sessionToken: "session",
+      types: SUPPORTED_LOCATION_TYPES,
+    });
+
+    expect(suggestions).toEqual([]);
+  });
+
+  it("uses the suggestion name as the country fallback for whole-place features", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "city-singapore",
+              feature_type: "city",
+              name: "Singapore",
+              context: {},
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Singapore",
+      accessToken: "token",
+      sessionToken: "session",
+      types: SUPPORTED_LOCATION_TYPES,
+    });
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: "city-singapore",
+        displayLabel: "Singapore, Singapore",
+        countryName: "Singapore",
+      }),
+    ]);
+    expect(suggestions[0]).not.toHaveProperty("countryCode");
+  });
+
+  it("drops larger administrative results", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          suggestions: [
+            {
+              mapbox_id: "district-greater-sydney",
+              feature_type: "district",
+              name: "Greater Sydney",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+                region: { name: "New South Wales" },
+              },
+            },
+            {
+              mapbox_id: "region-new-south-wales",
+              feature_type: "region",
+              name: "New South Wales",
+              context: {
+                country: { name: "Australia", country_code: "AU" },
+              },
+            },
+            {
+              mapbox_id: "country-hong-kong",
+              feature_type: "country",
+              name: "Hong Kong",
+              context: {
+                country: { name: "Hong Kong", country_code: "HK" },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const suggestions = await suggestLocations({
+      query: "Hong Kong",
+      accessToken: "token",
+      sessionToken: "session",
+      types: SUPPORTED_LOCATION_TYPES,
+    });
+
+    expect(suggestions).toEqual([]);
   });
 
   it("drops results outside supported weather location types or without readable identity", async () => {
@@ -189,30 +364,6 @@ describe("suggestLocations", () => {
               mapbox_id: "postcode-result",
               feature_type: "postcode",
               name: "2000",
-              context: {
-                country: { name: "Australia", country_code: "AU" },
-              },
-            },
-            {
-              mapbox_id: "district-result",
-              feature_type: "district",
-              name: "Greater Sydney",
-              context: {
-                country: { name: "Australia", country_code: "AU" },
-              },
-            },
-            {
-              mapbox_id: "region-result",
-              feature_type: "region",
-              name: "New South Wales",
-              context: {
-                country: { name: "Australia", country_code: "AU" },
-              },
-            },
-            {
-              mapbox_id: "country-result",
-              feature_type: "country",
-              name: "Australia",
               context: {
                 country: { name: "Australia", country_code: "AU" },
               },
@@ -250,7 +401,7 @@ describe("suggestLocations", () => {
       query: "Auburn",
       accessToken: "token",
       sessionToken: "session",
-      types: "locality,neighborhood,place,city",
+      types: SUPPORTED_LOCATION_TYPES,
     });
 
     expect(suggestions).toEqual([]);
@@ -264,7 +415,7 @@ describe("suggestLocations", () => {
         query: "Darwin",
         accessToken: "token",
         sessionToken: "session",
-        types: "locality,neighborhood,place,city",
+        types: SUPPORTED_LOCATION_TYPES,
       }),
     ).rejects.toThrow("Mapbox suggest failed with HTTP 502");
   });

@@ -8,6 +8,12 @@ import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 
 export type HomeChannel = "shared" | "direct";
 export type LocationPrefillSource = "url" | "persisted" | "default" | "none";
+export type PrefilledLocationResolveState =
+  | "idle"
+  | "pending"
+  | "resolving"
+  | "not_found"
+  | "not_matched";
 
 export interface HomeStoreBootstrapPayload {
   channel: HomeChannel;
@@ -15,7 +21,7 @@ export interface HomeStoreBootstrapPayload {
   sport: SportType;
   locationSearchInput: string;
   locationPrefillSource: LocationPrefillSource;
-  shouldAutoResolvePrefilledLocation: boolean;
+  prefilledLocationResolveState: PrefilledLocationResolveState;
 }
 
 interface HomeStoreState {
@@ -26,8 +32,7 @@ interface HomeStoreState {
   locationSearchInput: string;
   locationPrefillSource: LocationPrefillSource;
   selectedLocation: LocationSuggestion | null;
-  shouldAutoResolvePrefilledLocation: boolean;
-  hasPrefilledLocationNotMatched: boolean;
+  prefilledLocationResolveState: PrefilledLocationResolveState;
   locationSessionToken: string;
 
   bootstrap: (payload: HomeStoreBootstrapPayload) => void;
@@ -35,8 +40,10 @@ interface HomeStoreState {
   setSport: (sport: SportType) => void;
   setLocationSearchInput: (value: string) => void;
   selectLocation: (suggestion: LocationSuggestion) => void;
-  consumeAutoResolvePrefilledLocation: () => void;
-  setHasPrefilledLocationNotMatched: (value: boolean) => void;
+  startPrefilledLocationResolve: () => void;
+  finishPrefilledLocationResolve: () => void;
+  markPrefilledLocationNotFound: () => void;
+  markPrefilledLocationNotMatched: () => void;
 }
 
 function createSessionToken(): string {
@@ -61,8 +68,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
   locationSearchInput: "",
   locationPrefillSource: "none",
   selectedLocation: null,
-  shouldAutoResolvePrefilledLocation: false,
-  hasPrefilledLocationNotMatched: false,
+  prefilledLocationResolveState: "idle",
   locationSessionToken: createSessionToken(),
 
   bootstrap: ({
@@ -71,7 +77,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
     sport,
     locationSearchInput,
     locationPrefillSource,
-    shouldAutoResolvePrefilledLocation,
+    prefilledLocationResolveState,
   }) =>
     set({
       isBootstrapped: true,
@@ -81,8 +87,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       locationSearchInput,
       locationPrefillSource,
       selectedLocation: null,
-      shouldAutoResolvePrefilledLocation,
-      hasPrefilledLocationNotMatched: false,
+      prefilledLocationResolveState,
       locationSessionToken: createSessionToken(),
     }),
   setProfile: (profile) => set({ profile }),
@@ -101,8 +106,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
         locationSearchInput: value,
         locationPrefillSource: "none",
         ...(shouldClearSelectedLocation ? { selectedLocation: null } : {}),
-        shouldAutoResolvePrefilledLocation: false,
-        hasPrefilledLocationNotMatched: false,
+        prefilledLocationResolveState: "idle",
         ...(isStartingNewSearch
           ? { locationSessionToken: createSessionToken() }
           : {}),
@@ -113,11 +117,14 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       selectedLocation: suggestion,
       locationSearchInput: suggestion.displayLabel,
       locationPrefillSource: "none",
-      shouldAutoResolvePrefilledLocation: false,
-      hasPrefilledLocationNotMatched: false,
+      prefilledLocationResolveState: "idle",
     }),
-  consumeAutoResolvePrefilledLocation: () =>
-    set({ shouldAutoResolvePrefilledLocation: false }),
-  setHasPrefilledLocationNotMatched: (value) =>
-    set({ hasPrefilledLocationNotMatched: value }),
+  startPrefilledLocationResolve: () =>
+    set({ prefilledLocationResolveState: "resolving" }),
+  finishPrefilledLocationResolve: () =>
+    set({ prefilledLocationResolveState: "idle" }),
+  markPrefilledLocationNotFound: () =>
+    set({ prefilledLocationResolveState: "not_found" }),
+  markPrefilledLocationNotMatched: () =>
+    set({ prefilledLocationResolveState: "not_matched" }),
 }));

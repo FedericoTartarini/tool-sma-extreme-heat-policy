@@ -1,8 +1,8 @@
 import type { LocationSuggestion } from "@/domain/location";
 
 export const LOCATION_SUGGEST_TYPES = [
-  "locality",
   "neighborhood",
+  "locality",
   "place",
   "city",
 ] as const;
@@ -14,7 +14,20 @@ export interface PreparedLocationSuggestions {
   visibleSuggestions: LocationSuggestion[];
 }
 
-type LocationPrefillSource = "url" | "persisted" | "default" | "none";
+export type LocationPrefillSource = "url" | "persisted" | "default" | "none";
+
+function isRestoredPrefillSource(
+  prefillSource: LocationPrefillSource,
+): boolean {
+  return prefillSource === "url" || prefillSource === "persisted";
+}
+
+function toLocationLabelParts(value: string): string[] {
+  return value
+    .split(",")
+    .map((part) => part.trim().replace(/\s+/g, " "))
+    .filter(Boolean);
+}
 
 function toLocationIdentityKey(suggestion: LocationSuggestion): string {
   return [suggestion.name, suggestion.regionName ?? "", suggestion.countryName]
@@ -79,6 +92,21 @@ export function findExactNormalizedSuggestion(
   );
 }
 
+export function toPrefilledLocationSuggestQuery(value: string): string {
+  const trimmedValue = value.trim();
+  const parts = toLocationLabelParts(trimmedValue);
+
+  if (
+    parts.length === 2 &&
+    normalizeLocationSearchText(parts[0]) ===
+      normalizeLocationSearchText(parts[1])
+  ) {
+    return parts[0];
+  }
+
+  return trimmedValue;
+}
+
 export function resolvePrefilledLocationSuggestion(params: {
   suggestions: LocationSuggestion[];
   value: string;
@@ -91,5 +119,53 @@ export function resolvePrefilledLocationSuggestion(params: {
     return exactSuggestion;
   }
 
+  const suggestQuery = isRestoredPrefillSource(prefillSource)
+    ? toPrefilledLocationSuggestQuery(value)
+    : "";
+  const shouldTrySuggestQuery =
+    suggestQuery.length > 0 &&
+    normalizeLocationSearchText(suggestQuery) !==
+      normalizeLocationSearchText(value);
+
+  if (shouldTrySuggestQuery) {
+    const suggestQueryMatch = findExactNormalizedSuggestion(
+      suggestions,
+      suggestQuery,
+    );
+
+    if (suggestQueryMatch) {
+      return suggestQueryMatch;
+    }
+  }
+
   return prefillSource === "default" ? (suggestions[0] ?? null) : null;
+}
+
+/**
+ * Determines whether unmatched URL/storage prefill values should reveal manual choices.
+ */
+export function shouldOpenPrefilledLocationDropdown(params: {
+  suggestions: LocationSuggestion[];
+  visibleSuggestions: LocationSuggestion[];
+  value: string;
+  prefillSource: LocationPrefillSource;
+  isSuggestSuccess: boolean;
+}): boolean {
+  const {
+    suggestions,
+    visibleSuggestions,
+    value,
+    prefillSource,
+    isSuggestSuccess,
+  } = params;
+
+  if (
+    !isSuggestSuccess ||
+    visibleSuggestions.length === 0 ||
+    (prefillSource !== "url" && prefillSource !== "persisted")
+  ) {
+    return false;
+  }
+
+  return findExactNormalizedSuggestion(suggestions, value) === null;
 }

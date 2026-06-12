@@ -5,6 +5,7 @@ import type {
   HomeChannel,
   HomeStoreBootstrapPayload,
   LocationPrefillSource,
+  PrefilledLocationResolveState,
 } from "@/store/homeStore";
 
 interface ResolveHomeBootstrapStateParams {
@@ -79,7 +80,8 @@ export function resolveHomeBootstrapState({
     }
   }
 
-  const shouldAutoResolvePrefilledLocation = locationSearchInput.length > 0;
+  const prefilledLocationResolveState: PrefilledLocationResolveState =
+    locationSearchInput.length > 0 ? "pending" : "idle";
 
   return {
     channel,
@@ -87,6 +89,6 @@ export function resolveHomeBootstrapState({
     sport,
     locationSearchInput,
     locationPrefillSource,
-    shouldAutoResolvePrefilledLocation,
+    prefilledLocationResolveState,
   };
 }

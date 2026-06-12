@@ -27,7 +27,7 @@ describe("resolveHomeBootstrapState", () => {
       sport: SportType.Basketball,
       locationSearchInput: "Perth, Western Australia, Australia",
       locationPrefillSource: "url",
-      shouldAutoResolvePrefilledLocation: true,
+      prefilledLocationResolveState: "pending",
     });
   });
 
@@ -53,7 +53,7 @@ describe("resolveHomeBootstrapState", () => {
       sport: SportType.Running,
       locationSearchInput: "Dampier, Western Australia, Australia",
       locationPrefillSource: "persisted",
-      shouldAutoResolvePrefilledLocation: true,
+      prefilledLocationResolveState: "pending",
     });
   });
 
@@ -75,7 +75,7 @@ describe("resolveHomeBootstrapState", () => {
       sport: DEFAULT_SPORT_TYPE,
       locationSearchInput: "Sydney, New South Wales, Australia",
       locationPrefillSource: "default",
-      shouldAutoResolvePrefilledLocation: true,
+      prefilledLocationResolveState: "pending",
     });
   });
 
@@ -100,7 +100,29 @@ describe("resolveHomeBootstrapState", () => {
       sport: SportType.Running,
       locationSearchInput: "Perth, Western Australia, Australia",
       locationPrefillSource: "persisted",
-      shouldAutoResolvePrefilledLocation: true,
+      prefilledLocationResolveState: "pending",
+    });
+  });
+
+  it("leaves prefilled location resolve idle when no location is available", () => {
+    expect(
+      resolveHomeBootstrapState({
+        hasUrlState: false,
+        defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+        defaultSport: DEFAULT_SPORT_TYPE,
+        defaultLocationLabel: "   ",
+        urlProfile: null,
+        urlSport: null,
+        urlLocation: null,
+        persistedFilters: null,
+      }),
+    ).toEqual({
+      channel: "direct",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: "",
+      locationPrefillSource: "none",
+      prefilledLocationResolveState: "idle",
     });
   });
 });

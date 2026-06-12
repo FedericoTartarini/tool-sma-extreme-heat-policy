@@ -41,8 +41,7 @@ function resetHomeStore() {
     locationSearchInput: "",
     locationPrefillSource: "none",
     selectedLocation: null,
-    shouldAutoResolvePrefilledLocation: false,
-    hasPrefilledLocationNotMatched: false,
+    prefilledLocationResolveState: "idle",
     locationSessionToken: INITIAL_SESSION_TOKEN,
   });
 }
@@ -58,12 +57,14 @@ describe("homeStore location search", () => {
 
   it("clears the committed selection and preserves the draft when editing a location", () => {
     useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+    useHomeStore.getState().markPrefilledLocationNotMatched();
 
     useHomeStore.getState().setLocationSearchInput("P");
 
     expect(useHomeStore.getState()).toMatchObject({
       locationSearchInput: "P",
       selectedLocation: null,
+      prefilledLocationResolveState: "idle",
     });
   });
 
@@ -98,13 +99,48 @@ describe("homeStore location search", () => {
   it("restores a committed selection and formatted label after choosing a new suggestion", () => {
     useHomeStore.getState().selectLocation(DAMPER_LOCATION);
     useHomeStore.getState().setLocationSearchInput("Per");
+    useHomeStore.getState().startPrefilledLocationResolve();
 
     useHomeStore.getState().selectLocation(PERTH_LOCATION);
 
     expect(useHomeStore.getState()).toMatchObject({
       locationSearchInput: PERTH_LOCATION.displayLabel,
       selectedLocation: PERTH_LOCATION,
+      prefilledLocationResolveState: "idle",
     });
+  });
+
+  it("tracks prefilled location resolve state transitions", () => {
+    useHomeStore.getState().bootstrap({
+      channel: "shared",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: "Singapore, Singapore",
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "pending",
+    });
+
+    expect(useHomeStore.getState().prefilledLocationResolveState).toBe(
+      "pending",
+    );
+
+    useHomeStore.getState().startPrefilledLocationResolve();
+    expect(useHomeStore.getState().prefilledLocationResolveState).toBe(
+      "resolving",
+    );
+
+    useHomeStore.getState().markPrefilledLocationNotFound();
+    expect(useHomeStore.getState().prefilledLocationResolveState).toBe(
+      "not_found",
+    );
+
+    useHomeStore.getState().markPrefilledLocationNotMatched();
+    expect(useHomeStore.getState().prefilledLocationResolveState).toBe(
+      "not_matched",
+    );
+
+    useHomeStore.getState().finishPrefilledLocationResolve();
+    expect(useHomeStore.getState().prefilledLocationResolveState).toBe("idle");
   });
 
   it("keeps the current sport and location selection when the profile changes", () => {

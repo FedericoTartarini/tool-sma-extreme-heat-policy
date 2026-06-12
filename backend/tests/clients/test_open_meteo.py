@@ -69,8 +69,180 @@ def _build_client(handler) -> tuple[OpenMeteoClient, httpx.AsyncClient]:
         base_url="https://api.open-meteo.com/v1",
         timeout_seconds=10.0,
         client=mock_client,
+        retry_backoff_seconds=(0.0, 0.0),
     )
     return client, mock_client
+
+
+async def test_fetch_weather_forecast_retries_connect_error_then_returns_points() -> None:
+    """Transient request failures should be retried before surfacing a provider error."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise httpx.ConnectError("Open-Meteo connection failed", request=request)
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert calls == 2
+    assert [point.time_utc for point in weather.points] == [now]
+
+
+async def test_fetch_weather_forecast_keeps_owned_client_open_after_request_error() -> None:
+    """Owned clients should not be closed and rebuilt during request-error retries."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise httpx.ConnectError("Open-Meteo connection failed", request=request)
+        return httpx.Response(status_code=200, json=payload)
+
+    owned_client = httpx.AsyncClient(
+        base_url="https://api.open-meteo.com/v1",
+        transport=httpx.MockTransport(handler),
+    )
+    client = OpenMeteoClient(
+        base_url="https://api.open-meteo.com/v1",
+        timeout_seconds=10.0,
+        retry_backoff_seconds=(0.0, 0.0),
+    )
+    await client._client.aclose()
+    client._client = owned_client
+
+    try:
+        weather = await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+
+        assert calls == 2
+        assert client._client is owned_client
+        assert not owned_client.is_closed
+        assert [point.time_utc for point in weather.points] == [now]
+    finally:
+        await client.aclose()
+
+    assert owned_client.is_closed
+
+
+async def test_fetch_weather_forecast_retries_http_500_then_returns_points() -> None:
+    """Transient upstream server errors should be retried."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(status_code=500)
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert calls == 2
+    assert [point.time_utc for point in weather.points] == [now]
+
+
+async def test_fetch_weather_forecast_raises_after_retryable_http_429_attempts() -> None:
+    """Retryable upstream statuses should eventually surface the stable provider error."""
+
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(status_code=429)
+
+    client, mock_client = _build_client(handler)
+
+    try:
+        await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    except WeatherProviderError as exc:
+        assert exc.detail == "Weather provider unavailable"
+    else:
+        raise AssertionError("Expected WeatherProviderError after retryable 429 attempts")
+    finally:
+        await mock_client.aclose()
+
+    assert calls == 3
+
+
+async def test_fetch_weather_forecast_does_not_retry_http_400() -> None:
+    """Non-retryable upstream client errors should fail after the first attempt."""
+
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(status_code=400)
+
+    client, mock_client = _build_client(handler)
+
+    try:
+        await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    except WeatherProviderError as exc:
+        assert exc.detail == "Weather provider unavailable"
+    else:
+        raise AssertionError("Expected WeatherProviderError for non-retryable 400")
+    finally:
+        await mock_client.aclose()
+
+    assert calls == 1
 
 
 async def test_fetch_weather_forecast_returns_hourly_points_from_now_minus_1h() -> None:
@@ -175,8 +347,11 @@ async def test_fetch_weather_forecast_rejects_invalid_temperature_unit() -> None
         radiation=[720.0],
         units_override={"temperature_2m": "°F"},
     )
+    calls = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
         return httpx.Response(status_code=200, json=payload)
 
     client, mock_client = _build_client(handler)
@@ -193,6 +368,8 @@ async def test_fetch_weather_forecast_rejects_invalid_temperature_unit() -> None
         raise AssertionError("Expected WeatherProviderError for invalid temperature unit")
     finally:
         await mock_client.aclose()
+
+    assert calls == 1
 
 
 async def test_fetch_weather_forecast_rejects_invalid_direct_normal_irradiance_unit() -> None:

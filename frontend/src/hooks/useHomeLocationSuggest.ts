@@ -9,10 +9,12 @@ import {
   LOCATION_SUGGEST_TYPES_PARAM,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
+  shouldOpenPrefilledLocationDropdown,
+  toPrefilledLocationSuggestQuery,
 } from "@/domain/locationSearch";
 import { useHomeStore } from "@/store/homeStore";
 
-const MIN_LOCATION_QUERY_LENGTH = 3;
+const MIN_LOCATION_QUERY_LENGTH = 2;
 const SUGGEST_DEBOUNCE_MS = 800;
 const EMPTY_SUGGESTIONS: LocationSuggestion[] = [];
 
@@ -22,6 +24,7 @@ interface UseHomeLocationSuggestResult {
   locationSearchInput: string;
   locationSuggestions: LocationSuggestion[];
   isSuggestLoading: boolean;
+  shouldOpenLocationDropdown: boolean;
   suggestErrorReason: LocationSuggestErrorReason | null;
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
@@ -166,25 +169,28 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     (state) => state.locationSearchInput,
   );
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  const shouldAutoResolvePrefilledLocation = useHomeStore(
-    (state) => state.shouldAutoResolvePrefilledLocation,
+  const prefilledLocationResolveState = useHomeStore(
+    (state) => state.prefilledLocationResolveState,
   );
   const locationPrefillSource = useHomeStore(
     (state) => state.locationPrefillSource,
-  );
-  const hasPrefilledNotMatched = useHomeStore(
-    (state) => state.hasPrefilledLocationNotMatched,
   );
   const sessionToken = useHomeStore((state) => state.locationSessionToken);
   const setLocationSearchInput = useHomeStore(
     (state) => state.setLocationSearchInput,
   );
   const selectLocation = useHomeStore((state) => state.selectLocation);
-  const consumeAutoResolvePrefilledLocation = useHomeStore(
-    (state) => state.consumeAutoResolvePrefilledLocation,
+  const startPrefilledLocationResolve = useHomeStore(
+    (state) => state.startPrefilledLocationResolve,
   );
-  const setHasPrefilledLocationNotMatched = useHomeStore(
-    (state) => state.setHasPrefilledLocationNotMatched,
+  const finishPrefilledLocationResolve = useHomeStore(
+    (state) => state.finishPrefilledLocationResolve,
+  );
+  const markPrefilledLocationNotFound = useHomeStore(
+    (state) => state.markPrefilledLocationNotFound,
+  );
+  const markPrefilledLocationNotMatched = useHomeStore(
+    (state) => state.markPrefilledLocationNotMatched,
   );
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
 
@@ -192,8 +198,21 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
   const language = useMemo(() => getLanguagePreference(), []);
   const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
-  const queryForRequest = debouncedQuery.trim();
-  const hasDebounced = queryForRequest === query;
+  const debouncedQueryValue = debouncedQuery.trim();
+  const hasRestoredPrefillSource =
+    locationPrefillSource === "url" || locationPrefillSource === "persisted";
+  const isPrefilledLocationResolvePending =
+    prefilledLocationResolveState === "pending";
+  const hasActivePrefilledLocationResolve =
+    prefilledLocationResolveState !== "idle";
+  const hasPrefilledNotMatched =
+    prefilledLocationResolveState === "not_matched";
+  const shouldUsePrefilledSuggestQuery =
+    hasRestoredPrefillSource && hasActivePrefilledLocationResolve;
+  const queryForRequest = shouldUsePrefilledSuggestQuery
+    ? toPrefilledLocationSuggestQuery(debouncedQueryValue)
+    : debouncedQueryValue;
+  const hasDebounced = debouncedQueryValue === query;
 
   const shouldSuggest = shouldRunSuggestQuery({
     hasMapboxToken,
@@ -233,7 +252,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     suggestQuery.data?.visibleSuggestions ?? EMPTY_SUGGESTIONS;
 
   useEffect(() => {
-    if (!shouldAutoResolvePrefilledLocation) {
+    if (!isPrefilledLocationResolvePending) {
       return;
     }
 
@@ -245,10 +264,10 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       return;
     }
 
-    consumeAutoResolvePrefilledLocation();
+    startPrefilledLocationResolve();
 
     if (dedupedSuggestions.length === 0) {
-      setHasPrefilledLocationNotMatched(false);
+      markPrefilledLocationNotFound();
       return;
     }
 
@@ -259,31 +278,34 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     });
 
     if (!selectedSuggestion) {
-      setHasPrefilledLocationNotMatched(true);
+      markPrefilledLocationNotMatched();
       return;
     }
 
-    setHasPrefilledLocationNotMatched(false);
     void retrieveAndSelectLocation({
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
       selectLocation,
       setHasRetrieveError,
+    }).finally(() => {
+      finishPrefilledLocationResolve();
     });
   }, [
-    consumeAutoResolvePrefilledLocation,
+    finishPrefilledLocationResolve,
     hasDebounced,
     hasMapboxToken,
+    isPrefilledLocationResolvePending,
     locationPrefillSource,
+    markPrefilledLocationNotFound,
+    markPrefilledLocationNotMatched,
     mapboxAccessToken,
     query,
     queryForRequest,
     dedupedSuggestions,
-    setHasPrefilledLocationNotMatched,
     selectLocation,
     selectedLocation,
-    shouldAutoResolvePrefilledLocation,
+    startPrefilledLocationResolve,
     suggestQuery.isSuccess,
   ]);
 
@@ -296,21 +318,24 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     isSuggestSuccess: suggestQuery.isSuccess,
     suggestionCount: dedupedSuggestions.length,
   });
+  const shouldOpenLocationDropdown =
+    hasPrefilledNotMatched &&
+    shouldOpenPrefilledLocationDropdown({
+      suggestions: dedupedSuggestions,
+      visibleSuggestions,
+      value: query,
+      prefillSource: locationPrefillSource,
+      isSuggestSuccess: suggestQuery.isSuccess,
+    });
 
   const onLocationSearchInputChange = (value: string) => {
     if (hasRetrieveError) {
       setHasRetrieveError(false);
     }
-    if (hasPrefilledNotMatched) {
-      setHasPrefilledLocationNotMatched(false);
-    }
     setLocationSearchInput(value);
   };
 
   const onLocationOptionSubmit = (suggestionId: string) => {
-    if (hasPrefilledNotMatched) {
-      setHasPrefilledLocationNotMatched(false);
-    }
     const selectedSuggestion = findSubmittedSuggestion(
       dedupedSuggestions,
       suggestionId,
@@ -320,12 +345,22 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       return;
     }
 
+    const shouldFinishPrefilledResolve = hasActivePrefilledLocationResolve;
+
+    if (shouldFinishPrefilledResolve) {
+      startPrefilledLocationResolve();
+    }
+
     void retrieveAndSelectLocation({
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
       selectLocation,
       setHasRetrieveError,
+    }).finally(() => {
+      if (shouldFinishPrefilledResolve) {
+        finishPrefilledLocationResolve();
+      }
     });
   };
 
@@ -333,6 +368,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     locationSearchInput,
     locationSuggestions: visibleSuggestions,
     isSuggestLoading: shouldSuggest && suggestQuery.isFetching,
+    shouldOpenLocationDropdown,
     suggestErrorReason,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
