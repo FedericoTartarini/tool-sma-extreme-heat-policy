@@ -53,7 +53,17 @@ const router = createBrowserRouter(
   },
 );
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 function AppContent() {
   const { t } = useTranslation();

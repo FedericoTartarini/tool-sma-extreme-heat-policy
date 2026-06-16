@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useEffect, useMemo, useState } from "react";
-import { retrieveLocationCoordinates } from "@/api/mapboxRetrieve";
 import { suggestLocations } from "@/api/mapboxSuggest";
 import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
 import type { LocationSuggestion } from "@/domain/location";
@@ -12,6 +11,8 @@ import {
   shouldOpenPrefilledLocationDropdown,
   toPrefilledLocationSuggestQuery,
 } from "@/domain/locationSearch";
+import { createLatestAbortableRequestController } from "@/lib/latestAbortableRequest";
+import { retrieveAndSelectLocation } from "@/hooks/homeLocationRetrieve";
 import { useHomeStore } from "@/store/homeStore";
 
 const MIN_LOCATION_QUERY_LENGTH = 2;
@@ -118,45 +119,6 @@ function findSubmittedSuggestion(
   );
 }
 
-async function retrieveAndSelectLocation(params: {
-  selectedSuggestion: LocationSuggestion;
-  hasMapboxToken: boolean;
-  mapboxAccessToken: string;
-  selectLocation: (suggestion: LocationSuggestion) => void;
-  setHasRetrieveError: (hasError: boolean) => void;
-}): Promise<void> {
-  const {
-    selectedSuggestion,
-    hasMapboxToken,
-    mapboxAccessToken,
-    selectLocation,
-    setHasRetrieveError,
-  } = params;
-  const mapboxId = selectedSuggestion.mapboxId;
-  const sessionToken = selectedSuggestion.sessionToken;
-
-  if (!mapboxId || !sessionToken || !hasMapboxToken) {
-    setHasRetrieveError(true);
-    return;
-  }
-
-  try {
-    const coordinates = await retrieveLocationCoordinates({
-      mapboxId,
-      accessToken: mapboxAccessToken,
-      sessionToken,
-    });
-    setHasRetrieveError(false);
-    selectLocation({
-      ...selectedSuggestion,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-    });
-  } catch {
-    setHasRetrieveError(true);
-  }
-}
-
 /**
  * Query-driven location suggest hook for Home.
  */
@@ -193,6 +155,10 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     (state) => state.markPrefilledLocationNotMatched,
   );
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
+  const retrieveController = useMemo(
+    () => createLatestAbortableRequestController(),
+    [],
+  );
 
   const query = locationSearchInput.trim();
   const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
@@ -244,12 +210,18 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       });
     },
     enabled: shouldSuggest,
+    retry: false,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const dedupedSuggestions =
     suggestQuery.data?.dedupedSuggestions ?? EMPTY_SUGGESTIONS;
   const visibleSuggestions =
     suggestQuery.data?.visibleSuggestions ?? EMPTY_SUGGESTIONS;
+
+  useEffect(() => () => retrieveController.cancel(), [retrieveController]);
 
   useEffect(() => {
     if (!isPrefilledLocationResolvePending) {
@@ -286,6 +258,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
+      request: retrieveController.start(),
       selectLocation,
       setHasRetrieveError,
     }).finally(() => {
@@ -303,6 +276,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     query,
     queryForRequest,
     dedupedSuggestions,
+    retrieveController,
     selectLocation,
     selectedLocation,
     startPrefilledLocationResolve,
@@ -329,6 +303,8 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     });
 
   const onLocationSearchInputChange = (value: string) => {
+    retrieveController.cancel();
+
     if (hasRetrieveError) {
       setHasRetrieveError(false);
     }
@@ -355,6 +331,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
+      request: retrieveController.start(),
       selectLocation,
       setHasRetrieveError,
     }).finally(() => {

@@ -7,9 +7,11 @@ export type HomeSuggestErrorReason =
 
 export type HomeCalculationErrorReason =
   | "missing_location_coordinates"
-  | "missing_api_base_url"
+  | "missing_config"
+  | "abort"
+  | "http_status"
   | "invalid_response"
-  | "network_error";
+  | "network";
 
 const SUGGEST_ERROR_I18N_KEY_BY_REASON: Record<HomeSuggestErrorReason, string> =
   {
@@ -25,9 +27,11 @@ const CALCULATION_ERROR_I18N_KEY_BY_REASON: Record<
   string
 > = {
   missing_location_coordinates: "errors.location.missingCoordinates",
-  missing_api_base_url: "errors.risk.missingApiBaseUrl",
+  missing_config: "errors.risk.missingApiBaseUrl",
+  abort: "errors.risk.network",
+  http_status: "errors.risk.network",
   invalid_response: "errors.risk.invalidResponse",
-  network_error: "errors.risk.network",
+  network: "errors.risk.network",
 };
 
 /**

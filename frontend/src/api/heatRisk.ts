@@ -1,6 +1,7 @@
 import type { SportType } from "@/domain/sport";
+import { isApiError } from "@/api/apiErrors";
 import { endpoints } from "@/api/endpoints";
-import { httpClient } from "@/api/httpClient";
+import { httpClient, isApiBaseUrlConfigured } from "@/api/httpClient";
 import {
   isHeatRiskProfile,
   type HeatRiskProfile,
@@ -55,9 +56,11 @@ export interface HeatRiskApiResponse {
 }
 
 export type HeatRiskErrorReason =
-  | "missing_api_base_url"
+  | "missing_config"
+  | "abort"
+  | "http_status"
   | "invalid_response"
-  | "network_error";
+  | "network";
 
 export type HeatRiskApiResult =
   | {
@@ -67,19 +70,8 @@ export type HeatRiskApiResult =
   | {
       ok: false;
       reason: HeatRiskErrorReason;
+      status?: number;
     };
-
-/**
- * Builds the Home heat-risk request payload.
- */
-export function buildHeatRiskRequest(payload: {
-  sport: SportType;
-  latitude: number;
-  longitude: number;
-  profile: HeatRiskProfile;
-}): HeatRiskRequest {
-  return payload;
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -194,10 +186,10 @@ export async function fetchHeatRisk(
   payload: HeatRiskRequest,
   options?: { signal?: AbortSignal },
 ): Promise<HeatRiskApiResult> {
-  if (!import.meta.env.VITE_API_BASE_URL) {
+  if (!isApiBaseUrlConfigured()) {
     return {
       ok: false,
-      reason: "missing_api_base_url",
+      reason: "missing_config",
     };
   }
 
@@ -220,10 +212,18 @@ export async function fetchHeatRisk(
       ok: true,
       data: response,
     };
-  } catch {
+  } catch (error) {
+    if (isApiError(error)) {
+      return {
+        ok: false,
+        reason: error.kind,
+        ...(error.status !== undefined ? { status: error.status } : {}),
+      };
+    }
+
     return {
       ok: false,
-      reason: "network_error",
+      reason: "network",
     };
   }
 }

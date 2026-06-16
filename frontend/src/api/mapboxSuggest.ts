@@ -1,4 +1,9 @@
 import type { LocationSuggestion } from "@/domain/location";
+import {
+  createMapboxHttpStatusError,
+  createMapboxInvalidResponseError,
+  toMapboxApiError,
+} from "@/api/mapboxErrors";
 import { LOCATION_SUGGEST_TYPES } from "@/domain/locationSearch";
 
 const MAPBOX_SUGGEST_ENDPOINT =
@@ -35,6 +40,15 @@ export interface MapboxSuggestParams {
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null;
+}
+
+function isMapboxSuggestResponse(
+  value: unknown,
+): value is MapboxSuggestResponse {
+  return (
+    isRecord(value) &&
+    (value.suggestions === undefined || Array.isArray(value.suggestions))
+  );
 }
 
 function toTrimmedString(value: unknown): string {
@@ -204,15 +218,37 @@ export async function suggestLocations({
     language,
   });
 
-  const response = await fetch(`${MAPBOX_SUGGEST_ENDPOINT}?${queryString}`, {
-    signal,
-  });
+  let response: Response;
 
-  if (!response.ok) {
-    throw new Error(`Mapbox suggest failed with HTTP ${response.status}`);
+  try {
+    response = await fetch(`${MAPBOX_SUGGEST_ENDPOINT}?${queryString}`, {
+      signal,
+    });
+  } catch (error) {
+    throw toMapboxApiError("suggest", error);
   }
 
-  const data = (await response.json()) as MapboxSuggestResponse;
+  if (!response.ok) {
+    throw createMapboxHttpStatusError("suggest", response.status);
+  }
+
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    throw createMapboxInvalidResponseError(
+      "suggest",
+      "Mapbox suggest response was not valid JSON",
+    );
+  }
+
+  if (!isMapboxSuggestResponse(data)) {
+    throw createMapboxInvalidResponseError(
+      "suggest",
+      "Mapbox suggest response shape was invalid",
+    );
+  }
+
   const suggestions = data.suggestions ?? [];
   const mappedSuggestions = suggestions.map((suggestion) =>
     toLocationSuggestion(suggestion, sessionToken),
