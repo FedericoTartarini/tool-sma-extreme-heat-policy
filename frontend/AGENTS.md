@@ -83,15 +83,18 @@
 - `VITE_MAPBOX_ACCESS_TOKEN` is required for location suggest/retrieve.
 - Frontend must resolve coordinates via retrieve before risk requests.
 - Valid prefilled `loc` from URL or local persistence should auto-trigger suggest/retrieve and then risk fetch.
-- Backend risk payload must be `sport + latitude + longitude` only.
+- Backend risk payload must be `sport + latitude + longitude + profile` only.
 - Risk must refetch when selected location coordinates resolve and when sport changes.
 - Missing token must show a configuration error (no silent fallback).
 - Suggest failures must show a retryable error (no local fallback path).
 - Retrieve failures must show a retryable error and must block risk fetch.
 - Risk API failures must be surfaced and keep the last valid result.
-- On successful fetch, update `sport` and `loc` query params with replace history.
+- On successful fetch, update `profile`, `sport`, and `loc` query params with replace history.
 - Persist to localStorage only for direct visits (not shared links).
 - Forecast time display uses backend-provided `time_local` for point labels/grouping and `request.location.timezone` for date formatting.
+- Profile support is reserved for a future release: keep profile in the API,
+  URL, and localStorage contracts, but do not expose a Profile select in Home
+  filters and keep bootstrap fixed to `ADULT`.
 
 ## Testing Expectations
 

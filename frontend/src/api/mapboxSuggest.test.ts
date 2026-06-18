@@ -410,6 +410,32 @@ describe("suggestLocations", () => {
   it("throws when Mapbox suggest returns a non-OK response", async () => {
     fetchMock.mockResolvedValue(new Response("bad gateway", { status: 502 }));
 
+    try {
+      await suggestLocations({
+        query: "Darwin",
+        accessToken: "token",
+        sessionToken: "session",
+        types: SUPPORTED_LOCATION_TYPES,
+      });
+      throw new Error("Expected Mapbox suggest to fail");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe(
+        "Mapbox suggest failed with HTTP 502",
+      );
+      expect(error).toMatchObject({
+        endpoint: "suggest",
+        kind: "http_status",
+        status: 502,
+      });
+    }
+  });
+
+  it("throws an invalid_response error when Mapbox suggest returns a malformed payload", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ suggestions: "bad" }), { status: 200 }),
+    );
+
     await expect(
       suggestLocations({
         query: "Darwin",
@@ -417,6 +443,57 @@ describe("suggestLocations", () => {
         sessionToken: "session",
         types: SUPPORTED_LOCATION_TYPES,
       }),
-    ).rejects.toThrow("Mapbox suggest failed with HTTP 502");
+    ).rejects.toMatchObject({
+      endpoint: "suggest",
+      kind: "invalid_response",
+    });
+  });
+
+  it("throws an invalid_response error when Mapbox suggest returns invalid JSON", async () => {
+    fetchMock.mockResolvedValue(new Response("{", { status: 200 }));
+
+    await expect(
+      suggestLocations({
+        query: "Darwin",
+        accessToken: "token",
+        sessionToken: "session",
+        types: SUPPORTED_LOCATION_TYPES,
+      }),
+    ).rejects.toMatchObject({
+      endpoint: "suggest",
+      kind: "invalid_response",
+    });
+  });
+
+  it("throws a network error when Mapbox suggest cannot be reached", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+
+    await expect(
+      suggestLocations({
+        query: "Darwin",
+        accessToken: "token",
+        sessionToken: "session",
+        types: SUPPORTED_LOCATION_TYPES,
+      }),
+    ).rejects.toMatchObject({
+      endpoint: "suggest",
+      kind: "network",
+    });
+  });
+
+  it("throws an abort error when Mapbox suggest is cancelled", async () => {
+    fetchMock.mockRejectedValue(new DOMException("Aborted", "AbortError"));
+
+    await expect(
+      suggestLocations({
+        query: "Darwin",
+        accessToken: "token",
+        sessionToken: "session",
+        types: SUPPORTED_LOCATION_TYPES,
+      }),
+    ).rejects.toMatchObject({
+      endpoint: "suggest",
+      kind: "abort",
+    });
   });
 });

@@ -236,7 +236,7 @@
   },
   "home": {
     "notifications": {
-      "forecastUpdated": "Forecast data has been updated"
+      "forecastUpdated": "Forecast updated"
     },
     "sections": {
       "filters": {
@@ -281,19 +281,20 @@
   },
   "errors": {
     "mapbox": {
-      "missingToken": "Mapbox access token is required to search locations. Please configure VITE_MAPBOX_ACCESS_TOKEN.",
-      "unavailable": "Location suggestions are temporarily unavailable. Please try again.",
-      "noResults": "No location found for this query.",
-      "retrieveFailed": "Unable to resolve coordinates for the selected location. Please try another suggestion."
+      "missingToken": "Location search is not configured.\nSet VITE_MAPBOX_ACCESS_TOKEN.",
+      "unavailable": "Location provider is unavailable.\nTry again soon.",
+      "noResults": "No matching location found.",
+      "retrieveFailed": "Location provider failed.\nTry again soon."
     },
     "location": {
-      "missingCoordinates": "Selected location is missing coordinates. Please select a suggestion again.",
-      "prefilledNotMatched": "Unable to auto-match this prefilled location. Please select a suggestion manually."
+      "missingCoordinates": "This location has no coordinates. Choose another suggestion.",
+      "prefilledNotMatched": "Please choose a location from the suggestions."
     },
     "risk": {
-      "missingApiBaseUrl": "Risk API is not configured. Set VITE_API_BASE_URL.",
-      "invalidResponse": "Risk API returned an invalid response. Please try again.",
-      "network": "Risk calculation is temporarily unavailable. Please try again."
+      "missingApiBaseUrl": "Risk API is not configured.\nSet VITE_API_BASE_URL.",
+      "invalidResponse": "Risk data could not be loaded.",
+      "network": "Risk calculation is unavailable.\nTry again soon.",
+      "weatherProvider": "Weather provider is unavailable.\nTry again soon."
     }
   },
   "providers": {

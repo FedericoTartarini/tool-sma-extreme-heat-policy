@@ -222,7 +222,8 @@ Example response:
   forecast point; in that case the error payload uses the earliest candidate row and includes:
   - `unknown_inputs`
   - `available_inputs`
-- Upstream weather failures return `502`.
+- Upstream weather failures return `502` with:
+  `{"detail": "Weather provider unavailable", "error_code": "weather_provider_unavailable"}`.
 - Future forecast rows with missing inputs are skipped instead of failing the request.
 
 ## Notes

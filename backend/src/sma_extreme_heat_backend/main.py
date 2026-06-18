@@ -40,7 +40,11 @@ def create_app() -> FastAPI:
     async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
         """Map typed application errors into stable JSON responses."""
 
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        content = {"detail": exc.detail}
+        if exc.error_code is not None:
+            content["error_code"] = exc.error_code
+
+        return JSONResponse(status_code=exc.status_code, content=content)
 
     app.include_router(router)
 

@@ -91,17 +91,18 @@ Import rules:
 - Risk API response returns a non-empty `forecast[]` plus a nested `request` block containing `sport`, `profile`, and `location`; backend defines `forecast[0]` as the earliest complete forecast point, each forecast row includes both `time_utc` and `time_local`, and frontend derives the current risk from `forecast[0]` while grouping chart days from `time_local`.
 - Risk is fetched automatically when:
   - a location suggestion is selected (manual or auto-resolved) and coordinates are resolved, and
-  - the sport changes, and
-  - the selected profile changes.
-- Risk API failures are shown in UI and keep the last valid result (no silent fallback to fixtures).
+  - the sport changes.
+- Location and risk calculation failures are shown as bottom error toasts.
+- Risk API failures keep the last valid result and do not silently fall back to fixtures.
+- Backend `weather_provider_unavailable` errors are mapped to a weather-provider-specific toast.
 - After a successful fetch:
   - URL query params update (`profile`, `sport`, `loc`) and
   - the last selection is persisted to localStorage only for direct visits (not shared links).
 - Dates are formatted in the selected location timezone supplied by the backend.
 - API time contract: forecast responses must carry `time_utc` as ISO-8601 UTC (`...Z`) and `time_local` as ISO-8601 local time with an explicit offset.
-- The Home filters expose a Profile select above Location and Sport.
-- Public profile values are `ADULT`, `UNDER_10`, `AGE_10_13`, and `AGE_14_17`.
-- The current profile is sent to the backend and restored from shared URLs or local persistence.
+- Profile support is reserved for a future release. The frontend keeps the profile domain/store/API contract, but the Home filters do not currently expose a Profile select and bootstrap keeps the active profile fixed to `ADULT`.
+- Public reserved profile values are `ADULT`, `UNDER_10`, `AGE_10_13`, and `AGE_14_17`.
+- The current frozen profile is sent to the backend and written to URLs/local persistence for contract compatibility; restored URL/local profile values are ignored until profile selection is re-enabled.
 
 ## i18n
 

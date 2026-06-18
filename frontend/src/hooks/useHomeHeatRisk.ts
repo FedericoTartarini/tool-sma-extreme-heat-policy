@@ -1,11 +1,8 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@mantine/hooks";
-import {
-  buildHeatRiskRequest,
-  fetchHeatRisk,
-  type HeatRiskApiResponse,
-  type HeatRiskErrorReason,
-} from "@/api/heatRisk";
+import { ApiError, isApiError } from "@/api/apiErrors";
+import { getRetryDelayMs, heatRiskRetryPolicy } from "@/api/apiRetryPolicy";
+import { fetchHeatRisk, type HeatRiskApiResponse } from "@/api/heatRisk";
 import type { HomeCalculationErrorReason } from "@/domain/homeErrorMap";
 import type { ForecastDay, HeatRisk, RiskLevel } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
@@ -20,16 +17,6 @@ import {
 import { useHomeStore } from "@/store/homeStore";
 
 export type HeatRiskCalculationErrorReason = HomeCalculationErrorReason;
-
-class HeatRiskQueryError extends Error {
-  reason: HeatRiskErrorReason;
-
-  constructor(reason: HeatRiskErrorReason) {
-    super(reason);
-    this.reason = reason;
-    this.name = "HeatRiskQueryError";
-  }
-}
 
 interface UseHomeHeatRiskBaseResult {
   forecast: ForecastDay[];
@@ -75,6 +62,18 @@ function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
   };
 }
 
+function toHeatRiskCalculationErrorReason(
+  error: unknown,
+): HeatRiskCalculationErrorReason | null {
+  if (!isApiError(error)) {
+    return null;
+  }
+
+  return error.serverCode === "weather_provider_unavailable"
+    ? "weather_provider_unavailable"
+    : error.kind;
+}
+
 /**
  * Auto-fetches heat risk for the selected Home sport + location.
  *
@@ -102,32 +101,47 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
     ],
     queryFn: async ({ signal }) => {
       const result = await fetchHeatRisk(
-        buildHeatRiskRequest({
+        {
           sport: debouncedSport,
           latitude: locationCoordinates!.latitude,
           longitude: locationCoordinates!.longitude,
           profile: debouncedProfile,
-        }),
+        },
         { signal },
       );
 
       if (!result.ok) {
-        throw new HeatRiskQueryError(result.reason);
+        throw new ApiError({
+          kind:
+            result.reason === "weather_provider_unavailable"
+              ? "http_status"
+              : result.reason,
+          status: result.status,
+          serverCode:
+            result.reason === "weather_provider_unavailable"
+              ? "weather_provider_unavailable"
+              : undefined,
+          message: result.reason,
+        });
       }
 
       return result;
     },
     enabled: Boolean(locationCoordinates),
     placeholderData: keepPreviousData,
-    retry: false,
+    retry: (failureCount, error) =>
+      failureCount < heatRiskRetryPolicy.maxRetries &&
+      heatRiskRetryPolicy.shouldRetry(error),
+    retryDelay: () => getRetryDelayMs({ scope: "heat_risk" }),
+    staleTime: 0,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const errorReason: HeatRiskCalculationErrorReason | null =
     selectedLocation && !locationCoordinates
       ? "missing_location_coordinates"
-      : riskQuery.error instanceof HeatRiskQueryError
-        ? riskQuery.error.reason
-        : null;
+      : toHeatRiskCalculationErrorReason(riskQuery.error);
 
   const calculated = riskQuery.data
     ? toCalculatedHeatRisk(riskQuery.data.data)

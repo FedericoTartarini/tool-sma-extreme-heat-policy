@@ -1,12 +1,15 @@
+import {
+  createMapboxHttpStatusError,
+  createMapboxInvalidResponseError,
+  toMapboxApiError,
+  toMapboxResponseJsonError,
+} from "@/api/mapboxErrors";
+
 const MAPBOX_RETRIEVE_ENDPOINT =
   "https://api.mapbox.com/search/searchbox/v1/retrieve";
 
 interface UnknownRecord {
   [key: string]: unknown;
-}
-
-interface MapboxRetrieveResponse {
-  features?: unknown[];
 }
 
 export interface MapboxRetrieveParams {
@@ -30,30 +33,52 @@ function toFiniteNumberOrNull(value: unknown): number | null {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function toCoordinates(payload: MapboxRetrieveResponse): RetrievedCoordinates {
+function toCoordinates(payload: unknown): RetrievedCoordinates {
+  if (!isRecord(payload)) {
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve response shape was invalid",
+    );
+  }
+
   if (!Array.isArray(payload.features) || payload.features.length === 0) {
-    throw new Error("Mapbox retrieve response did not include features");
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve response did not include features",
+    );
   }
 
   const firstFeature = payload.features[0];
   if (!isRecord(firstFeature)) {
-    throw new Error("Mapbox retrieve response feature format was invalid");
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve response feature format was invalid",
+    );
   }
 
   const geometry = firstFeature.geometry;
   if (!isRecord(geometry)) {
-    throw new Error("Mapbox retrieve response geometry was missing");
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve response geometry was missing",
+    );
   }
 
   const coordinates = geometry.coordinates;
   if (!Array.isArray(coordinates) || coordinates.length < 2) {
-    throw new Error("Mapbox retrieve response coordinates were missing");
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve response coordinates were missing",
+    );
   }
 
   const longitude = toFiniteNumberOrNull(coordinates[0]);
   const latitude = toFiniteNumberOrNull(coordinates[1]);
   if (longitude === null || latitude === null) {
-    throw new Error("Mapbox retrieve coordinates were invalid");
+    throw createMapboxInvalidResponseError(
+      "retrieve",
+      "Mapbox retrieve coordinates were invalid",
+    );
   }
 
   return { latitude, longitude };
@@ -74,14 +99,31 @@ export async function retrieveLocationCoordinates({
     session_token: sessionToken,
   });
 
-  const response = await fetch(
-    `${MAPBOX_RETRIEVE_ENDPOINT}/${path}?${params.toString()}`,
-    { signal },
-  );
-  if (!response.ok) {
-    throw new Error(`Mapbox retrieve failed with HTTP ${response.status}`);
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${MAPBOX_RETRIEVE_ENDPOINT}/${path}?${params.toString()}`,
+      { signal },
+    );
+  } catch (error) {
+    throw toMapboxApiError("retrieve", error);
   }
 
-  const payload = (await response.json()) as MapboxRetrieveResponse;
+  if (!response.ok) {
+    throw createMapboxHttpStatusError("retrieve", response.status);
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    throw toMapboxResponseJsonError(
+      "retrieve",
+      error,
+      "Mapbox retrieve response was not valid JSON",
+    );
+  }
+
   return toCoordinates(payload);
 }

@@ -6,21 +6,27 @@ from typing import Any
 class AppError(Exception):
     """Base application error with an HTTP status code and response-safe detail."""
 
-    def __init__(self, status_code: int, detail: Any) -> None:
+    def __init__(
+        self,
+        status_code: int,
+        detail: Any,
+        error_code: str | None = None,
+    ) -> None:
         """Store the status code and serializable detail returned by the API layer."""
 
         super().__init__(str(detail))
         self.status_code = status_code
         self.detail = detail
+        self.error_code = error_code
 
 
 class UpstreamServiceError(AppError):
     """Base error for failed upstream dependencies."""
 
-    def __init__(self, detail: str) -> None:
+    def __init__(self, detail: str, error_code: str | None = None) -> None:
         """Normalize upstream failures into the shared 502 application error shape."""
 
-        super().__init__(status_code=502, detail=detail)
+        super().__init__(status_code=502, detail=detail, error_code=error_code)
 
 
 class WeatherProviderError(UpstreamServiceError):
@@ -29,7 +35,10 @@ class WeatherProviderError(UpstreamServiceError):
     def __init__(self, detail: str = "Weather provider unavailable") -> None:
         """Build the stable weather-provider error exposed to API callers."""
 
-        super().__init__(detail=detail)
+        super().__init__(
+            detail=detail,
+            error_code="weather_provider_unavailable",
+        )
 
 
 class RiskCalculationError(AppError):
