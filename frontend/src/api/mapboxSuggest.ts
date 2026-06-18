@@ -3,6 +3,7 @@ import {
   createMapboxHttpStatusError,
   createMapboxInvalidResponseError,
   toMapboxApiError,
+  toMapboxResponseJsonError,
 } from "@/api/mapboxErrors";
 import { LOCATION_SUGGEST_TYPES } from "@/domain/locationSearch";
 
@@ -235,9 +236,10 @@ export async function suggestLocations({
   let data: unknown;
   try {
     data = await response.json();
-  } catch {
-    throw createMapboxInvalidResponseError(
+  } catch (error) {
+    throw toMapboxResponseJsonError(
       "suggest",
+      error,
       "Mapbox suggest response was not valid JSON",
     );
   }

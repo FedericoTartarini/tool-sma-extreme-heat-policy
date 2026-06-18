@@ -42,12 +42,38 @@ export function createMapboxHttpStatusError(
 export function createMapboxInvalidResponseError(
   endpoint: MapboxEndpoint,
   message: string,
+  cause?: unknown,
 ): MapboxApiError {
   return new MapboxApiError({
     endpoint,
     kind: "invalid_response",
     message,
+    cause,
   });
+}
+
+function hasErrorName(value: unknown, name: string): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    value.name === name
+  );
+}
+
+/**
+ * Normalizes Mapbox response JSON parsing failures without masking aborts.
+ */
+export function toMapboxResponseJsonError(
+  endpoint: MapboxEndpoint,
+  error: unknown,
+  message: string,
+): MapboxApiError {
+  if (hasErrorName(error, "SyntaxError")) {
+    return createMapboxInvalidResponseError(endpoint, message, error);
+  }
+
+  return toMapboxApiError(endpoint, error);
 }
 
 /**

@@ -54,6 +54,16 @@ async function parseJsonResponse(response: Response): Promise<unknown> {
   }
 }
 
+function buildJsonHeaders(headers?: HeadersInit): Headers {
+  const mergedHeaders = new Headers(headers);
+
+  if (!mergedHeaders.has("Content-Type")) {
+    mergedHeaders.set("Content-Type", "application/json");
+  }
+
+  return mergedHeaders;
+}
+
 /**
  * Sends a JSON HTTP request to the configured backend base URL.
  */
@@ -66,10 +76,7 @@ export async function httpClient<T>(
   try {
     response = await fetch(buildUrl(path), {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init?.headers ?? {}),
-      },
+      headers: buildJsonHeaders(init?.headers),
     });
   } catch (error) {
     throw toApiError(error, "Backend request failed");

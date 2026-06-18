@@ -449,6 +449,22 @@ describe("suggestLocations", () => {
     });
   });
 
+  it("throws an invalid_response error when Mapbox suggest returns invalid JSON", async () => {
+    fetchMock.mockResolvedValue(new Response("{", { status: 200 }));
+
+    await expect(
+      suggestLocations({
+        query: "Darwin",
+        accessToken: "token",
+        sessionToken: "session",
+        types: SUPPORTED_LOCATION_TYPES,
+      }),
+    ).rejects.toMatchObject({
+      endpoint: "suggest",
+      kind: "invalid_response",
+    });
+  });
+
   it("throws a network error when Mapbox suggest cannot be reached", async () => {
     fetchMock.mockRejectedValue(new Error("offline"));
 

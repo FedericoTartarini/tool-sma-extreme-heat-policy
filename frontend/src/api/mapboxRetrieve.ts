@@ -2,6 +2,7 @@ import {
   createMapboxHttpStatusError,
   createMapboxInvalidResponseError,
   toMapboxApiError,
+  toMapboxResponseJsonError,
 } from "@/api/mapboxErrors";
 
 const MAPBOX_RETRIEVE_ENDPOINT =
@@ -116,9 +117,10 @@ export async function retrieveLocationCoordinates({
   let payload: unknown;
   try {
     payload = await response.json();
-  } catch {
-    throw createMapboxInvalidResponseError(
+  } catch (error) {
+    throw toMapboxResponseJsonError(
       "retrieve",
+      error,
       "Mapbox retrieve response was not valid JSON",
     );
   }

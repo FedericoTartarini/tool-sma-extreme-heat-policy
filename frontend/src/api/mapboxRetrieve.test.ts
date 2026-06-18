@@ -83,6 +83,21 @@ describe("retrieveLocationCoordinates", () => {
     });
   });
 
+  it("throws an invalid_response error when retrieve returns non-JSON content", async () => {
+    fetchMock.mockResolvedValue(new Response("not-json", { status: 200 }));
+
+    await expect(
+      retrieveLocationCoordinates({
+        mapboxId: "place-sydney",
+        accessToken: "token",
+        sessionToken: "session",
+      }),
+    ).rejects.toMatchObject({
+      endpoint: "retrieve",
+      kind: "invalid_response",
+    });
+  });
+
   it("throws an abort error when retrieve is cancelled", async () => {
     fetchMock.mockRejectedValue(new DOMException("Aborted", "AbortError"));
 
