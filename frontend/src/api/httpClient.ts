@@ -22,6 +22,26 @@ function buildUrl(path: string) {
   return `${getApiBaseUrl()}${path}`;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+async function parseBackendErrorCode(
+  response: Response,
+): Promise<string | undefined> {
+  try {
+    const payload: unknown = await response.json();
+
+    if (isRecord(payload) && typeof payload.error_code === "string") {
+      return payload.error_code;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 async function parseJsonResponse(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -56,9 +76,12 @@ export async function httpClient<T>(
   }
 
   if (!response.ok) {
+    const serverCode = await parseBackendErrorCode(response);
+
     throw new ApiError({
       kind: "http_status",
       status: response.status,
+      serverCode,
       message: `Backend request failed with HTTP ${response.status}`,
     });
   }

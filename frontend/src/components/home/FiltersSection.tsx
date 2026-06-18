@@ -19,7 +19,10 @@ import {
   type SportType,
 } from "@/domain/sport";
 import { CONTENT_GAP } from "@/config/uiLayout";
-import { useHomeLocationSuggest } from "@/hooks/useHomeLocationSuggest";
+import {
+  useHomeLocationSuggest,
+  type LocationSuggestErrorReason,
+} from "@/hooks/useHomeLocationSuggest";
 import { useHomeStore } from "@/store/homeStore";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
@@ -32,10 +35,14 @@ interface SelectOption<T extends string = string> {
 const FIELD_LABEL_WIDTH = 72;
 const SPORT_IMAGE_HEIGHT = 104;
 
+interface FiltersSectionProps {
+  onLocationError?: (reason: LocationSuggestErrorReason) => void;
+}
+
 /**
  * Renders sport and location filters for Home risk calculation.
  */
-export function FiltersSection() {
+export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
   /*
@@ -86,6 +93,7 @@ export function FiltersSection() {
     locationSuggestions,
     isSuggestLoading,
     shouldOpenLocationDropdown,
+    suggestErrorReason,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
   } = useHomeLocationSuggest();
@@ -113,6 +121,12 @@ export function FiltersSection() {
     shouldOpenLocationDropdown,
     shouldRenderLocationDropdown,
   ]);
+
+  useEffect(() => {
+    if (suggestErrorReason) {
+      onLocationError?.(suggestErrorReason);
+    }
+  }, [onLocationError, suggestErrorReason]);
 
   /*
   const handleProfileChange = (value: string | null) => {

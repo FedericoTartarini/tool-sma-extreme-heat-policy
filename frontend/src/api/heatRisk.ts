@@ -60,7 +60,8 @@ export type HeatRiskErrorReason =
   | "abort"
   | "http_status"
   | "invalid_response"
-  | "network";
+  | "network"
+  | "weather_provider_unavailable";
 
 export type HeatRiskApiResult =
   | {
@@ -179,6 +180,16 @@ export function isHeatRiskApiResponse(
   );
 }
 
+function toHeatRiskErrorReason(error: unknown): HeatRiskErrorReason {
+  if (isApiError(error)) {
+    return error.serverCode === "weather_provider_unavailable"
+      ? "weather_provider_unavailable"
+      : error.kind;
+  }
+
+  return "network";
+}
+
 /**
  * Fetches and validates the raw backend heat-risk response payload.
  */
@@ -213,17 +224,12 @@ export async function fetchHeatRisk(
       data: response,
     };
   } catch (error) {
-    if (isApiError(error)) {
-      return {
-        ok: false,
-        reason: error.kind,
-        ...(error.status !== undefined ? { status: error.status } : {}),
-      };
-    }
-
     return {
       ok: false,
-      reason: "network",
+      reason: toHeatRiskErrorReason(error),
+      ...(isApiError(error) && error.status !== undefined
+        ? { status: error.status }
+        : {}),
     };
   }
 }

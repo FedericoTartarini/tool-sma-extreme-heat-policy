@@ -108,6 +108,31 @@ describe("fetchHeatRisk", () => {
     });
   });
 
+  it("classifies weather provider backend error codes", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          detail: "Weather provider unavailable",
+          error_code: "weather_provider_unavailable",
+        }),
+        { status: 502 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "weather_provider_unavailable",
+      status: 502,
+    });
+  });
+
   it("classifies invalid backend response shapes", async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ forecast: [] }), { status: 200 }),

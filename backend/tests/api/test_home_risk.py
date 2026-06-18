@@ -334,7 +334,10 @@ def test_post_home_risk_weather_upstream_error_returns_502() -> None:
         )
 
     assert response.status_code == 502
-    assert response.json() == {"detail": "Weather provider unavailable"}
+    assert response.json() == {
+        "detail": "Weather provider unavailable",
+        "error_code": "weather_provider_unavailable",
+    }
 
 
 def test_post_home_risk_missing_wind_returns_422_unknown_inputs() -> None:

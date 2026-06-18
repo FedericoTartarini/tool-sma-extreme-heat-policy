@@ -1,5 +1,11 @@
 import { Stack } from "@mantine/core";
-import { useEffect, useEffectEvent, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import { CurrentRiskSection } from "@/components/home/CurrentRiskSection";
 import { FiltersSection } from "@/components/home/FiltersSection";
 import { ForecastSection } from "@/components/home/ForecastSection";
@@ -9,6 +15,13 @@ import { BottomToast } from "@/components/ui/BottomToast";
 import { SECTION_STACK_GAP } from "@/config/uiLayout";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useHomeUrlSync } from "@/hooks/useHomeUrlSync";
+import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
+import {
+  createCalculationErrorToast,
+  createForecastUpdatedToast,
+  createSuggestErrorToast,
+  type HomeToastEvent,
+} from "@/pages/home/homeToast";
 import { useHomeBootstrap } from "@/pages/home/useHomeBootstrap";
 import { useHomeStore } from "@/store/homeStore";
 import { useTranslation } from "react-i18next";
@@ -21,18 +34,46 @@ const HOME_AUTO_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 export function HomePage() {
   const { t } = useTranslation();
   const { setQueryStates } = useHomeBootstrap();
-  const { canSyncSelection, hasCalculatedRisk, refresh } = useHomeHeatRisk();
+  const { canSyncSelection, errorReason, hasCalculatedRisk, refresh } =
+    useHomeHeatRisk();
   const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  const [refreshToastEventId, setRefreshToastEventId] = useState(0);
+  const [toastEvent, setToastEvent] = useState<HomeToastEvent | null>(null);
+  const nextToastEventIdRef = useRef(0);
 
   useHomeUrlSync({
     setQueryStates,
     canSyncSelection,
   });
 
+  const publishToast = useCallback(
+    (createToast: (id: number) => HomeToastEvent | null) => {
+      const nextToastEventId = nextToastEventIdRef.current + 1;
+      const nextToastEvent = createToast(nextToastEventId);
+
+      if (!nextToastEvent) {
+        return;
+      }
+
+      nextToastEventIdRef.current = nextToastEventId;
+      setToastEvent(nextToastEvent);
+    },
+    [],
+  );
+  const handleLocationError = useCallback(
+    (reason: HomeSuggestErrorReason) => {
+      publishToast((id) => createSuggestErrorToast(id, reason));
+    },
+    [publishToast],
+  );
   const runScheduledRefresh = useEffectEvent(async () => refresh());
+
+  useEffect(() => {
+    if (errorReason) {
+      publishToast((id) => createCalculationErrorToast(id, errorReason));
+    }
+  }, [errorReason, publishToast]);
 
   useEffect(() => {
     if (!(selectedLocation !== null && Boolean(sport) && hasCalculatedRisk)) {
@@ -51,7 +92,7 @@ export function HomePage() {
         }
 
         if (didRefresh) {
-          setRefreshToastEventId((currentId) => currentId + 1);
+          publishToast(createForecastUpdatedToast);
         }
 
         scheduleNextRefresh();
@@ -67,21 +108,25 @@ export function HomePage() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [hasCalculatedRisk, profile, selectedLocation, sport]);
+  }, [hasCalculatedRisk, profile, publishToast, selectedLocation, sport]);
 
   return (
     <>
       <Stack gap={SECTION_STACK_GAP}>
-        <FiltersSection />
+        <FiltersSection onLocationError={handleLocationError} />
         <CurrentRiskSection />
         <CurrentRiskRecommendationsSection />
         <ForecastSection />
         <LocationMapSection />
       </Stack>
-      <BottomToast
-        eventId={refreshToastEventId}
-        message={t("home.notifications.forecastUpdated")}
-      />
+      {toastEvent ? (
+        <BottomToast
+          eventId={toastEvent.id}
+          message={t(toastEvent.i18nKey)}
+          variant={toastEvent.variant}
+          durationMs={toastEvent.durationMs}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,37 +1,35 @@
 import { Box, Notification, Portal } from "@mantine/core";
+import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 
-const TOAST_HIDE_AFTER_MS = 2800;
-const CHECK_ICON = (
-  <svg
-    viewBox="0 0 16 16"
-    width="16"
-    height="16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path
-      d="M3.5 8.5L6.5 11.5L12.5 4.5"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+const DEFAULT_TOAST_HIDE_AFTER_MS = 2800;
+
+export type BottomToastVariant = "success" | "error";
 
 interface BottomToastProps {
   eventId: number;
   message: string;
+  variant?: BottomToastVariant;
+  durationMs?: number;
 }
 
 /**
- * Renders a small bottom toast for transient background update feedback.
+ * Renders a small bottom toast for transient Home notifications.
  */
-export function BottomToast({ eventId, message }: BottomToastProps) {
+export function BottomToast({
+  eventId,
+  message,
+  variant = "success",
+  durationMs = DEFAULT_TOAST_HIDE_AFTER_MS,
+}: BottomToastProps) {
   const [dismissedEventId, setDismissedEventId] = useState(0);
   const isVisible = eventId > dismissedEventId;
+  const isError = variant === "error";
+  const icon = isError ? (
+    <IconAlertTriangle size={16} stroke={2} aria-hidden="true" />
+  ) : (
+    <IconCheck size={16} stroke={2} aria-hidden="true" />
+  );
 
   useEffect(() => {
     if (!isVisible) {
@@ -40,12 +38,12 @@ export function BottomToast({ eventId, message }: BottomToastProps) {
 
     const timeoutId = window.setTimeout(() => {
       setDismissedEventId(eventId);
-    }, TOAST_HIDE_AFTER_MS);
+    }, durationMs);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [eventId, isVisible]);
+  }, [durationMs, eventId, isVisible]);
 
   if (!isVisible) {
     return null;
@@ -65,11 +63,11 @@ export function BottomToast({ eventId, message }: BottomToastProps) {
         }}
       >
         <Notification
-          role="status"
-          aria-live="polite"
+          role={isError ? "alert" : "status"}
+          aria-live={isError ? "assertive" : "polite"}
           withCloseButton={false}
-          icon={CHECK_ICON}
-          color="teal"
+          icon={icon}
+          color={isError ? "red" : "teal"}
           title={message}
           mt="md"
           w="100%"
@@ -90,6 +88,7 @@ export function BottomToast({ eventId, message }: BottomToastProps) {
               marginBottom: 0,
               textAlign: "left",
               lineHeight: "1.2",
+              whiteSpace: "pre-line",
             },
             description: {
               display: "none",

@@ -11,7 +11,8 @@ export type HomeCalculationErrorReason =
   | "abort"
   | "http_status"
   | "invalid_response"
-  | "network";
+  | "network"
+  | "weather_provider_unavailable";
 
 const SUGGEST_ERROR_I18N_KEY_BY_REASON: Record<HomeSuggestErrorReason, string> =
   {
@@ -32,6 +33,7 @@ const CALCULATION_ERROR_I18N_KEY_BY_REASON: Record<
   http_status: "errors.risk.network",
   invalid_response: "errors.risk.invalidResponse",
   network: "errors.risk.network",
+  weather_provider_unavailable: "errors.risk.weatherProvider",
 };
 
 /**

@@ -62,6 +62,18 @@ function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
   };
 }
 
+function toHeatRiskCalculationErrorReason(
+  error: unknown,
+): HeatRiskCalculationErrorReason | null {
+  if (!isApiError(error)) {
+    return null;
+  }
+
+  return error.serverCode === "weather_provider_unavailable"
+    ? "weather_provider_unavailable"
+    : error.kind;
+}
+
 /**
  * Auto-fetches heat risk for the selected Home sport + location.
  *
@@ -100,8 +112,15 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
 
       if (!result.ok) {
         throw new ApiError({
-          kind: result.reason,
+          kind:
+            result.reason === "weather_provider_unavailable"
+              ? "http_status"
+              : result.reason,
           status: result.status,
+          serverCode:
+            result.reason === "weather_provider_unavailable"
+              ? "weather_provider_unavailable"
+              : undefined,
           message: result.reason,
         });
       }
@@ -122,9 +141,7 @@ export function useHomeHeatRisk(): UseHomeHeatRiskResult {
   const errorReason: HeatRiskCalculationErrorReason | null =
     selectedLocation && !locationCoordinates
       ? "missing_location_coordinates"
-      : isApiError(riskQuery.error)
-        ? riskQuery.error.kind
-        : null;
+      : toHeatRiskCalculationErrorReason(riskQuery.error);
 
   const calculated = riskQuery.data
     ? toCalculatedHeatRisk(riskQuery.data.data)

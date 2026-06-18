@@ -9,6 +9,7 @@ export interface ApiErrorParams {
   kind: ApiErrorKind;
   message: string;
   status?: number;
+  serverCode?: string;
   cause?: unknown;
 }
 
@@ -18,13 +19,15 @@ export interface ApiErrorParams {
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status?: number;
+  readonly serverCode?: string;
   override readonly cause?: unknown;
 
-  constructor({ kind, message, status, cause }: ApiErrorParams) {
+  constructor({ kind, message, status, serverCode, cause }: ApiErrorParams) {
     super(message);
     this.name = "ApiError";
     this.kind = kind;
     this.status = status;
+    this.serverCode = serverCode;
     this.cause = cause;
   }
 }

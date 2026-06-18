@@ -92,7 +92,9 @@ Import rules:
 - Risk is fetched automatically when:
   - a location suggestion is selected (manual or auto-resolved) and coordinates are resolved, and
   - the sport changes.
-- Risk API failures are tracked internally and keep the last valid result (no silent fallback to fixtures), but API error messages are not currently shown in UI.
+- Location and risk calculation failures are shown as bottom error toasts.
+- Risk API failures keep the last valid result and do not silently fall back to fixtures.
+- Backend `weather_provider_unavailable` errors are mapped to a weather-provider-specific toast.
 - After a successful fetch:
   - URL query params update (`profile`, `sport`, `loc`) and
   - the last selection is persisted to localStorage only for direct visits (not shared links).
