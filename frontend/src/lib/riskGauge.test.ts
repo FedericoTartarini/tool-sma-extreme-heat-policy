@@ -42,6 +42,8 @@ describe("riskGauge helpers", () => {
     expect(getRiskGaugePointerAngle(2.5)).toBe(112.5);
     expect(getRiskGaugePointerAngle(3.5)).toBe(67.5);
     expect(getRiskGaugePointerAngle(4)).toBe(45);
+    expect(getRiskGaugePointerAngle(4.9)).toBeCloseTo(4.5);
+    expect(getRiskGaugePointerAngle(5)).toBe(0);
   });
 
   it("remaps raw scores into the display range and falls back to N/A when unavailable", () => {
@@ -49,10 +51,12 @@ describe("riskGauge helpers", () => {
     expect(normalizeRiskGaugeScore(0.8)).toBe(0);
     expect(normalizeRiskGaugeScore(1.5)).toBe(0.5);
     expect(normalizeRiskGaugeScore(4)).toBe(3);
+    expect(normalizeRiskGaugeScore(4.9)).toBeCloseTo(3.9);
+    expect(normalizeRiskGaugeScore(5)).toBe(4);
     expect(normalizeRiskGaugeScore(6)).toBe(4);
     expect(getRiskGaugePointerAngle(Number.NaN)).toBeNull();
     expect(formatRiskGaugeValue(Number.NaN, "N/A")).toBe("N/A");
-    expect(formatRiskGaugeValue(4, "N/A")).toBe("4.0");
+    expect(formatRiskGaugeValue(4.9, "N/A")).toBe("4.9");
   });
 
   it("resolves default and clamped gauge widths from a single helper", () => {

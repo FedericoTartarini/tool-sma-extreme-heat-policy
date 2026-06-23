@@ -183,7 +183,7 @@ describe("buildForecastOption", () => {
     expect(rendered).not.toContain("1.5");
   });
 
-  it("renders a max score point on the high/extreme boundary", () => {
+  it("renders an extreme threshold point on the high/extreme boundary", () => {
     const option = buildForecastOption(
       [
         { time: "08:00", value: 3.5 },
@@ -234,6 +234,56 @@ describe("buildForecastOption", () => {
 
     expect(rendered).toContain("4.0");
     expect(rendered).not.toContain("3.0");
+  });
+
+  it("renders a 5.0 score point on the extreme upper boundary", () => {
+    const option = buildForecastOption(
+      [
+        { time: "08:00", value: 4.9 },
+        { time: "09:00", value: 5.0 },
+      ],
+      forecastLabels,
+      "Today",
+    );
+    const series = Array.isArray(option.series) ? option.series : [];
+    const visualSeries = series.find(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        entry.name === "Risk-visual",
+    );
+    const pointSeries = series.find(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "name" in entry &&
+        entry.name === "Risk-points",
+    );
+    const tooltip =
+      option.tooltip && !Array.isArray(option.tooltip) ? option.tooltip : null;
+    const visualData = (visualSeries as { data?: Array<[number, number]> })
+      .data;
+    const pointData = (pointSeries as { data?: Array<[number, number]> }).data;
+
+    expect(visualData?.[0]?.[0]).toBe(480);
+    expect(visualData?.[0]?.[1]).toBeCloseTo(3.9);
+    expect(visualData?.[1]).toEqual([540, 4]);
+    expect(pointData?.[0]?.[0]).toBe(480);
+    expect(pointData?.[0]?.[1]).toBeCloseTo(3.9);
+    expect(pointData?.[1]).toEqual([540, 4]);
+
+    const formatter = tooltip?.formatter as (params: unknown) => string;
+    const rendered = formatter([
+      {
+        axisValue: 480,
+        name: "08:00",
+        value: [480, 3.9000000000000004],
+      },
+    ]);
+
+    expect(rendered).toContain("4.9");
+    expect(rendered).not.toContain("3.9");
   });
 
   it("keeps mobile x-axis labels on a regular cadence", () => {

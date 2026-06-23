@@ -28,11 +28,14 @@ describe("getRiskBands", () => {
 });
 
 describe("toRiskDisplayScore", () => {
-  it("anchors the maximum model score to the high/extreme boundary", () => {
+  it("maps raw model scores onto the shifted display axis", () => {
     expect(toRiskDisplayScore(0.8)).toBe(0);
     expect(toRiskDisplayScore(1.5)).toBe(0.5);
     expect(toRiskDisplayScore(3.5)).toBe(2.5);
     expect(toRiskDisplayScore(4)).toBe(3);
+    expect(toRiskDisplayScore(4.9)).toBeCloseTo(3.9);
+    expect(toRiskDisplayScore(5)).toBe(4);
+    expect(toRiskDisplayScore(5.2)).toBe(4);
   });
 });
 

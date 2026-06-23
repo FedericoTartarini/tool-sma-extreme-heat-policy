@@ -13,7 +13,7 @@ dependencies = [
     "pandas==3.0.3",
     "pvlib==0.15.1",
     "pydantic-settings==2.14.1",
-    "pythermalcomfort==3.9.8",
+    "pythermalcomfort==4.0.2",
     "timezonefinder==8.2.4",
     "uvicorn[standard]==0.49.0",
 ]

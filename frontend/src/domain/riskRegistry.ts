@@ -28,7 +28,9 @@ export const RISK_LEVELS: readonly RiskLevel[] = [
   "high",
   "extreme",
 ] as const;
-export const MAX_RISK_SCORE = 4;
+export const RISK_RAW_SCALE_MAX = 5;
+export const RISK_DISPLAY_OFFSET = 1;
+export const RISK_DISPLAY_AXIS_MAX = RISK_RAW_SCALE_MAX - RISK_DISPLAY_OFFSET;
 
 export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
   low: {
@@ -109,27 +111,17 @@ export function toRiskLevel(score: number): RiskLevel {
 
 /**
  * Maps a raw risk score onto the shared chart display coordinate system.
- * The pythermalcomfort sports heat-risk model caps scores at 4.0, and that maximum score
- * should render on the High/Extreme boundary rather than within the Extreme band.
+ * The frontend displays raw scores on a 5.0 scale shifted onto a 0..4 axis.
  */
 export function toRiskDisplayScore(score: number): number | null {
   if (!Number.isFinite(score)) {
     return null;
   }
 
-  if (score <= 1) {
-    return 0;
-  }
-
-  if (score === MAX_RISK_SCORE) {
-    return MAX_RISK_SCORE - 1;
-  }
-
-  if (score > MAX_RISK_SCORE) {
-    return MAX_RISK_SCORE;
-  }
-
-  return score - 1;
+  return Math.min(
+    Math.max(score - RISK_DISPLAY_OFFSET, 0),
+    RISK_DISPLAY_AXIS_MAX,
+  );
 }
 
 /**
@@ -168,7 +160,7 @@ export function getRiskBands(): RiskBand[] {
     lower: RISK_REGISTRY[level].scoreLowerInclusive,
     upper:
       level === "extreme"
-        ? MAX_RISK_SCORE
+        ? RISK_DISPLAY_AXIS_MAX
         : RISK_REGISTRY[level].scoreUpperExclusive,
     color: RISK_REGISTRY[level].color,
   }));

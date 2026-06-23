@@ -452,7 +452,7 @@ wheels = [
 
 [[package]]
 name = "pythermalcomfort"
-version = "3.9.8"
+version = "4.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numba" },
@@ -460,9 +460,9 @@ dependencies = [
     { name = "scipy" },
     { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/71/9a60b8d311ab7c54a6fccaf2ec0bc61854cbebd869a7a8e079f09091ea8e/pythermalcomfort-3.9.8.tar.gz", hash = "sha256:e141787ef3b145f857d38b849d507f27becd9b41b14e3232f5c0122e176627c9", size = 484535, upload-time = "2026-05-26T02:07:55.956Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/58/8e88696f1faf6f46e86ce9f2ef249e3c1da9efbe9b9f532023b4476cea4d/pythermalcomfort-4.0.2.tar.gz", hash = "sha256:b8d6e2cafeca5e90a8709810aaabc92c2c653f22f75075baf9b353c299ec0df2", size = 2477800, upload-time = "2026-06-23T01:58:07.758Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/30/1fc9015177883d0a877c70d549d116236a83e764255e8a21cdebf09a2044/pythermalcomfort-3.9.8-py2.py3-none-any.whl", hash = "sha256:b5b2df237d567fc67f9ceb830b21deb2436e1c1a869ef50030239363305f4ca1", size = 238488, upload-time = "2026-05-26T02:07:53.661Z" },
+    { url = "https://files.pythonhosted.org/packages/46/08/7202431a30ea6b02002276bf6685ee86f8c9f548c6667cd01d6324df3e67/pythermalcomfort-4.0.2-py2.py3-none-any.whl", hash = "sha256:7d6c2bdcc7cc63f23057b09c3e55e973f65ad1e9e92fbb5a6c935f8576e9cfaf", size = 277031, upload-time = "2026-06-23T01:58:06.196Z" },
 ]
 
 [[package]]
@@ -621,7 +621,7 @@ requires-dist = [
     { name = "pandas", specifier = "==3.0.3" },
     { name = "pvlib", specifier = "==0.15.1" },
     { name = "pydantic-settings", specifier = "==2.14.1" },
-    { name = "pythermalcomfort", specifier = "==3.9.8" },
+    { name = "pythermalcomfort", specifier = "==4.0.2" },
     { name = "timezonefinder", specifier = "==8.2.4" },
     { name = "uvicorn", extras = ["standard"], specifier = "==0.49.0" },
 ]
