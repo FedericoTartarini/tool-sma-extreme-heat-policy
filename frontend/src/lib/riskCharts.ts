@@ -9,7 +9,7 @@ import { USYD_ORANGE_HEX } from "@/config/uiColors";
 import {
   getRiskBands,
   getRiskColor,
-  MAX_RISK_SCORE,
+  RISK_DISPLAY_AXIS_MAX,
   toRiskDisplayScore,
 } from "@/domain/riskRegistry";
 
@@ -156,7 +156,7 @@ function toForecastChartPoints(
 
   const thresholds = getRiskBands()
     .map((band) => band.upper)
-    .filter((threshold) => threshold > 0 && threshold < MAX_RISK_SCORE);
+    .filter((threshold) => threshold > 0 && threshold < RISK_DISPLAY_AXIS_MAX);
   const expandedPoints: ForecastChartPoint[] = [points[0]];
 
   for (let index = 1; index < points.length; index += 1) {
@@ -471,7 +471,7 @@ function createForecastYAxis(
     {
       type: "value" as const,
       min: 0,
-      max: MAX_RISK_SCORE,
+      max: RISK_DISPLAY_AXIS_MAX,
       interval: 1,
       axisPointer: {
         show: false,

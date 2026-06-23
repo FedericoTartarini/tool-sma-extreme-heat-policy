@@ -5,12 +5,12 @@ import { getReadableTextColor } from "@/lib/colorContrast";
 import {
   getRiskBands,
   getRiskColor,
-  MAX_RISK_SCORE,
+  RISK_DISPLAY_AXIS_MAX,
   toRiskDisplayScore,
 } from "@/domain/riskRegistry";
 
 export const RISK_GAUGE_MIN_SCORE = 0;
-export const RISK_GAUGE_MAX_SCORE = MAX_RISK_SCORE;
+export const RISK_GAUGE_MAX_SCORE = RISK_DISPLAY_AXIS_MAX;
 export const RISK_GAUGE_MIN_WIDTH = 200;
 export const RISK_GAUGE_MAX_WIDTH = 400;
 const RISK_GAUGE_TOTAL_ANGLE = 180;

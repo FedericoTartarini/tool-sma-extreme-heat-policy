@@ -177,18 +177,19 @@ def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) 
     }
 
 
-def test_forecast_heat_risk_accepts_legacy_scale_score() -> None:
+@pytest.mark.parametrize("score", [0.8, 4.9, 5.0])
+def test_forecast_heat_risk_accepts_finite_model_scores(score: float) -> None:
     """The public schema should continue accepting finite model scores."""
 
     heat_risk = ForecastHeatRisk(
-        risk_level_interpolated=0.8,
+        risk_level_interpolated=score,
         t_medium=34.5,
         t_high=37.1,
         t_extreme=39.2,
         recommendation="Increase hydration & modify clothing",
     )
 
-    assert heat_risk.risk_level_interpolated == 0.8
+    assert heat_risk.risk_level_interpolated == score
 
 
 def test_options_home_risk_allows_netlify_preview_origin_via_regex(monkeypatch) -> None:
