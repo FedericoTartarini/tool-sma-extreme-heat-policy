@@ -69,7 +69,7 @@ def _build_client(handler) -> tuple[OpenMeteoClient, httpx.AsyncClient]:
         base_url="https://api.open-meteo.com/v1",
         timeout_seconds=10.0,
         client=mock_client,
-        retry_backoff_seconds=(0.0, 0.0),
+        retry_backoff_seconds=(0.0,),
     )
     return client, mock_client
 
@@ -134,7 +134,7 @@ async def test_fetch_weather_forecast_keeps_owned_client_open_after_request_erro
     client = OpenMeteoClient(
         base_url="https://api.open-meteo.com/v1",
         timeout_seconds=10.0,
-        retry_backoff_seconds=(0.0, 0.0),
+        retry_backoff_seconds=(0.0,),
     )
     await client._client.aclose()
     client._client = owned_client
@@ -214,7 +214,7 @@ async def test_fetch_weather_forecast_raises_after_retryable_http_429_attempts()
     finally:
         await mock_client.aclose()
 
-    assert calls == 3
+    assert calls == 2
 
 
 async def test_fetch_weather_forecast_does_not_retry_http_400() -> None:

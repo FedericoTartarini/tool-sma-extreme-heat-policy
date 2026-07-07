@@ -69,6 +69,7 @@ export function shouldRetryMapboxRetrieveError(error: unknown): boolean {
 export function shouldRetryHeatRiskError(error: unknown): boolean {
   return (
     error instanceof ApiError &&
+    error.serverCode !== "weather_provider_unavailable" &&
     (error.kind === "network" || isHttpStatus(error, [502, 503, 504]))
   );
 }
