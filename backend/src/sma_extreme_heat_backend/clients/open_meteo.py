@@ -28,7 +28,7 @@ _EXPECTED_HOURLY_UNITS: dict[str, set[str]] = {
     "direct_normal_irradiance": {"W/m²", "W/m^2"},
 }
 
-_DEFAULT_RETRY_BACKOFF_SECONDS: tuple[float, ...] = (0.25, 1.0)
+_DEFAULT_RETRY_BACKOFF_SECONDS: tuple[float, ...] = (0.25,)
 _RETRYABLE_STATUS_CODES: set[int] = {408, 429}
 
 

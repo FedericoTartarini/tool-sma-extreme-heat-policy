@@ -42,6 +42,8 @@ Copy `backend/.env.example` to `backend/.env` using the command `cp .env.example
 Set `CORS_ORIGINS` to the production frontend origin. If you need to allow
 Netlify preview or branch deploy URLs, set `CORS_ORIGIN_REGEX` to a strict regex
 such as `^https://([a-z0-9-]+--)?sports-heat-tool\.netlify\.app$`.
+`HTTP_TIMEOUT_SECONDS` controls the per-attempt Open-Meteo request timeout and
+defaults to `3` seconds.
 
 ### Run locally
 
@@ -224,6 +226,8 @@ Example response:
   - `available_inputs`
 - Upstream weather failures return `502` with:
   `{"detail": "Weather provider unavailable", "error_code": "weather_provider_unavailable"}`.
+- Retryable Open-Meteo failures are retried once after `0.25` seconds; each
+  attempt uses `HTTP_TIMEOUT_SECONDS`.
 - Future forecast rows with missing inputs are skipped instead of failing the request.
 
 ## Notes

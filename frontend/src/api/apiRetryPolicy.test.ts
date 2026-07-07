@@ -27,6 +27,7 @@ function heatRiskError(params: {
     | "missing_config"
     | "network";
   status?: number;
+  serverCode?: string;
 }): ApiError {
   return new ApiError({
     message: params.kind,
@@ -98,6 +99,15 @@ describe("api retry policy", () => {
     ).toBe(false);
     expect(
       shouldRetryHeatRiskError(heatRiskError({ kind: "missing_config" })),
+    ).toBe(false);
+    expect(
+      shouldRetryHeatRiskError(
+        heatRiskError({
+          kind: "http_status",
+          status: 502,
+          serverCode: "weather_provider_unavailable",
+        }),
+      ),
     ).toBe(false);
     expect(
       shouldRetryHeatRiskError(

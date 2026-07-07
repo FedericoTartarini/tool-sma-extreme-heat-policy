@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         default="https://api.open-meteo.com/v1",
         alias="OPEN_METEO_BASE_URL",
     )
-    http_timeout_seconds: float = Field(default=10.0, alias="HTTP_TIMEOUT_SECONDS")
+    http_timeout_seconds: float = Field(default=3.0, alias="HTTP_TIMEOUT_SECONDS")
     risk_cache_ttl_seconds: int = Field(default=600, alias="RISK_CACHE_TTL_SECONDS")
 
     model_config = SettingsConfigDict(
