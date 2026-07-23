@@ -47,13 +47,22 @@ describe("fetchHeatRisk", () => {
     vi.clearAllMocks();
   });
 
-  it("sends the frozen ADULT profile in the Home risk payload", async () => {
+  it("sends Croquet with the frozen ADULT profile in the Home risk payload", async () => {
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify(VALID_HEAT_RISK_RESPONSE), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          ...VALID_HEAT_RISK_RESPONSE,
+          request: {
+            ...VALID_HEAT_RISK_RESPONSE.request,
+            sport: "CROQUET",
+          },
+        }),
+        { status: 200 },
+      ),
     );
 
     const result = await fetchHeatRisk({
-      sport: "SOCCER",
+      sport: "CROQUET",
       latitude: -33.847,
       longitude: 151.067,
       profile: "ADULT",
@@ -65,7 +74,7 @@ describe("fetchHeatRisk", () => {
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
-          sport: "SOCCER",
+          sport: "CROQUET",
           latitude: -33.847,
           longitude: 151.067,
           profile: "ADULT",

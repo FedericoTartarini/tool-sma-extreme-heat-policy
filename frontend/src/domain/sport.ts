@@ -9,6 +9,7 @@ export const SportType = {
   Bowls: "BOWLS",
   Canoeing: "CANOEING",
   Cricket: "CRICKET",
+  Croquet: "CROQUET",
   Cycling: "CYCLING",
   Equestrian: "EQUESTRIAN",
   FieldAthletics: "FIELD_ATHLETICS",
