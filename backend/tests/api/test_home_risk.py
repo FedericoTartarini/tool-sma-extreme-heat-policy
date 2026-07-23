@@ -18,6 +18,7 @@ from sma_extreme_heat_backend.schemas.home import (
 )
 
 VALID_PROFILES = ("ADULT", "UNDER_10", "AGE_10_13", "AGE_14_17")
+VALID_SPORTS = ("SOCCER", "CROQUET")
 
 
 class SuccessfulRiskService:
@@ -26,13 +27,13 @@ class SuccessfulRiskService:
     async def calculate_home_risk(self, payload: RiskRequest) -> RiskResponse:
         """Return a stable response for API contract assertions."""
 
-        assert payload.sport == "SOCCER"
+        assert payload.sport in VALID_SPORTS
         assert payload.latitude == -33.847
         assert payload.longitude == 151.067
         assert payload.profile in VALID_PROFILES
         return RiskResponse(
             request=RequestSummary(
-                sport="SOCCER",
+                sport=payload.sport,
                 profile=payload.profile,
                 location=LocationSummary(
                     latitude=-33.847,
@@ -108,15 +109,19 @@ class MissingInputRiskService:
         )
 
 
+@pytest.mark.parametrize("sport", VALID_SPORTS)
 @pytest.mark.parametrize("profile", VALID_PROFILES)
-def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) -> None:
+def test_post_home_risk_success_returns_forecast_centric_contract(
+    profile: str,
+    sport: str,
+) -> None:
     """The route should serialize the new forecast-centric response contract."""
 
     app = create_app()
     app.dependency_overrides[get_risk_service] = lambda: SuccessfulRiskService()
 
     payload = {
-        "sport": "SOCCER",
+        "sport": sport,
         "latitude": -33.847,
         "longitude": 151.067,
         "profile": profile,
@@ -128,7 +133,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(profile: str) 
     assert response.status_code == 200
     assert response.json() == {
         "request": {
-            "sport": "SOCCER",
+            "sport": sport,
             "profile": profile,
             "location": {
                 "latitude": -33.847,

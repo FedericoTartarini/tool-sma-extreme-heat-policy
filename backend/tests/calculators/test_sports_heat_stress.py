@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     PythermalcomfortSportsHeatStressCalculator,
     SportsHeatStressInput,
@@ -7,12 +9,13 @@ from sma_extreme_heat_backend.calculators.sports_heat_stress import (
 from sma_extreme_heat_backend.core.errors import InvalidSportError
 
 
-def test_model_sports_heat_stress_returns_pythermalcomfort_raw_keys() -> None:
+@pytest.mark.parametrize("sport", ["SOCCER", "CROQUET"])
+def test_model_sports_heat_stress_returns_pythermalcomfort_raw_keys(sport: str) -> None:
     calculator = PythermalcomfortSportsHeatStressCalculator()
 
     result = calculator.model_sports_heat_stress(
         SportsHeatStressInput(
-            sport="SOCCER",
+            sport=sport,
             tdb=30.0,
             rh=60.0,
             vr=1.2,
@@ -26,6 +29,7 @@ def test_model_sports_heat_stress_returns_pythermalcomfort_raw_keys() -> None:
     assert "t_extreme" in result.data
     assert "recommendation" in result.data
     assert result.meta["model"] == "pythermalcomfort.models.sports_heat_stress_risk"
+    assert result.meta["inputs"]["sport"] == sport
 
 
 def test_model_sports_heat_stress_rejects_non_official_sport_name() -> None:
