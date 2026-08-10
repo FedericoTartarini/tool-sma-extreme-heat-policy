@@ -106,7 +106,9 @@ Import rules:
 
 ## i18n
 
-- All user-facing text lives in `src/i18n/locales/en/translation.json`.
+- Bundled languages are configured in `src/i18n/language.ts`; English is the
+  default and the current selection is saved in localStorage.
+- All user-facing text lives in `src/i18n/locales/<language>/translation.json`.
 - Components/pages use `useTranslation()` and `t(...)`.
 - Do not embed visible copy directly in components/hooks/libs.
 
