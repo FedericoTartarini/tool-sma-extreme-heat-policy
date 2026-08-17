@@ -1,10 +1,12 @@
-import { Badge, Box, Stack } from "@mantine/core";
+import { Badge, Box, Stack, Switch } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { getHeatRiskProfileMeta } from "@/domain/heatRiskProfile";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { useSetShowRawData } from "@/hooks/useSetShowRawData";
+import { useHomeUiStore } from "@/store/homeUiStore";
 import { createRiskLevelLabels } from "@/domain/riskLabels";
 import {
   getRiskBadgeForegroundColor,
@@ -24,10 +26,21 @@ export function CurrentRiskSection() {
   const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const heatRisk = useHomeHeatRisk();
+  const showRawData = useHomeUiStore((state) => state.showRawData);
+  const setShowRawData = useSetShowRawData();
   const profile = useHomeStore((state) => state.profile);
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
   const profileLabel = t(getHeatRiskProfileMeta(profile).labelKey);
   const currentRiskTitle = t("home.sections.currentRisk.title");
+  const rawDataToggle = (
+    <Switch
+      label={t("environmental.toggleLabel")}
+      checked={showRawData}
+      onChange={(event) => setShowRawData(event.currentTarget.checked)}
+      disabled={!heatRisk.hasCalculatedRisk}
+      size={isMobile ? "sm" : "md"}
+    />
+  );
   const profileBadge = (
     <Box
       style={{
@@ -48,7 +61,7 @@ export function CurrentRiskSection() {
 
   if (!heatRisk.hasCalculatedRisk) {
     return (
-      <SectionCard title={currentRiskTitle}>
+      <SectionCard title={currentRiskTitle} actions={rawDataToggle}>
         <Stack gap={CONTENT_GAP} align="center">
           {profileBadge}
           <CurrentRiskSkeleton />
@@ -64,7 +77,7 @@ export function CurrentRiskSection() {
   const riskBadgeValue = longRiskLabels[heatRisk.riskLevel].toUpperCase();
 
   return (
-    <SectionCard title={currentRiskTitle}>
+    <SectionCard title={currentRiskTitle} actions={rawDataToggle}>
       <Stack gap={CONTENT_GAP} align="center">
         {profileBadge}
         <RiskGauge

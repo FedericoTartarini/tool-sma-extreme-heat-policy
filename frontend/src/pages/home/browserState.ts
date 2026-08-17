@@ -6,6 +6,7 @@ import {
 import type { SportType } from "@/domain/sport";
 
 const HOME_FILTERS_STORAGE_KEY = "home-filters:v1";
+const HOME_UI_PREFERENCES_STORAGE_KEY = "home-ui-preferences:v1";
 
 export interface PersistedHomeFilters {
   profile: HeatRiskProfile;
@@ -104,6 +105,51 @@ export function savePersistedHomeFilters(filters: PersistedHomeFilters): void {
     window.localStorage.setItem(
       HOME_FILTERS_STORAGE_KEY,
       JSON.stringify(payload),
+    );
+  } catch {
+    // Intentionally ignore storage errors to keep UI interaction unblocked.
+  }
+}
+
+/**
+ * Loads the persisted raw-data toggle. Invalid or missing values default to off.
+ */
+export function loadPersistedShowRawData(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(HOME_UI_PREFERENCES_STORAGE_KEY);
+
+    if (!raw) {
+      return false;
+    }
+
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!isRecord(parsed) || typeof parsed.showRawData !== "boolean") {
+      return false;
+    }
+
+    return parsed.showRawData;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Persists the raw-data toggle (best-effort).
+ */
+export function savePersistedShowRawData(showRawData: boolean): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      HOME_UI_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ showRawData }),
     );
   } catch {
     // Intentionally ignore storage errors to keep UI interaction unblocked.

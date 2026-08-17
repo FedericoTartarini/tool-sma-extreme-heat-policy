@@ -314,6 +314,21 @@
       "extreme": "Ext"
     }
   },
+  "environmental": {
+    "toggleLabel": "Raw data",
+    "rawDataTitle": "Raw Environmental Data for Current Sport Heat Risk",
+    "airTemperature": "Air temperature",
+    "windSpeed": "Wind speed",
+    "relativeHumidity": "Relative humidity",
+    "meanRadiantTemperature": "Mean radiant temperature",
+    "directNormalIrradiance": "Direct normal irradiance",
+    "units": {
+      "celsius": "°C",
+      "percent": "%",
+      "metersPerSecond": "m/s",
+      "wattsPerSquareMeter": "W/m²"
+    }
+  },
   "charts": {
     "gauge": {
       "seriesName": "Heat Risk",

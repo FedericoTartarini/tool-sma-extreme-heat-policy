@@ -3,10 +3,13 @@ import { HEAT_RISK_PROFILE_VALUES } from "@/domain/heatRiskProfile";
 import { SportType, SPORT_TYPE_VALUES } from "@/domain/sport";
 import {
   loadPersistedHomeFilters,
+  loadPersistedShowRawData,
   savePersistedHomeFilters,
+  savePersistedShowRawData,
 } from "@/pages/home/browserState";
 
 const HOME_FILTERS_STORAGE_KEY = "home-filters:v1";
+const HOME_UI_PREFERENCES_STORAGE_KEY = "home-ui-preferences:v1";
 
 interface LocalStorageMock {
   clear: () => void;
@@ -116,5 +119,24 @@ describe("home browserState", () => {
         loc: "Campbell Creek, Queensland, Australia",
       }),
     );
+  });
+
+  it("defaults the raw-data toggle to false when nothing is stored", () => {
+    expect(loadPersistedShowRawData()).toBe(false);
+  });
+
+  it("round-trips the raw-data toggle preference", () => {
+    savePersistedShowRawData(true);
+
+    expect(storage.get(HOME_UI_PREFERENCES_STORAGE_KEY)).toBe(
+      JSON.stringify({ showRawData: true }),
+    );
+    expect(loadPersistedShowRawData()).toBe(true);
+  });
+
+  it("defaults the raw-data toggle to false when stored data is invalid", () => {
+    storage.set(HOME_UI_PREFERENCES_STORAGE_KEY, "not-json");
+
+    expect(loadPersistedShowRawData()).toBe(false);
   });
 });
