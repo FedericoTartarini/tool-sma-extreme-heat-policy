@@ -4,11 +4,13 @@
 
 A location-aware web tool that helps athletes, coaches, and sporting organisations understand forecast heat-stress risk and take evidence-based precautions.
 
-[Getting started](#getting-started) · [Project structure](#project-structure) · [Development](#development) · [API](#api)
+[Open the live tool](https://sports-heat-tool.sydney.edu.au/) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Development](#development) · [API](#api)
 
 ## Overview
 
 The SMA Extreme Heat Policy Tool combines local weather forecasts with the Sports Medicine Australia heat-risk model. Users select a location and sport to see the current risk level, a seven-day forecast, and practical recommendations for reducing heat stress.
+
+> **Important:** This tool provides general information for educational purposes and does not provide medical advice. See the live tool's [terms and medical disclaimer](https://sports-heat-tool.sydney.edu.au/about).
 
 The application:
 
@@ -42,6 +44,8 @@ React frontend ──► FastAPI backend ──► Open-Meteo forecast
 - pnpm 11.5.2 (through Corepack)
 - A free [Mapbox public access token](https://account.mapbox.com/access-tokens/)
 
+The commands below use macOS/Linux shell syntax. In Windows PowerShell, replace `cp <source> <destination>` with `Copy-Item <source> <destination>`.
+
 ### 1. Clone the repository
 
 ```bash
@@ -58,11 +62,11 @@ cp .env.example .env
 uv run uvicorn sma_extreme_heat_backend.main:app --reload --port 8000
 ```
 
-The API is available at `http://localhost:8000`. The default environment file already allows requests from the local frontend.
+The API is available at `http://localhost:8000`, with interactive documentation at `http://localhost:8000/docs`. The default environment file already allows requests from the local frontend.
 
 ### 3. Start the frontend
 
-In a second terminal:
+From the repository root, in a second terminal:
 
 ```bash
 cd frontend
@@ -84,7 +88,15 @@ Then start the development server:
 pnpm dev
 ```
 
-Open the local URL printed by Vite (normally `http://localhost:5173`).
+Open the local URL printed by Vite (normally `http://localhost:5173`). If Vite selects another port, follow the CORS guidance below.
+
+### Troubleshooting
+
+- **Location search is unavailable:** confirm `VITE_MAPBOX_ACCESS_TOKEN` contains a valid public token, then restart the frontend after changing `.env.local`.
+- **The browser reports a CORS error:** confirm the frontend is running at `http://localhost:5173` and that `backend/.env` includes that URL in `CORS_ORIGINS`.
+- **Vite selects a port other than 5173:** free port 5173 and run `pnpm dev --port 5173 --strictPort`, or add Vite's selected URL to `CORS_ORIGINS` in `backend/.env` and restart the backend.
+- **Backend port 8000 is already in use:** stop the process using the port, or choose another backend port and update `VITE_API_BASE_URL` in `frontend/.env.local`.
+- **Weather requests fail:** confirm the backend has internet access and can reach Open-Meteo.
 
 ## Project structure
 
@@ -140,7 +152,7 @@ pnpm run build
 To run the repository's pre-commit hooks across all files:
 
 ```bash
-pre-commit run --all-files
+uvx pre-commit run --all-files
 ```
 
 ## API
@@ -163,7 +175,7 @@ The response contains the resolved location context and hourly forecast points w
 The tool is based on:
 
 - [Sports Medicine Australia Extreme Heat Policy](https://sma.org.au/resources/policies-and-guidelines/hot-weather/)
-- Tartarini, F. et al. (2025), [*A modified Sports Medicine Australia extreme heat policy and web tool*](https://www.sciencedirect.com/science/article/pii/S1440244025000696), *Journal of Science and Medicine in Sport*
+- Tartarini, F. et al. (2025), [_A modified Sports Medicine Australia extreme heat policy and web tool_](https://doi.org/10.1016/j.jsams.2025.03.006), _Journal of Science and Medicine in Sport_
 
 ## Contributing
 
