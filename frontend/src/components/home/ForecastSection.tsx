@@ -23,7 +23,7 @@ const MOBILE_FORECAST_CHART_HEIGHT = 280;
  * Renders the 24-hour forecast chart and upcoming daily forecast accordions.
  */
 export function ForecastSection() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const { hasCalculatedRisk, forecast, meta } = useHomeHeatRisk();
 
@@ -79,11 +79,13 @@ export function ForecastSection() {
                   <Flex direction={"column"}>
                     <Text fw={600}>
                       {formatWeekdayLabel(day.date, {
+                        locale: i18n.resolvedLanguage,
                         timeZone: meta.timeZone,
                       })}
                     </Text>
                     <Text c="dimmed" fz="sm">
                       {formatDateLabel(day.date, {
+                        locale: i18n.resolvedLanguage,
                         timeZone: meta.timeZone,
                       })}
                     </Text>
