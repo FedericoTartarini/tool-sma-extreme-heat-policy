@@ -136,10 +136,6 @@ export function loadPersistedShowWeatherDetails(): boolean {
       return parsed.showWeatherDetails;
     }
 
-    if (typeof parsed.showRawData === "boolean") {
-      return parsed.showRawData;
-    }
-
     return false;
   } catch {
     return false;

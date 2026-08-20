@@ -134,15 +134,6 @@ describe("home browserState", () => {
     expect(loadPersistedShowWeatherDetails()).toBe(true);
   });
 
-  it("reads legacy showRawData preference values", () => {
-    storage.set(
-      HOME_UI_PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ showRawData: true }),
-    );
-
-    expect(loadPersistedShowWeatherDetails()).toBe(true);
-  });
-
   it("defaults the weather-details toggle to false when stored data is invalid", () => {
     storage.set(HOME_UI_PREFERENCES_STORAGE_KEY, "not-json");
 
