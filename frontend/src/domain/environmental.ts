@@ -8,19 +8,18 @@ export interface EnvironmentalInputs {
 
 export type EnvironmentalMetricKey =
   | "airTemperature"
-  | "windSpeed"
-  | "relativeHumidity"
   | "meanRadiantTemperature"
+  | "relativeHumidity"
+  | "windSpeed"
   | "directNormalIrradiance";
 
 export type EnvironmentalMetricField = keyof EnvironmentalInputs;
 
 export type EnvironmentalMetricIcon =
   | "temperature"
-  | "wind"
   | "droplet"
-  | "sun"
-  | "sunHigh";
+  | "wind"
+  | "sun";
 
 export type EnvironmentalUnitKey =
   | "celsius"
@@ -37,6 +36,7 @@ export interface EnvironmentalMetricDefinition {
   decimals: number;
 }
 
+/** Metric order: familiar weather trio first, then radiation inputs. */
 export const ENVIRONMENTAL_METRICS: readonly EnvironmentalMetricDefinition[] = [
   {
     key: "airTemperature",
@@ -44,14 +44,6 @@ export const ENVIRONMENTAL_METRICS: readonly EnvironmentalMetricDefinition[] = [
     icon: "temperature",
     labelKey: "environmental.airTemperature",
     unitKey: "celsius",
-    decimals: 1,
-  },
-  {
-    key: "windSpeed",
-    field: "windSpeed10mMs",
-    icon: "wind",
-    labelKey: "environmental.windSpeed",
-    unitKey: "metersPerSecond",
     decimals: 1,
   },
   {
@@ -63,9 +55,17 @@ export const ENVIRONMENTAL_METRICS: readonly EnvironmentalMetricDefinition[] = [
     decimals: 0,
   },
   {
+    key: "windSpeed",
+    field: "windSpeed10mMs",
+    icon: "wind",
+    labelKey: "environmental.windSpeed",
+    unitKey: "metersPerSecond",
+    decimals: 1,
+  },
+  {
     key: "meanRadiantTemperature",
     field: "meanRadiantTemperatureC",
-    icon: "sun",
+    icon: "temperature",
     labelKey: "environmental.meanRadiantTemperature",
     unitKey: "celsius",
     decimals: 1,
@@ -73,7 +73,7 @@ export const ENVIRONMENTAL_METRICS: readonly EnvironmentalMetricDefinition[] = [
   {
     key: "directNormalIrradiance",
     field: "directNormalIrradianceWm2",
-    icon: "sunHigh",
+    icon: "sun",
     labelKey: "environmental.directNormalIrradiance",
     unitKey: "wattsPerSquareMeter",
     decimals: 0,

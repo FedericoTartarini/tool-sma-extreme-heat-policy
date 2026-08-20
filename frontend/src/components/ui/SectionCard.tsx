@@ -7,7 +7,6 @@ interface SectionCardProps {
   title?: string;
   titleIcon?: ReactNode;
   subtitle?: string;
-  actions?: ReactNode;
   children: ReactNode;
 }
 
@@ -18,49 +17,41 @@ export function SectionCard({
   title,
   titleIcon,
   subtitle,
-  actions,
   children,
 }: SectionCardProps) {
   const hasTitle = Boolean(title?.trim());
-  const hasHeading = hasTitle || Boolean(subtitle) || Boolean(actions);
+  const hasHeading = hasTitle || Boolean(subtitle);
 
   return (
     <Paper radius="md" p={CONTENT_PADDING}>
       {hasHeading ? (
         <Stack gap={CONTENT_GAP} mb={CONTENT_PADDING}>
-          {hasTitle || actions ? (
-            <Flex justify="space-between" align="flex-start" gap={CONTENT_GAP}>
-              {hasTitle ? (
-                <Title order={2} fz={{ base: "h3", sm: "h2" }}>
-                  <Flex
+          {hasTitle ? (
+            <Title order={2} fz={{ base: "h3", sm: "h2" }}>
+              <Flex
+                component="span"
+                align="center"
+                gap={CONTENT_GAP}
+                wrap="nowrap"
+                style={{
+                  display: "inline-flex",
+                }}
+              >
+                {titleIcon ? (
+                  <Box
                     component="span"
-                    align="center"
-                    gap={CONTENT_GAP}
-                    wrap="nowrap"
                     style={{
                       display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    {titleIcon ? (
-                      <Box
-                        component="span"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {titleIcon}
-                      </Box>
-                    ) : null}
-                    <span>{title}</span>
-                  </Flex>
-                </Title>
-              ) : (
-                <span />
-              )}
-              {actions ? <Box style={{ flexShrink: 0 }}>{actions}</Box> : null}
-            </Flex>
+                    {titleIcon}
+                  </Box>
+                ) : null}
+                <span>{title}</span>
+              </Flex>
+            </Title>
           ) : null}
           {subtitle ? (
             <Text

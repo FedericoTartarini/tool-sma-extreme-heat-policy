@@ -1,7 +1,9 @@
-import { Badge, Box, Stack, Switch } from "@mantine/core";
+import { IconChevronDown, IconChevronUp, IconSun } from "@tabler/icons-react";
+import { Badge, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CONTENT_GAP } from "@/config/uiLayout";
+import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
 import { getHeatRiskProfileMeta } from "@/domain/heatRiskProfile";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
@@ -32,15 +34,6 @@ export function CurrentRiskSection() {
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
   const profileLabel = t(getHeatRiskProfileMeta(profile).labelKey);
   const currentRiskTitle = t("home.sections.currentRisk.title");
-  const rawDataToggle = (
-    <Switch
-      label={t("environmental.toggleLabel")}
-      checked={showRawData}
-      onChange={(event) => setShowRawData(event.currentTarget.checked)}
-      disabled={!heatRisk.hasCalculatedRisk}
-      size={isMobile ? "sm" : "md"}
-    />
-  );
   const profileBadge = (
     <Box
       style={{
@@ -61,7 +54,7 @@ export function CurrentRiskSection() {
 
   if (!heatRisk.hasCalculatedRisk) {
     return (
-      <SectionCard title={currentRiskTitle} actions={rawDataToggle}>
+      <SectionCard title={currentRiskTitle}>
         <Stack gap={CONTENT_GAP} align="center">
           {profileBadge}
           <CurrentRiskSkeleton />
@@ -75,9 +68,13 @@ export function CurrentRiskSection() {
     heatRisk.riskLevel,
   );
   const riskBadgeValue = longRiskLabels[heatRisk.riskLevel].toUpperCase();
+  const rawDataLinkLabel = showRawData
+    ? t("environmental.hideRawData")
+    : t("environmental.showRawData");
+  const RawDataChevronIcon = showRawData ? IconChevronUp : IconChevronDown;
 
   return (
-    <SectionCard title={currentRiskTitle} actions={rawDataToggle}>
+    <SectionCard title={currentRiskTitle}>
       <Stack gap={CONTENT_GAP} align="center">
         {profileBadge}
         <RiskGauge
@@ -111,6 +108,27 @@ export function CurrentRiskSection() {
         >
           {riskBadgeValue}
         </Badge>
+        <UnstyledButton
+          onClick={() => setShowRawData(!showRawData)}
+          aria-expanded={showRawData}
+          w="100%"
+        >
+          <Group gap={CONTENT_GAP} justify="center" wrap="nowrap" c="dimmed">
+            <IconSun
+              size={UI_INLINE_ICON_SIZE}
+              stroke={UI_INLINE_ICON_STROKE}
+              aria-hidden={true}
+            />
+            <Text component="span" fz="sm" lh={1}>
+              {rawDataLinkLabel}
+            </Text>
+            <RawDataChevronIcon
+              size={UI_INLINE_ICON_SIZE}
+              stroke={UI_INLINE_ICON_STROKE}
+              aria-hidden={true}
+            />
+          </Group>
+        </UnstyledButton>
       </Stack>
     </SectionCard>
   );

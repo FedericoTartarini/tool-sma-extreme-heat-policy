@@ -5,8 +5,8 @@ describe("ENVIRONMENTAL_METRICS", () => {
   it("registers the five current-hour environmental fields", () => {
     expect(ENVIRONMENTAL_METRICS.map((metric) => metric.key)).toEqual([
       "airTemperature",
-      "windSpeed",
       "relativeHumidity",
+      "windSpeed",
       "meanRadiantTemperature",
       "directNormalIrradiance",
     ]);
