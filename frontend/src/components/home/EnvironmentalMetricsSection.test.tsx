@@ -6,12 +6,12 @@ import { appTheme } from "@/config/mantineTheme";
 import type { EnvironmentalInputs } from "@/domain/environmental";
 
 const translations: Record<string, string> = {
-  "environmental.rawDataTitle": "Weather details",
-  "environmental.airTemperature": "Air temperature",
-  "environmental.windSpeed": "Wind speed",
-  "environmental.relativeHumidity": "Relative humidity",
-  "environmental.meanRadiantTemperature": "Mean radiant temperature",
-  "environmental.directNormalIrradiance": "Direct normal irradiance",
+  "environmental.weatherDetailsTitle": "Weather details",
+  "environmental.airTemperatureC": "Air temperature",
+  "environmental.windSpeed10mMs": "Wind speed",
+  "environmental.relativeHumidityPct": "Relative humidity",
+  "environmental.meanRadiantTemperatureC": "Mean radiant temperature",
+  "environmental.directNormalIrradianceWm2": "Direct normal irradiance",
   "environmental.units.celsius": "°C",
   "environmental.units.percent": "%",
   "environmental.units.metersPerSecond": "m/s",
@@ -51,7 +51,7 @@ function renderSection(inputs: EnvironmentalInputs = sampleInputs): string {
 }
 
 describe("EnvironmentalMetricsSection", () => {
-  it("renders the raw data section title", () => {
+  it("renders the weather details section title", () => {
     expect(renderSection()).toContain("Weather details");
   });
 

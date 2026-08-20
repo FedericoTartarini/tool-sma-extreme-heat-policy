@@ -315,14 +315,14 @@
     }
   },
   "environmental": {
-    "showRawData": "View weather details",
-    "hideRawData": "Hide weather details",
-    "rawDataTitle": "Weather details",
-    "airTemperature": "Air temperature",
-    "windSpeed": "Wind speed",
-    "relativeHumidity": "Relative humidity",
-    "meanRadiantTemperature": "Mean radiant temperature",
-    "directNormalIrradiance": "Direct normal irradiance",
+    "showWeatherDetails": "View weather details",
+    "hideWeatherDetails": "Hide weather details",
+    "weatherDetailsTitle": "Weather details",
+    "airTemperatureC": "Air temperature",
+    "windSpeed10mMs": "Wind speed",
+    "relativeHumidityPct": "Relative humidity",
+    "meanRadiantTemperatureC": "Mean radiant temperature",
+    "directNormalIrradianceWm2": "Direct normal irradiance",
     "units": {
       "celsius": "°C",
       "percent": "%",

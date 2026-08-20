@@ -3,9 +3,9 @@ import { HEAT_RISK_PROFILE_VALUES } from "@/domain/heatRiskProfile";
 import { SportType, SPORT_TYPE_VALUES } from "@/domain/sport";
 import {
   loadPersistedHomeFilters,
-  loadPersistedShowRawData,
+  loadPersistedShowWeatherDetails,
   savePersistedHomeFilters,
-  savePersistedShowRawData,
+  savePersistedShowWeatherDetails,
 } from "@/pages/home/browserState";
 
 const HOME_FILTERS_STORAGE_KEY = "home-filters:v1";
@@ -121,22 +121,31 @@ describe("home browserState", () => {
     );
   });
 
-  it("defaults the raw-data toggle to false when nothing is stored", () => {
-    expect(loadPersistedShowRawData()).toBe(false);
+  it("defaults the weather-details toggle to false when nothing is stored", () => {
+    expect(loadPersistedShowWeatherDetails()).toBe(false);
   });
 
-  it("round-trips the raw-data toggle preference", () => {
-    savePersistedShowRawData(true);
+  it("round-trips the weather-details toggle preference", () => {
+    savePersistedShowWeatherDetails(true);
 
     expect(storage.get(HOME_UI_PREFERENCES_STORAGE_KEY)).toBe(
-      JSON.stringify({ showRawData: true }),
+      JSON.stringify({ showWeatherDetails: true }),
     );
-    expect(loadPersistedShowRawData()).toBe(true);
+    expect(loadPersistedShowWeatherDetails()).toBe(true);
   });
 
-  it("defaults the raw-data toggle to false when stored data is invalid", () => {
+  it("reads legacy showRawData preference values", () => {
+    storage.set(
+      HOME_UI_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ showRawData: true }),
+    );
+
+    expect(loadPersistedShowWeatherDetails()).toBe(true);
+  });
+
+  it("defaults the weather-details toggle to false when stored data is invalid", () => {
     storage.set(HOME_UI_PREFERENCES_STORAGE_KEY, "not-json");
 
-    expect(loadPersistedShowRawData()).toBe(false);
+    expect(loadPersistedShowWeatherDetails()).toBe(false);
   });
 });

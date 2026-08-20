@@ -9,7 +9,7 @@ import {
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 import {
   loadPersistedHomeFilters,
-  loadPersistedShowRawData,
+  loadPersistedShowWeatherDetails,
 } from "@/pages/home/browserState";
 import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
 import {
@@ -89,7 +89,9 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
   }, [bootstrapState]);
 
   useEffect(() => {
-    useHomeUiStore.getState().setShowRawData(loadPersistedShowRawData());
+    useHomeUiStore
+      .getState()
+      .setShowWeatherDetails(loadPersistedShowWeatherDetails());
   }, []);
 
   return {

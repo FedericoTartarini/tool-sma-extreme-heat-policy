@@ -1,3 +1,4 @@
+/** Domain environmental inputs; field names mirror backend keys in camelCase. */
 export interface EnvironmentalInputs {
   airTemperatureC: number;
   meanRadiantTemperatureC: number;
@@ -5,13 +6,6 @@ export interface EnvironmentalInputs {
   windSpeed10mMs: number;
   directNormalIrradianceWm2: number;
 }
-
-export type EnvironmentalMetricKey =
-  | "airTemperature"
-  | "meanRadiantTemperature"
-  | "relativeHumidity"
-  | "windSpeed"
-  | "directNormalIrradiance";
 
 export type EnvironmentalMetricField = keyof EnvironmentalInputs;
 
@@ -28,10 +22,9 @@ export type EnvironmentalUnitKey =
   | "wattsPerSquareMeter";
 
 export interface EnvironmentalMetricDefinition {
-  key: EnvironmentalMetricKey;
   field: EnvironmentalMetricField;
   icon: EnvironmentalMetricIcon;
-  labelKey: `environmental.${EnvironmentalMetricKey}`;
+  labelKey: `environmental.${EnvironmentalMetricField}`;
   unitKey: EnvironmentalUnitKey;
   decimals: number;
 }
@@ -39,42 +32,37 @@ export interface EnvironmentalMetricDefinition {
 /** Metric order: familiar weather trio first, then radiation inputs. */
 export const ENVIRONMENTAL_METRICS: readonly EnvironmentalMetricDefinition[] = [
   {
-    key: "airTemperature",
     field: "airTemperatureC",
     icon: "temperature",
-    labelKey: "environmental.airTemperature",
+    labelKey: "environmental.airTemperatureC",
     unitKey: "celsius",
     decimals: 1,
   },
   {
-    key: "relativeHumidity",
     field: "relativeHumidityPct",
     icon: "droplet",
-    labelKey: "environmental.relativeHumidity",
+    labelKey: "environmental.relativeHumidityPct",
     unitKey: "percent",
     decimals: 0,
   },
   {
-    key: "windSpeed",
     field: "windSpeed10mMs",
     icon: "wind",
-    labelKey: "environmental.windSpeed",
+    labelKey: "environmental.windSpeed10mMs",
     unitKey: "metersPerSecond",
     decimals: 1,
   },
   {
-    key: "meanRadiantTemperature",
     field: "meanRadiantTemperatureC",
     icon: "temperature",
-    labelKey: "environmental.meanRadiantTemperature",
+    labelKey: "environmental.meanRadiantTemperatureC",
     unitKey: "celsius",
     decimals: 1,
   },
   {
-    key: "directNormalIrradiance",
     field: "directNormalIrradianceWm2",
     icon: "sun",
-    labelKey: "environmental.directNormalIrradiance",
+    labelKey: "environmental.directNormalIrradianceWm2",
     unitKey: "wattsPerSquareMeter",
     decimals: 0,
   },

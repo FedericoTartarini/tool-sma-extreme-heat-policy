@@ -3,20 +3,20 @@ import { useHomeUiStore } from "@/store/homeUiStore";
 
 describe("homeUiStore", () => {
   beforeEach(() => {
-    useHomeUiStore.setState({ showRawData: false });
+    useHomeUiStore.setState({ showWeatherDetails: false });
   });
 
   afterEach(() => {
-    useHomeUiStore.setState({ showRawData: false });
+    useHomeUiStore.setState({ showWeatherDetails: false });
   });
 
-  it("starts with showRawData off", () => {
-    expect(useHomeUiStore.getState().showRawData).toBe(false);
+  it("starts with showWeatherDetails off", () => {
+    expect(useHomeUiStore.getState().showWeatherDetails).toBe(false);
   });
 
   it("updates shared state when toggled", () => {
-    useHomeUiStore.getState().setShowRawData(true);
+    useHomeUiStore.getState().setShowWeatherDetails(true);
 
-    expect(useHomeUiStore.getState().showRawData).toBe(true);
+    expect(useHomeUiStore.getState().showWeatherDetails).toBe(true);
   });
 });

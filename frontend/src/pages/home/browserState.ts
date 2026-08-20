@@ -112,9 +112,9 @@ export function savePersistedHomeFilters(filters: PersistedHomeFilters): void {
 }
 
 /**
- * Loads the persisted raw-data toggle. Invalid or missing values default to off.
+ * Loads the persisted weather-details toggle. Invalid or missing values default to off.
  */
-export function loadPersistedShowRawData(): boolean {
+export function loadPersistedShowWeatherDetails(): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -128,20 +128,30 @@ export function loadPersistedShowRawData(): boolean {
 
     const parsed = JSON.parse(raw) as unknown;
 
-    if (!isRecord(parsed) || typeof parsed.showRawData !== "boolean") {
+    if (!isRecord(parsed)) {
       return false;
     }
 
-    return parsed.showRawData;
+    if (typeof parsed.showWeatherDetails === "boolean") {
+      return parsed.showWeatherDetails;
+    }
+
+    if (typeof parsed.showRawData === "boolean") {
+      return parsed.showRawData;
+    }
+
+    return false;
   } catch {
     return false;
   }
 }
 
 /**
- * Persists the raw-data toggle (best-effort).
+ * Persists the weather-details toggle (best-effort).
  */
-export function savePersistedShowRawData(showRawData: boolean): void {
+export function savePersistedShowWeatherDetails(
+  showWeatherDetails: boolean,
+): void {
   if (typeof window === "undefined") {
     return;
   }
@@ -149,7 +159,7 @@ export function savePersistedShowRawData(showRawData: boolean): void {
   try {
     window.localStorage.setItem(
       HOME_UI_PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ showRawData }),
+      JSON.stringify({ showWeatherDetails }),
     );
   } catch {
     // Intentionally ignore storage errors to keep UI interaction unblocked.

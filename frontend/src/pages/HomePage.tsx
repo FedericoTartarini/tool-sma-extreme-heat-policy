@@ -37,7 +37,9 @@ export function HomePage() {
   const { t } = useTranslation();
   const { setQueryStates } = useHomeBootstrap();
   const heatRisk = useHomeHeatRisk();
-  const showRawData = useHomeUiStore((state) => state.showRawData);
+  const showWeatherDetails = useHomeUiStore(
+    (state) => state.showWeatherDetails,
+  );
   const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
@@ -131,7 +133,7 @@ export function HomePage() {
       <Stack gap={SECTION_STACK_GAP}>
         <FiltersSection onLocationError={handleLocationError} />
         <CurrentRiskSection />
-        {heatRisk.hasCalculatedRisk && showRawData ? (
+        {heatRisk.hasCalculatedRisk && showWeatherDetails ? (
           <EnvironmentalMetricsSection
             inputs={heatRisk.currentEnvironmentalInputs}
           />

@@ -7,7 +7,7 @@ import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
 import { getHeatRiskProfileMeta } from "@/domain/heatRiskProfile";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
-import { useSetShowRawData } from "@/hooks/useSetShowRawData";
+import { useSetShowWeatherDetails } from "@/hooks/useSetShowWeatherDetails";
 import { useHomeUiStore } from "@/store/homeUiStore";
 import { createRiskLevelLabels } from "@/domain/riskLabels";
 import {
@@ -28,8 +28,10 @@ export function CurrentRiskSection() {
   const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const heatRisk = useHomeHeatRisk();
-  const showRawData = useHomeUiStore((state) => state.showRawData);
-  const setShowRawData = useSetShowRawData();
+  const showWeatherDetails = useHomeUiStore(
+    (state) => state.showWeatherDetails,
+  );
+  const setShowWeatherDetails = useSetShowWeatherDetails();
   const profile = useHomeStore((state) => state.profile);
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
   const profileLabel = t(getHeatRiskProfileMeta(profile).labelKey);
@@ -68,10 +70,12 @@ export function CurrentRiskSection() {
     heatRisk.riskLevel,
   );
   const riskBadgeValue = longRiskLabels[heatRisk.riskLevel].toUpperCase();
-  const rawDataLinkLabel = showRawData
-    ? t("environmental.hideRawData")
-    : t("environmental.showRawData");
-  const RawDataChevronIcon = showRawData ? IconChevronUp : IconChevronDown;
+  const weatherDetailsLinkLabel = showWeatherDetails
+    ? t("environmental.hideWeatherDetails")
+    : t("environmental.showWeatherDetails");
+  const WeatherDetailsChevronIcon = showWeatherDetails
+    ? IconChevronUp
+    : IconChevronDown;
 
   return (
     <SectionCard title={currentRiskTitle}>
@@ -109,8 +113,8 @@ export function CurrentRiskSection() {
           {riskBadgeValue}
         </Badge>
         <UnstyledButton
-          onClick={() => setShowRawData(!showRawData)}
-          aria-expanded={showRawData}
+          onClick={() => setShowWeatherDetails(!showWeatherDetails)}
+          aria-expanded={showWeatherDetails}
           w="100%"
         >
           <Group gap={CONTENT_GAP} justify="center" wrap="nowrap" c="dimmed">
@@ -120,9 +124,9 @@ export function CurrentRiskSection() {
               aria-hidden={true}
             />
             <Text component="span" fz="sm" lh={1}>
-              {rawDataLinkLabel}
+              {weatherDetailsLinkLabel}
             </Text>
-            <RawDataChevronIcon
+            <WeatherDetailsChevronIcon
               size={UI_INLINE_ICON_SIZE}
               stroke={UI_INLINE_ICON_STROKE}
               aria-hidden={true}

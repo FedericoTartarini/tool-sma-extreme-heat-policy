@@ -47,7 +47,7 @@ interface EnvironmentalMetricsSectionProps {
 }
 
 /**
- * Renders the raw environmental data section in its own card.
+ * Renders the weather details section in its own card.
  */
 export function EnvironmentalMetricsSection({
   inputs,
@@ -59,7 +59,7 @@ export function EnvironmentalMetricsSection({
 
   return (
     <SectionCard
-      title={t("environmental.rawDataTitle")}
+      title={t("environmental.weatherDetailsTitle")}
       titleIcon={
         <IconSun
           size={UI_TITLE_ICON_SIZE}
@@ -112,7 +112,7 @@ function MetricsList({
 
         return (
           <MetricRow
-            key={metric.key}
+            key={metric.field}
             icon={
               <IconComponent
                 size={UI_INLINE_ICON_SIZE}

@@ -31,7 +31,7 @@ export function toHeatRisk(api: HeatRiskApiData): HeatRisk {
 }
 
 /**
- * Maps raw forecast inputs into the frontend environmental domain model.
+ * Maps backend forecast input keys (snake_case) into camelCase domain fields.
  */
 export function toEnvironmentalInputs(
   api: ForecastInputsApiData,
