@@ -1,9 +1,11 @@
 import type {
   ForecastApiPoint,
+  ForecastInputsApiData,
   HeatRiskApiData,
   HeatRiskApiLocation,
   HeatRiskApiResponse,
 } from "@/api/heatRisk";
+import type { EnvironmentalInputs } from "@/domain/environmental";
 import type { ForecastDay, HeatRisk } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
 import { toCoordinatesOrNull } from "@/lib/coordinates";
@@ -26,6 +28,30 @@ export function toHeatRisk(api: HeatRiskApiData): HeatRisk {
     extremeThreshold: api.t_extreme,
     recommendation: api.recommendation,
   };
+}
+
+/**
+ * Maps backend forecast input keys (snake_case) into camelCase domain fields.
+ */
+export function toEnvironmentalInputs(
+  api: ForecastInputsApiData,
+): EnvironmentalInputs {
+  return {
+    airTemperatureC: api.air_temperature_c,
+    meanRadiantTemperatureC: api.mean_radiant_temperature_c,
+    relativeHumidityPct: api.relative_humidity_pct,
+    windSpeed10mMs: api.wind_speed_10m_ms,
+    directNormalIrradianceWm2: api.direct_normal_irradiance_wm2,
+  };
+}
+
+/**
+ * Returns environmental inputs for the backend-defined current forecast point.
+ */
+export function getCurrentEnvironmentalInputs(
+  response: HeatRiskApiResponse,
+): EnvironmentalInputs {
+  return toEnvironmentalInputs(getCurrentForecastPoint(response).inputs);
 }
 
 /**
