@@ -6,6 +6,7 @@ import {
 import type { SportType } from "@/domain/sport";
 
 const HOME_FILTERS_STORAGE_KEY = "home-filters:v1";
+const HOME_UI_PREFERENCES_STORAGE_KEY = "home-ui-preferences:v1";
 
 export interface PersistedHomeFilters {
   profile: HeatRiskProfile;
@@ -104,6 +105,57 @@ export function savePersistedHomeFilters(filters: PersistedHomeFilters): void {
     window.localStorage.setItem(
       HOME_FILTERS_STORAGE_KEY,
       JSON.stringify(payload),
+    );
+  } catch {
+    // Intentionally ignore storage errors to keep UI interaction unblocked.
+  }
+}
+
+/**
+ * Loads the persisted weather-details toggle. Invalid or missing values default to off.
+ */
+export function loadPersistedShowWeatherDetails(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(HOME_UI_PREFERENCES_STORAGE_KEY);
+
+    if (!raw) {
+      return false;
+    }
+
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!isRecord(parsed)) {
+      return false;
+    }
+
+    if (typeof parsed.showWeatherDetails === "boolean") {
+      return parsed.showWeatherDetails;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Persists the weather-details toggle (best-effort).
+ */
+export function savePersistedShowWeatherDetails(
+  showWeatherDetails: boolean,
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      HOME_UI_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ showWeatherDetails }),
     );
   } catch {
     // Intentionally ignore storage errors to keep UI interaction unblocked.

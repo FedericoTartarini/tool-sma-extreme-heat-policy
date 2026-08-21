@@ -321,6 +321,22 @@
       "extreme": "极高"
     }
   },
+  "environmental": {
+    "showWeatherDetails": "查看天气详情",
+    "hideWeatherDetails": "隐藏天气详情",
+    "weatherDetailsTitle": "天气详情",
+    "airTemperatureC": "气温",
+    "windSpeed10mMs": "风速",
+    "relativeHumidityPct": "相对湿度",
+    "meanRadiantTemperatureC": "平均辐射温度",
+    "directNormalIrradianceWm2": "法向直接辐照度",
+    "units": {
+      "celsius": "°C",
+      "percent": "%",
+      "metersPerSecond": "m/s",
+      "wattsPerSquareMeter": "W/m²"
+    }
+  },
   "charts": {
     "gauge": {
       "seriesName": "高温风险",
