@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Box,
   Combobox,
   Image,
@@ -10,6 +11,8 @@ import {
   Text,
   useCombobox,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconBookmarkPlus } from "@tabler/icons-react";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,6 +27,8 @@ import {
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
 import { useHomeStore } from "@/store/homeStore";
+import { SaveLocationModal } from "@/components/home/SaveLocationModal";
+import { SavedLocationChips } from "@/components/home/SavedLocationChips";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 
@@ -34,6 +39,7 @@ interface SelectOption<T extends string = string> {
 
 const FIELD_LABEL_WIDTH = 72;
 const SPORT_IMAGE_HEIGHT = 104;
+const SAVE_LOCATION_ICON_SIZE = 18;
 
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
@@ -45,6 +51,10 @@ interface FiltersSectionProps {
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
+  const [
+    isSaveLocationModalOpen,
+    { open: openSaveLocationModal, close: closeSaveLocationModal },
+  ] = useDisclosure(false);
   /*
   const profile = useHomeStore((state) => state.profile);
   const setProfile = useHomeStore((state) => state.setProfile);
@@ -227,7 +237,18 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               ) : null}
             </Combobox>
           </Box>
+          <ActionIcon
+            variant="light"
+            size="lg"
+            aria-label={t("home.savedLocations.saveButton")}
+            disabled={selectedLocation === null}
+            onClick={openSaveLocationModal}
+          >
+            <IconBookmarkPlus size={SAVE_LOCATION_ICON_SIZE} />
+          </ActionIcon>
         </Group>
+
+        <SavedLocationChips />
 
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
           <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
@@ -279,6 +300,10 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           )}
         </Box>
       </Stack>
+      <SaveLocationModal
+        opened={isSaveLocationModalOpen}
+        onClose={closeSaveLocationModal}
+      />
     </SectionCard>
   );
 }
