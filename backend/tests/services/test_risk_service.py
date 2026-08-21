@@ -193,7 +193,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
     }
     assert first.forecast[0].inputs.model_dump() == {
         "air_temperature_c": 31.0,
-        "mean_radiant_temperature_c": 37.25,
+        "tr": 37.25,
         "relative_humidity_pct": 62.0,
         "wind_speed_10m_ms": 1.5,
         "direct_normal_irradiance_wm2": 700.0,
@@ -211,7 +211,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_local": "2026-03-09T11:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 31.0,
-                "mean_radiant_temperature_c": 37.25,
+                "tr": 37.25,
                 "relative_humidity_pct": 62.0,
                 "wind_speed_10m_ms": 1.5,
                 "direct_normal_irradiance_wm2": 700.0,
@@ -229,7 +229,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_local": "2026-03-09T12:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 32.0,
-                "mean_radiant_temperature_c": 38.25,
+                "tr": 38.25,
                 "relative_humidity_pct": 63.0,
                 "wind_speed_10m_ms": 1.6,
                 "direct_normal_irradiance_wm2": 750.0,
@@ -247,7 +247,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_local": "2026-03-09T13:00:00+11:00",
             "inputs": {
                 "air_temperature_c": 33.0,
-                "mean_radiant_temperature_c": 39.25,
+                "tr": 39.25,
                 "relative_humidity_pct": 64.0,
                 "wind_speed_10m_ms": 1.7,
                 "direct_normal_irradiance_wm2": 800.0,
@@ -545,7 +545,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
     ]
     assert response.forecast[0].inputs.model_dump() == {
         "air_temperature_c": 32.0,
-        "mean_radiant_temperature_c": 38.25,
+        "tr": 38.25,
         "relative_humidity_pct": 63.0,
         "wind_speed_10m_ms": 1.6,
         "direct_normal_irradiance_wm2": 750.0,
@@ -584,7 +584,7 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
         assert exc.detail["unknown_inputs"] == ["wind_speed_10m_ms"]
         assert exc.detail["available_inputs"] == {
             "air_temperature_c": 31.0,
-            "mean_radiant_temperature_c": 37.25,
+            "tr": 37.25,
             "relative_humidity_pct": 62.0,
             "wind_speed_10m_ms": None,
             "direct_normal_irradiance_wm2": 700.0,

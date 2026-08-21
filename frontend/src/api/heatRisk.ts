@@ -25,7 +25,7 @@ export interface HeatRiskApiData {
 
 export interface ForecastInputsApiData {
   air_temperature_c: number;
-  mean_radiant_temperature_c: number;
+  tr: number;
   relative_humidity_pct: number;
   wind_speed_10m_ms: number;
   direct_normal_irradiance_wm2: number;
@@ -117,7 +117,7 @@ function isForecastInputsApiData(
 
   return (
     isFiniteNumber(value.air_temperature_c) &&
-    isFiniteNumber(value.mean_radiant_temperature_c) &&
+    isFiniteNumber(value.tr) &&
     isFiniteNumber(value.relative_humidity_pct) &&
     isFiniteNumber(value.wind_speed_10m_ms) &&
     isFiniteNumber(value.direct_normal_irradiance_wm2)

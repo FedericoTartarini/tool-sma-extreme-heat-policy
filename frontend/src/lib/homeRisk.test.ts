@@ -40,7 +40,7 @@ describe("getCurrentForecastPoint", () => {
             time_local: "2026-03-09T12:00:00+11:00",
             inputs: {
               air_temperature_c: 31,
-              mean_radiant_temperature_c: 37,
+              tr: 37,
               relative_humidity_pct: 62,
               wind_speed_10m_ms: 1.5,
               direct_normal_irradiance_wm2: 700,
@@ -58,7 +58,7 @@ describe("getCurrentForecastPoint", () => {
             time_local: "2026-03-09T13:00:00+11:00",
             inputs: {
               air_temperature_c: 32,
-              mean_radiant_temperature_c: 38,
+              tr: 38,
               relative_humidity_pct: 61,
               wind_speed_10m_ms: 1.6,
               direct_normal_irradiance_wm2: 740,
@@ -90,7 +90,7 @@ describe("toForecastDays", () => {
         time_local: "2026-03-10T00:00:00+08:45",
         inputs: {
           air_temperature_c: 30,
-          mean_radiant_temperature_c: 35,
+          tr: 35,
           relative_humidity_pct: 60,
           wind_speed_10m_ms: 1.2,
           direct_normal_irradiance_wm2: 650,
@@ -108,7 +108,7 @@ describe("toForecastDays", () => {
         time_local: "2026-03-10T01:00:00+08:45",
         inputs: {
           air_temperature_c: 31,
-          mean_radiant_temperature_c: 36,
+          tr: 36,
           relative_humidity_pct: 59,
           wind_speed_10m_ms: 1.3,
           direct_normal_irradiance_wm2: 670,
@@ -126,7 +126,7 @@ describe("toForecastDays", () => {
         time_local: "2026-03-10T02:00:00+08:45",
         inputs: {
           air_temperature_c: 32,
-          mean_radiant_temperature_c: 37,
+          tr: 37,
           relative_humidity_pct: 58,
           wind_speed_10m_ms: 1.4,
           direct_normal_irradiance_wm2: 690,
@@ -162,7 +162,7 @@ describe("toForecastDays", () => {
           time_local: "not-a-local-time",
           inputs: {
             air_temperature_c: 30,
-            mean_radiant_temperature_c: 35,
+            tr: 35,
             relative_humidity_pct: 60,
             wind_speed_10m_ms: 1.2,
             direct_normal_irradiance_wm2: 650,

@@ -56,7 +56,7 @@ WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
 
 _PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
     "tdb": "air_temperature_c",
-    "tr": "mean_radiant_temperature_c",
+    "tr": "tr",
     "rh": "relative_humidity_pct",
     "wind": "wind_speed_10m_ms",
     "radiation": "direct_normal_irradiance_wm2",
@@ -219,7 +219,7 @@ class RiskService:
         wind_speed_10m_ms = _to_optional_float(point.wind)
         return {
             "air_temperature_c": _to_optional_float(point.tdb),
-            "mean_radiant_temperature_c": _to_optional_float(point.tr),
+            "tr": _to_optional_float(point.tr),
             "relative_humidity_pct": _to_optional_float(point.rh),
             "wind_speed_10m_ms": wind_speed_10m_ms,
             "direct_normal_irradiance_wm2": _to_optional_float(point.radiation),
@@ -258,7 +258,7 @@ class RiskService:
             time_local=timestamp,
             inputs=ForecastInputs(
                 air_temperature_c=float(point.tdb),
-                mean_radiant_temperature_c=float(point.tr),
+                tr=float(point.tr),
                 relative_humidity_pct=float(point.rh),
                 wind_speed_10m_ms=wind_speed_10m_ms,
                 direct_normal_irradiance_wm2=float(point.radiation),

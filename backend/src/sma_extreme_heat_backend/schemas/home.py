@@ -59,7 +59,7 @@ class ForecastInputs(BaseModel):
     """Public weather and MRT inputs used for one forecast point."""
 
     air_temperature_c: FiniteFloat
-    mean_radiant_temperature_c: FiniteFloat
+    tr: FiniteFloat
     relative_humidity_pct: FiniteFloat
     wind_speed_10m_ms: FiniteFloat
     direct_normal_irradiance_wm2: FiniteFloat
