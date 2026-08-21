@@ -80,7 +80,7 @@ export function SiteHeader() {
     <Box px={{ base: CONTENT_PADDING.base, sm: 0 }}>
       <Container
         component="header"
-        size="xl"
+        size="sm"
         px={{ base: 0, sm: CONTENT_PADDING.sm }}
         bg="gray.1"
         mt={CONTENT_PADDING}
@@ -89,7 +89,7 @@ export function SiteHeader() {
         <Box
           style={{
             display: "grid",
-            gridTemplateColumns: "auto minmax(0, 1fr) auto",
+            gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
             alignItems: "center",
             columnGap: "12px",
           }}
@@ -118,7 +118,7 @@ export function SiteHeader() {
             fz={{ base: "md", sm: "lg" }}
             ta="center"
             lineClamp={1}
-            style={{ justifySelf: "center", minWidth: 0 }}
+            style={{ justifySelf: "center" }}
           >
             {t("app.title")}
           </Text>
