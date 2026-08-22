@@ -1,6 +1,18 @@
 import { create } from "zustand";
 import type { LocationSuggestion } from "@/domain/location";
-import type { SavedLocation, SaveLocationResult } from "@/domain/savedLocation";
+import {
+  createSavedLocation,
+  hasCoordinates,
+  isDuplicateLabel,
+  normalizeLabel,
+  SAVED_LOCATIONS_MAX,
+  type SavedLocation,
+  type SaveLocationResult,
+} from "@/domain/savedLocation";
+import {
+  loadSavedLocations,
+  saveSavedLocations,
+} from "@/pages/home/savedLocationsStorage";
 
 interface SavedLocationsState {
   /** Newest first. Render in array order; do not sort in the UI. */
@@ -14,65 +26,69 @@ interface SavedLocationsState {
   removeLocation: (id: string) => void;
 }
 
-const SEED_SAVED_LOCATIONS: SavedLocation[] = [
-  {
-    id: "stub-home",
-    label: "Home",
-    location: {
-      id: "stub-location-north-sydney",
-      displayLabel: "North Sydney, New South Wales, Australia",
-      name: "North Sydney",
-      regionName: "New South Wales",
-      countryName: "Australia",
-      latitude: -33.8404,
-      longitude: 151.2073,
-    },
-    createdAt: 0,
-  },
-  {
-    id: "stub-gym",
-    label: "Gym",
-    location: {
-      id: "stub-location-perth",
-      displayLabel: "Perth, Western Australia, Australia",
-      name: "Perth",
-      regionName: "Western Australia",
-      countryName: "Australia",
-      latitude: -31.9523,
-      longitude: 115.8613,
-    },
-    createdAt: 0,
-  },
-];
-
 export const useSavedLocationsStore = create<SavedLocationsState>(
-  (set, get) => ({
-    savedLocations: SEED_SAVED_LOCATIONS,
-    hydrate: () => {},
-    saveLocation: ({ label, location }) => {
-      const id = `stub-${get().savedLocations.length}`;
+  (set, get) => {
+    function commit(savedLocations: readonly SavedLocation[]): void {
+      set({ savedLocations });
+      saveSavedLocations(savedLocations);
+    }
 
-      set({
-        savedLocations: [
-          { id, label, location, createdAt: 0 },
-          ...get().savedLocations,
-        ],
-      });
+    return {
+      savedLocations: loadSavedLocations(),
+      hydrate: () => set({ savedLocations: loadSavedLocations() }),
+      saveLocation: ({ label, location }) => {
+        if (!hasCoordinates(location)) {
+          return { status: "rejected", reason: "missing_coordinates" };
+        }
 
-      return { status: "saved", id };
-    },
-    renameLocation: (id, label) => {
-      set({
-        savedLocations: get().savedLocations.map((saved) =>
-          saved.id === id ? { ...saved, label } : saved,
-        ),
-      });
+        const normalizedLabel = normalizeLabel(label);
+        if (!normalizedLabel) {
+          return { status: "rejected", reason: "empty_label" };
+        }
 
-      return { status: "saved", id };
-    },
-    removeLocation: (id) =>
-      set({
-        savedLocations: get().savedLocations.filter((saved) => saved.id !== id),
-      }),
-  }),
+        const { savedLocations } = get();
+        if (isDuplicateLabel(savedLocations, normalizedLabel)) {
+          return { status: "rejected", reason: "duplicate_label" };
+        }
+
+        if (savedLocations.length >= SAVED_LOCATIONS_MAX) {
+          return { status: "rejected", reason: "limit_reached" };
+        }
+
+        const saved = createSavedLocation({
+          label: normalizedLabel,
+          location,
+        });
+        commit([saved, ...savedLocations]);
+
+        return { status: "saved", id: saved.id };
+      },
+      renameLocation: (id, label) => {
+        const normalizedLabel = normalizeLabel(label);
+        if (!normalizedLabel) {
+          return { status: "rejected", reason: "empty_label" };
+        }
+
+        const { savedLocations } = get();
+        // The entry being renamed must not clash with itself.
+        const otherLocations = savedLocations.filter(
+          (saved) => saved.id !== id,
+        );
+        if (isDuplicateLabel(otherLocations, normalizedLabel)) {
+          return { status: "rejected", reason: "duplicate_label" };
+        }
+
+        // An unknown id leaves the list untouched.
+        commit(
+          savedLocations.map((saved) =>
+            saved.id === id ? { ...saved, label: normalizedLabel } : saved,
+          ),
+        );
+
+        return { status: "saved", id };
+      },
+      removeLocation: (id) =>
+        commit(get().savedLocations.filter((saved) => saved.id !== id)),
+    };
+  },
 );
