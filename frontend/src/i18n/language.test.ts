@@ -3,7 +3,9 @@ import {
   DEFAULT_LANGUAGE,
   LANGUAGE_STORAGE_KEY,
   loadPersistedLanguage,
+  resolveSupportedLanguage,
   savePersistedLanguage,
+  toIntlLocale,
 } from "@/i18n/language";
 
 interface LocalStorageMock {
@@ -51,5 +53,18 @@ describe("language persistence", () => {
     savePersistedLanguage("zh-CN");
     savePersistedLanguage("fr");
     expect(storage.get(LANGUAGE_STORAGE_KEY)).toBe("zh-CN");
+  });
+});
+
+describe("language locale mapping", () => {
+  it("falls back to English for unsupported values", () => {
+    expect(resolveSupportedLanguage("fr")).toBe(DEFAULT_LANGUAGE);
+    expect(resolveSupportedLanguage(undefined)).toBe(DEFAULT_LANGUAGE);
+  });
+
+  it("maps app languages to Intl date locales", () => {
+    expect(toIntlLocale("en")).toBe("en-AU");
+    expect(toIntlLocale("zh-CN")).toBe("zh-CN");
+    expect(toIntlLocale("fr")).toBe("en-AU");
   });
 });

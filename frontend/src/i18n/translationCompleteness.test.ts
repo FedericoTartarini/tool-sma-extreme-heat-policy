@@ -44,4 +44,12 @@ describe("Simplified Chinese translation completeness", () => {
       ).toBe(true);
     }
   });
+
+  it("keeps the bibliographic citation in English", () => {
+    expect(zhCnTranslation.footer.paperTitle).toBe(
+      enTranslation.footer.paperTitle,
+    );
+    expect(zhCnTranslation.footer.authors).toBe(enTranslation.footer.authors);
+    expect(zhCnTranslation.footer.journal).toBe(enTranslation.footer.journal);
+  });
 });

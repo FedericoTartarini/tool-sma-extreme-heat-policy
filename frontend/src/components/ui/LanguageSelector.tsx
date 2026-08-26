@@ -2,9 +2,9 @@ import { ActionIcon, Menu, Select, Tooltip } from "@mantine/core";
 import { IconCheck, IconLanguage } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import {
-  DEFAULT_LANGUAGE,
   isSupportedLanguage,
   LANGUAGE_OPTIONS,
+  resolveSupportedLanguage,
 } from "@/i18n/language";
 
 interface LanguageSelectorProps {
@@ -14,9 +14,7 @@ interface LanguageSelectorProps {
 /** Lets users switch between bundled languages. */
 export function LanguageSelector({ compact = false }: LanguageSelectorProps) {
   const { i18n, t } = useTranslation();
-  const currentLanguage = isSupportedLanguage(i18n.resolvedLanguage)
-    ? i18n.resolvedLanguage
-    : DEFAULT_LANGUAGE;
+  const currentLanguage = resolveSupportedLanguage(i18n.resolvedLanguage);
 
   const changeLanguage = (language: string | null) => {
     if (isSupportedLanguage(language)) {

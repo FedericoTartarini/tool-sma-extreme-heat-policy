@@ -10,6 +10,7 @@ import {
   getRiskColor,
   getRiskLevelI18nKeys,
 } from "@/domain/riskRegistry";
+import { toIntlLocale } from "@/i18n/language";
 import { bindForecastHoverPoint, buildForecastOption } from "@/lib/riskCharts";
 import { formatDateLabel, formatWeekdayLabel } from "@/lib/formatDate";
 import { ForecastSkeleton } from "@/components/home/HomeSectionSkeletons";
@@ -40,6 +41,7 @@ export function ForecastSection() {
   }
 
   const [today, ...nextDays] = forecast;
+  const dateLocale = toIntlLocale(i18n.resolvedLanguage);
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
 
   const forecastLabels = {
@@ -79,13 +81,13 @@ export function ForecastSection() {
                   <Flex direction={"column"}>
                     <Text fw={600}>
                       {formatWeekdayLabel(day.date, {
-                        locale: i18n.resolvedLanguage,
+                        locale: dateLocale,
                         timeZone: meta.timeZone,
                       })}
                     </Text>
                     <Text c="dimmed" fz="sm">
                       {formatDateLabel(day.date, {
-                        locale: i18n.resolvedLanguage,
+                        locale: dateLocale,
                         timeZone: meta.timeZone,
                       })}
                     </Text>

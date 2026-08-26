@@ -8,11 +8,26 @@ export const LANGUAGE_OPTIONS = [
 
 export type SupportedLanguage = (typeof LANGUAGE_OPTIONS)[number]["value"];
 
+const DATE_LOCALES: Record<SupportedLanguage, string> = {
+  en: "en-AU",
+  "zh-CN": "zh-CN",
+};
+
 /** Checks whether a value is one of the languages bundled with the app. */
 export function isSupportedLanguage(
   value: unknown,
 ): value is SupportedLanguage {
   return LANGUAGE_OPTIONS.some((option) => option.value === value);
+}
+
+/** Returns a bundled language, defaulting to English when the value is unknown. */
+export function resolveSupportedLanguage(value: unknown): SupportedLanguage {
+  return isSupportedLanguage(value) ? value : DEFAULT_LANGUAGE;
+}
+
+/** Maps an app language to the Intl locale used for dates. */
+export function toIntlLocale(language: unknown): string {
+  return DATE_LOCALES[resolveSupportedLanguage(language)];
 }
 
 /** Loads a supported language from localStorage, defaulting to English. */
