@@ -156,4 +156,114 @@ describe("homeStore location search", () => {
       selectedLocation: DAMPER_LOCATION,
     });
   });
+
+  it("applies shared URL navigation when sport or location changes after bootstrap", () => {
+    useHomeStore.getState().bootstrap({
+      channel: "direct",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: DAMPER_LOCATION.displayLabel,
+      locationPrefillSource: "persisted",
+      prefilledLocationResolveState: "idle",
+    });
+    useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+
+    useHomeStore.getState().applySharedUrlNavigation({
+      channel: "shared",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: "RUNNING",
+      locationSearchInput: PERTH_LOCATION.displayLabel,
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "pending",
+    });
+
+    expect(useHomeStore.getState()).toMatchObject({
+      channel: "shared",
+      sport: "RUNNING",
+      locationSearchInput: PERTH_LOCATION.displayLabel,
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "pending",
+      selectedLocation: null,
+    });
+    expect(useHomeStore.getState().locationSessionToken).not.toBe(
+      INITIAL_SESSION_TOKEN,
+    );
+
+    useHomeStore.getState().selectLocation(PERTH_LOCATION);
+
+    useHomeStore.getState().applySharedUrlNavigation({
+      channel: "shared",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: "RUNNING",
+      locationSearchInput: PERTH_LOCATION.displayLabel,
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "pending",
+    });
+
+    expect(useHomeStore.getState()).toMatchObject({
+      selectedLocation: PERTH_LOCATION,
+      locationSessionToken: useHomeStore.getState().locationSessionToken,
+    });
+  });
+
+  it("applies profile-only shared URL navigation without clearing the selected location", () => {
+    useHomeStore.getState().bootstrap({
+      channel: "direct",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: DAMPER_LOCATION.displayLabel,
+      locationPrefillSource: "persisted",
+      prefilledLocationResolveState: "idle",
+    });
+    useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+    const sessionToken = useHomeStore.getState().locationSessionToken;
+
+    useHomeStore.getState().applySharedUrlNavigation({
+      channel: "shared",
+      profile: "AGE_14_17",
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: "",
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "idle",
+    });
+
+    expect(useHomeStore.getState()).toMatchObject({
+      channel: "shared",
+      profile: "AGE_14_17",
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: "",
+      locationPrefillSource: "url",
+      selectedLocation: DAMPER_LOCATION,
+      locationSessionToken: sessionToken,
+    });
+  });
+
+  it("applies channel-only shared URL navigation without clearing the selected location", () => {
+    useHomeStore.getState().bootstrap({
+      channel: "direct",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: DAMPER_LOCATION.displayLabel,
+      locationPrefillSource: "persisted",
+      prefilledLocationResolveState: "idle",
+    });
+    useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+    const sessionToken = useHomeStore.getState().locationSessionToken;
+
+    useHomeStore.getState().applySharedUrlNavigation({
+      channel: "shared",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: DEFAULT_SPORT_TYPE,
+      locationSearchInput: "",
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "idle",
+    });
+
+    expect(useHomeStore.getState()).toMatchObject({
+      channel: "shared",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      selectedLocation: DAMPER_LOCATION,
+      locationSessionToken: sessionToken,
+    });
+  });
 });

@@ -34,6 +34,7 @@ export function SiteHeader() {
   const navItems = [
     { label: t("nav.home"), to: "/" },
     { label: t("nav.about"), to: "/about" },
+    { label: t("nav.multicityDashboard"), to: "/multicity" },
   ];
   const mobileNavItems = [
     ...navItems,

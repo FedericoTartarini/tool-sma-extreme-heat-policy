@@ -4,6 +4,7 @@
   },
   "nav": {
     "home": "Home",
+    "multicityDashboard": "Multi-city dashboard",
     "about": "About",
     "detailedRecommendations": "Recommendations",
     "drawerTitle": "Navigation",
@@ -444,6 +445,50 @@
           "Active cooling strategies should be applied."
         ]
       }
+    }
+  },
+  "multicity": {
+    "notifications": {
+      "riskUpdated": "Risk updated"
+    },
+    "header": {
+      "title": "Multi-city dashboard view",
+      "subtitlePrefix": "Compare heat risk ratings across multiple cities for",
+      "sportLabel": "Sport",
+      "sportNotFound": "No sports found"
+    },
+    "addLocation": {
+      "title": "Search to add a location",
+      "inputLabel": "Location",
+      "placeholder": "Location"
+    },
+    "emptyState": {
+      "title": "No saved locations yet",
+      "body": "Search for a city and add it to start monitoring heat risk across multiple locations."
+    },
+    "cards": {
+      "openHomeAriaLabel": "Open {{city}} on the home page",
+      "menuAriaLabel": "City actions",
+      "delete": "Delete",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "moveLeft": "Move left",
+      "moveRight": "Move right"
+    },
+    "cardErrors": {
+      "generic": "Risk data could not be loaded for this location.",
+      "missingResult": "Risk data is unavailable for this location.",
+      "unknownInputs": "Weather inputs are unavailable for this location.",
+      "riskCalculationFailed": "Risk could not be calculated for this location."
+    },
+    "errors": {
+      "missing_token": "Location search is unavailable because Mapbox is not configured.",
+      "retrieve_failed": "Could not resolve the selected location. Please try again.",
+      "unavailable": "Location search is temporarily unavailable. Please try again.",
+      "no_results": "No locations matched your search.",
+      "duplicate": "This location is already saved.",
+      "max_reached": "You can save up to 6 locations.",
+      "missing_coordinates": "The selected location could not be resolved."
     }
   }
 }

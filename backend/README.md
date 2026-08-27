@@ -177,6 +177,86 @@ Example response:
 }
 ```
 
+### `POST /home/risk/batch`
+
+Dashboard summary endpoint for up to **6** locations in one request.
+
+Request body:
+
+- `sport: string`
+  Same rules as `POST /home/risk`.
+- `profile: string`
+  Same rules as `POST /home/risk`.
+- `locations: array`
+  Required. Length `1` to `6`. Each item requires:
+  - `latitude: number` in `[-90, 90]`
+  - `longitude: number` in `[-180, 180]`
+
+Example request:
+
+```json
+{
+  "sport": "SOCCER",
+  "profile": "ADULT",
+  "locations": [
+    { "latitude": -33.847, "longitude": 151.067 },
+    { "latitude": -37.813, "longitude": 144.963 }
+  ]
+}
+```
+
+Response contract:
+
+- Returns `200` for valid batch requests, even when individual locations fail.
+- Weather is fetched from Open-Meteo in one multi-location request per chunk (up to 10 coordinates per upstream call).
+- Successful location summaries are cached in memory with the same TTL as `POST /home/risk`. Errors are not cached. This cache is separate from the seven-day home forecast cache.
+- Each `locations[]` entry includes:
+  - `status`: `"ok"` or `"error"`
+  - `current_risk_level_interpolated`: same semantics as `forecast[0]` on `/home/risk`
+  - `today_max_risk_level_interpolated`: max score for the current local calendar day
+  - `timezone`, `current_time_local`, `error_code`, and `detail`
+
+Example response:
+
+```json
+{
+  "request": {
+    "sport": "SOCCER",
+    "profile": "ADULT"
+  },
+  "locations": [
+    {
+      "latitude": -33.847,
+      "longitude": 151.067,
+      "timezone": "Australia/Sydney",
+      "status": "ok",
+      "current_risk_level_interpolated": 1.94,
+      "today_max_risk_level_interpolated": 2.14,
+      "current_time_local": "2026-03-09T11:00:00+11:00",
+      "error_code": null,
+      "detail": null
+    },
+    {
+      "latitude": -37.813,
+      "longitude": 144.963,
+      "timezone": "Australia/Melbourne",
+      "status": "error",
+      "current_risk_level_interpolated": null,
+      "today_max_risk_level_interpolated": null,
+      "current_time_local": null,
+      "error_code": "weather_provider_unavailable",
+      "detail": "Weather provider unavailable"
+    }
+  ]
+}
+```
+
+Per-location error codes:
+
+- `weather_provider_unavailable`
+- `unknown_inputs`
+- `risk_calculation_failed`
+
 ## Risk Flow
 
 1. Fetch Open-Meteo hourly weather with:
@@ -213,6 +293,7 @@ Example response:
 
 - The risk service keeps an in-memory TTL cache keyed by:
   `sport + profile + latitude + longitude`
+- Dashboard batch summaries use a separate in-memory cache with the same TTL.
 - Requests from different users will reuse cached results only when they hit the
   same backend process.
 - The cache is not shared across multiple server instances.

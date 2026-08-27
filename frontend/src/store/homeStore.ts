@@ -36,6 +36,7 @@ interface HomeStoreState {
   locationSessionToken: string;
 
   bootstrap: (payload: HomeStoreBootstrapPayload) => void;
+  applySharedUrlNavigation: (payload: HomeStoreBootstrapPayload) => void;
   setProfile: (profile: HeatRiskProfile) => void;
   setSport: (sport: SportType) => void;
   setLocationSearchInput: (value: string) => void;
@@ -89,6 +90,49 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       selectedLocation: null,
       prefilledLocationResolveState,
       locationSessionToken: createSessionToken(),
+    }),
+  applySharedUrlNavigation: ({
+    channel,
+    profile,
+    sport,
+    locationSearchInput,
+    locationPrefillSource,
+    prefilledLocationResolveState,
+  }) =>
+    set((state) => {
+      const nextLocationInput = locationSearchInput.trim();
+      const selectedLocationLabel =
+        state.selectedLocation?.displayLabel.trim() ?? "";
+      const locationChanged =
+        nextLocationInput.length > 0 &&
+        nextLocationInput !== selectedLocationLabel;
+      const sportChanged = sport !== state.sport;
+      const profileChanged = profile !== state.profile;
+      const channelChanged = channel !== state.channel;
+
+      if (
+        !locationChanged &&
+        !sportChanged &&
+        !profileChanged &&
+        !channelChanged
+      ) {
+        return state;
+      }
+
+      return {
+        channel,
+        profile,
+        sport,
+        locationSearchInput,
+        locationPrefillSource,
+        prefilledLocationResolveState,
+        ...(locationChanged
+          ? {
+              selectedLocation: null,
+              locationSessionToken: createSessionToken(),
+            }
+          : {}),
+      };
     }),
   setProfile: (profile) => set({ profile }),
   setSport: (sport) => set({ sport }),

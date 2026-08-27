@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -13,11 +14,25 @@ from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     SportsHeatStressCalculator,
     SportsHeatStressInput,
 )
-from sma_extreme_heat_backend.clients.open_meteo import OpenMeteoClient
+from sma_extreme_heat_backend.clients.open_meteo import (
+    LocationWeatherFetchResult,
+    OpenMeteoClient,
+    WeatherLocationRequest,
+)
 from sma_extreme_heat_backend.core.config import get_settings
 from sma_extreme_heat_backend.core.errors import (
+    AppError,
     ModelInputUnavailableError,
+    RiskCalculationError,
     WeatherProviderError,
+)
+from sma_extreme_heat_backend.schemas.batch import (
+    BatchRiskLocationRequest,
+    BatchRiskLocationResult,
+    BatchRiskLocationStatus,
+    BatchRiskRequest,
+    BatchRiskRequestSummary,
+    BatchRiskResponse,
 )
 from sma_extreme_heat_backend.schemas.home import (
     ForecastHeatRisk,
@@ -25,8 +40,12 @@ from sma_extreme_heat_backend.schemas.home import (
     ForecastPoint,
     LocationSummary,
     RequestSummary,
+    RiskProfile,
     RiskRequest,
     RiskResponse,
+)
+from sma_extreme_heat_backend.services.batch_summary import (
+    get_today_max_risk_level_interpolated,
 )
 from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
@@ -35,10 +54,10 @@ from sma_extreme_heat_backend.services.mrt import (
 
 
 @dataclass
-class CacheEntry:
-    """In-memory TTL cache entry for a computed risk response."""
+class CacheEntry[T]:
+    """In-memory TTL cache entry for a computed risk result."""
 
-    value: RiskResponse
+    value: T
     expires_at: float
 
 
@@ -53,6 +72,7 @@ class WindSpeedRefactorConfig:
 
 
 WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
+LOGGER = logging.getLogger(__name__)
 
 _PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
     "tdb": "air_temperature_c",
@@ -78,7 +98,8 @@ class RiskService:
         self.weather_client = weather_client
         self.calculator = calculator
         self.ttl_seconds = ttl_seconds
-        self._cache: dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry[RiskResponse]] = {}
+        self._batch_cache: dict[str, CacheEntry[BatchRiskLocationResult]] = {}
 
     async def calculate_home_risk(self, payload: RiskRequest) -> RiskResponse:
         """Calculate and cache a forecast-centric heat-risk response."""
@@ -124,16 +145,249 @@ class RiskService:
         self._cache[key] = CacheEntry(value=response, expires_at=now + self.ttl_seconds)
         return response
 
+    async def calculate_home_risk_batch(
+        self,
+        payload: BatchRiskRequest,
+    ) -> BatchRiskResponse:
+        """Calculate dashboard summaries for multiple locations in one request."""
+
+        now = time.monotonic()
+        results: list[BatchRiskLocationResult | None] = [None] * len(payload.locations)
+        miss_indices: list[int] = []
+
+        for index, location in enumerate(payload.locations):
+            cached = self._batch_cache.get(
+                self._batch_cache_key(
+                    sport=payload.sport,
+                    profile=payload.profile,
+                    latitude=location.latitude,
+                    longitude=location.longitude,
+                )
+            )
+            if cached and cached.expires_at > now:
+                results[index] = cached.value
+                continue
+            miss_indices.append(index)
+
+        if miss_indices:
+            await self._fill_batch_cache_misses(
+                payload=payload,
+                miss_indices=miss_indices,
+                results=results,
+            )
+
+        populated_results: list[BatchRiskLocationResult] = []
+        for result in results:
+            if result is None:
+                raise RuntimeError("Batch location result was not populated")
+            populated_results.append(result)
+
+        return BatchRiskResponse(
+            request=BatchRiskRequestSummary(
+                sport=payload.sport,
+                profile=payload.profile,
+            ),
+            locations=populated_results,
+        )
+
     async def aclose(self) -> None:
         """Close the owned weather client resources."""
 
         await self.weather_client.aclose()
+
+    async def _fill_batch_cache_misses(
+        self,
+        *,
+        payload: BatchRiskRequest,
+        miss_indices: list[int],
+        results: list[BatchRiskLocationResult | None],
+    ) -> None:
+        """Fetch and summarize uncached batch locations, storing successful summaries."""
+
+        miss_locations = [payload.locations[index] for index in miss_indices]
+        location_contexts = self._resolve_batch_location_contexts(miss_locations)
+        weather_results = await self._fetch_batch_weather(location_contexts)
+        now = time.monotonic()
+
+        for index, (location, timezone_name, timezone_error), weather_result in zip(
+            miss_indices,
+            location_contexts,
+            weather_results,
+            strict=True,
+        ):
+            summary = self._summarize_location(
+                sport=payload.sport,
+                location=location,
+                timezone_name=timezone_name,
+                timezone_error=timezone_error,
+                weather_result=weather_result,
+            )
+            if summary.status == BatchRiskLocationStatus.OK:
+                self._batch_cache[
+                    self._batch_cache_key(
+                        sport=payload.sport,
+                        profile=payload.profile,
+                        latitude=location.latitude,
+                        longitude=location.longitude,
+                    )
+                ] = CacheEntry(value=summary, expires_at=now + self.ttl_seconds)
+            results[index] = summary
 
     @staticmethod
     def _cache_key(payload: RiskRequest) -> str:
         """Build a stable cache key for the current request contract."""
 
         return f"{payload.sport}|{payload.profile}|{payload.latitude:.6f}|{payload.longitude:.6f}"
+
+    @staticmethod
+    def _batch_cache_key(
+        *,
+        sport: str,
+        profile: RiskProfile,
+        latitude: float,
+        longitude: float,
+    ) -> str:
+        """Build a cache key for a successful dashboard location summary.
+
+        Coordinates use `repr` so values that round identically at six decimals
+        still produce independent cache entries.
+        """
+
+        return f"batch|{sport}|{profile}|{latitude!r}|{longitude!r}"
+
+    @staticmethod
+    def _resolve_batch_location_contexts(
+        locations: list[BatchRiskLocationRequest],
+    ) -> list[tuple[BatchRiskLocationRequest, str | None, AppError | None]]:
+        """Resolve timezone metadata for each batch location."""
+
+        contexts: list[tuple[BatchRiskLocationRequest, str | None, AppError | None]] = []
+        for location in locations:
+            try:
+                timezone_name = resolve_timezone_name(
+                    latitude=location.latitude,
+                    longitude=location.longitude,
+                )
+            except AppError as exc:
+                contexts.append((location, None, exc))
+                continue
+            contexts.append((location, timezone_name, None))
+        return contexts
+
+    async def _fetch_batch_weather(
+        self,
+        location_contexts: list[tuple[BatchRiskLocationRequest, str | None, AppError | None]],
+    ) -> list[LocationWeatherFetchResult | None]:
+        """Fetch weather for all resolvable batch locations in one provider call."""
+
+        fetch_requests: list[WeatherLocationRequest] = []
+        fetchable_indices: list[int] = []
+        for index, (location, timezone_name, timezone_error) in enumerate(location_contexts):
+            if timezone_error is not None or timezone_name is None:
+                continue
+            fetchable_indices.append(index)
+            fetch_requests.append(
+                WeatherLocationRequest(
+                    latitude=location.latitude,
+                    longitude=location.longitude,
+                    timezone_name=timezone_name,
+                )
+            )
+
+        weather_results: list[LocationWeatherFetchResult | None] = [None] * len(location_contexts)
+        if not fetch_requests:
+            return weather_results
+
+        try:
+            fetched = await self.weather_client.fetch_weather_forecast_batch(
+                locations=fetch_requests,
+            )
+        except Exception as exc:
+            LOGGER.exception("Unexpected batch weather fetch failure")
+            failure = LocationWeatherFetchResult.unexpected_failure(exc)
+            for index in fetchable_indices:
+                weather_results[index] = failure
+            return weather_results
+
+        for index, result in zip(fetchable_indices, fetched, strict=True):
+            weather_results[index] = result
+        return weather_results
+
+    def _summarize_location(
+        self,
+        *,
+        sport: str,
+        location: BatchRiskLocationRequest,
+        timezone_name: str | None = None,
+        timezone_error: AppError | None = None,
+        weather_result: LocationWeatherFetchResult | None = None,
+    ) -> BatchRiskLocationResult:
+        """Summarize one location, mapping failures to per-location error results."""
+
+        try:
+            if timezone_error is not None:
+                raise timezone_error
+            if timezone_name is None:
+                raise WeatherProviderError("Could not resolve location timezone from coordinates")
+            if weather_result is None:
+                raise WeatherProviderError()
+            if weather_result.unexpected_error is not None:
+                raise weather_result.unexpected_error
+            if weather_result.error is not None:
+                raise weather_result.error
+            if weather_result.forecast is None:
+                raise WeatherProviderError()
+
+            mrt_df = build_mrt_dataframe(
+                points=weather_result.forecast.points,
+                latitude=location.latitude,
+                longitude=location.longitude,
+                timezone_name=timezone_name,
+            )
+            forecast = self._build_forecast(forecast_mrt_df=mrt_df, sport=sport)
+            current_point = forecast[0]
+            return BatchRiskLocationResult(
+                latitude=location.latitude,
+                longitude=location.longitude,
+                timezone=timezone_name,
+                status=BatchRiskLocationStatus.OK,
+                current_risk_level_interpolated=current_point.heat_risk.risk_level_interpolated,
+                today_max_risk_level_interpolated=get_today_max_risk_level_interpolated(forecast),
+                current_time_local=current_point.time_local,
+                error_code=None,
+                detail=None,
+            )
+        except AppError as exc:
+            error_code, detail = _map_batch_location_error(exc)
+            return BatchRiskLocationResult(
+                latitude=location.latitude,
+                longitude=location.longitude,
+                timezone=timezone_name,
+                status=BatchRiskLocationStatus.ERROR,
+                current_risk_level_interpolated=None,
+                today_max_risk_level_interpolated=None,
+                current_time_local=None,
+                error_code=error_code,
+                detail=detail,
+            )
+        except Exception:
+            LOGGER.exception(
+                "Unexpected batch location failure latitude=%s longitude=%s sport=%s",
+                location.latitude,
+                location.longitude,
+                sport,
+            )
+            return BatchRiskLocationResult(
+                latitude=location.latitude,
+                longitude=location.longitude,
+                timezone=timezone_name,
+                status=BatchRiskLocationStatus.ERROR,
+                current_risk_level_interpolated=None,
+                today_max_risk_level_interpolated=None,
+                current_time_local=None,
+                error_code="risk_calculation_failed",
+                detail="Risk calculation failed",
+            )
 
     def _build_forecast(
         self,
@@ -314,3 +568,30 @@ def _to_optional_float(value: float | None) -> float | None:
     if value is None or pd.isna(value):
         return None
     return float(value)
+
+
+def _map_batch_location_error(exc: AppError) -> tuple[str, str]:
+    """Map a single-location failure into stable batch error fields."""
+
+    if isinstance(exc, WeatherProviderError):
+        return "weather_provider_unavailable", _app_error_detail_message(exc)
+    if isinstance(exc, ModelInputUnavailableError):
+        return "unknown_inputs", _app_error_detail_message(exc)
+    if isinstance(exc, RiskCalculationError):
+        return "risk_calculation_failed", _app_error_detail_message(exc)
+    if exc.error_code is not None:
+        return exc.error_code, _app_error_detail_message(exc)
+    return "risk_calculation_failed", _app_error_detail_message(exc)
+
+
+def _app_error_detail_message(exc: AppError) -> str:
+    """Serialize an application error detail into a response-safe string."""
+
+    detail = exc.detail
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, dict):
+        message = detail.get("message")
+        if isinstance(message, str) and message.strip():
+            return message
+    return str(detail)

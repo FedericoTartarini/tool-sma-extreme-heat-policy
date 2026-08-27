@@ -50,6 +50,47 @@ class WeatherForecast:
     points: list[HourlyWeatherPoint]
 
 
+@dataclass(frozen=True)
+class WeatherLocationRequest:
+    """One coordinate and timezone pair for a multi-location Open-Meteo request."""
+
+    latitude: float
+    longitude: float
+    timezone_name: str
+
+
+@dataclass(frozen=True)
+class LocationWeatherFetchResult:
+    """Per-location outcome from a batched Open-Meteo weather fetch."""
+
+    forecast: WeatherForecast | None = None
+    error: WeatherProviderError | None = None
+    unexpected_error: Exception | None = None
+
+    @classmethod
+    def success(cls, forecast: WeatherForecast) -> LocationWeatherFetchResult:
+        """Wrap a parsed forecast for one location."""
+
+        return cls(forecast=forecast)
+
+    @classmethod
+    def failure(cls, error: WeatherProviderError) -> LocationWeatherFetchResult:
+        """Wrap a provider failure for one location."""
+
+        return cls(error=error)
+
+    @classmethod
+    def unexpected_failure(cls, error: Exception) -> LocationWeatherFetchResult:
+        """Wrap an unexpected failure for one location."""
+
+        return cls(unexpected_error=error)
+
+
+_BATCH_LOCATION_CHUNK_SIZE = 10
+_DEFAULT_FORECAST_WINDOW_DAYS = 7
+_BATCH_FORECAST_WINDOW_DAYS = 2
+
+
 def _to_float_or_none(value: Any) -> float | None:
     """Convert provider values to floats while treating invalid values as missing."""
 
@@ -174,15 +215,16 @@ def _select_hourly_points(
     payload: dict[str, Any],
     *,
     requested_timezone_name: str,
+    forecast_window_days: int = _DEFAULT_FORECAST_WINDOW_DAYS,
 ) -> list[HourlyWeatherPoint]:
-    """Keep only the current-to-7-day forecast window and normalize each row."""
+    """Keep only the current forecast window and normalize each row."""
 
     timestamps, series_data = _extract_hourly_series(
         payload,
         requested_timezone_name=requested_timezone_name,
     )
     threshold = datetime.now(tz=UTC) - timedelta(hours=1)
-    forecast_window_end = threshold + timedelta(days=7)
+    forecast_window_end = threshold + timedelta(days=forecast_window_days)
     candidate_rows = [
         (idx, timestamp)
         for idx, timestamp in sorted(enumerate(timestamps), key=lambda item: item[1])
@@ -201,6 +243,37 @@ def _select_hourly_points(
         )
         for idx, timestamp in candidate_rows
     ]
+
+
+def _normalize_multi_location_payload(payload: Any) -> list[dict[str, Any]]:
+    """Normalize single- or multi-location Open-Meteo JSON into a list of payloads."""
+
+    if isinstance(payload, dict):
+        return [payload]
+    if isinstance(payload, list):
+        if not payload:
+            raise WeatherProviderError("Weather provider response was empty")
+        if not all(isinstance(item, dict) for item in payload):
+            raise WeatherProviderError("Weather provider response contained invalid locations")
+        return payload
+    raise WeatherProviderError("Weather provider response had an unexpected shape")
+
+
+def _parse_location_weather_payload(
+    payload: dict[str, Any],
+    *,
+    requested_timezone_name: str,
+    forecast_window_days: int,
+) -> WeatherForecast:
+    """Parse one Open-Meteo location payload into a normalized forecast."""
+
+    _validate_hourly_units(payload)
+    points = _select_hourly_points(
+        payload,
+        requested_timezone_name=requested_timezone_name,
+        forecast_window_days=forecast_window_days,
+    )
+    return WeatherForecast(points=points)
 
 
 class OpenMeteoClient:
@@ -241,9 +314,70 @@ class OpenMeteoClient:
 
         payload = await self._fetch_weather_payload(params=params)
 
-        _validate_hourly_units(payload)
-        points = _select_hourly_points(payload, requested_timezone_name=timezone_name)
-        return WeatherForecast(points=points)
+        return _parse_location_weather_payload(
+            payload,
+            requested_timezone_name=timezone_name,
+            forecast_window_days=_DEFAULT_FORECAST_WINDOW_DAYS,
+        )
+
+    async def fetch_weather_forecast_batch(
+        self,
+        *,
+        locations: list[WeatherLocationRequest],
+    ) -> list[LocationWeatherFetchResult]:
+        """Fetch hourly weather for multiple locations using comma-separated coordinates."""
+
+        if not locations:
+            return []
+
+        results: list[LocationWeatherFetchResult] = []
+        for chunk_start in range(0, len(locations), _BATCH_LOCATION_CHUNK_SIZE):
+            chunk = locations[chunk_start : chunk_start + _BATCH_LOCATION_CHUNK_SIZE]
+            results.extend(await self._fetch_weather_forecast_chunk(locations=chunk))
+        return results
+
+    async def _fetch_weather_forecast_chunk(
+        self,
+        *,
+        locations: list[WeatherLocationRequest],
+    ) -> list[LocationWeatherFetchResult]:
+        """Fetch one multi-location chunk and parse each location independently."""
+
+        params = {
+            "latitude": ",".join(str(location.latitude) for location in locations),
+            "longitude": ",".join(str(location.longitude) for location in locations),
+            "hourly": ",".join(_HOURLY_FIELDS),
+            "wind_speed_unit": "ms",
+            "timezone": ",".join(location.timezone_name for location in locations),
+            "forecast_days": _BATCH_FORECAST_WINDOW_DAYS,
+        }
+
+        try:
+            payloads = _normalize_multi_location_payload(
+                await self._fetch_weather_payload(params=params)
+            )
+        except WeatherProviderError as exc:
+            return [LocationWeatherFetchResult.failure(exc) for _ in locations]
+
+        if len(payloads) != len(locations):
+            error = WeatherProviderError(
+                "Weather provider response location count did not match the request"
+            )
+            return [LocationWeatherFetchResult.failure(error) for _ in locations]
+
+        results: list[LocationWeatherFetchResult] = []
+        for location, payload in zip(locations, payloads, strict=True):
+            try:
+                forecast = _parse_location_weather_payload(
+                    payload,
+                    requested_timezone_name=location.timezone_name,
+                    forecast_window_days=_BATCH_FORECAST_WINDOW_DAYS,
+                )
+            except WeatherProviderError as exc:
+                results.append(LocationWeatherFetchResult.failure(exc))
+                continue
+            results.append(LocationWeatherFetchResult.success(forecast))
+        return results
 
     def _build_async_client(self) -> httpx.AsyncClient:
         """Build an owned HTTPX client with the configured Open-Meteo settings."""

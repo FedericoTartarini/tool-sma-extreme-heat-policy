@@ -18,6 +18,7 @@ import { resolveSupportedLanguage } from "@/i18n/language";
 import { AboutPage } from "@/pages/AboutPage";
 import { DetailedRecommendationsPage } from "@/pages/DetailedRecommendationsPage";
 import { HomePage } from "@/pages/HomePage";
+import { MultiCityPage } from "@/pages/MultiCityPage";
 
 const routerBasename =
   import.meta.env.BASE_URL === "/"
@@ -33,6 +34,10 @@ const router = createBrowserRouter(
         {
           index: true,
           element: <HomePage />,
+        },
+        {
+          path: "multicity",
+          element: <MultiCityPage />,
         },
         {
           path: "about",

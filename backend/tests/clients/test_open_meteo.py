@@ -6,7 +6,10 @@ from zoneinfo import ZoneInfo
 import httpx
 import pytest
 
-from sma_extreme_heat_backend.clients.open_meteo import OpenMeteoClient
+from sma_extreme_heat_backend.clients.open_meteo import (
+    OpenMeteoClient,
+    WeatherLocationRequest,
+)
 from sma_extreme_heat_backend.core.errors import WeatherProviderError
 
 
@@ -494,8 +497,7 @@ async def test_fetch_weather_forecast_rejects_provider_timezone_mismatch() -> No
         )
     except WeatherProviderError as exc:
         assert (
-            exc.detail
-            == "Weather provider response timezone did not match the requested timezone"
+            exc.detail == "Weather provider response timezone did not match the requested timezone"
         )
     else:
         raise AssertionError("Expected WeatherProviderError for timezone mismatch")
@@ -608,3 +610,162 @@ async def test_fetch_weather_forecast_rejects_length_mismatch_for_direct_normal_
         raise AssertionError("Expected WeatherProviderError for radiation length mismatch")
     finally:
         await mock_client.aclose()
+
+
+async def test_fetch_weather_forecast_batch_returns_one_forecast_per_location() -> None:
+    """Multi-location responses should parse into aligned forecasts."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = [
+        _hourly_payload(
+            times=[now],
+            tdb=[31.0],
+            rh=[62.0],
+            wind=[1.5],
+            radiation=[720.0],
+            timezone_name="Australia/Sydney",
+        ),
+        _hourly_payload(
+            times=[now],
+            tdb=[29.0],
+            rh=[60.0],
+            wind=[2.0],
+            radiation=[680.0],
+            timezone_name="Australia/Melbourne",
+        ),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params.get("latitude") == "-33.847,-37.813"
+        assert request.url.params.get("longitude") == "151.067,144.963"
+        assert request.url.params.get("timezone") == ("Australia/Sydney,Australia/Melbourne")
+        assert request.url.params.get("forecast_days") == "2"
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    results = await client.fetch_weather_forecast_batch(
+        locations=[
+            WeatherLocationRequest(
+                latitude=-33.847,
+                longitude=151.067,
+                timezone_name="Australia/Sydney",
+            ),
+            WeatherLocationRequest(
+                latitude=-37.813,
+                longitude=144.963,
+                timezone_name="Australia/Melbourne",
+            ),
+        ]
+    )
+    await mock_client.aclose()
+
+    assert len(results) == 2
+    assert results[0].error is None
+    assert results[0].forecast is not None
+    assert results[0].forecast.points[0].tdb == 31.0
+    assert results[1].forecast is not None
+    assert results[1].forecast.points[0].tdb == 29.0
+
+
+async def test_fetch_weather_forecast_batch_maps_per_location_parse_failures() -> None:
+    """One malformed location payload should not fail the rest of the chunk."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = [
+        _hourly_payload(
+            times=[now],
+            tdb=[31.0],
+            rh=[62.0],
+            wind=[1.5],
+            radiation=[720.0],
+            timezone_name="Australia/Sydney",
+        ),
+        {
+            "timezone": "Australia/Melbourne",
+            "hourly_units": {
+                "temperature_2m": "°C",
+                "relative_humidity_2m": "%",
+                "wind_speed_10m": "m/s",
+                "direct_normal_irradiance": "W/m²",
+            },
+            "hourly": {
+                "time": ["invalid-time"],
+                "temperature_2m": [29.0],
+                "relative_humidity_2m": [60.0],
+                "wind_speed_10m": [2.0],
+                "direct_normal_irradiance": [680.0],
+            },
+        },
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    results = await client.fetch_weather_forecast_batch(
+        locations=[
+            WeatherLocationRequest(
+                latitude=-33.847,
+                longitude=151.067,
+                timezone_name="Australia/Sydney",
+            ),
+            WeatherLocationRequest(
+                latitude=-37.813,
+                longitude=144.963,
+                timezone_name="Australia/Melbourne",
+            ),
+        ]
+    )
+    await mock_client.aclose()
+
+    assert results[0].forecast is not None
+    assert results[1].forecast is None
+    assert results[1].error is not None
+    assert results[1].error.detail == (
+        "Weather provider response contained invalid hourly.time values"
+    )
+
+
+async def test_fetch_weather_forecast_batch_chunks_large_location_lists() -> None:
+    """Requests above the chunk size should fan out into multiple provider calls."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        location_count = len(request.url.params.get("latitude", "").split(","))
+        return httpx.Response(
+            status_code=200,
+            json=[
+                _hourly_payload(
+                    times=[now],
+                    tdb=[31.0],
+                    rh=[62.0],
+                    wind=[1.5],
+                    radiation=[720.0],
+                    timezone_name="Australia/Sydney",
+                )
+                for _ in range(location_count)
+            ],
+        )
+
+    client, mock_client = _build_client(handler)
+    locations = [
+        WeatherLocationRequest(
+            latitude=-33.847 + (index * 0.01),
+            longitude=151.067,
+            timezone_name="Australia/Sydney",
+        )
+        for index in range(11)
+    ]
+
+    results = await client.fetch_weather_forecast_batch(locations=locations)
+    await mock_client.aclose()
+
+    assert calls == 2
+    assert len(results) == 11
+    assert all(result.forecast is not None for result in results)

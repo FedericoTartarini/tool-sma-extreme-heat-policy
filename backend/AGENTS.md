@@ -43,6 +43,7 @@
 
 ## API Contract Rules
 - Preserve route: `POST /home/risk`.
+- Add route: `POST /home/risk/batch` for multi-city dashboard summaries.
 - Request requires `latitude` and `longitude`.
 - `sport` must be official pythermalcomfort `Sports` enum name (e.g. `SOCCER`).
 - Response shape:
