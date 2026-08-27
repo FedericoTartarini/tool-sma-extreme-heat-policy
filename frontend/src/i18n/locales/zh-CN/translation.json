@@ -4,6 +4,7 @@
   },
   "nav": {
     "home": "首页",
+    "multicityDashboard": "多城市看板",
     "about": "关于",
     "detailedRecommendations": "建议",
     "drawerTitle": "导航",
@@ -439,6 +440,50 @@
           "应采取主动降温措施。"
         ]
       }
+    }
+  },
+  "multicity": {
+    "notifications": {
+      "riskUpdated": "风险已更新"
+    },
+    "header": {
+      "title": "多城市看板",
+      "subtitlePrefix": "比较多个城市在以下运动项目中的热应激风险：",
+      "sportLabel": "运动项目",
+      "sportNotFound": "未找到运动项目"
+    },
+    "addLocation": {
+      "title": "搜索并添加地点",
+      "inputLabel": "地点",
+      "placeholder": "地点"
+    },
+    "emptyState": {
+      "title": "尚未保存地点",
+      "body": "搜索并添加城市，即可开始对比多个地点的热应激风险。"
+    },
+    "cards": {
+      "openHomeAriaLabel": "在首页打开 {{city}}",
+      "menuAriaLabel": "城市操作",
+      "delete": "删除",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "moveLeft": "左移",
+      "moveRight": "右移"
+    },
+    "cardErrors": {
+      "generic": "无法加载此地点的风险数据。",
+      "missingResult": "此地点暂无风险数据。",
+      "unknownInputs": "此地点的天气输入不可用。",
+      "riskCalculationFailed": "无法计算此地点的风险。"
+    },
+    "errors": {
+      "missing_token": "地点搜索不可用，因为尚未配置 Mapbox。",
+      "retrieve_failed": "无法解析所选地点，请重试。",
+      "unavailable": "地点搜索暂时不可用，请重试。",
+      "no_results": "没有与搜索匹配的地点。",
+      "duplicate": "此地点已保存。",
+      "max_reached": "最多可保存 6 个地点。",
+      "missing_coordinates": "无法解析所选地点。"
     }
   }
 }
