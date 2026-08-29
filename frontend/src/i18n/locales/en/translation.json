@@ -10,6 +10,13 @@
     "toggleAriaLabel": "Toggle navigation",
     "logoAlt": "University of Sydney"
   },
+  "language": {
+    "selectorLabel": "Language",
+    "options": {
+      "en": "English",
+      "zhCn": "简体中文"
+    }
+  },
   "footer": {
     "developedBy": "Developed by:",
     "endorsedBy": "Endorsed by:",

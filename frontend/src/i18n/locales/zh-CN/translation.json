@@ -1,0 +1,444 @@
+{
+  "app": {
+    "title": "运动热应激风险工具"
+  },
+  "nav": {
+    "home": "首页",
+    "about": "关于",
+    "detailedRecommendations": "建议",
+    "drawerTitle": "导航",
+    "toggleAriaLabel": "切换导航菜单",
+    "logoAlt": "悉尼大学"
+  },
+  "language": {
+    "selectorLabel": "语言",
+    "options": {
+      "en": "English",
+      "zhCn": "简体中文"
+    }
+  },
+  "footer": {
+    "developedBy": "开发：",
+    "endorsedBy": "认可：",
+    "feedbackLink": "提供反馈",
+    "citePrompt": "如果您使用本工具，请引用以下论文：",
+    "paperTitle": "The Sports Medicine Australia extreme heat risk and response guidelines and web tool.",
+    "authors": "Tartarini F, Smallcombe JW, Lynch GP, Cross TJ, Broderick C, Jay O.",
+    "journal": "J Sci Med Sport. 2025 Sep;28(9):690-699.",
+    "copyright": "© {{year}} - 悉尼大学高温与健康研究中心。",
+    "reviewedBy": "本网站于 {{year}} 年经澳大利亚运动医学协会科学咨询委员会审阅",
+    "version": "版本：{{version}}",
+    "contactUs": "联系我们",
+    "usydLogoAlt": "悉尼大学标志",
+    "smaLogoAlt": "澳大利亚运动医学协会标志",
+    "weatherAttribution": "天气数据由 <openMeteoLink>Open-Meteo.com</openMeteoLink> 提供，并经处理用于热应激风险评估。采用 <licenceLink>CC BY 4.0</licenceLink> 许可。"
+  },
+  "about": {
+    "sections": [
+      {
+        "iconKey": "overview",
+        "title": "悉尼大学运动热应激风险工具",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "本网站提供一个方便且可免费使用的工具，用于评估在澳大利亚进行体育运动和身体活动时的热应激风险。"
+              },
+              {
+                "text": "本工具以澳大利亚运动医学协会（SMA）《极端高温风险与应对指南》为依据。",
+                "href": "https://sma.org.au/resources/policies-and-guidelines/hot-weather/"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "该指南由悉尼大学高温与健康研究中心制定，所采用的方法详见"
+              },
+              {
+                "text": "这篇论文。",
+                "href": "https://www.jsams.org/article/S1440-2440(25)00069-6/fulltext"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "functionalities",
+        "title": "功能",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "本网站目前针对澳大利亚最流行的运动项目提供建议。这些运动项目根据其典型服装热阻、代谢率和预计活动时长进行了特征界定。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "本工具会自动提取距离所选地点最近的气象站逐小时环境数据，帮助用户评估热应激风险；同时提供分级的风险降低建议和未来七天的风险预报。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "heat-risk",
+        "title": "剧烈运动会使部分人面临热疾病风险，在炎热天气中尤其如此。",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "如果不及时处理，热疾病可能发展为更严重且可能危及生命的热射病。了解热疾病的成因后，卫生专业人员、教练、运动员以及所有参与体育运动或身体活动的人，都可以根据指南中的建议采取措施，将热疾病风险降至最低。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "大多数建议都是简单的常识性做法。请留意身体反应；如感到不适，应停止活动或降低强度，这对儿童尤其重要。请确保能够获得清凉饮用水，佩戴合适的帽子，并在一天或一年中最炎热的时段格外谨慎。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "该指南适用于所有参与体育运动和身体活动的澳大利亚人，尤其适合从事身体活动推广的卫生专业人员、教练、健身指导人员和体育管理人员使用。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "《2025 年极端高温政策》",
+                "href": "https://sma.org.au/wp-content/uploads/2026/01/Extreme-Heat-Policy-2025_v1.pdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "uv-guide",
+        "title": "紫外线暴露与热疾病指南",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "澳大利亚运动医学协会 Smartplay 项目与澳洲防癌协会（Cancer Council）SunSmart 项目联合编制了《紫外线暴露与热疾病指南》。该指南提供关于紫外线暴露和热疾病的最新信息，制定、审查并实施当地指南的建议，可修改的紫外线暴露与热疾病检查表，以及实际案例。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "下载指南",
+                "href": "https://sma.org.au/wp-content/uploads/2023/03/UV-Exposure-and-Heat-Illness-Guide.pdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "terms",
+        "title": "条款与条件",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "澳大利亚运动医学协会（SMA）极端高温政策网站（https://sma-heat-policy.sydney.edu.au/）仅为信息和教育目的提供一般性资料，用于说明人员在特定地点参加不同类型体育运动时可能面临的热应激风险。"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "本网站由悉尼大学高温与健康研究中心（以下简称“大学”）创建并提供。网站使用生理模型计算热应激风险，并以特定风险等级展示结果，同时提供基于证据的降温策略。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "medical-disclaimer",
+        "title": "医疗免责声明",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "通过本网站获取的信息不构成医疗建议。如果您认为自己或他人出现医疗紧急情况或其他健康问题，应立即联系紧急医疗服务机构，或咨询医生或其他医疗服务提供者。如果您认为自己可能患有任何疾病，应立即就医。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "warranty",
+        "title": "保证与一般免责声明",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "在法律（包括《澳大利亚消费者法》）允许的最大范围内，我们不就本网站或其内容作出任何保证或陈述，包括但不限于保证或陈述其内容完整、准确或最新，访问不会中断或发生错误，不含病毒，或者本网站安全。我们保留随时在不另行通知的情况下限制、暂停或终止您访问本网站、任何内容或任何功能的权利；对于由此产生的任何损失、费用、损害或责任，我们概不负责。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "privacy",
+        "title": "隐私",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "向大学提供的任何个人信息都将按照大学的隐私政策处理。所提供的信息可能由大学员工在隐私政策规定的范围内访问。本网站不收集个人信息，但会在本地存储中保存用户选择的地点、运动项目和年龄组。未来，用户提供的部分或全部信息可能会存储在云数据库中。大学仅可将这些信息用于研究和非商业目的，例如分析用户类型及网站使用情况。本网站使用 Google Analytics 收集网站访客数量、用户活动以及根据 IP 地址推测的大致位置等匿名统计信息，所有此类数据均由 Google 去标识化处理。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "iconKey": "unacceptable-activity",
+        "title": "禁止行为",
+        "paragraphs": [
+          {
+            "runs": [
+              {
+                "text": "您不得从事我们认为不适当、违法或任何适用于本网站的法律所禁止的行为，包括但不限于："
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- 侵犯他人隐私权（包括未经本人同意上传其私人或个人信息）或其他合法权利的行为；"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- 使用本网站诽谤或中伤我们、我们的员工或其他个人；"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- 上传含有病毒、可能损害我们的财产或他人财产的文件；或"
+              }
+            ]
+          },
+          {
+            "runs": [
+              {
+                "text": "- 在本网站发布或传输任何未经授权的材料，包括但不限于我们认为可能造成滋扰，或者具有诽谤性、种族歧视性、淫秽性、威胁性、色情性，或会损害、破坏我们的系统或第三方系统及网络安全的材料。"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "home": {
+    "notifications": {
+      "forecastUpdated": "预报已更新"
+    },
+    "sections": {
+      "filters": {
+        "profileLabel": "年龄",
+        "profileAdult": "成人",
+        "profileUnder10": "10 岁以下",
+        "profileAge10To13": "10 至 13 岁",
+        "profileAge14To17": "14 至 17 岁",
+        "sportLabel": "运动项目",
+        "locationLabel": "地点",
+        "defaultLocation": "North Sydney, New South Wales, Australia",
+        "locationPlaceholder": "搜索郊区、城镇或城市",
+        "sportNotFound": "未找到运动项目",
+        "selectedSportFallback": "已选运动项目",
+        "sportImageUnavailable": "运动项目图片不可用",
+        "sportImageHelp": "请在 {{path}} 添加 {{sportLabel}} 的图片。",
+        "sportImageAlt": "{{sportLabel}} 预览图",
+        "helperText": "搜索并选择地点以自动计算风险"
+      },
+      "currentRisk": {
+        "title": "当前运动热应激风险"
+      },
+      "keyRecommendations": {
+        "title": "关键建议：",
+        "panelHint": "点击图标查看详细建议",
+        "panelAriaLabel": "打开详细建议"
+      },
+      "detailedSuggestions": {
+        "title": "详细建议："
+      },
+      "forecast": {
+        "title": "风险预报",
+        "maxRiskLabel": "最高风险："
+      },
+      "map": {
+        "title": "地点地图",
+        "missingCoordinatesTitle": "地图不可用",
+        "missingCoordinatesBody": "无法获取 {{location}} 的坐标，因此不能显示地图。",
+        "locationFallback": "请选择地点"
+      }
+    }
+  },
+  "errors": {
+    "mapbox": {
+      "missingToken": "地点搜索尚未配置。\n请设置 VITE_MAPBOX_ACCESS_TOKEN。",
+      "unavailable": "地点服务暂时不可用。\n请稍后重试。",
+      "noResults": "未找到匹配的地点。",
+      "retrieveFailed": "地点服务请求失败。\n请稍后重试。"
+    },
+    "location": {
+      "missingCoordinates": "无法获取此地点的坐标，请选择其他建议地点。",
+      "prefilledNotMatched": "请从建议列表中选择地点。"
+    },
+    "risk": {
+      "missingApiBaseUrl": "风险 API 尚未配置。\n请设置 VITE_API_BASE_URL。",
+      "invalidResponse": "无法加载风险数据。",
+      "network": "风险计算暂时不可用。\n请稍后重试。",
+      "weatherProvider": "天气服务暂时不可用。\n请稍后重试。"
+    }
+  },
+  "providers": {
+    "mapbox": "Mapbox"
+  },
+  "risk": {
+    "level": {
+      "low": "低",
+      "moderate": "中等",
+      "high": "高",
+      "extreme": "极高"
+    },
+    "levelShort": {
+      "low": "低",
+      "moderate": "中",
+      "high": "高",
+      "extreme": "极高"
+    }
+  },
+  "environmental": {
+    "showWeatherDetails": "查看天气详情",
+    "hideWeatherDetails": "隐藏天气详情",
+    "weatherDetailsTitle": "天气详情",
+    "airTemperatureC": "气温",
+    "windSpeed10mMs": "风速",
+    "relativeHumidityPct": "相对湿度",
+    "meanRadiantTemperatureC": "平均辐射温度",
+    "directNormalIrradianceWm2": "法向直接辐照度",
+    "units": {
+      "celsius": "°C",
+      "percent": "%",
+      "metersPerSecond": "m/s",
+      "wattsPerSquareMeter": "W/m²"
+    }
+  },
+  "charts": {
+    "gauge": {
+      "seriesName": "热应激风险",
+      "riskLabel": "热应激风险",
+      "riskUnavailable": "暂无"
+    },
+    "forecast": {
+      "xAxisName": "时间",
+      "yAxisRiskName": "风险",
+      "tooltipRiskLabel": "风险"
+    }
+  },
+  "sports": {
+    "abseiling": "绳降",
+    "archery": "射箭",
+    "australian_football": "澳式足球",
+    "baseball": "棒球",
+    "basketball": "篮球",
+    "bowls": "草地滚球",
+    "canoeing": "划艇",
+    "cricket": "板球",
+    "croquet": "槌球",
+    "cycling": "公路自行车",
+    "equestrian": "马术",
+    "field_athletics": "跑步（田径）",
+    "field_hockey": "曲棍球",
+    "fishing": "钓鱼",
+    "golf": "高尔夫",
+    "horseback": "骑马",
+    "kayaking": "皮艇",
+    "running": "长跑",
+    "mtb": "山地自行车",
+    "netball": "篮网球",
+    "oztag": "澳式标签橄榄球",
+    "pickleball": "匹克球",
+    "climbing": "攀岩",
+    "rowing": "赛艇",
+    "rugby_league": "联盟式橄榄球",
+    "rugby_union": "联合式橄榄球",
+    "sailing": "帆船",
+    "shooting": "射击",
+    "soccer": "足球",
+    "softball": "垒球",
+    "tennis": "网球",
+    "touch": "触式橄榄球",
+    "volleyball": "排球",
+    "walking": "健步走"
+  },
+  "recommendations": {
+    "key": {
+      "low": ["及时补水", "穿轻薄衣物"],
+      "moderate": ["及时补水", "穿轻薄衣物", "安排休息"],
+      "high": ["及时补水", "穿轻薄衣物", "安排休息", "主动降温"],
+      "extreme": ["考虑暂停活动"]
+    },
+    "manual": {
+      "title": "热应激风险等级",
+      "intro": "浏览以下热应激风险等级，了解从低风险到极高风险时应如何逐步加强应对措施。在炎热天气中规划训练、比赛和恢复时，可将这些等级作为行动参考。"
+    },
+    "modal": {
+      "title": "详细建议",
+      "viewAllCta": "查看所有风险等级"
+    },
+    "detailed": {
+      "youShouldLabel": "您应该：",
+      "low": {
+        "description": "通过规律补充液体及时补水，并调整衣着，是在夏季保持凉爽、维护健康和运动表现的简单而有效的方法。",
+        "suggestions": [
+          "运动前每 2 至 3 小时按每公斤体重 6 毫升饮水，以确保身体水分充足。对于体重 70 公斤的人，每次约为 420 毫升（标准运动饮料瓶容量为 500 毫升）。",
+          "运动期间规律饮水。饮水量应尽量补足出汗造成的水分流失，但也应避免过量饮水，因为这同样可能影响健康。可养成在训练或比赛前后称重的习惯，以了解自己通常的出汗量。",
+          "条件允许时，选择轻薄、透气且通风良好的衣物。",
+          "脱去不必要的衣物、装备或多余衣层。",
+          "减少衣物覆盖的皮肤面积，以促进汗液蒸发并帮助身体散热。"
+        ]
+      },
+      "moderate": {
+        "description": "即使资源有限，在锻炼或体育活动中增加休息次数和／或延长休息时间，也能有效降低热疾病风险。",
+        "suggestions": [
+          "训练时，每练习 45 分钟至少安排 15 分钟休息。",
+          "将特定运动比赛中原有的固定休息时段（例如中场休息）延长约 10 分钟。此措施适用于足球和橄榄球，也可用于曲棍球等其他运动。",
+          "增加原本赛程中没有安排的休息。例如，可在足球或橄榄球上下半场的中段加入 3 至 5 分钟的“四分之一场”短休息；板球比赛可每小时增加 10 分钟饮水休息；网球比赛可在第二盘后增加类似休息。",
+          "对于没有固定休息、持续进行的运动，可缩短赛程或活动时长。",
+          "每次暂停比赛或训练时，所有人都应前往阴凉处。如果没有自然遮阴，应提供便携式遮阳设施，并保证饮水随时可取。"
+        ]
+      },
+      "high": {
+        "description": "应在固定休息和额外休息期间采取主动降温措施；如果运动连续进行，也应在活动前和活动中降温。以下方法已被证实可以有效降低体温。具体方法是否适用、是否可行，取决于所进行的运动类型。",
+        "suggestions": [
+          "运动开始前饮用低温饮品和／或冰浆。请注意，在运动过程中饮用冷水或冰浆的降温效果相对较弱。",
+          "将手臂或双脚浸入冷水中。",
+          "淋水降温——使用海绵或喷瓶用凉水打湿皮肤，有助于加强蒸发；蒸发是在高温环境中最有效的降温机制。",
+          "冰袋或冰毛巾——将冰袋或装有碎冰的湿毛巾敷在颈部。",
+          "电风扇（喷雾风扇）——户外风扇有助于身体降温，与水雾系统配合使用时尤其有效。"
+        ]
+      },
+      "extreme": {
+        "description": "应暂停锻炼或比赛。如果活动已经开始，应尽快停止所有活动。",
+        "suggestions": [
+          "所有运动员都应前往阴凉处；如有条件，应进入有空调的凉爽场所。",
+          "应采取主动降温措施。"
+        ]
+      }
+    }
+  }
+}
