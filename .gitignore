@@ -3,3 +3,6 @@
 
 # IDE/editor metadata
 .idea/
+
+# Local package manager cache
+.pnpm-store/
