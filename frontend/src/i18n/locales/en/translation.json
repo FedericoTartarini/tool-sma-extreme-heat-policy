@@ -284,6 +284,22 @@
         "missingCoordinatesBody": "Coordinates for {{location}} are unavailable, so the map cannot be displayed.",
         "locationFallback": "Select a location"
       }
+    },
+    "savedLocations": {
+      "saveButton": "Save this location",
+      "modalTitle": "Save location",
+      "labelInput": "Location name",
+      "labelPlaceholder": "e.g. Home, Work, Gym",
+      "cancel": "Cancel",
+      "confirm": "Save",
+      "apply": "Switch to {{label}}",
+      "remove": "Remove {{label}}",
+      "errors": {
+        "empty_label": "Enter a name for this location.",
+        "duplicate_label": "You already have a location with this name.",
+        "limit_reached": "You can save up to {{max}} locations.",
+        "missing_coordinates": "This location can't be saved. Search for it again."
+      }
     }
   },
   "errors": {
