@@ -14,6 +14,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { CONTENT_PADDING } from "@/config/uiLayout";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
@@ -131,6 +132,7 @@ export function SiteHeader() {
                     size: "sm",
                   }),
                 )}
+                <LanguageSelector compact />
               </Group>
             ) : (
               <Burger
@@ -160,6 +162,7 @@ export function SiteHeader() {
               onClick: close,
             }),
           )}
+          <LanguageSelector />
         </Stack>
       </Drawer>
     </Box>

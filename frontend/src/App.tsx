@@ -14,6 +14,7 @@ import {
 import { SiteShell } from "@/app/layout/SiteShell";
 import { appTheme } from "@/config/mantineTheme";
 import { i18n } from "@/i18n/i18n";
+import { resolveSupportedLanguage } from "@/i18n/language";
 import { AboutPage } from "@/pages/AboutPage";
 import { DetailedRecommendationsPage } from "@/pages/DetailedRecommendationsPage";
 import { HomePage } from "@/pages/HomePage";
@@ -66,11 +67,14 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   useEffect(() => {
     document.title = t("app.title");
-  }, [t]);
+    document.documentElement.lang = resolveSupportedLanguage(
+      i18n.resolvedLanguage,
+    );
+  }, [i18n.resolvedLanguage, t]);
 
   return (
     <NuqsAdapter>
