@@ -16,10 +16,10 @@ const VALID_HEAT_RISK_RESPONSE = {
       time_utc: "2026-03-09T00:00:00Z",
       time_local: "2026-03-09T11:00:00+11:00",
       inputs: {
-        air_temperature_c: 31,
+        tdb: 31,
         tr: 37.25,
-        relative_humidity_pct: 62,
-        wind_speed_10m_ms: 1.5,
+        rh: 62,
+        v_z1: 1.5,
         direct_normal_irradiance_wm2: 700,
       },
       heat_risk: {
@@ -211,10 +211,10 @@ describe("isHeatRiskApiResponse", () => {
             time_utc: "2026-03-09T00:00:00Z",
             time_local: "2026-03-09T11:00:00+11:00",
             inputs: {
-              air_temperature_c: 31,
+              tdb: 31,
               tr: 37.25,
-              relative_humidity_pct: 62,
-              wind_speed_10m_ms: 1.5,
+              rh: 62,
+              v_z1: 1.5,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {
@@ -247,10 +247,10 @@ describe("isHeatRiskApiResponse", () => {
             time_utc: "2026-03-09T00:00:00Z",
             time_local: "2026-03-09T11:00:00+11:00",
             inputs: {
-              air_temperature_c: 31,
+              tdb: 31,
               tr: 37.25,
-              relative_humidity_pct: 62,
-              wind_speed_10m_ms: 1.5,
+              rh: 62,
+              v_z1: 1.5,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {
@@ -282,10 +282,10 @@ describe("isHeatRiskApiResponse", () => {
           {
             time_utc: "2026-03-09T00:00:00Z",
             inputs: {
-              air_temperature_c: 31,
+              tdb: 31,
               tr: 37.25,
-              relative_humidity_pct: 62,
-              wind_speed_10m_ms: 1.5,
+              rh: 62,
+              v_z1: 1.5,
               direct_normal_irradiance_wm2: 700,
             },
             heat_risk: {

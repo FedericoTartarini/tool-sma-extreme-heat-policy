@@ -58,10 +58,10 @@ class RequestSummary(BaseModel):
 class ForecastInputs(BaseModel):
     """Public weather and MRT inputs used for one forecast point."""
 
-    air_temperature_c: FiniteFloat
+    tdb: FiniteFloat
     tr: FiniteFloat
-    relative_humidity_pct: FiniteFloat
-    wind_speed_10m_ms: FiniteFloat
+    rh: FiniteFloat
+    v_z1: FiniteFloat
     direct_normal_irradiance_wm2: FiniteFloat
 
 

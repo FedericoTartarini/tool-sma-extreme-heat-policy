@@ -46,10 +46,10 @@ class SuccessfulRiskService:
                     time_utc="2026-03-09T00:00:00Z",
                     time_local="2026-03-09T11:00:00+11:00",
                     inputs=ForecastInputs(
-                        air_temperature_c=31.0,
+                        tdb=31.0,
                         tr=37.25,
-                        relative_humidity_pct=62.0,
-                        wind_speed_10m_ms=1.5,
+                        rh=62.0,
+                        v_z1=1.5,
                         direct_normal_irradiance_wm2=700.0,
                     ),
                     heat_risk=ForecastHeatRisk(
@@ -64,10 +64,10 @@ class SuccessfulRiskService:
                     time_utc="2026-03-09T01:00:00Z",
                     time_local="2026-03-09T12:00:00+11:00",
                     inputs=ForecastInputs(
-                        air_temperature_c=32.0,
+                        tdb=32.0,
                         tr=38.1,
-                        relative_humidity_pct=61.0,
-                        wind_speed_10m_ms=1.6,
+                        rh=61.0,
+                        v_z1=1.6,
                         direct_normal_irradiance_wm2=740.0,
                     ),
                     heat_risk=ForecastHeatRisk(
@@ -98,12 +98,12 @@ class MissingInputRiskService:
         """Raise the same 422 the real service would return."""
 
         raise ModelInputUnavailableError(
-            unknown_inputs=["wind_speed_10m_ms"],
+            unknown_inputs=["v_z1"],
             available_inputs={
-                "air_temperature_c": 30.0,
+                "tdb": 30.0,
                 "tr": 35.0,
-                "relative_humidity_pct": 60.0,
-                "wind_speed_10m_ms": None,
+                "rh": 60.0,
+                "v_z1": None,
                 "direct_normal_irradiance_wm2": 700.0,
             },
         )
@@ -146,10 +146,10 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                 "time_utc": "2026-03-09T00:00:00Z",
                 "time_local": "2026-03-09T11:00:00+11:00",
                 "inputs": {
-                    "air_temperature_c": 31.0,
+                    "tdb": 31.0,
                     "tr": 37.25,
-                    "relative_humidity_pct": 62.0,
-                    "wind_speed_10m_ms": 1.5,
+                    "rh": 62.0,
+                    "v_z1": 1.5,
                     "direct_normal_irradiance_wm2": 700.0,
                 },
                 "heat_risk": {
@@ -164,10 +164,10 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                 "time_utc": "2026-03-09T01:00:00Z",
                 "time_local": "2026-03-09T12:00:00+11:00",
                 "inputs": {
-                    "air_temperature_c": 32.0,
+                    "tdb": 32.0,
                     "tr": 38.1,
-                    "relative_humidity_pct": 61.0,
-                    "wind_speed_10m_ms": 1.6,
+                    "rh": 61.0,
+                    "v_z1": 1.6,
                     "direct_normal_irradiance_wm2": 740.0,
                 },
                 "heat_risk": {
@@ -364,4 +364,4 @@ def test_post_home_risk_missing_wind_returns_422_unknown_inputs() -> None:
         )
 
     assert response.status_code == 422
-    assert response.json()["detail"]["unknown_inputs"] == ["wind_speed_10m_ms"]
+    assert response.json()["detail"]["unknown_inputs"] == ["v_z1"]

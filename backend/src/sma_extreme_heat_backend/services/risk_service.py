@@ -55,10 +55,10 @@ class WindSpeedRefactorConfig:
 WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
 
 _PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
-    "tdb": "air_temperature_c",
+    "tdb": "tdb",
     "tr": "tr",
-    "rh": "relative_humidity_pct",
-    "wind": "wind_speed_10m_ms",
+    "rh": "rh",
+    "wind": "v_z1",
     "radiation": "direct_normal_irradiance_wm2",
 }
 
@@ -216,12 +216,12 @@ class RiskService:
     ) -> dict[str, float | None]:
         """Expose the current point inputs using public API field names."""
 
-        wind_speed_10m_ms = _to_optional_float(point.wind)
+        v_z1 = _to_optional_float(point.wind)
         return {
-            "air_temperature_c": _to_optional_float(point.tdb),
+            "tdb": _to_optional_float(point.tdb),
             "tr": _to_optional_float(point.tr),
-            "relative_humidity_pct": _to_optional_float(point.rh),
-            "wind_speed_10m_ms": wind_speed_10m_ms,
+            "rh": _to_optional_float(point.rh),
+            "v_z1": v_z1,
             "direct_normal_irradiance_wm2": _to_optional_float(point.radiation),
         }
 
@@ -240,9 +240,9 @@ class RiskService:
         assert not pd.isna(point.radiation)
         assert not pd.isna(point.tr)
 
-        wind_speed_10m_ms = float(point.wind)
+        v_z1 = float(point.wind)
         # Convert the provider's 10 m wind speed into the model's required 1.1 m input.
-        wind_speed_model_ms = self._resolve_model_wind_speed(vr=wind_speed_10m_ms)
+        wind_speed_model_ms = self._resolve_model_wind_speed(vr=v_z1)
         computed = self.calculator.model_sports_heat_stress(
             SportsHeatStressInput(
                 sport=sport,
@@ -257,10 +257,10 @@ class RiskService:
             time_utc=timestamp.astimezone(UTC),
             time_local=timestamp,
             inputs=ForecastInputs(
-                air_temperature_c=float(point.tdb),
+                tdb=float(point.tdb),
                 tr=float(point.tr),
-                relative_humidity_pct=float(point.rh),
-                wind_speed_10m_ms=wind_speed_10m_ms,
+                rh=float(point.rh),
+                v_z1=v_z1,
                 direct_normal_irradiance_wm2=float(point.radiation),
             ),
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
