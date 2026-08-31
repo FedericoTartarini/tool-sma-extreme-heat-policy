@@ -27,6 +27,7 @@ import {
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
 import { useHomeStore } from "@/store/homeStore";
+// Issue #51: mount points for save dialog + shortcut chips
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
 import { SavedLocationChips } from "@/components/home/SavedLocationChips";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -39,7 +40,7 @@ interface SelectOption<T extends string = string> {
 
 const FIELD_LABEL_WIDTH = 72;
 const SPORT_IMAGE_HEIGHT = 104;
-const SAVE_LOCATION_ICON_SIZE = 18;
+const SAVE_SAVED_LOCATION_BUTTON_ICON_SIZE = 18;
 
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
@@ -51,9 +52,10 @@ interface FiltersSectionProps {
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
+  // Issue #51: open/close state for the save-location dialog
   const [
-    isSaveLocationModalOpen,
-    { open: openSaveLocationModal, close: closeSaveLocationModal },
+    isSaveSavedLocationModalOpen,
+    { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
   ] = useDisclosure(false);
   /*
   const profile = useHomeStore((state) => state.profile);
@@ -237,17 +239,19 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               ) : null}
             </Combobox>
           </Box>
+          {/* Issue #51: bookmark — disabled until a location is selected */}
           <ActionIcon
             variant="light"
             size="lg"
             aria-label={t("home.savedLocations.saveButton")}
             disabled={selectedLocation === null}
-            onClick={openSaveLocationModal}
+            onClick={openSaveSavedLocationModal}
           >
-            <IconBookmarkPlus size={SAVE_LOCATION_ICON_SIZE} />
+            <IconBookmarkPlus size={SAVE_SAVED_LOCATION_BUTTON_ICON_SIZE} />
           </ActionIcon>
         </Group>
 
+        {/* Issue #51: Home / Gym-style shortcuts under the location box */}
         <SavedLocationChips />
 
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
@@ -300,9 +304,10 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           )}
         </Box>
       </Stack>
+      {/* Issue #51: dialog attached to this filter section */}
       <SaveLocationModal
-        opened={isSaveLocationModalOpen}
-        onClose={closeSaveLocationModal}
+        opened={isSaveSavedLocationModalOpen}
+        onClose={closeSaveSavedLocationModal}
       />
     </SectionCard>
   );

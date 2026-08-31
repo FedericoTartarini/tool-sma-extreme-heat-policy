@@ -3,9 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
-  SAVED_LOCATION_LABEL_MAX_LENGTH,
-  SAVED_LOCATIONS_MAX,
-  type SaveLocationRejectReason,
+  SAVED_LOCATION_LABEL_MAX_LENGTH as MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT,
+  SAVED_LOCATIONS_MAX as MAX_SAVED_LOCATION_COUNT,
+  type SaveLocationRejectReason as SaveLocationValidationErrorCode,
 } from "@/domain/savedLocation";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
@@ -16,19 +16,24 @@ interface SaveLocationModalProps {
 }
 
 /**
- * Collects a short label for the currently selected location and saves it.
+ * Save-location dialog (Issue #51 UI).
+ * Asks for a short label, then calls the shared store — no API call here.
  */
 export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
   const { t } = useTranslation();
+  // Current place from the Home filter (must already include coordinates).
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  const saveLocation = useSavedLocationsStore((state) => state.saveLocation);
-  const [label, setLabel] = useState("");
-  const [rejectReason, setRejectReason] =
-    useState<SaveLocationRejectReason | null>(null);
+  // Persistence/validation live in the store (teammate's layer).
+  const saveLocationToStore = useSavedLocationsStore(
+    (state) => state.saveLocation,
+  );
+  const [savedLocationNameInput, setSavedLocationNameInput] = useState("");
+  const [validationErrorCode, setValidationErrorCode] =
+    useState<SaveLocationValidationErrorCode | null>(null);
 
-  const closeAndReset = () => {
-    setLabel("");
-    setRejectReason(null);
+  const closeModalAndClearForm = () => {
+    setSavedLocationNameInput("");
+    setValidationErrorCode(null);
     onClose();
   };
 
@@ -37,20 +42,25 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
       return;
     }
 
-    const result = saveLocation({ label, location: selectedLocation });
+    // Store returns saved | rejected — never throws.
+    const saveResult = saveLocationToStore({
+      label: savedLocationNameInput,
+      location: selectedLocation,
+    });
 
-    if (result.status === "rejected") {
-      setRejectReason(result.reason);
+    if (saveResult.status === "rejected") {
+      // Machine code → i18n key, e.g. errors.duplicate_label
+      setValidationErrorCode(saveResult.reason);
       return;
     }
 
-    closeAndReset();
+    closeModalAndClearForm();
   };
 
   return (
     <Modal
       opened={opened}
-      onClose={closeAndReset}
+      onClose={closeModalAndClearForm}
       title={t("home.savedLocations.modalTitle")}
       centered
     >
@@ -63,23 +73,24 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
         <TextInput
           label={t("home.savedLocations.labelInput")}
           placeholder={t("home.savedLocations.labelPlaceholder")}
-          value={label}
-          maxLength={SAVED_LOCATION_LABEL_MAX_LENGTH}
+          value={savedLocationNameInput}
+          // Soft cap in the input; store also truncates to 20 characters.
+          maxLength={MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT}
           error={
-            rejectReason
-              ? t(`home.savedLocations.errors.${rejectReason}`, {
-                  max: SAVED_LOCATIONS_MAX,
+            validationErrorCode
+              ? t(`home.savedLocations.errors.${validationErrorCode}`, {
+                  max: MAX_SAVED_LOCATION_COUNT,
                 })
               : null
           }
           onChange={(event) => {
-            setLabel(event.currentTarget.value);
-            setRejectReason(null);
+            setSavedLocationNameInput(event.currentTarget.value);
+            setValidationErrorCode(null);
           }}
           data-autofocus
         />
         <Group justify="flex-end" gap={CONTENT_GAP}>
-          <Button variant="default" onClick={closeAndReset}>
+          <Button variant="default" onClick={closeModalAndClearForm}>
             {t("home.savedLocations.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={selectedLocation === null}>
