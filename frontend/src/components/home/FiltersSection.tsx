@@ -273,8 +273,9 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               </Combobox>
             </Box>
             <LocationFieldActionIcons
-              isSaveDisabled={selectedLocation === null}
-              onSave={openSaveSavedLocationModal}
+              canSaveCurrentLocation={selectedLocation !== null}
+              hasSavedLocations={savedLocations.length > 0}
+              onOpenSavedLocations={openSaveSavedLocationModal}
             />
           </Group>
         </Group>

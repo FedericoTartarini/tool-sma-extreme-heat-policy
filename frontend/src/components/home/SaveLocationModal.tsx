@@ -66,41 +66,54 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
     <Modal
       opened={opened}
       onClose={closeModalAndClearForm}
-      title={t("home.savedLocations.modalTitle")}
+      title={
+        selectedLocation
+          ? t("home.savedLocations.modalTitle")
+          : t("home.savedLocations.savedListTitle")
+      }
       centered
     >
       <Stack gap={CONTENT_GAP}>
         {selectedLocation ? (
-          <Text fz="sm">
-            {t("home.savedLocations.savingLocationIntro", {
-              location: selectedLocation.displayLabel,
-            })}
-          </Text>
-        ) : null}
-        <TextInput
-          label={t("home.savedLocations.labelInput")}
-          placeholder={t("home.savedLocations.labelPlaceholder")}
-          value={savedLocationNameInput}
-          // Soft cap in the input; store also truncates to 20 characters.
-          maxLength={MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT}
-          error={
-            validationErrorCode
-              ? t(`home.savedLocations.errors.${validationErrorCode}`, {
-                  max: MAX_SAVED_LOCATION_COUNT,
-                })
-              : null
-          }
-          onChange={(event) => {
-            setSavedLocationNameInput(event.currentTarget.value);
-            setValidationErrorCode(null);
-          }}
-          data-autofocus
-        />
-        <Stack gap="xs">
-          <Group justify="space-between" align="center" wrap="nowrap">
-            <Text fw={500} fz="sm">
-              {t("home.savedLocations.savedListTitle")}
+          <>
+            <Text fz="sm">
+              {t("home.savedLocations.savingLocationIntro", {
+                location: selectedLocation.displayLabel,
+              })}
             </Text>
+            <TextInput
+              label={t("home.savedLocations.labelInput")}
+              placeholder={t("home.savedLocations.labelPlaceholder")}
+              value={savedLocationNameInput}
+              // Soft cap in the input; store also truncates to 20 characters.
+              maxLength={MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT}
+              error={
+                validationErrorCode
+                  ? t(`home.savedLocations.errors.${validationErrorCode}`, {
+                      max: MAX_SAVED_LOCATION_COUNT,
+                    })
+                  : null
+              }
+              onChange={(event) => {
+                setSavedLocationNameInput(event.currentTarget.value);
+                setValidationErrorCode(null);
+              }}
+              data-autofocus
+            />
+          </>
+        ) : null}
+        <Stack gap="xs">
+          <Group
+            justify={selectedLocation ? "space-between" : "flex-end"}
+            align="center"
+            wrap="nowrap"
+          >
+            {/* The dialog title already names the list when nothing is being saved. */}
+            {selectedLocation ? (
+              <Text fw={500} fz="sm">
+                {t("home.savedLocations.savedListTitle")}
+              </Text>
+            ) : null}
             {savedLocations.length > 0 ? (
               <Button
                 variant="subtle"
@@ -135,9 +148,11 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
           <Button variant="default" onClick={closeModalAndClearForm}>
             {t("home.savedLocations.cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={selectedLocation === null}>
-            {t("home.savedLocations.confirm")}
-          </Button>
+          {selectedLocation ? (
+            <Button onClick={handleSubmit}>
+              {t("home.savedLocations.confirm")}
+            </Button>
+          ) : null}
         </Group>
       </Stack>
     </Modal>

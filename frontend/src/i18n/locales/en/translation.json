@@ -287,6 +287,7 @@
     },
     "savedLocations": {
       "saveButton": "Save this location",
+      "openSavedLocations": "Open saved locations",
       "modalTitle": "Save location",
       "savingLocationIntro": "You are currently saving {{location}}. Please enter a name for this location.",
       "labelInput": "Location name",
