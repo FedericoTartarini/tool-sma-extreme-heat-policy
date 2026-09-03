@@ -6,22 +6,17 @@ const SAVE_SAVED_LOCATION_BUTTON_ICON_SIZE = 18;
 const USE_MY_LOCATION_BUTTON_ICON_SIZE = 18;
 
 interface LocationFieldActionIconsProps {
-  canSaveCurrentLocation: boolean;
-  hasSavedLocations: boolean;
-  onOpenSavedLocations: () => void;
+  isSaveDisabled: boolean;
+  onSave: () => void;
 }
 
 /**
  * Use-my-location and Save controls for the Home location field (Issue #51 / #56).
  * Rendered outside the combobox so the input stays a standard Mantine field.
- *
- * The bookmark is the only entry point to the saved-location dialog, so it stays
- * enabled whenever there is something to save or something already saved.
  */
 export function LocationFieldActionIcons({
-  canSaveCurrentLocation,
-  hasSavedLocations,
-  onOpenSavedLocations,
+  isSaveDisabled,
+  onSave,
 }: LocationFieldActionIconsProps) {
   const { t } = useTranslation();
 
@@ -40,13 +35,9 @@ export function LocationFieldActionIcons({
         variant="light"
         color="brand"
         size="sm"
-        aria-label={
-          canSaveCurrentLocation
-            ? t("home.savedLocations.saveButton")
-            : t("home.savedLocations.openSavedLocations")
-        }
-        disabled={!canSaveCurrentLocation && !hasSavedLocations}
-        onClick={onOpenSavedLocations}
+        aria-label={t("home.savedLocations.saveButton")}
+        disabled={isSaveDisabled}
+        onClick={onSave}
       >
         <IconBookmarkPlus size={SAVE_SAVED_LOCATION_BUTTON_ICON_SIZE} />
       </ActionIcon>

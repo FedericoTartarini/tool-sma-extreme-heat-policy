@@ -287,7 +287,6 @@
     },
     "savedLocations": {
       "saveButton": "保存此地点",
-      "openSavedLocations": "打开已保存地点",
       "modalTitle": "保存地点",
       "savingLocationIntro": "正在保存 {{location}}。请为该地点输入一个名称。",
       "labelInput": "地点名称",
