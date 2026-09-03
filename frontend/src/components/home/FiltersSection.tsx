@@ -53,7 +53,6 @@ interface FiltersSectionProps {
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
-  // Issue #51: open/close state for the save-location dialog
   const [
     isSaveSavedLocationModalOpen,
     { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
@@ -330,7 +329,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           )}
         </Box>
       </Stack>
-      {/* Issue #51: dialog attached to this filter section */}
       <SaveLocationModal
         opened={isSaveSavedLocationModalOpen}
         onClose={closeSaveSavedLocationModal}

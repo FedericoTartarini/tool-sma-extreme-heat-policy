@@ -22,9 +22,8 @@ interface SaveLocationModalProps {
  */
 export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
   const { t } = useTranslation();
-  // Current place from the Home filter (must already include coordinates).
+  // Must already include coordinates, otherwise the store rejects the save.
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
-  // Persistence/validation live in the store (teammate's layer).
   const saveLocationToStore = useSavedLocationsStore(
     (state) => state.saveLocation,
   );

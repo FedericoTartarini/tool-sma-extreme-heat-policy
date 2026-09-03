@@ -30,7 +30,6 @@ export function SavedLocationChips({
   );
   const applySelectedLocation = useHomeStore((state) => state.selectLocation);
 
-  // Empty list → render nothing (no empty row).
   if (savedLocations.length === 0) {
     return null;
   }
