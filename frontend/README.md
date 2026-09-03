@@ -104,6 +104,17 @@ Import rules:
 - Public reserved profile values are `ADULT`, `UNDER_10`, `AGE_10_13`, and `AGE_14_17`.
 - The current frozen profile is sent to the backend and written to URLs/local persistence for contract compatibility; restored URL/local profile values are ignored until profile selection is re-enabled.
 
+## Saved locations
+
+- Client state lives in `src/store/savedLocationsStore.ts` (Zustand); persistence helpers live in `src/pages/home/savedLocationsStorage.ts`, matching the `browserState.ts` pattern.
+- Stored under the localStorage key `saved-locations:v1`. Reads and writes are best-effort: a malformed payload yields an empty list and storage errors never block the UI.
+- Each entry keeps a full location snapshot including coordinates, so applying a saved location needs no Mapbox `suggest`/`retrieve` call and triggers a risk refetch directly.
+- A persisted entry without coordinates is treated as corrupt and dropped, because it could not be applied without a Mapbox lookup.
+- Mapbox session tokens are stripped before persisting, since they expire.
+- Limits live in `src/domain/savedLocation.ts`: up to `SAVED_LOCATIONS_MAX` entries, labels capped at `SAVED_LOCATION_LABEL_MAX_LENGTH` characters, and labels deduped case-insensitively.
+- Saving and switching update the UI immediately with no page reload; the list renders newest-first and is not re-sorted in the UI.
+- Saved locations are created and managed inside the save dialog opened from the Home location field.
+
 ## i18n
 
 - Bundled languages are configured in `src/i18n/language.ts`; English is the
