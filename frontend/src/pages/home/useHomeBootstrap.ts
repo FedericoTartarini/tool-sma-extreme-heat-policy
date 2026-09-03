@@ -7,10 +7,7 @@ import {
   type HeatRiskProfile,
 } from "@/domain/heatRiskProfile";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
-import {
-  loadPersistedHomeFilters,
-  loadPersistedShowWeatherDetails,
-} from "@/pages/home/browserState";
+import { loadPersistedHomeFilters } from "@/pages/home/browserState";
 import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
 import {
   HOME_QUERY_PARSERS,
@@ -22,7 +19,6 @@ import {
   useHomeStore,
   type HomeStoreBootstrapPayload,
 } from "@/store/homeStore";
-import { useHomeUiStore } from "@/store/homeUiStore";
 
 interface SetQueryStateValues {
   profile: HeatRiskProfile | null;
@@ -87,12 +83,6 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
 
     useHomeStore.getState().bootstrap(bootstrapState);
   }, [bootstrapState]);
-
-  useEffect(() => {
-    useHomeUiStore
-      .getState()
-      .setShowWeatherDetails(loadPersistedShowWeatherDetails());
-  }, []);
 
   return {
     bootstrapState,
