@@ -75,30 +75,6 @@ describe("savedLocationsStore", () => {
     useSavedLocationsStore.setState({ savedLocations: [] });
   });
 
-  it("hydrates from persisted storage", () => {
-    const persisted: SavedLocation = {
-      id: "saved-home",
-      label: "Home",
-      location: SYDNEY,
-      createdAt: 1,
-    };
-    storage.set(SAVED_LOCATIONS_STORAGE_KEY, JSON.stringify([persisted]));
-
-    useSavedLocationsStore.getState().hydrate();
-
-    expect(useSavedLocationsStore.getState().savedLocations).toEqual([
-      persisted,
-    ]);
-  });
-
-  it("hydrates to an empty list when storage is corrupt", () => {
-    storage.set(SAVED_LOCATIONS_STORAGE_KEY, "{not-json");
-
-    useSavedLocationsStore.getState().hydrate();
-
-    expect(useSavedLocationsStore.getState().savedLocations).toEqual([]);
-  });
-
   it("saves a location newest first with a trimmed label", () => {
     useSavedLocationsStore
       .getState()

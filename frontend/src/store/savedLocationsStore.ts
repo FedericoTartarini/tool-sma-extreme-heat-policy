@@ -17,7 +17,6 @@ import {
 interface SavedLocationsState {
   /** Newest first. Render in array order; do not sort in the UI. */
   savedLocations: readonly SavedLocation[];
-  hydrate: () => void;
   saveLocation: (input: {
     label: string;
     location: LocationSuggestion;
@@ -34,7 +33,6 @@ export const useSavedLocationsStore = create<SavedLocationsState>(
 
     return {
       savedLocations: loadSavedLocations(),
-      hydrate: () => set({ savedLocations: loadSavedLocations() }),
       saveLocation: ({ label, location }) => {
         if (!hasCoordinates(location)) {
           return { status: "rejected", reason: "missing_coordinates" };
