@@ -52,4 +52,16 @@ describe("Simplified Chinese translation completeness", () => {
     expect(zhCnTranslation.footer.authors).toBe(enTranslation.footer.authors);
     expect(zhCnTranslation.footer.journal).toBe(enTranslation.footer.journal);
   });
+
+  it("keeps saved-location modal copy explicit and chip-only", () => {
+    expect(enTranslation.home.savedLocations.savingLocationIntro).toBe(
+      "You are currently saving {{location}}. Please enter a name for this location.",
+    );
+    expect(enTranslation.home.savedLocations.chipHint).toBe(
+      "Tap a saved location to switch",
+    );
+    expect(enTranslation.home.savedLocations.savingLocationIntro).toContain(
+      "{{location}}",
+    );
+  });
 });

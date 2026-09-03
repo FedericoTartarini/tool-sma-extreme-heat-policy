@@ -284,6 +284,31 @@
         "missingCoordinatesBody": "无法获取 {{location}} 的坐标，因此不能显示地图。",
         "locationFallback": "请选择地点"
       }
+    },
+    "savedLocations": {
+      "saveButton": "保存此地点",
+      "modalTitle": "保存地点",
+      "savingLocationIntro": "正在保存 {{location}}。请为该地点输入一个名称。",
+      "labelInput": "地点名称",
+      "labelPlaceholder": "例如：家、公司、球场",
+      "cancel": "取消",
+      "confirm": "保存",
+      "apply": "切换到 {{label}}",
+      "remove": "移除 {{label}}",
+      "useMyLocationButton": "使用我的位置",
+      "savedListTitle": "已保存地点",
+      "edit": "编辑",
+      "doneEditing": "完成",
+      "chipHint": "点击已保存地点即可切换",
+      "chipHintEditing": "点击 × 删除",
+      "suggestionSaved": "已保存地点",
+      "suggestionUnsaved": "尚未保存",
+      "errors": {
+        "empty_label": "请为该地点输入名称。",
+        "duplicate_label": "已存在同名地点。",
+        "limit_reached": "最多可保存 {{max}} 个地点。",
+        "missing_coordinates": "该地点无法保存，请重新搜索。"
+      }
     }
   },
   "errors": {

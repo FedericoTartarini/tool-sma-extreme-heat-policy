@@ -10,22 +10,28 @@ import {
   Text,
   useCombobox,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconBookmarkFilled, IconBookmarkPlus } from "@tabler/icons-react";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
+import { SaveLocationModal } from "@/components/home/SaveLocationModal";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { CONTENT_GAP } from "@/config/uiLayout";
+import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
 import {
   isSportType,
   sports,
   toSportAssetName,
   type SportType,
 } from "@/domain/sport";
-import { CONTENT_GAP } from "@/config/uiLayout";
 import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
-import { useHomeStore } from "@/store/homeStore";
-import { SectionCard } from "@/components/ui/SectionCard";
 import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import { useHomeStore } from "@/store/homeStore";
+import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
 interface SelectOption<T extends string = string> {
   value: T;
@@ -34,6 +40,8 @@ interface SelectOption<T extends string = string> {
 
 const FIELD_LABEL_WIDTH = 72;
 const SPORT_IMAGE_HEIGHT = 104;
+const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
+const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
@@ -45,6 +53,10 @@ interface FiltersSectionProps {
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
   const locationCombobox = useCombobox();
+  const [
+    isSaveSavedLocationModalOpen,
+    { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
+  ] = useDisclosure(false);
   /*
   const profile = useHomeStore((state) => state.profile);
   const setProfile = useHomeStore((state) => state.setProfile);
@@ -52,6 +64,9 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const setSport = useHomeStore((state) => state.setSport);
+  const savedLocations = useSavedLocationsStore(
+    (state) => state.savedLocations,
+  );
   const [hasSportImageError, setHasSportImageError] = useState(false);
 
   /*
@@ -101,16 +116,38 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     selectedLocation !== null &&
     locationSearchInput === selectedLocation.displayLabel;
   const shouldRenderLocationDropdown = locationSuggestions.length > 0;
-  const locationRightSection = isSuggestLoading ? (
-    <Loader size={16} />
-  ) : (
-    <Combobox.Chevron size="md" />
-  );
-  const locationOptions = locationSuggestions.map((suggestion) => (
-    <Combobox.Option value={suggestion.id} key={suggestion.id}>
-      {suggestion.displayLabel}
-    </Combobox.Option>
-  ));
+  const locationOptions = locationSuggestions.map((suggestion) => {
+    const isSavedSuggestion = isSuggestionAlreadySaved(
+      savedLocations,
+      suggestion,
+    );
+
+    return (
+      <Combobox.Option value={suggestion.id} key={suggestion.id}>
+        <Group justify="space-between" wrap="nowrap" gap="xs">
+          <Text span fz="md" lineClamp={1} flex={1} miw={0}>
+            {suggestion.displayLabel}
+          </Text>
+          <Box
+            c="brand"
+            aria-label={
+              isSavedSuggestion
+                ? t("home.savedLocations.suggestionSaved")
+                : t("home.savedLocations.suggestionUnsaved")
+            }
+          >
+            {isSavedSuggestion ? (
+              <IconBookmarkFilled
+                size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE}
+              />
+            ) : (
+              <IconBookmarkPlus size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE} />
+            )}
+          </Box>
+        </Group>
+      </Combobox.Option>
+    );
+  });
 
   useEffect(() => {
     if (shouldOpenLocationDropdown && shouldRenderLocationDropdown) {
@@ -187,46 +224,59 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
             {t("home.sections.filters.locationLabel")}:
           </Text>
-          <Box flex={1}>
-            <Combobox
-              store={locationCombobox}
-              onOptionSubmit={(value) => {
-                onLocationOptionSubmit(value);
-                closeLocationDropdown();
-              }}
-              size="md"
-            >
-              <Combobox.Target targetType="input">
-                <InputBase
-                  __staticSelector="Select"
-                  aria-label={t("home.sections.filters.locationLabel")}
-                  size="md"
-                  placeholder={t("home.sections.filters.locationPlaceholder")}
-                  value={locationSearchInput}
-                  onChange={(event) => {
-                    onLocationSearchInputChange(event.currentTarget.value);
-                    locationCombobox.openDropdown();
-                  }}
-                  onFocus={() => {
-                    if (shouldRenderLocationDropdown) {
+          <Group wrap="nowrap" align="center" gap="xs" flex={1} miw={0}>
+            <Box flex={1} miw={0}>
+              <Combobox
+                store={locationCombobox}
+                onOptionSubmit={(value) => {
+                  onLocationOptionSubmit(value);
+                  closeLocationDropdown();
+                }}
+                size="md"
+              >
+                <Combobox.Target targetType="input">
+                  <InputBase
+                    __staticSelector="Select"
+                    aria-label={t("home.sections.filters.locationLabel")}
+                    size="md"
+                    placeholder={t("home.sections.filters.locationPlaceholder")}
+                    value={locationSearchInput}
+                    onChange={(event) => {
+                      onLocationSearchInputChange(event.currentTarget.value);
                       locationCombobox.openDropdown();
+                    }}
+                    onFocus={() => {
+                      if (shouldRenderLocationDropdown) {
+                        locationCombobox.openDropdown();
+                      }
+                    }}
+                    onBlur={closeLocationDropdown}
+                    onClick={handleLocationInputClick}
+                    rightSection={
+                      isSuggestLoading ? (
+                        <Loader size={16} />
+                      ) : (
+                        <Combobox.Chevron size="md" />
+                      )
                     }
-                  }}
-                  onBlur={closeLocationDropdown}
-                  onClick={handleLocationInputClick}
-                  rightSection={locationRightSection}
-                  rightSectionPointerEvents="none"
-                  autoComplete="off"
-                />
-              </Combobox.Target>
+                    rightSectionWidth={LOCATION_INPUT_CHEVRON_SECTION_WIDTH}
+                    rightSectionPointerEvents="none"
+                    autoComplete="off"
+                  />
+                </Combobox.Target>
 
-              {shouldRenderLocationDropdown ? (
-                <Combobox.Dropdown>
-                  <Combobox.Options>{locationOptions}</Combobox.Options>
-                </Combobox.Dropdown>
-              ) : null}
-            </Combobox>
-          </Box>
+                {shouldRenderLocationDropdown ? (
+                  <Combobox.Dropdown>
+                    <Combobox.Options>{locationOptions}</Combobox.Options>
+                  </Combobox.Dropdown>
+                ) : null}
+              </Combobox>
+            </Box>
+            <LocationFieldActionIcons
+              isSaveDisabled={selectedLocation === null}
+              onSave={openSaveSavedLocationModal}
+            />
+          </Group>
         </Group>
 
         <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
@@ -279,6 +329,10 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           )}
         </Box>
       </Stack>
+      <SaveLocationModal
+        opened={isSaveSavedLocationModalOpen}
+        onClose={closeSaveSavedLocationModal}
+      />
     </SectionCard>
   );
 }
