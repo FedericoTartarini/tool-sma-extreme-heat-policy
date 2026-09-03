@@ -170,64 +170,6 @@ describe("savedLocationsStore", () => {
     );
   });
 
-  it("renames an entry and persists the new label", () => {
-    useSavedLocationsStore
-      .getState()
-      .saveLocation({ label: "Home", location: SYDNEY });
-    const [saved] = useSavedLocationsStore.getState().savedLocations;
-
-    const result = useSavedLocationsStore
-      .getState()
-      .renameLocation(saved.id, "  Work  ");
-
-    expect(result).toEqual({ status: "saved", id: saved.id });
-    expect(useSavedLocationsStore.getState().savedLocations[0].label).toBe(
-      "Work",
-    );
-    expect(readPersisted(storage)[0].label).toBe("Work");
-  });
-
-  it("allows renaming an entry to its own label", () => {
-    useSavedLocationsStore
-      .getState()
-      .saveLocation({ label: "Home", location: SYDNEY });
-    const [saved] = useSavedLocationsStore.getState().savedLocations;
-
-    expect(
-      useSavedLocationsStore.getState().renameLocation(saved.id, "Home"),
-    ).toEqual({ status: "saved", id: saved.id });
-  });
-
-  it("rejects a rename that clashes with another entry", () => {
-    useSavedLocationsStore
-      .getState()
-      .saveLocation({ label: "Home", location: SYDNEY });
-    useSavedLocationsStore
-      .getState()
-      .saveLocation({ label: "Gym", location: PERTH });
-    const [gym] = useSavedLocationsStore.getState().savedLocations;
-
-    const result = useSavedLocationsStore
-      .getState()
-      .renameLocation(gym.id, "home");
-
-    expect(result).toEqual({ status: "rejected", reason: "duplicate_label" });
-    expect(useSavedLocationsStore.getState().savedLocations[0].label).toBe(
-      "Gym",
-    );
-  });
-
-  it("rejects a rename to a blank label", () => {
-    useSavedLocationsStore
-      .getState()
-      .saveLocation({ label: "Home", location: SYDNEY });
-    const [saved] = useSavedLocationsStore.getState().savedLocations;
-
-    expect(
-      useSavedLocationsStore.getState().renameLocation(saved.id, "  "),
-    ).toEqual({ status: "rejected", reason: "empty_label" });
-  });
-
   it("removes an entry and persists the shorter list", () => {
     useSavedLocationsStore
       .getState()

@@ -22,7 +22,6 @@ interface SavedLocationsState {
     label: string;
     location: LocationSuggestion;
   }) => SaveLocationResult;
-  renameLocation: (id: string, label: string) => SaveLocationResult;
   removeLocation: (id: string) => void;
 }
 
@@ -62,30 +61,6 @@ export const useSavedLocationsStore = create<SavedLocationsState>(
         commit([saved, ...savedLocations]);
 
         return { status: "saved", id: saved.id };
-      },
-      renameLocation: (id, label) => {
-        const normalizedLabel = normalizeLabel(label);
-        if (!normalizedLabel) {
-          return { status: "rejected", reason: "empty_label" };
-        }
-
-        const { savedLocations } = get();
-        // The entry being renamed must not clash with itself.
-        const otherLocations = savedLocations.filter(
-          (saved) => saved.id !== id,
-        );
-        if (isDuplicateLabel(otherLocations, normalizedLabel)) {
-          return { status: "rejected", reason: "duplicate_label" };
-        }
-
-        // An unknown id leaves the list untouched.
-        commit(
-          savedLocations.map((saved) =>
-            saved.id === id ? { ...saved, label: normalizedLabel } : saved,
-          ),
-        );
-
-        return { status: "saved", id };
       },
       removeLocation: (id) =>
         commit(get().savedLocations.filter((saved) => saved.id !== id)),
