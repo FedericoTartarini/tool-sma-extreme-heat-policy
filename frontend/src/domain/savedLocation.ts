@@ -56,6 +56,35 @@ export function stripSessionToken(
   return persistableLocation;
 }
 
+/**
+ * True when a Mapbox suggestion is the same place as a saved snapshot.
+ * Suggest results often have no coordinates yet, so Mapbox id / display label
+ * are the stable keys.
+ */
+export function isSamePlace(
+  left: LocationSuggestion,
+  right: LocationSuggestion,
+): boolean {
+  if (left.mapboxId && right.mapboxId) {
+    return left.mapboxId === right.mapboxId;
+  }
+
+  if (left.id === right.id) {
+    return true;
+  }
+
+  return left.displayLabel === right.displayLabel;
+}
+
+export function isSuggestionAlreadySaved(
+  savedLocations: readonly SavedLocation[],
+  suggestion: LocationSuggestion,
+): boolean {
+  return savedLocations.some((saved) =>
+    isSamePlace(saved.location, suggestion),
+  );
+}
+
 export function createSavedLocation(input: {
   label: string;
   location: LocationSuggestion;

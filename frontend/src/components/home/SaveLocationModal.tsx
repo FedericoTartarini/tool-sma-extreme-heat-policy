@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SavedLocationChips } from "@/components/home/SavedLocationChips";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
   SAVED_LOCATION_LABEL_MAX_LENGTH as MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT,
@@ -27,13 +28,18 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
   const saveLocationToStore = useSavedLocationsStore(
     (state) => state.saveLocation,
   );
+  const savedLocations = useSavedLocationsStore(
+    (state) => state.savedLocations,
+  );
   const [savedLocationNameInput, setSavedLocationNameInput] = useState("");
   const [validationErrorCode, setValidationErrorCode] =
     useState<SaveLocationValidationErrorCode | null>(null);
+  const [isEditingSavedLocations, setIsEditingSavedLocations] = useState(false);
 
   const closeModalAndClearForm = () => {
     setSavedLocationNameInput("");
     setValidationErrorCode(null);
+    setIsEditingSavedLocations(false);
     onClose();
   };
 
@@ -66,8 +72,10 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
     >
       <Stack gap={CONTENT_GAP}>
         {selectedLocation ? (
-          <Text c="dimmed" fz="sm">
-            {selectedLocation.displayLabel}
+          <Text fz="sm">
+            {t("home.savedLocations.savingLocationIntro", {
+              location: selectedLocation.displayLabel,
+            })}
           </Text>
         ) : null}
         <TextInput
@@ -89,6 +97,41 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
           }}
           data-autofocus
         />
+        <Stack gap="xs">
+          <Group justify="space-between" align="center" wrap="nowrap">
+            <Text fw={500} fz="sm">
+              {t("home.savedLocations.savedListTitle")}
+            </Text>
+            {savedLocations.length > 0 ? (
+              <Button
+                variant="subtle"
+                size="xs"
+                onClick={() =>
+                  setIsEditingSavedLocations(
+                    (isCurrentlyEditing) => !isCurrentlyEditing,
+                  )
+                }
+              >
+                {isEditingSavedLocations
+                  ? t("home.savedLocations.doneEditing")
+                  : t("home.savedLocations.edit")}
+              </Button>
+            ) : null}
+          </Group>
+          <SavedLocationChips
+            isEditing={isEditingSavedLocations}
+            onApplySavedLocation={closeModalAndClearForm}
+          />
+          {savedLocations.length > 0 ? (
+            <Text c="dimmed" fz="xs">
+              {t(
+                isEditingSavedLocations
+                  ? "home.savedLocations.chipHintEditing"
+                  : "home.savedLocations.chipHint",
+              )}
+            </Text>
+          ) : null}
+        </Stack>
         <Group justify="flex-end" gap={CONTENT_GAP}>
           <Button variant="default" onClick={closeModalAndClearForm}>
             {t("home.savedLocations.cancel")}

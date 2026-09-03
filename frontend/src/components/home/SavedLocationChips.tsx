@@ -6,11 +6,20 @@ import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
 const REMOVE_SAVED_LOCATION_BUTTON_ICON_SIZE = 14;
 
+interface SavedLocationChipsProps {
+  isEditing?: boolean;
+  onApplySavedLocation?: () => void;
+}
+
 /**
  * One-tap shortcuts for saved places (Issue #51 UI).
  * Applies stored coordinates — no new Mapbox search.
+ * Delete is hidden until the user turns on edit, to avoid accidental taps.
  */
-export function SavedLocationChips() {
+export function SavedLocationChips({
+  isEditing = false,
+  onApplySavedLocation,
+}: SavedLocationChipsProps) {
   const { t } = useTranslation();
   // Newest first; do not re-sort in the UI.
   const savedLocations = useSavedLocationsStore(
@@ -37,25 +46,34 @@ export function SavedLocationChips() {
               label: savedLocation.label,
             })}
             // Snapshot already has lat/long → heat-risk refetch follows.
-            onClick={() => applySelectedLocation(savedLocation.location)}
+            onClick={() => {
+              if (isEditing) {
+                return;
+              }
+
+              applySelectedLocation(savedLocation.location);
+              onApplySavedLocation?.();
+            }}
           >
             {savedLocation.label}
           </Button>
-          <Button
-            variant="light"
-            size="xs"
-            px="xs"
-            aria-label={t("home.savedLocations.remove", {
-              label: savedLocation.label,
-            })}
-            onClick={(event) => {
-              // Stop bubble so delete does not also apply this location.
-              event.stopPropagation();
-              removeSavedLocation(savedLocation.id);
-            }}
-          >
-            <IconX size={REMOVE_SAVED_LOCATION_BUTTON_ICON_SIZE} />
-          </Button>
+          {isEditing ? (
+            <Button
+              variant="light"
+              size="xs"
+              px="xs"
+              aria-label={t("home.savedLocations.remove", {
+                label: savedLocation.label,
+              })}
+              onClick={(event) => {
+                // Stop bubble so delete does not also apply this location.
+                event.stopPropagation();
+                removeSavedLocation(savedLocation.id);
+              }}
+            >
+              <IconX size={REMOVE_SAVED_LOCATION_BUTTON_ICON_SIZE} />
+            </Button>
+          ) : null}
         </Button.Group>
       ))}
     </Group>

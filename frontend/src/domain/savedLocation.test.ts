@@ -4,6 +4,8 @@ import {
   createSavedLocation,
   hasCoordinates,
   isDuplicateLabel,
+  isSamePlace,
+  isSuggestionAlreadySaved,
   normalizeLabel,
   stripSessionToken,
   SAVED_LOCATION_LABEL_MAX_LENGTH,
@@ -93,6 +95,55 @@ describe("stripSessionToken", () => {
     stripSessionToken(PERTH);
 
     expect(PERTH.sessionToken).toBe("session-perth");
+  });
+});
+
+describe("isSamePlace", () => {
+  it("matches on Mapbox id when both sides have one", () => {
+    expect(
+      isSamePlace(PERTH, {
+        ...PERTH,
+        id: "other-id",
+        displayLabel: "Somewhere else",
+      }),
+    ).toBe(true);
+  });
+
+  it("matches on suggestion id when Mapbox ids are missing", () => {
+    expect(
+      isSamePlace(
+        { ...PERTH, mapboxId: undefined },
+        { ...PERTH, mapboxId: undefined, displayLabel: "Somewhere else" },
+      ),
+    ).toBe(true);
+  });
+
+  it("matches on display label when ids differ", () => {
+    expect(
+      isSamePlace(
+        { ...PERTH, id: "a", mapboxId: undefined },
+        { ...PERTH, id: "b", mapboxId: undefined },
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("isSuggestionAlreadySaved", () => {
+  it("finds a saved snapshot of the same Mapbox place", () => {
+    expect(isSuggestionAlreadySaved([toSavedLocation("Home")], PERTH)).toBe(
+      true,
+    );
+  });
+
+  it("rejects a different suggestion", () => {
+    expect(
+      isSuggestionAlreadySaved([toSavedLocation("Home")], {
+        ...PERTH,
+        id: "loc-sydney",
+        mapboxId: "mapbox-sydney",
+        displayLabel: "Sydney, New South Wales, Australia",
+      }),
+    ).toBe(false);
   });
 });
 
