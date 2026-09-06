@@ -43,7 +43,7 @@ describe("getCurrentForecastPoint", () => {
               tr: 37,
               rh: 62,
               v_z1: 1.5,
-              direct_normal_irradiance_wm2: 700,
+              sol_radiation_dir: 700,
             },
             heat_risk: {
               risk_level_interpolated: 1.2,
@@ -61,7 +61,7 @@ describe("getCurrentForecastPoint", () => {
               tr: 38,
               rh: 61,
               v_z1: 1.6,
-              direct_normal_irradiance_wm2: 740,
+              sol_radiation_dir: 740,
             },
             heat_risk: {
               risk_level_interpolated: 1.4,
@@ -93,7 +93,7 @@ describe("toForecastDays", () => {
           tr: 35,
           rh: 60,
           v_z1: 1.2,
-          direct_normal_irradiance_wm2: 650,
+          sol_radiation_dir: 650,
         },
         heat_risk: {
           risk_level_interpolated: 1.8,
@@ -111,7 +111,7 @@ describe("toForecastDays", () => {
           tr: 36,
           rh: 59,
           v_z1: 1.3,
-          direct_normal_irradiance_wm2: 670,
+          sol_radiation_dir: 670,
         },
         heat_risk: {
           risk_level_interpolated: 2.2,
@@ -129,7 +129,7 @@ describe("toForecastDays", () => {
           tr: 37,
           rh: 58,
           v_z1: 1.4,
-          direct_normal_irradiance_wm2: 690,
+          sol_radiation_dir: 690,
         },
         heat_risk: {
           risk_level_interpolated: 2.4,
@@ -165,7 +165,7 @@ describe("toForecastDays", () => {
             tr: 35,
             rh: 60,
             v_z1: 1.2,
-            direct_normal_irradiance_wm2: 650,
+            sol_radiation_dir: 650,
           },
           heat_risk: {
             risk_level_interpolated: 1.8,

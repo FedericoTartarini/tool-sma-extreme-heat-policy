@@ -59,7 +59,7 @@ _PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
     "tr": "tr",
     "rh": "rh",
     "wind": "v_z1",
-    "radiation": "direct_normal_irradiance_wm2",
+    "dni": "sol_radiation_dir",
 }
 
 
@@ -181,8 +181,8 @@ class RiskService:
             missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["rh"])
         if pd.isna(point.wind):
             missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["wind"])
-        if pd.isna(point.radiation):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["radiation"])
+        if pd.isna(point.dni):
+            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["dni"])
         if pd.isna(point.tr):
             missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["tr"])
         return missing_inputs
@@ -222,7 +222,7 @@ class RiskService:
             "tr": _to_optional_float(point.tr),
             "rh": _to_optional_float(point.rh),
             "v_z1": v_z1,
-            "direct_normal_irradiance_wm2": _to_optional_float(point.radiation),
+            "sol_radiation_dir": _to_optional_float(point.dni),
         }
 
     def _to_forecast_point(
@@ -237,7 +237,7 @@ class RiskService:
         assert not pd.isna(point.tdb)
         assert not pd.isna(point.rh)
         assert not pd.isna(point.wind)
-        assert not pd.isna(point.radiation)
+        assert not pd.isna(point.dni)
         assert not pd.isna(point.tr)
 
         v_z1 = float(point.wind)
@@ -261,7 +261,7 @@ class RiskService:
                 tr=float(point.tr),
                 rh=float(point.rh),
                 v_z1=v_z1,
-                direct_normal_irradiance_wm2=float(point.radiation),
+                sol_radiation_dir=float(point.dni),
             ),
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )

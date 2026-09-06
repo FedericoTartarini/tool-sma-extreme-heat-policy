@@ -20,7 +20,7 @@ const VALID_HEAT_RISK_RESPONSE = {
         tr: 37.25,
         rh: 62,
         v_z1: 1.5,
-        direct_normal_irradiance_wm2: 700,
+        sol_radiation_dir: 525,
       },
       heat_risk: {
         risk_level_interpolated: 1.94,
@@ -215,7 +215,7 @@ describe("isHeatRiskApiResponse", () => {
               tr: 37.25,
               rh: 62,
               v_z1: 1.5,
-              direct_normal_irradiance_wm2: 700,
+              sol_radiation_dir: 525,
             },
             heat_risk: {
               risk_level_interpolated: 1.94,
@@ -251,7 +251,7 @@ describe("isHeatRiskApiResponse", () => {
               tr: 37.25,
               rh: 62,
               v_z1: 1.5,
-              direct_normal_irradiance_wm2: 700,
+              sol_radiation_dir: 525,
             },
             heat_risk: {
               risk_level_interpolated: 1.94,
@@ -286,7 +286,7 @@ describe("isHeatRiskApiResponse", () => {
               tr: 37.25,
               rh: 62,
               v_z1: 1.5,
-              direct_normal_irradiance_wm2: 700,
+              sol_radiation_dir: 525,
             },
             heat_risk: {
               risk_level_interpolated: 1.94,

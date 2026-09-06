@@ -28,7 +28,7 @@ export interface ForecastInputsApiData {
   tr: number;
   rh: number;
   v_z1: number;
-  direct_normal_irradiance_wm2: number;
+  sol_radiation_dir: number;
 }
 
 export interface ForecastApiPoint {
@@ -120,7 +120,7 @@ function isForecastInputsApiData(
     isFiniteNumber(value.tr) &&
     isFiniteNumber(value.rh) &&
     isFiniteNumber(value.v_z1) &&
-    isFiniteNumber(value.direct_normal_irradiance_wm2)
+    isFiniteNumber(value.sol_radiation_dir)
   );
 }
 

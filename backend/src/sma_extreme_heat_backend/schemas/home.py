@@ -62,7 +62,7 @@ class ForecastInputs(BaseModel):
     tr: FiniteFloat
     rh: FiniteFloat
     v_z1: FiniteFloat
-    direct_normal_irradiance_wm2: FiniteFloat
+    sol_radiation_dir: FiniteFloat
 
 
 class ForecastHeatRisk(BaseModel):

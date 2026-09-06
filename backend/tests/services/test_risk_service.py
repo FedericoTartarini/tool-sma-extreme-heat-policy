@@ -196,7 +196,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         "tr": 37.25,
         "rh": 62.0,
         "v_z1": 1.5,
-        "direct_normal_irradiance_wm2": 700.0,
+        "sol_radiation_dir": 525.0,
     }
     assert first.forecast[0].heat_risk.model_dump() == {
         "risk_level_interpolated": 1.94,
@@ -214,7 +214,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "tr": 37.25,
                 "rh": 62.0,
                 "v_z1": 1.5,
-                "direct_normal_irradiance_wm2": 700.0,
+                "sol_radiation_dir": 525.0,
             },
             "heat_risk": {
                 "risk_level_interpolated": 1.94,
@@ -232,7 +232,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "tr": 38.25,
                 "rh": 63.0,
                 "v_z1": 1.6,
-                "direct_normal_irradiance_wm2": 750.0,
+                "sol_radiation_dir": 562.5,
             },
             "heat_risk": {
                 "risk_level_interpolated": 2.04,
@@ -250,7 +250,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
                 "tr": 39.25,
                 "rh": 64.0,
                 "v_z1": 1.7,
-                "direct_normal_irradiance_wm2": 800.0,
+                "sol_radiation_dir": 600.0,
             },
             "heat_risk": {
                 "risk_level_interpolated": 2.14,
@@ -548,7 +548,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
         "tr": 38.25,
         "rh": 63.0,
         "v_z1": 1.6,
-        "direct_normal_irradiance_wm2": 750.0,
+        "sol_radiation_dir": 562.5,
     }
 
 
@@ -587,7 +587,7 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
             "tr": 37.25,
             "rh": 62.0,
             "v_z1": None,
-            "direct_normal_irradiance_wm2": 700.0,
+            "sol_radiation_dir": 525.0,
         }
     else:
         raise AssertionError("Expected ModelInputUnavailableError")

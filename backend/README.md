@@ -163,7 +163,7 @@ Example response:
         "tr": 37.25,
         "rh": 62.0,
         "v_z1": 1.5,
-        "direct_normal_irradiance_wm2": 700.0
+        "sol_radiation_dir": 525.0
       },
       "heat_risk": {
         "risk_level_interpolated": 1.94,
@@ -199,7 +199,7 @@ Example response:
 7. Build MRT values with `pvlib` + `pythermalcomfort` on the provider-native hourly points:
    - compute solar elevation for each local timestamp
    - clamp negative solar elevations to `0`
-   - derive `dni = direct_normal_irradiance * 0.75`
+   - derive `sol_radiation_dir = direct_normal_irradiance * 0.75`
    - compute `delta_mrt` with `pythermalcomfort.models.solar_gain`
    - derive `tr = tdb + delta_mrt`
 8. Convert `v_z1` to the model's required 1.1 m wind speed using

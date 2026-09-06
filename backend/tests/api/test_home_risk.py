@@ -50,7 +50,7 @@ class SuccessfulRiskService:
                         tr=37.25,
                         rh=62.0,
                         v_z1=1.5,
-                        direct_normal_irradiance_wm2=700.0,
+                        sol_radiation_dir=525.0,
                     ),
                     heat_risk=ForecastHeatRisk(
                         risk_level_interpolated=1.2,
@@ -68,7 +68,7 @@ class SuccessfulRiskService:
                         tr=38.1,
                         rh=61.0,
                         v_z1=1.6,
-                        direct_normal_irradiance_wm2=740.0,
+                        sol_radiation_dir=555.0,
                     ),
                     heat_risk=ForecastHeatRisk(
                         risk_level_interpolated=1.4,
@@ -104,7 +104,7 @@ class MissingInputRiskService:
                 "tr": 35.0,
                 "rh": 60.0,
                 "v_z1": None,
-                "direct_normal_irradiance_wm2": 700.0,
+                "sol_radiation_dir": 525.0,
             },
         )
 
@@ -150,7 +150,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                     "tr": 37.25,
                     "rh": 62.0,
                     "v_z1": 1.5,
-                    "direct_normal_irradiance_wm2": 700.0,
+                    "sol_radiation_dir": 525.0,
                 },
                 "heat_risk": {
                     "risk_level_interpolated": 1.2,
@@ -168,7 +168,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                     "tr": 38.1,
                     "rh": 61.0,
                     "v_z1": 1.6,
-                    "direct_normal_irradiance_wm2": 740.0,
+                    "sol_radiation_dir": 555.0,
                 },
                 "heat_risk": {
                     "risk_level_interpolated": 1.4,
