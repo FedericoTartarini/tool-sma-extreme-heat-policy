@@ -41,8 +41,8 @@ function isSavedLocation(value: unknown): value is SavedLocation {
 }
 
 /**
- * Loads persisted saved locations. Any malformed payload yields an empty list;
- * this never throws.
+ * Loads persisted saved locations. A non-array or unreadable payload yields
+ * an empty list; invalid entries are dropped individually. This never throws.
  */
 export function loadSavedLocations(): SavedLocation[] {
   if (typeof window === "undefined") {
@@ -56,22 +56,38 @@ export function loadSavedLocations(): SavedLocation[] {
     }
 
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed) || !parsed.every(isSavedLocation)) {
+    if (!Array.isArray(parsed)) {
+      console.warn(
+        "Saved locations payload is not an array; ignoring it.",
+        parsed,
+      );
       return [];
     }
 
-    return parsed;
-  } catch {
+    const savedLocations = parsed.filter(isSavedLocation);
+    const discardedCount = parsed.length - savedLocations.length;
+    if (discardedCount > 0) {
+      console.warn(
+        `Dropped ${discardedCount} invalid saved-location ${
+          discardedCount === 1 ? "entry" : "entries"
+        }.`,
+      );
+    }
+
+    return savedLocations;
+  } catch (error) {
+    console.warn("Failed to load saved locations from localStorage.", error);
     return [];
   }
 }
 
 /**
- * Persists saved locations (best-effort).
+ * Persists saved locations. Returns false when storage is missing or the
+ * write fails; this never throws.
  */
-export function saveSavedLocations(list: readonly SavedLocation[]): void {
+export function saveSavedLocations(list: readonly SavedLocation[]): boolean {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
   try {
@@ -79,7 +95,9 @@ export function saveSavedLocations(list: readonly SavedLocation[]): void {
       SAVED_LOCATIONS_STORAGE_KEY,
       JSON.stringify(list),
     );
-  } catch {
-    // Intentionally ignore storage errors to keep UI interaction unblocked.
+    return true;
+  } catch (error) {
+    console.warn("Failed to persist saved locations to localStorage.", error);
+    return false;
   }
 }

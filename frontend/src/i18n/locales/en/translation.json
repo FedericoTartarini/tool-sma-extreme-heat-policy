@@ -307,7 +307,8 @@
         "empty_label": "Enter a name for this location.",
         "duplicate_label": "You already have a location with this name.",
         "limit_reached": "You can save up to {{max}} locations.",
-        "missing_coordinates": "This location can't be saved. Search for it again."
+        "missing_coordinates": "This location can't be saved. Search for it again.",
+        "storage_unavailable": "This location couldn't be saved. Check that browser storage is available and try again."
       }
     }
   },

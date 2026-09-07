@@ -164,4 +164,32 @@ describe("savedLocationsStore", () => {
     ).toEqual(["Home"]);
     expect(readPersisted(storage)).toHaveLength(1);
   });
+
+  it("rejects a save when persistence fails and keeps memory unchanged", () => {
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal("window", {
+      localStorage: {
+        clear: () => undefined,
+        getItem: () => null,
+        removeItem: () => undefined,
+        setItem: () => {
+          throw new Error("quota exceeded");
+        },
+      },
+    });
+    useSavedLocationsStore.setState({ savedLocations: [] });
+
+    const result = useSavedLocationsStore
+      .getState()
+      .saveLocation({ label: "Home", location: SYDNEY });
+
+    expect(result).toEqual({
+      status: "rejected",
+      reason: "storage_unavailable",
+    });
+    expect(useSavedLocationsStore.getState().savedLocations).toEqual([]);
+    warnSpy.mockRestore();
+  });
 });

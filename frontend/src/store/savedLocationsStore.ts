@@ -26,9 +26,15 @@ interface SavedLocationsState {
 
 export const useSavedLocationsStore = create<SavedLocationsState>(
   (set, get) => {
-    function commit(savedLocations: readonly SavedLocation[]): void {
+    function persistIfPossible(
+      savedLocations: readonly SavedLocation[],
+    ): boolean {
+      if (!saveSavedLocations(savedLocations)) {
+        return false;
+      }
+
       set({ savedLocations });
-      saveSavedLocations(savedLocations);
+      return true;
     }
 
     return {
@@ -56,12 +62,18 @@ export const useSavedLocationsStore = create<SavedLocationsState>(
           label: normalizedLabel,
           location,
         });
-        commit([saved, ...savedLocations]);
+
+        if (!persistIfPossible([saved, ...savedLocations])) {
+          return { status: "rejected", reason: "storage_unavailable" };
+        }
 
         return { status: "saved", id: saved.id };
       },
-      removeLocation: (id) =>
-        commit(get().savedLocations.filter((saved) => saved.id !== id)),
+      removeLocation: (id) => {
+        persistIfPossible(
+          get().savedLocations.filter((saved) => saved.id !== id),
+        );
+      },
     };
   },
 );

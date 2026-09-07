@@ -16,7 +16,8 @@ export type SaveLocationRejectReason =
   | "empty_label"
   | "duplicate_label"
   | "limit_reached"
-  | "missing_coordinates";
+  | "missing_coordinates"
+  | "storage_unavailable";
 
 export type SaveLocationResult =
   | { status: "saved"; id: string }

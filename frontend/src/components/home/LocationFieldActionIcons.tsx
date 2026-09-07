@@ -22,11 +22,12 @@ export function LocationFieldActionIcons({
 
   return (
     <>
-      {/* Issue #56 placeholder — visual only, no geolocation yet. */}
+      {/* Issue #56 placeholder — layout only until geolocation is wired. */}
       <ActionIcon
         variant="subtle"
         color="gray"
         size="sm"
+        disabled
         aria-label={t("home.savedLocations.useMyLocationButton")}
       >
         <IconCurrentLocation size={USE_MY_LOCATION_BUTTON_ICON_SIZE} />

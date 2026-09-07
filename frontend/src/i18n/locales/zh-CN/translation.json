@@ -307,7 +307,8 @@
         "empty_label": "请为该地点输入名称。",
         "duplicate_label": "已存在同名地点。",
         "limit_reached": "最多可保存 {{max}} 个地点。",
-        "missing_coordinates": "该地点无法保存，请重新搜索。"
+        "missing_coordinates": "该地点无法保存，请重新搜索。",
+        "storage_unavailable": "该地点无法保存。请确认浏览器允许本地存储后重试。"
       }
     }
   },

@@ -57,12 +57,15 @@ function toSavedLocation(
 
 describe("savedLocationsStorage", () => {
   let storage: Map<string, string>;
+  let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     storage = installWindowMock();
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    warnSpy.mockRestore();
     vi.unstubAllGlobals();
   });
 
@@ -86,6 +89,7 @@ describe("savedLocationsStorage", () => {
     storage.set(SAVED_LOCATIONS_STORAGE_KEY, "{not-json");
 
     expect(loadSavedLocations()).toEqual([]);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
   it("returns an empty list when the payload is not an array", () => {
@@ -95,18 +99,22 @@ describe("savedLocationsStorage", () => {
     );
 
     expect(loadSavedLocations()).toEqual([]);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
-  it("discards the whole list when an entry is missing required fields", () => {
+  it("keeps valid entries when another entry is missing required fields", () => {
+    const valid = toSavedLocation();
     storage.set(
       SAVED_LOCATIONS_STORAGE_KEY,
-      JSON.stringify([toSavedLocation(), { id: "saved-gym" }]),
+      JSON.stringify([valid, { id: "saved-gym" }]),
     );
 
-    expect(loadSavedLocations()).toEqual([]);
+    expect(loadSavedLocations()).toEqual([valid]);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
-  it("discards the whole list when an entry has no coordinates", () => {
+  it("keeps valid entries when another entry has no coordinates", () => {
+    const valid = toSavedLocation();
     const unusable = toSavedLocation({
       id: "saved-gym",
       location: {
@@ -117,23 +125,24 @@ describe("savedLocationsStorage", () => {
       },
     });
 
-    storage.set(
-      SAVED_LOCATIONS_STORAGE_KEY,
-      JSON.stringify([toSavedLocation(), unusable]),
-    );
+    storage.set(SAVED_LOCATIONS_STORAGE_KEY, JSON.stringify([valid, unusable]));
 
-    expect(loadSavedLocations()).toEqual([]);
+    expect(loadSavedLocations()).toEqual([valid]);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
-  it("swallows write failures so the UI stays unblocked", () => {
+  it("returns false when a write fails", () => {
     vi.unstubAllGlobals();
+    warnSpy.mockRestore();
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     installWindowMock({
       setItem: () => {
         throw new Error("quota exceeded");
       },
     });
 
-    expect(() => saveSavedLocations([toSavedLocation()])).not.toThrow();
+    expect(saveSavedLocations([toSavedLocation()])).toBe(false);
+    expect(warnSpy).toHaveBeenCalled();
   });
 
   it("is inert without a window", () => {
@@ -141,6 +150,6 @@ describe("savedLocationsStorage", () => {
     vi.stubGlobal("window", undefined);
 
     expect(loadSavedLocations()).toEqual([]);
-    expect(() => saveSavedLocations([toSavedLocation()])).not.toThrow();
+    expect(saveSavedLocations([toSavedLocation()])).toBe(false);
   });
 });
