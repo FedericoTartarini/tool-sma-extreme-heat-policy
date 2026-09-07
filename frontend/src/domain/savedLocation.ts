@@ -70,10 +70,6 @@ export function isSamePlace(
     return left.mapboxId === right.mapboxId;
   }
 
-  if (left.id === right.id) {
-    return true;
-  }
-
   return left.displayLabel === right.displayLabel;
 }
 

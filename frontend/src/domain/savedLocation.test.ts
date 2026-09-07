@@ -109,15 +109,6 @@ describe("isSamePlace", () => {
     ).toBe(true);
   });
 
-  it("matches on suggestion id when Mapbox ids are missing", () => {
-    expect(
-      isSamePlace(
-        { ...PERTH, mapboxId: undefined },
-        { ...PERTH, mapboxId: undefined, displayLabel: "Somewhere else" },
-      ),
-    ).toBe(true);
-  });
-
   it("matches on display label when ids differ", () => {
     expect(
       isSamePlace(
