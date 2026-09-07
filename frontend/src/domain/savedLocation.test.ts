@@ -117,6 +117,30 @@ describe("isSamePlace", () => {
       ),
     ).toBe(true);
   });
+
+  it("separates two places with different Mapbox ids", () => {
+    expect(
+      isSamePlace(PERTH, {
+        ...PERTH,
+        id: "loc-sydney",
+        mapboxId: "mapbox-sydney",
+        displayLabel: "Sydney, New South Wales, Australia",
+      }),
+    ).toBe(false);
+  });
+
+  it("separates two places with different labels and no Mapbox id", () => {
+    expect(
+      isSamePlace(
+        { ...PERTH, mapboxId: undefined },
+        {
+          ...PERTH,
+          mapboxId: undefined,
+          displayLabel: "Sydney, New South Wales, Australia",
+        },
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("isSuggestionAlreadySaved", () => {
