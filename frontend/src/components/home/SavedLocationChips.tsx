@@ -41,15 +41,11 @@ export function SavedLocationChips({
           <Button
             variant="light"
             size="xs"
+            disabled={isEditing}
             aria-label={t("home.savedLocations.apply", {
               label: savedLocation.label,
             })}
-            // Snapshot already has lat/long → heat-risk refetch follows.
             onClick={() => {
-              if (isEditing) {
-                return;
-              }
-
               applySelectedLocation(savedLocation.location);
               onApplySavedLocation?.();
             }}
@@ -64,9 +60,7 @@ export function SavedLocationChips({
               aria-label={t("home.savedLocations.remove", {
                 label: savedLocation.label,
               })}
-              onClick={(event) => {
-                // Stop bubble so delete does not also apply this location.
-                event.stopPropagation();
+              onClick={() => {
                 removeSavedLocation(savedLocation.id);
               }}
             >

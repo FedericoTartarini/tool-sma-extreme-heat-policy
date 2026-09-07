@@ -111,7 +111,7 @@ Import rules:
 - Each entry keeps a full location snapshot including coordinates, so applying a saved location skips Mapbox `suggest`/`retrieve` and triggers a risk refetch directly.
 - Up to 8 saved locations, labels capped at 20 characters and deduped case-insensitively.
 - Saving and switching update the UI immediately with no page reload; the list renders newest-first and is not re-sorted in the UI.
-- Saved locations are created and managed inside the save dialog opened from the Home location field.
+- Saved locations are created and managed inside the save dialog opened from the Home location field. If places are already saved, the bookmark stays available even when no location is currently selected, and the dialog then shows the list only.
 
 ## i18n
 

@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { SavedLocationChips } from "@/components/home/SavedLocationChips";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
-  SAVED_LOCATION_LABEL_MAX_LENGTH as MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT,
-  SAVED_LOCATIONS_MAX as MAX_SAVED_LOCATION_COUNT,
-  type SaveLocationRejectReason as SaveLocationValidationErrorCode,
+  SAVED_LOCATION_LABEL_MAX_LENGTH,
+  SAVED_LOCATIONS_MAX,
+  type SaveLocationRejectReason,
 } from "@/domain/savedLocation";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
@@ -32,7 +32,7 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
   );
   const [savedLocationNameInput, setSavedLocationNameInput] = useState("");
   const [validationErrorCode, setValidationErrorCode] =
-    useState<SaveLocationValidationErrorCode | null>(null);
+    useState<SaveLocationRejectReason | null>(null);
   const [isEditingSavedLocations, setIsEditingSavedLocations] = useState(false);
 
   const closeModalAndClearForm = () => {
@@ -66,41 +66,53 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
     <Modal
       opened={opened}
       onClose={closeModalAndClearForm}
-      title={t("home.savedLocations.modalTitle")}
+      title={
+        selectedLocation
+          ? t("home.savedLocations.modalTitle")
+          : t("home.savedLocations.savedListTitle")
+      }
       centered
     >
       <Stack gap={CONTENT_GAP}>
         {selectedLocation ? (
-          <Text fz="sm">
-            {t("home.savedLocations.savingLocationIntro", {
-              location: selectedLocation.displayLabel,
-            })}
-          </Text>
-        ) : null}
-        <TextInput
-          label={t("home.savedLocations.labelInput")}
-          placeholder={t("home.savedLocations.labelPlaceholder")}
-          value={savedLocationNameInput}
-          // Soft cap in the input; store also truncates to 20 characters.
-          maxLength={MAX_SAVED_LOCATION_NAME_CHARACTER_COUNT}
-          error={
-            validationErrorCode
-              ? t(`home.savedLocations.errors.${validationErrorCode}`, {
-                  max: MAX_SAVED_LOCATION_COUNT,
-                })
-              : null
-          }
-          onChange={(event) => {
-            setSavedLocationNameInput(event.currentTarget.value);
-            setValidationErrorCode(null);
-          }}
-          data-autofocus
-        />
-        <Stack gap="xs">
-          <Group justify="space-between" align="center" wrap="nowrap">
-            <Text fw={500} fz="sm">
-              {t("home.savedLocations.savedListTitle")}
+          <>
+            <Text fz="sm">
+              {t("home.savedLocations.savingLocationIntro", {
+                location: selectedLocation.displayLabel,
+              })}
             </Text>
+            <TextInput
+              label={t("home.savedLocations.labelInput")}
+              placeholder={t("home.savedLocations.labelPlaceholder")}
+              value={savedLocationNameInput}
+              // Soft cap in the input; store also truncates to 20 characters.
+              maxLength={SAVED_LOCATION_LABEL_MAX_LENGTH}
+              error={
+                validationErrorCode
+                  ? t(`home.savedLocations.errors.${validationErrorCode}`, {
+                      max: SAVED_LOCATIONS_MAX,
+                    })
+                  : null
+              }
+              onChange={(event) => {
+                setSavedLocationNameInput(event.currentTarget.value);
+                setValidationErrorCode(null);
+              }}
+              data-autofocus
+            />
+          </>
+        ) : null}
+        <Stack gap="xs">
+          <Group
+            justify={selectedLocation ? "space-between" : "flex-end"}
+            align="center"
+            wrap="nowrap"
+          >
+            {selectedLocation ? (
+              <Text fw={500} fz="sm">
+                {t("home.savedLocations.savedListTitle")}
+              </Text>
+            ) : null}
             {savedLocations.length > 0 ? (
               <Button
                 variant="subtle"
@@ -135,9 +147,11 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
           <Button variant="default" onClick={closeModalAndClearForm}>
             {t("home.savedLocations.cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={selectedLocation === null}>
-            {t("home.savedLocations.confirm")}
-          </Button>
+          {selectedLocation ? (
+            <Button onClick={handleSubmit}>
+              {t("home.savedLocations.confirm")}
+            </Button>
+          ) : null}
         </Group>
       </Stack>
     </Modal>
