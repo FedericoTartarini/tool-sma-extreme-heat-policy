@@ -50,12 +50,12 @@ export const useSavedLocationsStore = create<SavedLocationsState>(
         }
 
         const { savedLocations } = get();
-        if (isDuplicateLabel(savedLocations, normalizedLabel)) {
-          return { status: "rejected", reason: "duplicate_label" };
-        }
-
         if (savedLocations.length >= SAVED_LOCATIONS_MAX) {
           return { status: "rejected", reason: "limit_reached" };
+        }
+
+        if (isDuplicateLabel(savedLocations, normalizedLabel)) {
+          return { status: "rejected", reason: "duplicate_label" };
         }
 
         const saved = createSavedLocation({

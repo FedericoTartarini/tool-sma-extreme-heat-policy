@@ -146,6 +146,16 @@ describe("savedLocationsStore", () => {
     );
   });
 
+  it("reports a full list before a duplicate label", () => {
+    seedSavedLocations(SAVED_LOCATIONS_MAX);
+
+    const result = useSavedLocationsStore
+      .getState()
+      .saveLocation({ label: "Spot 0", location: PERTH });
+
+    expect(result).toEqual({ status: "rejected", reason: "limit_reached" });
+  });
+
   it("removes an entry and persists the shorter list", () => {
     useSavedLocationsStore
       .getState()
