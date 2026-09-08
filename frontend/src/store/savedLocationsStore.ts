@@ -12,7 +12,7 @@ import {
 import {
   loadSavedLocations,
   saveSavedLocations,
-} from "@/pages/home/savedLocationsStorage";
+} from "@/lib/savedLocationsStorage";
 
 interface SavedLocationsState {
   /** Newest first. Render in array order; do not sort in the UI. */

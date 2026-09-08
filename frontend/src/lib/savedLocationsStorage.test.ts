@@ -3,7 +3,7 @@ import type { SavedLocation } from "@/domain/savedLocation";
 import {
   loadSavedLocations,
   saveSavedLocations,
-} from "@/pages/home/savedLocationsStorage";
+} from "@/lib/savedLocationsStorage";
 
 const SAVED_LOCATIONS_STORAGE_KEY = "saved-locations:v1";
 
