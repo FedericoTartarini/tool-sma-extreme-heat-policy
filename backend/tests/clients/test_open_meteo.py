@@ -287,8 +287,8 @@ async def test_fetch_weather_forecast_returns_hourly_points_from_now_minus_1h() 
     ]
     assert [point.tdb for point in weather.points] == [31.0, 33.0, 34.0]
     assert [point.rh for point in weather.points] == [62.0, 61.0, 60.0]
-    assert [point.wind for point in weather.points] == [1.5, 1.1, 1.0]
-    assert [point.radiation for point in weather.points] == [720.0, 760.0, 780.0]
+    assert [point.v_z1 for point in weather.points] == [1.5, 1.1, 1.0]
+    assert [point.dni for point in weather.points] == [720.0, 760.0, 780.0]
 
 
 @pytest.mark.parametrize(

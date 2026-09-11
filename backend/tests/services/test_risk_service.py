@@ -37,8 +37,8 @@ class FakeWeatherClient:
                 time_utc=base_time + timedelta(hours=offset),
                 tdb=31.0 + offset,
                 rh=62.0 + offset,
-                wind=1.5 + (offset * 0.1),
-                radiation=700.0 + (offset * 50.0),
+                v_z1=1.5 + (offset * 0.1),
+                dni=700.0 + (offset * 50.0),
             )
             for offset in range(3)
         ]
@@ -122,10 +122,10 @@ def _build_mrt_dataframe(
         row = {
             "tdb": tdb,
             "rh": 62.0 + offset,
-            "wind": wind_start + (offset * 0.1),
-            "radiation": 700.0 + (offset * 50.0),
+            "v_z1": wind_start + (offset * 0.1),
+            "dni": 700.0 + (offset * 50.0),
             "elevation": 50.0 + offset,
-            "dni": 525.0 + (offset * 37.5),
+            "sol_radiation_dir": 525.0 + (offset * 37.5),
             "delta_mrt": tr_offset,
             "tr": tdb + tr_offset,
         }
@@ -492,7 +492,7 @@ async def test_risk_service_skips_future_points_with_missing_inputs(
     calculator = FakeCalculator()
     _install_mrt_pipeline(
         monkeypatch,
-        df=_build_mrt_dataframe(future_missing_by_row={1: {"wind"}}),
+        df=_build_mrt_dataframe(future_missing_by_row={1: {"v_z1"}}),
     )
     service = RiskService(
         weather_client=weather_client,
@@ -521,7 +521,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
 ) -> None:
     """Leading incomplete rows should be skipped until the first complete forecast point."""
 
-    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe(current_missing={"wind"}))
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe(current_missing={"v_z1"}))
     calculator = FakeCalculator()
     service = RiskService(
         weather_client=FakeWeatherClient(),
@@ -560,8 +560,8 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
     _install_mrt_pipeline(
         monkeypatch,
         df=_build_mrt_dataframe(
-            current_missing={"wind"},
-            future_missing_by_row={1: {"wind"}, 2: {"wind"}},
+            current_missing={"v_z1"},
+            future_missing_by_row={1: {"v_z1"}, 2: {"v_z1"}},
         ),
     )
     service = RiskService(

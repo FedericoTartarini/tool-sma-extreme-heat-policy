@@ -29,8 +29,8 @@ class RadiationWeatherClient:
                 time_utc=datetime(2026, 3, 9, 0, tzinfo=UTC) + timedelta(hours=index),
                 tdb=30.0,
                 rh=60.0,
-                wind=2.0,
-                radiation=value,
+                v_z1=2.0,
+                dni=value,
             )
             for index, value in enumerate(radiation)
         ]

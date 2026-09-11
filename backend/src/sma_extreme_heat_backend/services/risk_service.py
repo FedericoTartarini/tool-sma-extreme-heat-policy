@@ -54,13 +54,8 @@ class WindSpeedRefactorConfig:
 
 WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
 
-_PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
-    "tdb": "tdb",
-    "tr": "tr",
-    "rh": "rh",
-    "wind": "v_z1",
-    "dni": "sol_radiation_dir",
-}
+# MRT columns share their names with the public `inputs` fields, so no mapping is needed.
+_REQUIRED_INPUT_FIELDS: tuple[str, ...] = ("tdb", "rh", "v_z1", "sol_radiation_dir", "tr")
 
 
 class RiskService:
@@ -174,18 +169,7 @@ class RiskService:
     def _missing_required_input_fields(point: pd.Series) -> list[str]:
         """List missing public input fields for a forecast row."""
 
-        missing_inputs: list[str] = []
-        if pd.isna(point.tdb):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["tdb"])
-        if pd.isna(point.rh):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["rh"])
-        if pd.isna(point.wind):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["wind"])
-        if pd.isna(point.dni):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["dni"])
-        if pd.isna(point.tr):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["tr"])
-        return missing_inputs
+        return [field for field in _REQUIRED_INPUT_FIELDS if pd.isna(point[field])]
 
     @staticmethod
     def _first_candidate_forecast_point(*, forecast_mrt_df: pd.DataFrame) -> pd.Series:
@@ -216,13 +200,13 @@ class RiskService:
     ) -> dict[str, float | None]:
         """Expose the current point inputs using public API field names."""
 
-        v_z1 = _to_optional_float(point.wind)
+        v_z1 = _to_optional_float(point.v_z1)
         return {
             "tdb": _to_optional_float(point.tdb),
             "tr": _to_optional_float(point.tr),
             "rh": _to_optional_float(point.rh),
             "v_z1": v_z1,
-            "sol_radiation_dir": _to_optional_float(point.dni),
+            "sol_radiation_dir": _to_optional_float(point.sol_radiation_dir),
         }
 
     def _to_forecast_point(
@@ -236,11 +220,11 @@ class RiskService:
 
         assert not pd.isna(point.tdb)
         assert not pd.isna(point.rh)
-        assert not pd.isna(point.wind)
-        assert not pd.isna(point.dni)
+        assert not pd.isna(point.v_z1)
+        assert not pd.isna(point.sol_radiation_dir)
         assert not pd.isna(point.tr)
 
-        v_z1 = float(point.wind)
+        v_z1 = float(point.v_z1)
         # Convert the provider's 10 m wind speed into the model's required 1.1 m input.
         wind_speed_model_ms = self._resolve_model_wind_speed(vr=v_z1)
         computed = self.calculator.model_sports_heat_stress(
@@ -261,7 +245,7 @@ class RiskService:
                 tr=float(point.tr),
                 rh=float(point.rh),
                 v_z1=v_z1,
-                sol_radiation_dir=float(point.dni),
+                sol_radiation_dir=float(point.sol_radiation_dir),
             ),
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )
