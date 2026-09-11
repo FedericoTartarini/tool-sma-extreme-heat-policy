@@ -1,0 +1,79 @@
+import { create } from "zustand";
+import type { LocationSuggestion } from "@/domain/location";
+import {
+  createSavedLocation,
+  hasCoordinates,
+  isDuplicateLabel,
+  normalizeLabel,
+  SAVED_LOCATIONS_MAX,
+  type SavedLocation,
+  type SaveLocationResult,
+} from "@/domain/savedLocation";
+import {
+  loadSavedLocations,
+  saveSavedLocations,
+} from "@/lib/savedLocationsStorage";
+
+interface SavedLocationsState {
+  /** Newest first. Render in array order; do not sort in the UI. */
+  savedLocations: readonly SavedLocation[];
+  saveLocation: (input: {
+    label: string;
+    location: LocationSuggestion;
+  }) => SaveLocationResult;
+  removeLocation: (id: string) => void;
+}
+
+export const useSavedLocationsStore = create<SavedLocationsState>(
+  (set, get) => {
+    function persistIfPossible(
+      savedLocations: readonly SavedLocation[],
+    ): boolean {
+      if (!saveSavedLocations(savedLocations)) {
+        return false;
+      }
+
+      set({ savedLocations });
+      return true;
+    }
+
+    return {
+      savedLocations: loadSavedLocations(),
+      saveLocation: ({ label, location }) => {
+        if (!hasCoordinates(location)) {
+          return { status: "rejected", reason: "missing_coordinates" };
+        }
+
+        const normalizedLabel = normalizeLabel(label);
+        if (!normalizedLabel) {
+          return { status: "rejected", reason: "empty_label" };
+        }
+
+        const { savedLocations } = get();
+        if (savedLocations.length >= SAVED_LOCATIONS_MAX) {
+          return { status: "rejected", reason: "limit_reached" };
+        }
+
+        if (isDuplicateLabel(savedLocations, normalizedLabel)) {
+          return { status: "rejected", reason: "duplicate_label" };
+        }
+
+        const saved = createSavedLocation({
+          label: normalizedLabel,
+          location,
+        });
+
+        if (!persistIfPossible([saved, ...savedLocations])) {
+          return { status: "rejected", reason: "storage_unavailable" };
+        }
+
+        return { status: "saved", id: saved.id };
+      },
+      removeLocation: (id) => {
+        persistIfPossible(
+          get().savedLocations.filter((saved) => saved.id !== id),
+        );
+      },
+    };
+  },
+);
