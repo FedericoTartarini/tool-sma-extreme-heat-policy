@@ -24,11 +24,11 @@ export interface HeatRiskApiData {
 }
 
 export interface ForecastInputsApiData {
-  air_temperature_c: number;
-  mean_radiant_temperature_c: number;
-  relative_humidity_pct: number;
-  wind_speed_10m_ms: number;
-  direct_normal_irradiance_wm2: number;
+  tdb: number;
+  tr: number;
+  rh: number;
+  v_z1: number;
+  sol_radiation_dir: number;
 }
 
 export interface ForecastApiPoint {
@@ -116,11 +116,11 @@ function isForecastInputsApiData(
   }
 
   return (
-    isFiniteNumber(value.air_temperature_c) &&
-    isFiniteNumber(value.mean_radiant_temperature_c) &&
-    isFiniteNumber(value.relative_humidity_pct) &&
-    isFiniteNumber(value.wind_speed_10m_ms) &&
-    isFiniteNumber(value.direct_normal_irradiance_wm2)
+    isFiniteNumber(value.tdb) &&
+    isFiniteNumber(value.tr) &&
+    isFiniteNumber(value.rh) &&
+    isFiniteNumber(value.v_z1) &&
+    isFiniteNumber(value.sol_radiation_dir)
   );
 }
 
