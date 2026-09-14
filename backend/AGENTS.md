@@ -1,73 +1,25 @@
-# AI Working Guide for SMA Backend
+# SMA backend
 
-## Purpose and Scope
-- This guide applies only to `backend/`.
-- It extends the global rules in the repository root `AGENTS.md`.
-- If a local and global rule conflict, follow the stricter rule and note it in handoff.
-- Goal: preserve strict pythermalcomfort integration rules.
+FastAPI, Pydantic v2, httpx, pythermalcomfort, uvicorn. Python 3.12, environment tool `uv`.
 
-## Project Snapshot
-- Stack: FastAPI, Pydantic v2, httpx, pythermalcomfort, uvicorn.
-- Package/environment tool: `uv`.
-- Python version: 3.12.
+## Core rules (strict)
 
-## Core Rules (Strict Mode)
-- Use `pythermalcomfort.models.sports_heat_stress_risk.sports_heat_stress_risk` directly.
-- Model inputs are `tdb`, `tr`, `rh`, `vr`, `sport`.
-- Compute `tr` from the MRT pipeline, not by setting `tr = tdb`.
-- Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before model call.
+- Use `pythermalcomfort.models.sports_heat_stress_risk.sports_heat_stress_risk` directly. Model inputs are `tdb`, `tr`, `rh`, `vr`, `sport`. No custom risk scoring on top of its output.
+- Compute `tr` from the MRT pipeline, not by setting `tr = tdb`: Open-Meteo `direct_normal_irradiance` as the radiation source, MRT via `pvlib` + `pythermalcomfort.models.solar_gain`. Globe temperature (`tg`) is out of scope and must not be introduced.
+- Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before the model call.
 - Resolve the location timezone from coordinates in backend orchestration; do not require frontend `tz`.
-- Use Open-Meteo `direct_normal_irradiance` as the radiation source and derive MRT with `pvlib` + `pythermalcomfort.models.solar_gain`.
-- Globe temperature (`tg`) is out of scope and must not be introduced.
-- Do not introduce assumptions before model call:
-  - no clamping
-  - no default fill
-  - no business-side input remapping beyond the approved MRT pipeline and wind-height scaling
-- If required weather or MRT inputs are missing/uncertain (`tdb`, `rh`, `wind`, `radiation`, `tr`), return `422` with `unknown_inputs` under `response.forecast[*].heat_risk`.
+- No assumptions before the model call: no clamping, no default fill, no input remapping beyond the approved MRT pipeline and wind-height scaling.
+- If required weather or MRT inputs are missing or uncertain (`tdb`, `rh`, `wind`, `radiation`, `tr`), return `422` with `unknown_inputs` under `response.forecast[*].heat_risk`.
 - Return pythermalcomfort output in `response.heat_risk` with original field names.
 
-## Engineering and Design Rules
-- Keep routing thin: routes only parse/validate and delegate.
-- Keep service orchestration deterministic and easy to test.
-- Keep calculators focused on model invocation and minimal transformation.
-- Use explicit error types and actionable error responses.
-- Preserve backward-compatible API behavior unless a breaking change is explicitly requested.
+## Layers
 
-## Architecture and Layer Rules
-- `api/routes`: request/response wiring only.
-- `schemas`: request/response validation.
-- `services`: orchestration, cache, upstream sequencing.
-- `clients`: Open-Meteo API calls.
-- `calculators`: pythermalcomfort model invocation only.
-- `core`: config and error types.
+`api/routes` request/response wiring only; `schemas` validation; `services` orchestration, cache, upstream sequencing; `clients` Open-Meteo calls; `calculators` pythermalcomfort invocation only; `core` config and error types. Routes only parse, validate and delegate.
 
-## API Contract Rules
-- Preserve route: `POST /home/risk`.
-- Request requires `latitude` and `longitude`.
-- `sport` must be official pythermalcomfort `Sports` enum name (e.g. `SOCCER`).
-- Response shape:
-  - `request` -> request context including `sport`, `profile`, and `location.timezone`
-  - `forecast` -> hourly points with `time_utc`, `time_local`, explicit inputs, and raw pythermalcomfort output keys under `heat_risk`
-- API contract style is snake_case only; do not default to camelCase request keys or legacy `data/meta` response keys.
-- Validate request/response schemas at boundaries; do not rely on implicit dict shapes in route handlers.
+## API contract
 
-## Data and Error Handling Rules
-- Treat upstream weather data as untrusted input and validate before model invocation.
-- For upstream failures/timeouts, return explicit, stable error shapes with enough context for frontend handling.
-- Do not leak secrets or environment-specific internals in error payloads.
-- Keep logging structured and operationally useful; avoid noisy debug prints in committed code.
-
-## Testing Expectations
-- Add or update tests for any behavior or contract change.
-- Prefer unit tests for calculators/services and API-level tests for route contracts.
-- Keep tests deterministic; avoid network dependence in tests when mocks or fixtures are feasible.
-
-## Validation Checklist Before Handoff
-- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .`
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest`
-- Verify `uvicorn` starts locally.
-
-## Out of Scope / Do Not Change
-- No frontend changes unless explicitly requested.
-- No cloud/deployment changes in this phase.
-- No custom risk scoring formula on top of pythermalcomfort output.
+- Route `POST /home/risk`. Request requires `latitude` and `longitude`; `sport` is an official pythermalcomfort `Sports` enum name (e.g. `SOCCER`).
+- Response: `request` (context including `sport`, `profile`, `location.timezone`) and `forecast` (hourly points with `time_utc`, `time_local`, explicit inputs, raw pythermalcomfort keys under `heat_risk`).
+- snake_case only; no camelCase request keys, no legacy `data/meta` response keys. Validate schemas at boundaries; no implicit dict shapes in route handlers.
+- Upstream weather data is untrusted: validate before model invocation. Upstream failures and timeouts return explicit, stable error shapes without secrets or internals.
+- Tests: unit tests for calculators and services, API-level tests for route contracts, no network dependence.
