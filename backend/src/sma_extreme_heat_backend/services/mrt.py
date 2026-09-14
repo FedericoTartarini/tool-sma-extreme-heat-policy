@@ -39,10 +39,10 @@ MRT_MODEL_CONFIG = MrtModelConfig()
 MRT_COLUMNS: tuple[str, ...] = (
     "tdb",
     "rh",
-    "wind",
-    "radiation",
-    "elevation",
+    "v_z1",
     "dni",
+    "elevation",
+    "sol_radiation_dir",
     "delta_mrt",
     "tr",
 )
@@ -88,8 +88,8 @@ def _points_to_dataframe(points: list[HourlyWeatherPoint]) -> pd.DataFrame:
             "time": [point.time_utc for point in points],
             "tdb": [point.tdb for point in points],
             "rh": [point.rh for point in points],
-            "wind": [point.wind for point in points],
-            "radiation": [point.radiation for point in points],
+            "v_z1": [point.v_z1 for point in points],
+            "dni": [point.dni for point in points],
         }
     )
     df["time"] = pd.to_datetime(df["time"], utc=True)
@@ -127,14 +127,14 @@ def build_mrt_dataframe(
     solar_position.loc[solar_position["elevation"] < 0, "elevation"] = 0
 
     df_result = pd.concat([df_weather.copy(), solar_position], axis=1)
-    df_result["dni"] = (
-        df_result["radiation"] * MRT_MODEL_CONFIG.solar_radiation_correction_coefficient
+    df_result["sol_radiation_dir"] = (
+        df_result["dni"] * MRT_MODEL_CONFIG.solar_radiation_correction_coefficient
     )
 
     delta_mrt_values: list[float] = []
     negative_delta_mrt_values: list[float] = []
     for row in df_result.itertuples():
-        if pd.isna(row.elevation) or pd.isna(row.dni):
+        if pd.isna(row.elevation) or pd.isna(row.sol_radiation_dir):
             delta_mrt_values.append(float("nan"))
             continue
 
@@ -142,7 +142,7 @@ def build_mrt_dataframe(
             solar_gain(
                 sol_altitude=float(row.elevation),
                 sharp=MRT_MODEL_CONFIG.sharp,
-                sol_radiation_dir=float(row.dni),
+                sol_radiation_dir=float(row.sol_radiation_dir),
                 sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
                 f_svv=MRT_MODEL_CONFIG.f_svv,
                 f_bes=MRT_MODEL_CONFIG.f_bes,

@@ -37,8 +37,8 @@ class FakeWeatherClient:
                 time_utc=base_time + timedelta(hours=offset),
                 tdb=31.0 + offset,
                 rh=62.0 + offset,
-                wind=1.5 + (offset * 0.1),
-                radiation=700.0 + (offset * 50.0),
+                v_z1=1.5 + (offset * 0.1),
+                dni=700.0 + (offset * 50.0),
             )
             for offset in range(3)
         ]
@@ -122,10 +122,10 @@ def _build_mrt_dataframe(
         row = {
             "tdb": tdb,
             "rh": 62.0 + offset,
-            "wind": wind_start + (offset * 0.1),
-            "radiation": 700.0 + (offset * 50.0),
+            "v_z1": wind_start + (offset * 0.1),
+            "dni": 700.0 + (offset * 50.0),
             "elevation": 50.0 + offset,
-            "dni": 525.0 + (offset * 37.5),
+            "sol_radiation_dir": 525.0 + (offset * 37.5),
             "delta_mrt": tr_offset,
             "tr": tdb + tr_offset,
         }
@@ -192,11 +192,11 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         },
     }
     assert first.forecast[0].inputs.model_dump() == {
-        "air_temperature_c": 31.0,
-        "mean_radiant_temperature_c": 37.25,
-        "relative_humidity_pct": 62.0,
-        "wind_speed_10m_ms": 1.5,
-        "direct_normal_irradiance_wm2": 700.0,
+        "tdb": 31.0,
+        "tr": 37.25,
+        "rh": 62.0,
+        "v_z1": 1.5,
+        "sol_radiation_dir": 525.0,
     }
     assert first.forecast[0].heat_risk.model_dump() == {
         "risk_level_interpolated": 1.94,
@@ -210,11 +210,11 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_utc": "2026-03-09T00:00:00Z",
             "time_local": "2026-03-09T11:00:00+11:00",
             "inputs": {
-                "air_temperature_c": 31.0,
-                "mean_radiant_temperature_c": 37.25,
-                "relative_humidity_pct": 62.0,
-                "wind_speed_10m_ms": 1.5,
-                "direct_normal_irradiance_wm2": 700.0,
+                "tdb": 31.0,
+                "tr": 37.25,
+                "rh": 62.0,
+                "v_z1": 1.5,
+                "sol_radiation_dir": 525.0,
             },
             "heat_risk": {
                 "risk_level_interpolated": 1.94,
@@ -228,11 +228,11 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_utc": "2026-03-09T01:00:00Z",
             "time_local": "2026-03-09T12:00:00+11:00",
             "inputs": {
-                "air_temperature_c": 32.0,
-                "mean_radiant_temperature_c": 38.25,
-                "relative_humidity_pct": 63.0,
-                "wind_speed_10m_ms": 1.6,
-                "direct_normal_irradiance_wm2": 750.0,
+                "tdb": 32.0,
+                "tr": 38.25,
+                "rh": 63.0,
+                "v_z1": 1.6,
+                "sol_radiation_dir": 562.5,
             },
             "heat_risk": {
                 "risk_level_interpolated": 2.04,
@@ -246,11 +246,11 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
             "time_utc": "2026-03-09T02:00:00Z",
             "time_local": "2026-03-09T13:00:00+11:00",
             "inputs": {
-                "air_temperature_c": 33.0,
-                "mean_radiant_temperature_c": 39.25,
-                "relative_humidity_pct": 64.0,
-                "wind_speed_10m_ms": 1.7,
-                "direct_normal_irradiance_wm2": 800.0,
+                "tdb": 33.0,
+                "tr": 39.25,
+                "rh": 64.0,
+                "v_z1": 1.7,
+                "sol_radiation_dir": 600.0,
             },
             "heat_risk": {
                 "risk_level_interpolated": 2.14,
@@ -480,7 +480,7 @@ async def test_risk_service_uses_only_height_scaled_wind_for_higher_values(
     )
 
     assert calculator.payloads[0].vr == pytest.approx(2.72)
-    assert response.forecast[0].inputs.wind_speed_10m_ms == pytest.approx(4.0)
+    assert response.forecast[0].inputs.v_z1 == pytest.approx(4.0)
 
 
 async def test_risk_service_skips_future_points_with_missing_inputs(
@@ -492,7 +492,7 @@ async def test_risk_service_skips_future_points_with_missing_inputs(
     calculator = FakeCalculator()
     _install_mrt_pipeline(
         monkeypatch,
-        df=_build_mrt_dataframe(future_missing_by_row={1: {"wind"}}),
+        df=_build_mrt_dataframe(future_missing_by_row={1: {"v_z1"}}),
     )
     service = RiskService(
         weather_client=weather_client,
@@ -521,7 +521,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
 ) -> None:
     """Leading incomplete rows should be skipped until the first complete forecast point."""
 
-    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe(current_missing={"wind"}))
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe(current_missing={"v_z1"}))
     calculator = FakeCalculator()
     service = RiskService(
         weather_client=FakeWeatherClient(),
@@ -544,11 +544,11 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
         "2026-03-09T02:00:00Z",
     ]
     assert response.forecast[0].inputs.model_dump() == {
-        "air_temperature_c": 32.0,
-        "mean_radiant_temperature_c": 38.25,
-        "relative_humidity_pct": 63.0,
-        "wind_speed_10m_ms": 1.6,
-        "direct_normal_irradiance_wm2": 750.0,
+        "tdb": 32.0,
+        "tr": 38.25,
+        "rh": 63.0,
+        "v_z1": 1.6,
+        "sol_radiation_dir": 562.5,
     }
 
 
@@ -560,8 +560,8 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
     _install_mrt_pipeline(
         monkeypatch,
         df=_build_mrt_dataframe(
-            current_missing={"wind"},
-            future_missing_by_row={1: {"wind"}, 2: {"wind"}},
+            current_missing={"v_z1"},
+            future_missing_by_row={1: {"v_z1"}, 2: {"v_z1"}},
         ),
     )
     service = RiskService(
@@ -581,13 +581,13 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
         )
     except ModelInputUnavailableError as exc:
         assert exc.status_code == 422
-        assert exc.detail["unknown_inputs"] == ["wind_speed_10m_ms"]
+        assert exc.detail["unknown_inputs"] == ["v_z1"]
         assert exc.detail["available_inputs"] == {
-            "air_temperature_c": 31.0,
-            "mean_radiant_temperature_c": 37.25,
-            "relative_humidity_pct": 62.0,
-            "wind_speed_10m_ms": None,
-            "direct_normal_irradiance_wm2": 700.0,
+            "tdb": 31.0,
+            "tr": 37.25,
+            "rh": 62.0,
+            "v_z1": None,
+            "sol_radiation_dir": 525.0,
         }
     else:
         raise AssertionError("Expected ModelInputUnavailableError")
