@@ -9,7 +9,7 @@ FastAPI, Pydantic v2, httpx, pythermalcomfort, uvicorn. Python 3.12, environment
 - Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before the model call.
 - Resolve the location timezone from coordinates in backend orchestration; do not require frontend `tz`.
 - No assumptions before the model call: no clamping, no default fill, no input remapping beyond the approved MRT pipeline and wind-height scaling.
-- If required weather or MRT inputs are missing or uncertain (`tdb`, `rh`, `v_z1`, `sol_radiation_dir`, `tr`), return `422` with `unknown_inputs` under `response.forecast[*].heat_risk`.
+- Required model inputs are `tdb`, `rh`, `v_z1`, `sol_radiation_dir`, `tr`. Forecast rows missing any of them are skipped; if no complete row remains, return `422` with `detail.unknown_inputs` and `detail.available_inputs` from the earliest candidate row.
 - Return pythermalcomfort output in `response.heat_risk` with original field names.
 
 ## Layers
