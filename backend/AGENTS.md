@@ -12,7 +12,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run pytest
 UV_CACHE_DIR=/tmp/uv-cache uv run uvicorn sma_extreme_heat_backend.main:app --port 8000
 ```
 
-All three pass when ruff and pytest exit 0 and `GET /health/ready` on the running server returns 200, which is what CI checks.
+All three pass when ruff and pytest exit 0 and, with the server running, `curl http://127.0.0.1:8000/health/ready` from a second shell prints `{"status":"ready"}`, which is what CI checks.
 
 ## Core rules (strict)
 
