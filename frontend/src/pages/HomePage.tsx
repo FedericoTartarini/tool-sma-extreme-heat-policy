@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { CurrentRiskSection } from "@/components/home/CurrentRiskSection";
-import { EnvironmentalMetricsSection } from "@/components/home/EnvironmentalMetricsSection";
 import { FiltersSection } from "@/components/home/FiltersSection";
 import { ForecastSection } from "@/components/home/ForecastSection";
 import { LocationMapSection } from "@/components/home/LocationMapSection";
@@ -25,7 +24,6 @@ import {
 } from "@/pages/home/homeToast";
 import { useHomeBootstrap } from "@/pages/home/useHomeBootstrap";
 import { useHomeStore } from "@/store/homeStore";
-import { useHomeUiStore } from "@/store/homeUiStore";
 import { useTranslation } from "react-i18next";
 
 const HOME_AUTO_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
@@ -36,10 +34,8 @@ const HOME_AUTO_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 export function HomePage() {
   const { t } = useTranslation();
   const { setQueryStates } = useHomeBootstrap();
-  const heatRisk = useHomeHeatRisk();
-  const showWeatherDetails = useHomeUiStore(
-    (state) => state.showWeatherDetails,
-  );
+  const { canSyncSelection, errorReason, hasCalculatedRisk, refresh } =
+    useHomeHeatRisk();
   const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
@@ -48,7 +44,7 @@ export function HomePage() {
 
   useHomeUrlSync({
     setQueryStates,
-    canSyncSelection: heatRisk.canSyncSelection,
+    canSyncSelection,
   });
 
   const publishToast = useCallback(
@@ -71,24 +67,16 @@ export function HomePage() {
     },
     [publishToast],
   );
-  const runScheduledRefresh = useEffectEvent(async () => heatRisk.refresh());
+  const runScheduledRefresh = useEffectEvent(async () => refresh());
 
   useEffect(() => {
-    if (heatRisk.errorReason) {
-      publishToast((id) =>
-        createCalculationErrorToast(id, heatRisk.errorReason),
-      );
+    if (errorReason) {
+      publishToast((id) => createCalculationErrorToast(id, errorReason));
     }
-  }, [heatRisk.errorReason, publishToast]);
+  }, [errorReason, publishToast]);
 
   useEffect(() => {
-    if (
-      !(
-        selectedLocation !== null &&
-        Boolean(sport) &&
-        heatRisk.hasCalculatedRisk
-      )
-    ) {
+    if (!(selectedLocation !== null && Boolean(sport) && hasCalculatedRisk)) {
       return;
     }
 
@@ -120,24 +108,13 @@ export function HomePage() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [
-    heatRisk.hasCalculatedRisk,
-    profile,
-    publishToast,
-    selectedLocation,
-    sport,
-  ]);
+  }, [hasCalculatedRisk, profile, publishToast, selectedLocation, sport]);
 
   return (
     <>
       <Stack gap={SECTION_STACK_GAP}>
         <FiltersSection onLocationError={handleLocationError} />
         <CurrentRiskSection />
-        {heatRisk.hasCalculatedRisk && showWeatherDetails ? (
-          <EnvironmentalMetricsSection
-            inputs={heatRisk.currentEnvironmentalInputs}
-          />
-        ) : null}
         <CurrentRiskRecommendationsSection />
         <ForecastSection />
         <LocationMapSection />

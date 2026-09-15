@@ -159,11 +159,11 @@ Example response:
       "time_utc": "2026-03-09T00:00:00Z",
       "time_local": "2026-03-09T11:00:00+11:00",
       "inputs": {
-        "air_temperature_c": 31.0,
-        "mean_radiant_temperature_c": 37.25,
-        "relative_humidity_pct": 62.0,
-        "wind_speed_10m_ms": 1.5,
-        "direct_normal_irradiance_wm2": 700.0
+        "tdb": 31.0,
+        "tr": 37.25,
+        "rh": 62.0,
+        "v_z1": 1.5,
+        "sol_radiation_dir": 525.0
       },
       "heat_risk": {
         "risk_level_interpolated": 1.94,
@@ -199,10 +199,10 @@ Example response:
 7. Build MRT values with `pvlib` + `pythermalcomfort` on the provider-native hourly points:
    - compute solar elevation for each local timestamp
    - clamp negative solar elevations to `0`
-   - derive `dni = direct_normal_irradiance * 0.75`
+   - derive `sol_radiation_dir = direct_normal_irradiance * 0.75`
    - compute `delta_mrt` with `pythermalcomfort.models.solar_gain`
    - derive `tr = tdb + delta_mrt`
-8. Convert `wind_speed_10m_ms` to the model's required 1.1 m wind speed using
+8. Convert `v_z1` to the model's required 1.1 m wind speed using
    `pythermalcomfort.utils.scale_wind_speed_log(...)`.
 9. Run `sports_heat_stress_risk` for each complete forecast row.
 10. Skip incomplete rows and treat the earliest complete row as `forecast[0]`.
@@ -234,6 +234,6 @@ Example response:
 
 - Mean radiant temperature is not assumed to equal dry-bulb air temperature.
   The backend derives MRT through the solar-gain pipeline and returns the final
-  `mean_radiant_temperature_c` in each forecast point.
+  `tr` input in each forecast point, matching PyThermalComfort naming.
 - Each forecast point exposes both `time_utc` and `time_local`; `time_utc` is the
   canonical instant, while `time_local` is the location-local display time.

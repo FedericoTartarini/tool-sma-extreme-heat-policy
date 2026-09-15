@@ -321,22 +321,6 @@
       "extreme": "Ext"
     }
   },
-  "environmental": {
-    "showWeatherDetails": "View weather details",
-    "hideWeatherDetails": "Hide weather details",
-    "weatherDetailsTitle": "Weather details",
-    "airTemperatureC": "Air temperature",
-    "windSpeed10mMs": "Wind speed",
-    "relativeHumidityPct": "Relative humidity",
-    "meanRadiantTemperatureC": "Mean radiant temperature",
-    "directNormalIrradianceWm2": "Direct normal irradiance",
-    "units": {
-      "celsius": "°C",
-      "percent": "%",
-      "metersPerSecond": "m/s",
-      "wattsPerSquareMeter": "W/m²"
-    }
-  },
   "charts": {
     "gauge": {
       "seriesName": "Heat Risk",
