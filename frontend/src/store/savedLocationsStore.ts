@@ -6,6 +6,7 @@ import {
   isDuplicateLabel,
   normalizeLabel,
   SAVED_LOCATIONS_MAX,
+  type RemoveLocationResult,
   type SavedLocation,
   type SaveLocationResult,
 } from "@/domain/savedLocation";
@@ -21,7 +22,7 @@ interface SavedLocationsState {
     label: string;
     location: LocationSuggestion;
   }) => SaveLocationResult;
-  removeLocation: (id: string) => void;
+  removeLocation: (id: string) => RemoveLocationResult;
 }
 
 export const useSavedLocationsStore = create<SavedLocationsState>(
@@ -70,9 +71,15 @@ export const useSavedLocationsStore = create<SavedLocationsState>(
         return { status: "saved", id: saved.id };
       },
       removeLocation: (id) => {
-        persistIfPossible(
-          get().savedLocations.filter((saved) => saved.id !== id),
-        );
+        if (
+          !persistIfPossible(
+            get().savedLocations.filter((saved) => saved.id !== id),
+          )
+        ) {
+          return { status: "rejected", reason: "storage_unavailable" };
+        }
+
+        return { status: "removed" };
       },
     };
   },

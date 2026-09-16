@@ -165,8 +165,9 @@ describe("savedLocationsStore", () => {
       .saveLocation({ label: "Gym", location: PERTH });
     const [gym] = useSavedLocationsStore.getState().savedLocations;
 
-    useSavedLocationsStore.getState().removeLocation(gym.id);
+    const result = useSavedLocationsStore.getState().removeLocation(gym.id);
 
+    expect(result).toEqual({ status: "removed" });
     expect(
       useSavedLocationsStore
         .getState()
@@ -200,6 +201,35 @@ describe("savedLocationsStore", () => {
       reason: "storage_unavailable",
     });
     expect(useSavedLocationsStore.getState().savedLocations).toEqual([]);
+    warnSpy.mockRestore();
+  });
+
+  it("rejects a remove when persistence fails and keeps memory unchanged", () => {
+    useSavedLocationsStore
+      .getState()
+      .saveLocation({ label: "Home", location: SYDNEY });
+    const [home] = useSavedLocationsStore.getState().savedLocations;
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal("window", {
+      localStorage: {
+        clear: () => undefined,
+        getItem: () => null,
+        removeItem: () => undefined,
+        setItem: () => {
+          throw new Error("quota exceeded");
+        },
+      },
+    });
+
+    const result = useSavedLocationsStore.getState().removeLocation(home.id);
+
+    expect(result).toEqual({
+      status: "rejected",
+      reason: "storage_unavailable",
+    });
+    expect(useSavedLocationsStore.getState().savedLocations).toEqual([home]);
     warnSpy.mockRestore();
   });
 });

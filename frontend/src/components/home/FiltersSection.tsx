@@ -11,7 +11,7 @@ import {
   useCombobox,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconBookmarkFilled, IconBookmarkPlus } from "@tabler/icons-react";
+import { IconBookmarkFilled } from "@tabler/icons-react";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
@@ -128,24 +128,18 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           <Text span fz="md" lineClamp={1} flex={1} miw={0}>
             {suggestion.displayLabel}
           </Text>
-          <Box
-            component="span"
-            role="img"
-            c="brand"
-            aria-label={
-              isSavedSuggestion
-                ? t("home.savedLocations.suggestionSaved")
-                : t("home.savedLocations.suggestionUnsaved")
-            }
-          >
-            {isSavedSuggestion ? (
+          {isSavedSuggestion ? (
+            <Box
+              component="span"
+              role="img"
+              c="brand"
+              aria-label={t("home.savedLocations.suggestionSaved")}
+            >
               <IconBookmarkFilled
                 size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE}
               />
-            ) : (
-              <IconBookmarkPlus size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE} />
-            )}
-          </Box>
+            </Box>
+          ) : null}
         </Group>
       </Combobox.Option>
     );

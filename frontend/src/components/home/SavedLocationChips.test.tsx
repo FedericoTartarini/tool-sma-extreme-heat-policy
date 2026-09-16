@@ -44,7 +44,11 @@ vi.mock("@/store/savedLocationsStore", () => ({
   useSavedLocationsStore: (
     selector: (state: {
       savedLocations: SavedLocation[];
-      removeLocation: (id: string) => void;
+      removeLocation: (
+        id: string,
+      ) =>
+        | { status: "removed" }
+        | { status: "rejected"; reason: "storage_unavailable" };
     }) => unknown,
   ) =>
     selector({

@@ -23,6 +23,10 @@ export type SaveLocationResult =
   | { status: "saved"; id: string }
   | { status: "rejected"; reason: SaveLocationRejectReason };
 
+export type RemoveLocationResult =
+  | { status: "removed" }
+  | { status: "rejected"; reason: "storage_unavailable" };
+
 /** Trims and caps a user-typed label; the input field caps length as well. */
 export function normalizeLabel(rawLabel: string): string {
   return rawLabel.trim().slice(0, SAVED_LOCATION_LABEL_MAX_LENGTH);

@@ -84,7 +84,11 @@ vi.mock("@/store/savedLocationsStore", () => ({
     selector: (state: {
       savedLocations: SavedLocation[];
       saveLocation: () => { status: "saved"; id: string };
-      removeLocation: (id: string) => void;
+      removeLocation: (
+        id: string,
+      ) =>
+        | { status: "removed" }
+        | { status: "rejected"; reason: "storage_unavailable" };
     }) => unknown,
   ) =>
     selector({
@@ -116,10 +120,9 @@ describe("SaveLocationModal", () => {
     const markup = renderModal();
 
     expect(markup).toContain(tFromEn("home.savedLocations.modalTitle"));
+    expect(markup).toContain(fixtures.perth.displayLabel);
     expect(markup).toContain(
-      tFromEn("home.savedLocations.savingLocationIntro", {
-        location: fixtures.perth.displayLabel,
-      }),
+      tFromEn("home.savedLocations.savingLocationNameHint"),
     );
     expect(markup).toContain(tFromEn("home.savedLocations.labelInput"));
     expect(markup).toContain(tFromEn("home.savedLocations.confirm"));
@@ -132,10 +135,9 @@ describe("SaveLocationModal", () => {
 
     expect(markup).toContain(tFromEn("home.savedLocations.savedListTitle"));
     expect(markup).toContain("Home");
+    expect(markup).not.toContain(fixtures.perth.displayLabel);
     expect(markup).not.toContain(
-      tFromEn("home.savedLocations.savingLocationIntro", {
-        location: fixtures.perth.displayLabel,
-      }),
+      tFromEn("home.savedLocations.savingLocationNameHint"),
     );
     expect(markup).not.toContain(tFromEn("home.savedLocations.labelInput"));
   });

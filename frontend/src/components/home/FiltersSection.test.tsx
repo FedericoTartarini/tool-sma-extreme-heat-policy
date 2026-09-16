@@ -131,13 +131,13 @@ function renderFilters(): string {
 }
 
 describe("FiltersSection", () => {
-  it("announces saved and unsaved bookmark state in the dropdown", () => {
+  it("announces saved bookmark state in the dropdown", () => {
     fixtures.selectedLocation = fixtures.perth;
     const markup = renderFilters();
 
     expect(markup).toContain('role="img"');
     expect(markup).toContain("home.savedLocations.suggestionSaved");
-    expect(markup).toContain("home.savedLocations.suggestionUnsaved");
+    expect(markup).not.toContain("home.savedLocations.suggestionUnsaved");
     expect(markup).toContain("Perth, Western Australia, Australia");
     expect(markup).toContain("Sydney, New South Wales, Australia");
   });

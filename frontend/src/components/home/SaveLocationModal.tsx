@@ -76,11 +76,14 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
       <Stack gap={CONTENT_GAP}>
         {selectedLocation ? (
           <>
-            <Text fz="sm">
-              {t("home.savedLocations.savingLocationIntro", {
-                location: selectedLocation.displayLabel,
-              })}
-            </Text>
+            <Stack gap={4}>
+              <Text fw={600} fz="md">
+                {selectedLocation.displayLabel}
+              </Text>
+              <Text c="dimmed" fz="sm">
+                {t("home.savedLocations.savingLocationNameHint")}
+              </Text>
+            </Stack>
             <TextInput
               label={t("home.savedLocations.labelInput")}
               placeholder={t("home.savedLocations.labelPlaceholder")}
