@@ -1,7 +1,8 @@
 import { RISK_REGISTRY, type RiskLevel } from "@/domain/riskRegistry";
+import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export interface RecommendationDetailItem {
-  src: string;
+  image: ResponsiveImageAsset;
   label: string;
 }
 
@@ -47,9 +48,9 @@ export function getRecommendationDetailContent(
   return {
     level,
     levelLabel: toString(translate(details.levelKey)),
-    items: details.keyIconPaths
-      .map((iconPath, index) => ({
-        src: iconPath,
+    items: details.keyIconAssets
+      .map((image, index) => ({
+        image,
         label: labels[index] ?? "",
       }))
       .filter((item) => item.label),

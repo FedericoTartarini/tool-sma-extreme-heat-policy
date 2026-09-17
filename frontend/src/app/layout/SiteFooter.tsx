@@ -14,7 +14,7 @@ import {
   PARAGRAPH_GAP,
   STANDARD_TEXT_LINE_HEIGHT,
 } from "@/config/uiTypography";
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 
 const APP_VERSION = "1.2.2";
 const COPYRIGHT_YEAR = 2025;
@@ -48,14 +48,16 @@ export function SiteFooter() {
     {
       key: "usyd",
       label: t("footer.developedBy"),
-      src: toPublicAssetUrl("branding/logo-usyd-black.png"),
+      image: BRANDING_ASSETS.usyd,
+      sizes: "145px",
       alt: t("footer.usydLogoAlt"),
       height: 50,
     },
     {
       key: "sma",
       label: t("footer.endorsedBy"),
-      src: toPublicAssetUrl("branding/sma-black.png"),
+      image: BRANDING_ASSETS.sma,
+      sizes: "125px",
       alt: t("footer.smaLogoAlt"),
       height: 50,
     },
@@ -73,7 +75,10 @@ export function SiteFooter() {
         }}
       >
         <Image
-          src={logo.src}
+          src={logo.image.src}
+          srcSet={logo.image.srcSet}
+          sizes={logo.sizes}
+          loading="lazy"
           alt={logo.alt}
           w="auto"
           h={logo.height}

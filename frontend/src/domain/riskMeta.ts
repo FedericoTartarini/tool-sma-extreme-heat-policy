@@ -5,6 +5,7 @@ import {
   toRiskLevel as toRiskLevelFromRegistry,
   type RiskLevel,
 } from "@/domain/riskRegistry";
+import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export type { RiskLevel } from "@/domain/riskRegistry";
 export { RISK_LEVELS } from "@/domain/riskRegistry";
@@ -12,7 +13,7 @@ export { RISK_LEVELS } from "@/domain/riskRegistry";
 interface LegacyRiskMetaEntry {
   color: string;
   scoreUpperExclusive: number;
-  keyIconPaths: string[];
+  keyIconAssets: ResponsiveImageAsset[];
   i18nLevelKey: string;
   i18nLevelShortKey: string;
 }
@@ -25,7 +26,7 @@ export const RISK_LEVEL_META: Record<RiskLevel, LegacyRiskMetaEntry> =
       meta[level] = {
         color: registryEntry.color,
         scoreUpperExclusive: registryEntry.scoreUpperExclusive,
-        keyIconPaths: registryEntry.keyIconPaths,
+        keyIconAssets: registryEntry.keyIconAssets,
         i18nLevelKey: registryEntry.levelKey,
         i18nLevelShortKey: registryEntry.levelShortKey,
       };

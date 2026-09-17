@@ -1,12 +1,32 @@
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import {
+  createResponsiveImageAsset,
+  type ResponsiveImageAsset,
+} from "@/lib/responsiveImage";
+
+const ACTION_IMAGE_WIDTHS = [48, 96] as const;
 
 export const RECOMMENDATION_ACTION_ASSETS = {
-  hydration: toPublicAssetUrl("actions/hydration.png"),
-  clothing: toPublicAssetUrl("actions/clothing.png"),
-  pause: toPublicAssetUrl("actions/pause.png"),
-  cooling: toPublicAssetUrl("actions/cooling.png"),
-  stop: toPublicAssetUrl("actions/stop.png"),
-} satisfies Record<string, string>;
+  hydration: createResponsiveImageAsset({
+    assetPath: "actions/hydration",
+    widths: ACTION_IMAGE_WIDTHS,
+  }),
+  clothing: createResponsiveImageAsset({
+    assetPath: "actions/clothing",
+    widths: ACTION_IMAGE_WIDTHS,
+  }),
+  pause: createResponsiveImageAsset({
+    assetPath: "actions/pause",
+    widths: ACTION_IMAGE_WIDTHS,
+  }),
+  cooling: createResponsiveImageAsset({
+    assetPath: "actions/cooling",
+    widths: ACTION_IMAGE_WIDTHS,
+  }),
+  stop: createResponsiveImageAsset({
+    assetPath: "actions/stop",
+    widths: ACTION_IMAGE_WIDTHS,
+  }),
+} satisfies Record<string, ResponsiveImageAsset>;
 
 export type RecommendationActionAssetKey =
   keyof typeof RECOMMENDATION_ACTION_ASSETS;

@@ -1,5 +1,6 @@
 import { getReadableTextColor } from "@/lib/colorContrast";
 import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
+import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export type RiskLevel = "low" | "moderate" | "high" | "extreme";
 
@@ -7,7 +8,7 @@ export interface RiskRegistryEntry {
   scoreLowerInclusive: number;
   scoreUpperExclusive: number;
   color: string;
-  keyIconPaths: string[];
+  keyIconAssets: ResponsiveImageAsset[];
   levelKey: string;
   levelShortKey: string;
   keyRecommendationsKey: string;
@@ -37,7 +38,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 0,
     scoreUpperExclusive: 1,
     color: "#FFE478",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
     ],
@@ -51,7 +52,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 1,
     scoreUpperExclusive: 2,
     color: "#F5810C",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
       RECOMMENDATION_ACTION_ASSETS.pause,
@@ -66,7 +67,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 2,
     scoreUpperExclusive: 3,
     color: "#CF3838",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
       RECOMMENDATION_ACTION_ASSETS.pause,
@@ -82,7 +83,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 3,
     scoreUpperExclusive: Number.POSITIVE_INFINITY,
     color: "#8C2439",
-    keyIconPaths: [RECOMMENDATION_ACTION_ASSETS.stop],
+    keyIconAssets: [RECOMMENDATION_ACTION_ASSETS.stop],
     levelKey: "risk.level.extreme",
     levelShortKey: "risk.levelShort.extreme",
     keyRecommendationsKey: "recommendations.key.extreme",

@@ -3,6 +3,57 @@ import type { RiskLevel } from "@/domain/riskRegistry";
 import enTranslations from "@/i18n/locales/en/translation.json";
 import { getRecommendationDetailContent } from "@/lib/recommendationDetails";
 
+const EXPECTED_ACTION_IMAGES = {
+  low: [
+    {
+      src: "/actions/hydration-96.webp",
+      srcSet: "/actions/hydration-48.webp 48w, /actions/hydration-96.webp 96w",
+    },
+    {
+      src: "/actions/clothing-96.webp",
+      srcSet: "/actions/clothing-48.webp 48w, /actions/clothing-96.webp 96w",
+    },
+  ],
+  moderate: [
+    {
+      src: "/actions/hydration-96.webp",
+      srcSet: "/actions/hydration-48.webp 48w, /actions/hydration-96.webp 96w",
+    },
+    {
+      src: "/actions/clothing-96.webp",
+      srcSet: "/actions/clothing-48.webp 48w, /actions/clothing-96.webp 96w",
+    },
+    {
+      src: "/actions/pause-96.webp",
+      srcSet: "/actions/pause-48.webp 48w, /actions/pause-96.webp 96w",
+    },
+  ],
+  high: [
+    {
+      src: "/actions/hydration-96.webp",
+      srcSet: "/actions/hydration-48.webp 48w, /actions/hydration-96.webp 96w",
+    },
+    {
+      src: "/actions/clothing-96.webp",
+      srcSet: "/actions/clothing-48.webp 48w, /actions/clothing-96.webp 96w",
+    },
+    {
+      src: "/actions/pause-96.webp",
+      srcSet: "/actions/pause-48.webp 48w, /actions/pause-96.webp 96w",
+    },
+    {
+      src: "/actions/cooling-96.webp",
+      srcSet: "/actions/cooling-48.webp 48w, /actions/cooling-96.webp 96w",
+    },
+  ],
+  extreme: [
+    {
+      src: "/actions/stop-96.webp",
+      srcSet: "/actions/stop-48.webp 48w, /actions/stop-96.webp 96w",
+    },
+  ],
+} satisfies Record<RiskLevel, { src: string; srcSet: string }[]>;
+
 function translate(key: string): unknown {
   return key
     .split(".")
@@ -71,7 +122,9 @@ describe("getRecommendationDetailContent", () => {
       expect(content.levelLabel).toBe(expectedLabel);
       expect(content.items.map((item) => item.label)).toEqual(expectedItems);
       expect(content.items).toHaveLength(expectedItems.length);
-      expect(content.items.every((item) => item.src.length > 0)).toBe(true);
+      expect(content.items.map((item) => item.image)).toEqual(
+        EXPECTED_ACTION_IMAGES[level],
+      );
       expect(content.description.length).toBeGreaterThan(0);
       expect(content.suggestions).toEqual(expectedSuggestions);
     },

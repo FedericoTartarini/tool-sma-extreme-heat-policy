@@ -12,12 +12,7 @@ import {
 } from "@mantine/core";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  isSportType,
-  sports,
-  toSportAssetName,
-  type SportType,
-} from "@/domain/sport";
+import { isSportType, sports, type SportType } from "@/domain/sport";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
   useHomeLocationSuggest,
@@ -25,7 +20,6 @@ import {
 } from "@/hooks/useHomeLocationSuggest";
 import { useHomeStore } from "@/store/homeStore";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 
 interface SelectOption<T extends string = string> {
   value: T;
@@ -34,6 +28,7 @@ interface SelectOption<T extends string = string> {
 
 const FIELD_LABEL_WIDTH = 72;
 const SPORT_IMAGE_HEIGHT = 104;
+const SPORT_IMAGE_SIZES = "(max-width: 48em) calc(100vw - 4rem), 48rem";
 
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
@@ -84,9 +79,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
       t("home.sections.filters.selectedSportFallback"),
     [sport, sportOptions, t],
   );
-  const sportImageSrc =
-    selectedSportMeta?.imagePath ??
-    toPublicAssetUrl(`sports/${toSportAssetName(sport)}.webp`);
+  const sportImage = selectedSportMeta?.image;
 
   const {
     locationSearchInput,
@@ -247,9 +240,11 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
         </Group>
 
         <Box h={SPORT_IMAGE_HEIGHT}>
-          {!hasSportImageError ? (
+          {sportImage !== undefined && !hasSportImageError ? (
             <Image
-              src={sportImageSrc}
+              src={sportImage.src}
+              srcSet={sportImage.srcSet}
+              sizes={SPORT_IMAGE_SIZES}
               alt={t("home.sections.filters.sportImageAlt", {
                 sportLabel: selectedSportLabel,
               })}
@@ -272,7 +267,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               <Text c="dimmed" fz="xs" ta="center">
                 {t("home.sections.filters.sportImageHelp", {
                   sportLabel: selectedSportLabel,
-                  path: sportImageSrc,
+                  path: sportImage?.src ?? "",
                 })}
               </Text>
             </Stack>

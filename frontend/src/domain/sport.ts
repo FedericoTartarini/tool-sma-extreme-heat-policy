@@ -1,4 +1,7 @@
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import {
+  createResponsiveImageAsset,
+  type ResponsiveImageAsset,
+} from "@/lib/responsiveImage";
 
 export const SportType = {
   Abseiling: "ABSEILING",
@@ -52,7 +55,16 @@ export interface SportMeta {
   type: SportType;
   assetName: string;
   labelKey: string;
-  imagePath: string;
+  image: ResponsiveImageAsset;
+}
+
+const STANDARD_SPORT_IMAGE_WIDTHS = [320, 640, 816] as const;
+const COMPACT_SPORT_IMAGE_WIDTHS = [320, 522] as const;
+
+function getSportImageWidths(type: SportType): readonly number[] {
+  return type === SportType.Soccer || type === SportType.Walking
+    ? COMPACT_SPORT_IMAGE_WIDTHS
+    : STANDARD_SPORT_IMAGE_WIDTHS;
 }
 
 export const sports: readonly SportMeta[] = Object.values(SportType).map(
@@ -63,7 +75,10 @@ export const sports: readonly SportMeta[] = Object.values(SportType).map(
       type,
       assetName,
       labelKey: `sports.${assetName}`,
-      imagePath: toPublicAssetUrl(`sports/${assetName}.webp`),
+      image: createResponsiveImageAsset({
+        assetPath: `sports/${assetName}`,
+        widths: getSportImageWidths(type),
+      }),
     };
   },
 );
