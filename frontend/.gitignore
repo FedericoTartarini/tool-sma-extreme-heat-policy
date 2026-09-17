@@ -13,13 +13,10 @@ dist-ssr
 .vite
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Local env (Vite reads .env, .env.[mode] and their .local variants)
+.env
+.env.*
+!.env.example
+
+# Netlify CLI
+.netlify/
