@@ -3,6 +3,13 @@
 
 # IDE/editor metadata
 .idea/
+.vscode/
+.cursor/
 
 # Local package manager cache
 .pnpm-store/
+
+# Agent tooling: local config, hooks, skill docs and scratch tickets
+.claude/
+docs/agents/
+.scratch/
