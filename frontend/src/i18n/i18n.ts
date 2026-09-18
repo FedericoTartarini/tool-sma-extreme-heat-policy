@@ -6,14 +6,6 @@ import zhCnTranslation from "@/i18n/locales/zh-CN/translation.json";
 
 export const i18n = i18next.createInstance();
 
-function applyTranslationResources(
-  en: typeof enTranslation,
-  zhCn: typeof zhCnTranslation,
-): void {
-  i18n.addResourceBundle("en", "translation", en, true, true);
-  i18n.addResourceBundle("zh-CN", "translation", zhCn, true, true);
-}
-
 void i18n.use(initReactI18next).init({
   lng: loadPersistedLanguage(),
   fallbackLng: "en",
@@ -35,17 +27,3 @@ void i18n.use(initReactI18next).init({
 });
 
 i18n.on("languageChanged", savePersistedLanguage);
-
-if (import.meta.hot) {
-  import.meta.hot.accept(
-    ["./locales/en/translation.json", "./locales/zh-CN/translation.json"],
-    async () => {
-      const [{ default: en }, { default: zhCn }] = await Promise.all([
-        import("./locales/en/translation.json"),
-        import("./locales/zh-CN/translation.json"),
-      ]);
-      applyTranslationResources(en, zhCn);
-      void i18n.changeLanguage(i18n.language);
-    },
-  );
-}

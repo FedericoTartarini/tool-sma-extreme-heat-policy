@@ -293,6 +293,7 @@
       "labelInput": "地点名称",
       "labelPlaceholder": "例如：家、公司、球场",
       "cancel": "取消",
+      "close": "关闭",
       "confirm": "保存",
       "apply": "切换到 {{label}}",
       "remove": "移除 {{label}}",

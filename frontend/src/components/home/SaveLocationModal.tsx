@@ -2,8 +2,9 @@ import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SavedLocationChips } from "@/components/home/SavedLocationChips";
-import { CONTENT_GAP } from "@/config/uiLayout";
+import { BUTTON_HEIGHT_XS, CONTENT_GAP } from "@/config/uiLayout";
 import {
+  normalizeLabel,
   SAVED_LOCATION_LABEL_MAX_LENGTH,
   SAVED_LOCATIONS_MAX,
   type SaveLocationRejectReason,
@@ -34,6 +35,9 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
   const [validationErrorCode, setValidationErrorCode] =
     useState<SaveLocationRejectReason | null>(null);
   const [isEditingSavedLocations, setIsEditingSavedLocations] = useState(false);
+
+  // One rule for both footer decisions: Close vs Cancel wording and Save's disabled state.
+  const isNameEmpty = normalizeLabel(savedLocationNameInput) === "";
 
   const closeModalAndClearForm = () => {
     setSavedLocationNameInput("");
@@ -90,6 +94,8 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
               value={savedLocationNameInput}
               // Soft cap in the input; store also truncates to 20 characters.
               maxLength={SAVED_LOCATION_LABEL_MAX_LENGTH}
+              // Editing the list and naming a new entry are separate tasks.
+              disabled={isEditingSavedLocations}
               error={
                 validationErrorCode
                   ? t(`home.savedLocations.errors.${validationErrorCode}`, {
@@ -110,25 +116,25 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
             justify={selectedLocation ? "space-between" : "flex-end"}
             align="center"
             wrap="nowrap"
+            // Reserve the Edit button's height so the dialog does not jump when it hides.
+            mih={BUTTON_HEIGHT_XS}
           >
             {selectedLocation ? (
               <Text fw={500} fz="sm">
                 {t("home.savedLocations.savedListTitle")}
               </Text>
             ) : null}
-            {savedLocations.length > 0 ? (
+            {savedLocations.length > 0 && !isEditingSavedLocations ? (
               <Button
                 variant="subtle"
                 size="xs"
-                onClick={() =>
-                  setIsEditingSavedLocations(
-                    (isCurrentlyEditing) => !isCurrentlyEditing,
-                  )
-                }
+                onClick={() => {
+                  // Removing an entry may resolve a duplicate_label error, so drop it.
+                  setValidationErrorCode(null);
+                  setIsEditingSavedLocations(true);
+                }}
               >
-                {isEditingSavedLocations
-                  ? t("home.savedLocations.doneEditing")
-                  : t("home.savedLocations.edit")}
+                {t("home.savedLocations.edit")}
               </Button>
             ) : null}
           </Group>
@@ -147,14 +153,26 @@ export function SaveLocationModal({ opened, onClose }: SaveLocationModalProps) {
           ) : null}
         </Stack>
         <Group justify="flex-end" gap={CONTENT_GAP}>
-          <Button variant="default" onClick={closeModalAndClearForm}>
-            {t("home.savedLocations.cancel")}
-          </Button>
-          {selectedLocation ? (
-            <Button onClick={handleSubmit}>
-              {t("home.savedLocations.confirm")}
+          {isEditingSavedLocations ? (
+            // Removals persist immediately, so the only way out of edit mode is "Done".
+            <Button onClick={() => setIsEditingSavedLocations(false)}>
+              {t("home.savedLocations.doneEditing")}
             </Button>
-          ) : null}
+          ) : (
+            <>
+              <Button variant="default" onClick={closeModalAndClearForm}>
+                {/* Typed text is discarded on close, so say Cancel while there is any. */}
+                {isNameEmpty
+                  ? t("home.savedLocations.close")
+                  : t("home.savedLocations.cancel")}
+              </Button>
+              {selectedLocation ? (
+                <Button onClick={handleSubmit} disabled={isNameEmpty}>
+                  {t("home.savedLocations.confirm")}
+                </Button>
+              ) : null}
+            </>
+          )}
         </Group>
       </Stack>
     </Modal>

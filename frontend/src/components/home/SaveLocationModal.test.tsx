@@ -129,6 +129,28 @@ describe("SaveLocationModal", () => {
     expect(markup).toContain(tFromEn("home.savedLocations.edit"));
   });
 
+  it("offers Close (not Cancel) while nothing is typed and keeps Save disabled", () => {
+    fixtures.selectedLocation = fixtures.perth;
+    const markup = renderModal();
+
+    // Removals persist immediately and no name is typed yet, so nothing can be cancelled.
+    expect(markup).toContain(tFromEn("home.savedLocations.close"));
+    expect(markup).not.toContain(">Cancel<");
+
+    // An empty name must not be submittable; that click used to surface empty_label.
+    const saveLabel = tFromEn("home.savedLocations.confirm");
+    const saveButton = markup.match(
+      new RegExp(
+        `<button[^>]*>(?:(?!</button>)[\\s\\S])*?${saveLabel}(?:(?!</button>)[\\s\\S])*?</button>`,
+      ),
+    )?.[0];
+    expect(saveButton).toBeDefined();
+    expect(saveButton).toContain("disabled");
+    expect(markup).not.toContain(
+      tFromEn("home.savedLocations.errors.empty_label"),
+    );
+  });
+
   it("opens as a switch-only list when no location is selected", () => {
     fixtures.selectedLocation = null;
     const markup = renderModal();

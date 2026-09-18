@@ -293,6 +293,7 @@
       "labelInput": "Location name",
       "labelPlaceholder": "e.g. Home, Work, Gym",
       "cancel": "Cancel",
+      "close": "Close",
       "confirm": "Save",
       "apply": "Switch to {{label}}",
       "remove": "Remove {{label}}",
