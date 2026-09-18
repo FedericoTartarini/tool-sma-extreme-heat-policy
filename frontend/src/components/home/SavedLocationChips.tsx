@@ -82,7 +82,8 @@ export function SavedLocationChips({
           </Button.Group>
         ))}
       </Group>
-      {removeErrorCode ? (
+      {/* The error belongs to the delete controls, so it leaves with them. */}
+      {isEditing && removeErrorCode ? (
         <Text c="red" fz="sm">
           {t(`home.savedLocations.errors.${removeErrorCode}`)}
         </Text>
