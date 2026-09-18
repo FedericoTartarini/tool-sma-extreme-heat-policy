@@ -86,12 +86,24 @@ export function isSuggestionAlreadySaved(
   );
 }
 
+/** Same secure-context guard as `createSessionToken` in homeStore. */
+function createSavedLocationId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `saved-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export function createSavedLocation(input: {
   label: string;
   location: LocationSuggestion;
 }): SavedLocation {
   return {
-    id: crypto.randomUUID(),
+    id: createSavedLocationId(),
     label: normalizeLabel(input.label),
     location: stripSessionToken(input.location),
     createdAt: Date.now(),
