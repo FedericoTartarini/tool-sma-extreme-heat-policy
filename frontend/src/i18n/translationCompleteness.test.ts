@@ -22,6 +22,33 @@ function toTranslationShape(value: unknown): unknown {
   return typeof value;
 }
 
+const PLACEHOLDER_PATTERN = /\{\{\s*[\w.]+\s*\}\}/g;
+
+function collectPlaceholders(
+  value: unknown,
+  path = "",
+  into = new Map<string, Set<string>>(),
+): Map<string, Set<string>> {
+  if (typeof value === "string") {
+    const placeholders = value.match(PLACEHOLDER_PATTERN) ?? [];
+    into.set(
+      path,
+      new Set(
+        placeholders.map((placeholder) => placeholder.replace(/\s/g, "")),
+      ),
+    );
+    return into;
+  }
+
+  if (typeof value === "object" && value !== null) {
+    for (const [key, nested] of Object.entries(value)) {
+      collectPlaceholders(nested, path ? `${path}.${key}` : key, into);
+    }
+  }
+
+  return into;
+}
+
 describe("Simplified Chinese translation completeness", () => {
   it("matches the complete English translation structure", () => {
     expect(toTranslationShape(zhCnTranslation)).toEqual(
@@ -51,5 +78,17 @@ describe("Simplified Chinese translation completeness", () => {
     );
     expect(zhCnTranslation.footer.authors).toBe(enTranslation.footer.authors);
     expect(zhCnTranslation.footer.journal).toBe(enTranslation.footer.journal);
+  });
+
+  it("uses the same interpolation placeholders in every locale", () => {
+    const english = collectPlaceholders(enTranslation);
+    const chinese = collectPlaceholders(zhCnTranslation);
+
+    for (const [path, expected] of english) {
+      expect(
+        [...(chinese.get(path) ?? [])].sort(),
+        `zh-CN key "${path}"`,
+      ).toEqual([...expected].sort());
+    }
   });
 });
