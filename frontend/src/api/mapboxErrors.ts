@@ -1,6 +1,6 @@
 import { ApiError, toApiError, type ApiErrorKind } from "@/api/apiErrors";
 
-export type MapboxEndpoint = "suggest" | "retrieve";
+export type MapboxEndpoint = "suggest" | "retrieve" | "reverse";
 
 /**
  * Structured Mapbox API error carrying the failed endpoint.

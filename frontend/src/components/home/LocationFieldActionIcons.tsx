@@ -1,6 +1,9 @@
 import { ActionIcon, Text } from "@mantine/core";
 import { IconBookmarkPlus, IconCurrentLocation } from "@tabler/icons-react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import type { HomeCurrentLocationErrorReason } from "@/domain/homeErrorMap";
+import { useHomeCurrentLocation } from "@/hooks/useHomeCurrentLocation";
 
 const ACTION_ICON_SIZE = 18;
 
@@ -8,6 +11,7 @@ interface LocationFieldActionIconsProps {
   canSaveCurrentLocation: boolean;
   hasSavedLocations: boolean;
   onOpenSavedLocations: () => void;
+  onCurrentLocationError?: (reason: HomeCurrentLocationErrorReason) => void;
 }
 
 /**
@@ -21,18 +25,28 @@ export function LocationFieldActionIcons({
   canSaveCurrentLocation,
   hasSavedLocations,
   onOpenSavedLocations,
+  onCurrentLocationError,
 }: LocationFieldActionIconsProps) {
   const { t } = useTranslation();
+  const { isDetecting, errorReason, requestCurrentLocation } =
+    useHomeCurrentLocation();
+
+  useEffect(() => {
+    if (errorReason) {
+      onCurrentLocationError?.(errorReason);
+    }
+  }, [errorReason, onCurrentLocationError]);
 
   return (
     <>
-      {/* Issue #56 placeholder — layout only until geolocation is wired. */}
       <ActionIcon
         variant="subtle"
         color="gray"
         size="sm"
-        disabled
+        disabled={isDetecting}
+        aria-busy={isDetecting}
         aria-label={t("home.savedLocations.useMyLocationButton")}
+        onClick={requestCurrentLocation}
       >
         <IconCurrentLocation size={ACTION_ICON_SIZE} />
       </ActionIcon>

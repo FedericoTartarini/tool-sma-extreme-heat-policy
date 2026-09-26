@@ -1,8 +1,8 @@
 import {
   toCalculationErrorI18nKey,
-  toSuggestErrorI18nKey,
+  toLocationErrorI18nKey,
   type HomeCalculationErrorReason,
-  type HomeSuggestErrorReason,
+  type HomeLocationErrorReason,
 } from "@/domain/homeErrorMap";
 
 export type HomeToastVariant = "success" | "error";
@@ -44,11 +44,11 @@ export function createCalculationErrorToast(
   };
 }
 
-export function createSuggestErrorToast(
+export function createLocationErrorToast(
   id: number,
-  reason: HomeSuggestErrorReason | null,
+  reason: HomeLocationErrorReason | null,
 ): HomeToastEvent | null {
-  const i18nKey = toSuggestErrorI18nKey(reason);
+  const i18nKey = toLocationErrorI18nKey(reason);
 
   if (!i18nKey) {
     return null;

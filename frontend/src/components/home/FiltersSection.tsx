@@ -19,16 +19,14 @@ import { SaveLocationModal } from "@/components/home/SaveLocationModal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
+import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
 import {
   isSportType,
   sports,
   toSportAssetName,
   type SportType,
 } from "@/domain/sport";
-import {
-  useHomeLocationSuggest,
-  type LocationSuggestErrorReason,
-} from "@/hooks/useHomeLocationSuggest";
+import { useHomeLocationSuggest } from "@/hooks/useHomeLocationSuggest";
 import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
@@ -44,7 +42,7 @@ const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
 const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
 interface FiltersSectionProps {
-  onLocationError?: (reason: LocationSuggestErrorReason) => void;
+  onLocationError?: (reason: HomeLocationErrorReason) => void;
 }
 
 /**
@@ -272,6 +270,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               canSaveCurrentLocation={selectedLocation !== null}
               hasSavedLocations={savedLocations.length > 0}
               onOpenSavedLocations={openSaveSavedLocationModal}
+              onCurrentLocationError={onLocationError}
             />
           </Group>
         </Group>

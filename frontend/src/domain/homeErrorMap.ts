@@ -5,6 +5,17 @@ export type HomeSuggestErrorReason =
   | "retrieve_failed"
   | "prefilled_location_not_matched";
 
+export type HomeCurrentLocationErrorReason =
+  | "missing_token"
+  | "geolocation_permission_denied"
+  | "geolocation_unavailable"
+  | "geolocation_timeout"
+  | "reverse_geocode_failed";
+
+export type HomeLocationErrorReason =
+  | HomeSuggestErrorReason
+  | HomeCurrentLocationErrorReason;
+
 export type HomeCalculationErrorReason =
   | "missing_location_coordinates"
   | "missing_config"
@@ -14,14 +25,20 @@ export type HomeCalculationErrorReason =
   | "network"
   | "weather_provider_unavailable";
 
-const SUGGEST_ERROR_I18N_KEY_BY_REASON: Record<HomeSuggestErrorReason, string> =
-  {
-    missing_token: "errors.mapbox.missingToken",
-    retrieve_failed: "errors.mapbox.retrieveFailed",
-    prefilled_location_not_matched: "errors.location.prefilledNotMatched",
-    unavailable: "errors.mapbox.unavailable",
-    no_results: "errors.mapbox.noResults",
-  };
+const LOCATION_ERROR_I18N_KEY_BY_REASON: Record<
+  HomeLocationErrorReason,
+  string
+> = {
+  missing_token: "errors.mapbox.missingToken",
+  retrieve_failed: "errors.mapbox.retrieveFailed",
+  reverse_geocode_failed: "errors.mapbox.reverseFailed",
+  prefilled_location_not_matched: "errors.location.prefilledNotMatched",
+  unavailable: "errors.mapbox.unavailable",
+  no_results: "errors.mapbox.noResults",
+  geolocation_permission_denied: "errors.location.permissionDenied",
+  geolocation_unavailable: "errors.location.geolocationUnavailable",
+  geolocation_timeout: "errors.location.geolocationTimeout",
+};
 
 const CALCULATION_ERROR_I18N_KEY_BY_REASON: Record<
   HomeCalculationErrorReason,
@@ -37,16 +54,16 @@ const CALCULATION_ERROR_I18N_KEY_BY_REASON: Record<
 };
 
 /**
- * Maps a location suggest error reason to an i18n key.
+ * Maps a location search or current-location error reason to an i18n key.
  */
-export function toSuggestErrorI18nKey(
-  reason: HomeSuggestErrorReason | null,
+export function toLocationErrorI18nKey(
+  reason: HomeLocationErrorReason | null,
 ): string | null {
   if (!reason) {
     return null;
   }
 
-  return SUGGEST_ERROR_I18N_KEY_BY_REASON[reason] ?? null;
+  return LOCATION_ERROR_I18N_KEY_BY_REASON[reason] ?? null;
 }
 
 /**

@@ -1,9 +1,15 @@
 import { MantineProvider } from "@mantine/core";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
 import { appTheme } from "@/config/mantineTheme";
 import { tFromEn } from "@/i18n/enTestTranslate";
+
+const currentLocationFixture = vi.hoisted(() => ({
+  isDetecting: false,
+  errorReason: null,
+  requestCurrentLocation: vi.fn(),
+}));
 
 vi.mock("react-i18next", async () => {
   const { tFromEn: translate } = await import("@/i18n/enTestTranslate");
@@ -14,6 +20,10 @@ vi.mock("react-i18next", async () => {
     }),
   };
 });
+
+vi.mock("@/hooks/useHomeCurrentLocation", () => ({
+  useHomeCurrentLocation: () => currentLocationFixture,
+}));
 
 function renderIcons(props: {
   canSaveCurrentLocation: boolean;
@@ -31,7 +41,13 @@ function renderIcons(props: {
 }
 
 describe("LocationFieldActionIcons", () => {
-  it("keeps use-my-location disabled until geolocation is wired", () => {
+  beforeEach(() => {
+    currentLocationFixture.isDetecting = false;
+    currentLocationFixture.errorReason = null;
+    currentLocationFixture.requestCurrentLocation.mockClear();
+  });
+
+  it("enables use-my-location when geolocation is idle", () => {
     const markup = renderIcons({
       canSaveCurrentLocation: true,
       hasSavedLocations: false,
@@ -39,9 +55,24 @@ describe("LocationFieldActionIcons", () => {
     const locateLabel = tFromEn("home.savedLocations.useMyLocationButton");
 
     expect(markup).toContain(locateLabel);
+    expect(markup).not.toMatch(
+      new RegExp(`aria-label="${locateLabel}"[^>]*disabled`),
+    );
+  });
+
+  it("disables use-my-location while detection is in progress", () => {
+    currentLocationFixture.isDetecting = true;
+
+    const markup = renderIcons({
+      canSaveCurrentLocation: true,
+      hasSavedLocations: false,
+    });
+    const locateLabel = tFromEn("home.savedLocations.useMyLocationButton");
+
     expect(markup).toMatch(
       new RegExp(`aria-label="${locateLabel}"[^>]*disabled`),
     );
+    expect(markup).toContain('aria-busy="true"');
   });
 
   it("disables the bookmark when there is nothing to save or switch to", () => {
