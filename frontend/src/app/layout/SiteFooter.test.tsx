@@ -23,6 +23,10 @@ describe("SiteFooter", () => {
     );
     expect(markup).toContain('sizes="7.7917rem"');
     expect(markup).toContain('alt="footer.smaLogoAlt"');
-    expect(markup).toContain('loading="lazy"');
+    const logoImages = markup.match(/<img\b[^>]*>/g) ?? [];
+    expect(logoImages).toHaveLength(2);
+    for (const logoImage of logoImages) {
+      expect(logoImage).toContain('loading="lazy"');
+    }
   });
 });
