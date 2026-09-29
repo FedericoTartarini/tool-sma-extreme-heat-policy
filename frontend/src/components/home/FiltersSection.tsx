@@ -1,7 +1,6 @@
 import {
   Box,
   Combobox,
-  Image,
   InputBase,
   Loader,
   Group,
@@ -16,6 +15,7 @@ import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
+import { SportImagePreview } from "@/components/home/SportImagePreview";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
@@ -24,7 +24,6 @@ import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
-import { getImageLoadFailureUrl } from "@/lib/imageElement";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
@@ -34,7 +33,6 @@ interface SelectOption<T extends string = string> {
 }
 
 const FIELD_LABEL_WIDTH = 72;
-const SPORT_IMAGE_HEIGHT = 104;
 const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
 const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
@@ -288,48 +286,12 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           </Box>
         </Group>
 
-        <Box h={SPORT_IMAGE_HEIGHT}>
-          {sportImage !== null && failedSportImageUrl === null ? (
-            <Image
-              src={sportImage.src}
-              srcSet={sportImage.srcSet}
-              sizes={sportImage.sizes}
-              alt={t("home.sections.filters.sportImageAlt", {
-                sportLabel: selectedSportLabel,
-              })}
-              w="100%"
-              h={SPORT_IMAGE_HEIGHT}
-              radius="sm"
-              onError={(event) => {
-                setFailedSportImageUrl(
-                  getImageLoadFailureUrl(event.currentTarget),
-                );
-              }}
-            />
-          ) : (
-            <Stack
-              align="center"
-              justify="center"
-              gap={CONTENT_GAP}
-              h="100%"
-              px={CONTENT_GAP}
-            >
-              <Text fw={500} fz="sm">
-                {t("home.sections.filters.sportImageUnavailable")}
-              </Text>
-              <Text c="dimmed" fz="xs" ta="center">
-                {failedSportImageUrl !== null
-                  ? t("home.sections.filters.sportImageHelp", {
-                      sportLabel: selectedSportLabel,
-                      path: failedSportImageUrl,
-                    })
-                  : t("home.sections.filters.sportImageNotConfigured", {
-                      sportLabel: selectedSportLabel,
-                    })}
-              </Text>
-            </Stack>
-          )}
-        </Box>
+        <SportImagePreview
+          image={sportImage}
+          sportLabel={selectedSportLabel}
+          failedImageUrl={failedSportImageUrl}
+          onImageLoadFailure={setFailedSportImageUrl}
+        />
       </Stack>
       <SaveLocationModal
         opened={isSaveSavedLocationModalOpen}
