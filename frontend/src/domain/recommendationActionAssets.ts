@@ -4,34 +4,19 @@ import {
   type ResponsiveImageAsset,
 } from "@/lib/responsiveImage";
 
-const { sizes, widths } = RECOMMENDATION_ACTION_IMAGE_CONFIG;
+function createActionImageAsset(name: string): ResponsiveImageAsset | null {
+  return createResponsiveImageAsset({
+    assetPath: `actions/${name}`,
+    config: RECOMMENDATION_ACTION_IMAGE_CONFIG,
+  });
+}
 
 export const RECOMMENDATION_ACTION_ASSETS = {
-  hydration: createResponsiveImageAsset({
-    assetPath: "actions/hydration",
-    widths,
-    sizes,
-  }),
-  clothing: createResponsiveImageAsset({
-    assetPath: "actions/clothing",
-    widths,
-    sizes,
-  }),
-  pause: createResponsiveImageAsset({
-    assetPath: "actions/pause",
-    widths,
-    sizes,
-  }),
-  cooling: createResponsiveImageAsset({
-    assetPath: "actions/cooling",
-    widths,
-    sizes,
-  }),
-  stop: createResponsiveImageAsset({
-    assetPath: "actions/stop",
-    widths,
-    sizes,
-  }),
+  hydration: createActionImageAsset("hydration"),
+  clothing: createActionImageAsset("clothing"),
+  pause: createActionImageAsset("pause"),
+  cooling: createActionImageAsset("cooling"),
+  stop: createActionImageAsset("stop"),
 } satisfies Record<string, ResponsiveImageAsset | null>;
 
 export type RecommendationActionAssetKey =

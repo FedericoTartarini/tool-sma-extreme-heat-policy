@@ -1,8 +1,7 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RECOMMENDATION_ACTION_IMAGE_CONFIG } from "@/config/responsiveImages";
 import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
+import { expectResponsiveImageFilesToExist } from "@/test/responsiveImageTestUtils";
 
 const ACTION_KEYS = [
   "hydration",
@@ -34,6 +33,8 @@ describe("RECOMMENDATION_ACTION_ASSETS", () => {
         continue;
       }
 
+      expectResponsiveImageFilesToExist(image, assetName);
+
       for (const candidate of image.srcSet.split(",")) {
         const candidateMatch = candidate.trim().match(/^(\S+)\s+(\d+)w$/);
         expect(
@@ -57,16 +58,6 @@ describe("RECOMMENDATION_ACTION_ASSETS", () => {
         }
 
         expect(Number(suffixMatch[1])).toBe(Number(descriptorWidth));
-
-        const assetPath = join(
-          process.cwd(),
-          "public",
-          candidateUrl.replace(/^\/+/, ""),
-        );
-        expect(
-          existsSync(assetPath),
-          `${assetName} references missing asset ${candidateUrl}`,
-        ).toBe(true);
       }
     }
   });

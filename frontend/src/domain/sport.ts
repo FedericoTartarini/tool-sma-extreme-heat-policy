@@ -70,8 +70,7 @@ export const sports: readonly SportMeta[] = Object.values(SportType).map(
       labelKey: `sports.${assetName}`,
       image: createResponsiveImageAsset({
         assetPath: `sports/${assetName}`,
-        widths: imageConfig.widths,
-        sizes: imageConfig.sizes,
+        config: imageConfig,
       }),
     };
   },

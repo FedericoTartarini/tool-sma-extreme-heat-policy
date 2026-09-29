@@ -1,7 +1,4 @@
-export interface ResponsiveImageConfig {
-  readonly widths: readonly number[];
-  readonly sizes: string;
-}
+import type { ResponsiveImageConfig } from "@/lib/responsiveImage";
 
 export interface ResponsiveSquareImageConfig extends ResponsiveImageConfig {
   readonly renderedSize: string;
@@ -71,13 +68,14 @@ export const SPORT_IMAGE_CONFIG_BY_ASSET_NAME = {
 } as const satisfies Record<string, ResponsiveImageConfig>;
 
 export function getSportImageConfig(assetName: string): ResponsiveImageConfig {
+  if (!Object.hasOwn(SPORT_IMAGE_CONFIG_BY_ASSET_NAME, assetName)) {
+    return DEFAULT_SPORT_IMAGE_CONFIG;
+  }
+
   const configuredAssetName =
     assetName as keyof typeof SPORT_IMAGE_CONFIG_BY_ASSET_NAME;
 
-  return (
-    SPORT_IMAGE_CONFIG_BY_ASSET_NAME[configuredAssetName] ??
-    DEFAULT_SPORT_IMAGE_CONFIG
-  );
+  return SPORT_IMAGE_CONFIG_BY_ASSET_NAME[configuredAssetName];
 }
 
 // Intrinsic dimensions come from the original 471x163 USYD and 1314x527 SMA

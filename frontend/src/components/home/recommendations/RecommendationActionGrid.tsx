@@ -39,7 +39,7 @@ export function RecommendationActionGrid({
     >
       {items.map((item, index) => (
         <Box
-          key={`${item.image.src}-${item.label}`}
+          key={`${index}-${item.label}`}
           style={{
             ...(shouldCenterLastRecommendation && index === items.length - 1
               ? {
@@ -55,16 +55,18 @@ export function RecommendationActionGrid({
           }}
         >
           <Stack align="center" gap={CONTENT_GAP}>
-            <Image
-              src={item.image.src}
-              srcSet={item.image.srcSet}
-              sizes={item.image.sizes}
-              loading="lazy"
-              alt={item.label}
-              w={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
-              h={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
-              fit="contain"
-            />
+            {item.image !== null && (
+              <Image
+                src={item.image.src}
+                srcSet={item.image.srcSet}
+                sizes={item.image.sizes}
+                loading="lazy"
+                alt={item.label}
+                w={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
+                h={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
+                fit="contain"
+              />
+            )}
             <Text
               fw={600}
               fz={{ base: "sm", sm: "md" }}

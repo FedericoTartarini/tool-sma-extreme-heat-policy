@@ -2,7 +2,7 @@ import { RISK_REGISTRY, type RiskLevel } from "@/domain/riskRegistry";
 import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export interface RecommendationDetailItem {
-  image: ResponsiveImageAsset;
+  image: ResponsiveImageAsset | null;
   label: string;
 }
 
@@ -53,10 +53,7 @@ export function getRecommendationDetailContent(
         image,
         label: labels[index] ?? "",
       }))
-      .filter(
-        (item): item is RecommendationDetailItem =>
-          item.image !== null && item.label !== "",
-      ),
+      .filter((item) => item.label !== ""),
     description: toString(translate(details.detailedDescriptionKey)),
     suggestions: toStringArray(
       translate(details.detailedSuggestionsKey, {

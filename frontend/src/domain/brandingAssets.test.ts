@@ -1,17 +1,6 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BRANDING_ASSETS } from "@/domain/brandingAssets";
-
-function getResponsiveImageUrls(image: { src: string; srcSet: string }) {
-  return [
-    image.src,
-    ...image.srcSet
-      .split(",")
-      .map((candidate) => candidate.trim().split(/\s+/)[0])
-      .filter(Boolean),
-  ];
-}
+import { expectResponsiveImageFilesToExist } from "@/test/responsiveImageTestUtils";
 
 describe("branding assets", () => {
   it("provides responsive USYD header logo metadata", () => {
@@ -52,18 +41,7 @@ describe("branding assets", () => {
         continue;
       }
 
-      for (const imageUrl of getResponsiveImageUrls(image)) {
-        const assetPath = join(
-          process.cwd(),
-          "public",
-          imageUrl.replace(/^\//, ""),
-        );
-
-        expect(
-          existsSync(assetPath),
-          `${assetName} references missing asset ${imageUrl}`,
-        ).toBe(true);
-      }
+      expectResponsiveImageFilesToExist(image, assetName);
     }
   });
 });

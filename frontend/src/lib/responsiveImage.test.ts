@@ -10,8 +10,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "actions/hydration",
-        widths: [48, 96],
-        sizes: "2.5rem",
+        config: { widths: [48, 96], sizes: "2.5rem" },
       }),
     ).toEqual({
       src: "/actions/hydration-96.webp",
@@ -24,8 +23,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "actions/cooling",
-        widths: [96, 48, 96, 48],
-        sizes: "2.5rem",
+        config: { widths: [96, 48, 96, 48], sizes: "2.5rem" },
       })?.srcSet,
     ).toBe("/actions/cooling-48.webp 48w, /actions/cooling-96.webp 96w");
   });
@@ -34,8 +32,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "sports/running",
-        widths: [320, 816, 640],
-        sizes: "45rem",
+        config: { widths: [320, 816, 640], sizes: "45rem" },
       })?.src,
     ).toBe("/sports/running-816.webp");
   });
@@ -46,8 +43,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "/actions/pause",
-        widths: [48, 96],
-        sizes: "2.5rem",
+        config: { widths: [48, 96], sizes: "2.5rem" },
       }),
     ).toEqual({
       src: "/heat-policy/actions/pause-96.webp",
@@ -61,8 +57,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "  actions/clothing  ",
-        widths: [48, 96],
-        sizes: "2.5rem",
+        config: { widths: [48, 96], sizes: "2.5rem" },
       }),
     ).toEqual({
       src: "/actions/clothing-96.webp",
@@ -77,8 +72,7 @@ describe("createResponsiveImageAsset", () => {
       expect(
         createResponsiveImageAsset({
           assetPath,
-          widths: [48, 96],
-          sizes: "2.5rem",
+          config: { widths: [48, 96], sizes: "2.5rem" },
         }),
       ).toBeNull();
     },
@@ -88,8 +82,7 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "actions/stop",
-        widths: [],
-        sizes: "2.5rem",
+        config: { widths: [], sizes: "2.5rem" },
       }),
     ).toBeNull();
   });
@@ -98,8 +91,10 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "actions/stop",
-        widths: [96, 0, -1, 48.5, Number.NaN, 48, 96],
-        sizes: "2.5rem",
+        config: {
+          widths: [96, 0, -1, 48.5, Number.NaN, 48, 96],
+          sizes: "2.5rem",
+        },
       }),
     ).toEqual({
       src: "/actions/stop-96.webp",
@@ -112,8 +107,10 @@ describe("createResponsiveImageAsset", () => {
     expect(
       createResponsiveImageAsset({
         assetPath: "actions/stop",
-        widths: [0, -1, 48.5, Number.NaN, Number.POSITIVE_INFINITY],
-        sizes: "2.5rem",
+        config: {
+          widths: [0, -1, 48.5, Number.NaN, Number.POSITIVE_INFINITY],
+          sizes: "2.5rem",
+        },
       }),
     ).toBeNull();
   });

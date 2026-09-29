@@ -6,20 +6,23 @@ export interface ResponsiveImageAsset {
   readonly sizes: string;
 }
 
+export interface ResponsiveImageConfig {
+  /** Available intrinsic image widths. */
+  readonly widths: readonly number[];
+  /** Browser source-size expression matching the rendered image size. */
+  readonly sizes: string;
+}
+
 export interface CreateResponsiveImageAssetOptions {
   /** Public asset path without a file extension or width suffix. */
   assetPath: string;
-  /** Available intrinsic image widths. */
-  widths: readonly number[];
-  /** Browser source-size expression matching the rendered image size. */
-  sizes: string;
+  config: ResponsiveImageConfig;
 }
 
 /** Creates responsive image URLs for width-suffixed WebP assets. */
 export function createResponsiveImageAsset({
   assetPath,
-  widths,
-  sizes,
+  config: { widths, sizes },
 }: CreateResponsiveImageAssetOptions): ResponsiveImageAsset | null {
   const normalizedAssetPath = assetPath.trim();
 

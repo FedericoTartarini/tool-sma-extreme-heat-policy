@@ -45,4 +45,24 @@ describe("RecommendationActionGrid", () => {
     expect(markup).toContain('loading="lazy"');
     expect(markup).toContain('alt="Stay hydrated"');
   });
+
+  it("renders extreme stop advice without an image", () => {
+    const markup = renderGrid([
+      { image: null, label: "Consider Suspending Play" },
+    ]);
+
+    expect(markup).toContain(">Consider Suspending Play<");
+    expect(markup).not.toContain("<img");
+  });
+
+  it("keeps all labels when only some images are available", () => {
+    const markup = renderGrid([
+      ...items,
+      { image: null, label: "Wear light clothing" },
+    ]);
+
+    expect(markup).toContain(">Stay hydrated<");
+    expect(markup).toContain(">Wear light clothing<");
+    expect(markup.match(/<img\b/g)).toHaveLength(1);
+  });
 });

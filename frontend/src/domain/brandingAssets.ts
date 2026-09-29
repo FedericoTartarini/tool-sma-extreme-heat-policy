@@ -17,8 +17,7 @@ function createBrandingImageAsset(
 ): BrandingImageAsset | null {
   const image = createResponsiveImageAsset({
     assetPath,
-    widths: config.widths,
-    sizes: config.sizes,
+    config,
   });
 
   return image === null
