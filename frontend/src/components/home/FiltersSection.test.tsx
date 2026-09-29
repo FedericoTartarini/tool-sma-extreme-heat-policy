@@ -144,7 +144,7 @@ describe("FiltersSection", () => {
       "/sports/basketball-320.webp 320w, /sports/basketball-640.webp 640w, /sports/basketball-816.webp 816w",
     );
     expect(markup).toContain(
-      'sizes="(max-width: 45rem) calc(100vw - 3rem), 42rem"',
+      'sizes="(max-width: 720px) calc(100vw - 3rem), calc(720px - 3rem)"',
     );
     expect(markup).toContain('alt="sports.basketball preview"');
   });

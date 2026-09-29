@@ -62,7 +62,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const savedLocations = useSavedLocationsStore(
     (state) => state.savedLocations,
   );
-  const [hasSportImageError, setHasSportImageError] = useState(false);
   const [failedSportImageUrl, setFailedSportImageUrl] = useState<string | null>(
     null,
   );
@@ -97,7 +96,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
       t("home.sections.filters.selectedSportFallback"),
     [sport, sportOptions, t],
   );
-  const sportImage = selectedSportMeta?.image;
+  const sportImage = selectedSportMeta.image;
 
   const {
     locationSearchInput,
@@ -180,7 +179,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   };
 
   const handleSportChange = (value: string | null) => {
-    setHasSportImageError(false);
     setFailedSportImageUrl(null);
 
     if (value === null) {
@@ -291,7 +289,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
         </Group>
 
         <Box h={SPORT_IMAGE_HEIGHT}>
-          {!hasSportImageError && sportImage !== null ? (
+          {sportImage !== null && failedSportImageUrl === null ? (
             <Image
               src={sportImage.src}
               srcSet={sportImage.srcSet}
@@ -306,7 +304,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
                 setFailedSportImageUrl(
                   getImageLoadFailureUrl(event.currentTarget),
                 );
-                setHasSportImageError(true);
               }}
             />
           ) : (
@@ -321,13 +318,14 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
                 {t("home.sections.filters.sportImageUnavailable")}
               </Text>
               <Text c="dimmed" fz="xs" ta="center">
-                {t("home.sections.filters.sportImageHelp", {
-                  sportLabel: selectedSportLabel,
-                  path:
-                    failedSportImageUrl ??
-                    sportImage?.src ??
-                    `sports/${selectedSportMeta.assetName}`,
-                })}
+                {failedSportImageUrl !== null
+                  ? t("home.sections.filters.sportImageHelp", {
+                      sportLabel: selectedSportLabel,
+                      path: failedSportImageUrl,
+                    })
+                  : t("home.sections.filters.sportImageNotConfigured", {
+                      sportLabel: selectedSportLabel,
+                    })}
               </Text>
             </Stack>
           )}

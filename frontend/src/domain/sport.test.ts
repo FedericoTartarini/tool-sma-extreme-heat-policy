@@ -38,7 +38,7 @@ describe("sport registry", () => {
         src: "/sports/croquet-816.webp",
         srcSet:
           "/sports/croquet-320.webp 320w, /sports/croquet-640.webp 640w, /sports/croquet-816.webp 816w",
-        sizes: "(max-width: 45rem) calc(100vw - 3rem), 42rem",
+        sizes: "(max-width: 720px) calc(100vw - 3rem), calc(720px - 3rem)",
       },
     });
   });
@@ -49,14 +49,14 @@ describe("sport registry", () => {
     ).toEqual({
       src: "/sports/soccer-522.webp",
       srcSet: "/sports/soccer-320.webp 320w, /sports/soccer-522.webp 522w",
-      sizes: "(max-width: 45rem) calc(100vw - 3rem), 42rem",
+      sizes: "(max-width: 720px) calc(100vw - 3rem), calc(720px - 3rem)",
     });
     expect(
       sports.find((sport) => sport.type === SportType.Walking)?.image,
     ).toEqual({
       src: "/sports/walking-522.webp",
       srcSet: "/sports/walking-320.webp 320w, /sports/walking-522.webp 522w",
-      sizes: "(max-width: 45rem) calc(100vw - 3rem), 42rem",
+      sizes: "(max-width: 720px) calc(100vw - 3rem), calc(720px - 3rem)",
     });
   });
 

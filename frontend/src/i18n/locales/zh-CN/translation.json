@@ -260,6 +260,7 @@
         "selectedSportFallback": "已选运动项目",
         "sportImageUnavailable": "运动项目图片不可用",
         "sportImageHelp": "请在 {{path}} 添加 {{sportLabel}} 的图片。",
+        "sportImageNotConfigured": "尚未为{{sportLabel}}配置图片。",
         "sportImageAlt": "{{sportLabel}} 预览图",
         "helperText": "搜索并选择地点以自动计算风险"
       },

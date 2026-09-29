@@ -45,14 +45,12 @@ export const RECOMMENDATION_ACTION_IMAGE_CONFIG = {
   renderedSize: RECOMMENDATION_ACTION_RENDERED_SIZE,
 } satisfies ResponsiveSquareImageConfig;
 
-// Mantine's size="sm" Container is a 45rem border box. SiteShell and
-// SectionCard each add 0.75rem per side, leaving 42rem for the image once the
-// container reaches its cap and viewport-minus-3rem below it.
-const HOME_CONTAINER_MAX_WIDTH_REM = 45;
+// The app treats Mantine's size="sm" Container as a 720px border box.
+// SiteShell and SectionCard each add 0.75rem per side, leaving the container
+// width minus 3rem for the image at every viewport size.
+const HOME_CONTAINER_MAX_WIDTH_PX = 720;
 const HOME_IMAGE_INLINE_PADDING_REM = 3;
-const SPORT_IMAGE_DESKTOP_WIDTH_REM =
-  HOME_CONTAINER_MAX_WIDTH_REM - HOME_IMAGE_INLINE_PADDING_REM;
-const SPORT_IMAGE_SIZES = `(max-width: ${HOME_CONTAINER_MAX_WIDTH_REM}rem) calc(100vw - ${HOME_IMAGE_INLINE_PADDING_REM}rem), ${SPORT_IMAGE_DESKTOP_WIDTH_REM}rem`;
+const SPORT_IMAGE_SIZES = `(max-width: ${HOME_CONTAINER_MAX_WIDTH_PX}px) calc(100vw - ${HOME_IMAGE_INLINE_PADDING_REM}rem), calc(${HOME_CONTAINER_MAX_WIDTH_PX}px - ${HOME_IMAGE_INLINE_PADDING_REM}rem)`;
 
 export const DEFAULT_SPORT_IMAGE_CONFIG = {
   widths: [320, 640, 816],
