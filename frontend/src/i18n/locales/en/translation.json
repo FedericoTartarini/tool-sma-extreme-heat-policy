@@ -294,10 +294,10 @@
             "minTempC": "Min temp",
             "humidityAtMaxPct": "Humidity @ max",
             "humidityAtMinPct": "Humidity @ min",
-            "avgWindSpeedMs": "Avg wind speed (day)",
+            "avgWindSpeedMs": "Avg wind speed",
             "uvIndexMax": "Max UV index",
             "cumulativeRainfallMm": "Cumulative rainfall",
-            "precipProbMaxPct": "Max precip prob (day)",
+            "precipProbMaxPct": "Max precip prob",
             "sunriseLocal": "Sunrise",
             "sunsetLocal": "Sunset"
           },
