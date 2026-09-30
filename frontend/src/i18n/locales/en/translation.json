@@ -276,7 +276,38 @@
       },
       "forecast": {
         "title": "Forecasted risk",
-        "maxRiskLabel": "Max risk:"
+        "maxRiskLabel": "Max risk:",
+        "weatherDetails": {
+          "title": "Weather details",
+          "unavailable": "—",
+          "unavailableForDay": "Weather details unavailable for this day",
+          "groups": {
+            "temperatureHumidity": "Temperature & humidity",
+            "wind": "Wind",
+            "uv": "UV",
+            "precipitation": "Precipitation",
+            "daylight": "Daylight"
+          },
+          "valueAtTime": "{{value}} @ {{time}}",
+          "metrics": {
+            "maxTempC": "Max temp",
+            "minTempC": "Min temp",
+            "humidityAtMaxPct": "Humidity @ max",
+            "humidityAtMinPct": "Humidity @ min",
+            "avgWindSpeedMs": "Avg wind speed (day)",
+            "uvIndexMax": "Max UV index",
+            "cumulativeRainfallMm": "Cumulative rainfall",
+            "precipProbMaxPct": "Max precip prob (day)",
+            "sunriseLocal": "Sunrise",
+            "sunsetLocal": "Sunset"
+          },
+          "units": {
+            "celsius": "{{value}}°C",
+            "percent": "{{value}}%",
+            "metersPerSecond": "{{value}} m/s",
+            "millimeters": "{{value}} mm"
+          }
+        }
       },
       "map": {
         "title": "Location Map",

@@ -83,6 +83,68 @@ describe("fetchHeatRisk", () => {
     );
   });
 
+  it("keeps valid daily weather rows and drops malformed ones", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...VALID_HEAT_RISK_RESPONSE,
+          daily_weather: [
+            {
+              date: "2026-03-09",
+              sunrise_local: "06:30",
+              sunset_local: "19:45",
+              uv_index_max: 8.2,
+            },
+            {
+              date: "2026-03-10",
+              sunrise_local: "",
+              sunset_local: "19:45",
+            },
+            {
+              date: "2026-3-10",
+              sunrise_local: "06:30",
+              sunset_local: "19:45",
+            },
+            {
+              date: "2026-03-11",
+              sunrise_local: null,
+              sunset_local: null,
+              max_temp_c: 27.5,
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.data.daily_weather).toEqual([
+      {
+        date: "2026-03-09",
+        sunrise_local: "06:30",
+        sunset_local: "19:45",
+        uv_index_max: 8.2,
+      },
+      {
+        date: "2026-03-11",
+        sunrise_local: null,
+        sunset_local: null,
+        max_temp_c: 27.5,
+      },
+    ]);
+  });
+
   it("returns missing_config without calling fetch when the API base URL is absent", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "");
 
