@@ -87,7 +87,7 @@ describe("formatWeatherMetricValue", () => {
         getWeatherMetricDefinition("maxTempC"),
         t,
       ),
-    ).toBe("29.6°C @ 14:00");
+    ).toBe("29.6°C @ 2 PM");
   });
 
   it("formats UV with the time of day maximum", () => {
@@ -97,7 +97,7 @@ describe("formatWeatherMetricValue", () => {
         getWeatherMetricDefinition("uvIndexMax"),
         t,
       ),
-    ).toBe("8.5 @ 13:00");
+    ).toBe("8.5 @ 1 PM");
   });
 
   it("formats unitless numeric values without a time", () => {
@@ -112,7 +112,7 @@ describe("formatWeatherMetricValue", () => {
 
   it("appends a local time when one is provided", () => {
     expect(formatWeatherValueAtTime("29.6°C", "14:00", t)).toBe(
-      "29.6°C @ 14:00",
+      "29.6°C @ 2 PM",
     );
   });
 

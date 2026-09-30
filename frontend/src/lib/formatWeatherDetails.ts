@@ -5,6 +5,7 @@ import {
   getWeatherMetricValue,
   isWeatherMetricAvailable,
 } from "@/domain/weatherDetailsRegistry";
+import { formatLocalTimeLabel } from "@/lib/localTimeLabel";
 
 function formatNumericValue(value: number, decimals: number): string {
   return value.toFixed(decimals);
@@ -24,7 +25,7 @@ export function formatWeatherValueAtTime(
 
   return t("home.sections.forecast.weatherDetails.valueAtTime", {
     value,
-    time,
+    time: formatLocalTimeLabel(time),
   });
 }
 
@@ -43,7 +44,7 @@ export function formatWeatherMetricValue(
   }
 
   if (typeof rawValue === "string") {
-    return rawValue;
+    return formatLocalTimeLabel(rawValue);
   }
 
   if (!Number.isFinite(rawValue)) {

@@ -38,7 +38,7 @@ describe("WeatherTemperatureGroupCell", () => {
       </MantineProvider>,
     );
 
-    expect(markup).toContain("@ 14:00");
+    expect(markup).toContain("@ 2 PM");
   });
 
   it("does not render peak time without a maximum temperature", () => {
