@@ -54,10 +54,10 @@ vi.mock("react-i18next", () => ({
         return `${options?.sportLabel} preview`;
       }
       if (key === "home.sections.filters.sportImageHelp") {
-        return `${options?.sportLabel} image failed at ${options?.path}`;
+        return `Add an image for ${options?.sportLabel} at ${options?.path}.`;
       }
       if (key === "home.sections.filters.sportImageNotConfigured") {
-        return `No image is configured for ${options?.sportLabel}`;
+        return `No image is configured for ${options?.sportLabel}.`;
       }
       return key;
     },
@@ -203,7 +203,9 @@ describe("FiltersSection", () => {
 
     expect(markup).not.toContain("<img");
     expect(markup).toContain("home.sections.filters.sportImageUnavailable");
-    expect(markup).toContain(`Basketball image failed at ${failedImageUrl}`);
+    expect(markup).toContain(
+      `Add an image for Basketball at ${failedImageUrl}.`,
+    );
   });
 
   it("renders the no-config fallback when a sport has no image", () => {
@@ -211,7 +213,7 @@ describe("FiltersSection", () => {
 
     expect(markup).not.toContain("<img");
     expect(markup).toContain("home.sections.filters.sportImageUnavailable");
-    expect(markup).toContain("No image is configured for Basketball");
+    expect(markup).toContain("No image is configured for Basketball.");
   });
 
   it("announces saved bookmark state in the dropdown", () => {
