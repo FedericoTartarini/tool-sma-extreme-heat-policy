@@ -179,6 +179,7 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                 },
             },
         ],
+        "daily_weather": [],
     }
 
 

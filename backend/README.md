@@ -173,24 +173,60 @@ Example response:
         "recommendation": "Increase hydration & modify clothing"
       }
     }
+  ],
+  "daily_weather": [
+    {
+      "date": "2026-03-09",
+      "sunrise_local": "06:30",
+      "sunset_local": "19:45",
+      "uv_index_max": 8.2,
+      "precip_prob_max_pct": 70.0,
+      "cumulative_rainfall_mm": 1.5,
+      "max_temp_c": 32.4,
+      "min_temp_c": 21.3,
+      "max_temp_time_local": "14:00",
+      "min_temp_time_local": "05:00",
+      "humidity_at_max_pct": 48.0,
+      "humidity_at_min_pct": 88.0,
+      "uv_index_max_time_local": "13:00",
+      "avg_wind_speed_ms": 2.1
+    }
   ]
 }
 ```
 
 ## Risk Flow
 
-1. Fetch Open-Meteo hourly weather with:
+1. Fetch Open-Meteo weather with hourly:
    - `temperature_2m`
    - `relative_humidity_2m`
    - `wind_speed_10m`
    - `direct_normal_irradiance`
+   - `uv_index` (optional, weather details only)
+   - and daily:
+   - `sunrise`
+   - `sunset`
+   - `precipitation_probability_max`
+   - `rain_sum`
    - `timezone=<resolved IANA timezone>`
    - `wind_speed_unit=ms`
 2. Validate provider units at runtime:
-   - `temperature_2m: °C`
-   - `relative_humidity_2m: %`
-   - `wind_speed_10m: m/s`
-   - `direct_normal_irradiance: W/m²`
+   - hourly: `temperature_2m: °C`, `relative_humidity_2m: %`, `wind_speed_10m: m/s`, `direct_normal_irradiance: W/m²`
+   - daily: `precipitation_probability_max: %`, `rain_sum: mm`
+   - hourly `uv_index` is not unit-validated or required: a missing or misaligned
+     series is logged at warning level and only clears the UV fields in
+     `daily_weather`.
+   - daily parse failures are non-fatal: an invalid daily payload or row is logged
+     at warning level and only clears that day's sunrise, sunset and precipitation
+     fields; hourly-derived details and hourly risk calculation continue
+     unchanged. Every metric inside a `daily_weather` row
+     (including `sunrise_local`/`sunset_local`) is nullable and is omitted on
+     its own without dropping the rest of the day.
+   - `daily_weather` also includes calendar-day temperature, humidity, UV max
+     (value and time), and average wind derived from the full provider hourly
+     series (not the risk-trimmed `forecast[]` window).
+   - When multiple hours share the same max/min temperature or max UV index,
+     the earliest local hour that day is used for the reported time.
 3. Resolve the IANA timezone from `latitude` and `longitude`, then require the
    provider response to echo back the same timezone.
 4. Keep hourly records where `time >= now_utc - 1h` inside the 7-day forecast window.

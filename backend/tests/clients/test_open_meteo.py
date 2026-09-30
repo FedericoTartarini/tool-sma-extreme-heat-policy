@@ -31,8 +31,10 @@ def _hourly_payload(
     rh: list[float | None],
     wind: list[float | None],
     radiation: list[float | None],
+    uv: list[float | None] | None = None,
     timezone_name: str = "UTC",
     units_override: dict[str, str] | None = None,
+    daily_override: dict | None = None,
 ) -> dict:
     """Build a minimal Open-Meteo hourly payload for tests."""
 
@@ -41,9 +43,36 @@ def _hourly_payload(
         "relative_humidity_2m": "%",
         "wind_speed_10m": "m/s",
         "direct_normal_irradiance": "W/m²",
+        "uv_index": "",
     }
     if units_override:
         units.update(units_override)
+
+    provider_time_zone = ZoneInfo(timezone_name)
+    daily_dates = sorted(
+        {
+            (ts.replace(tzinfo=UTC) if ts.tzinfo is None else ts.astimezone(UTC))
+            .astimezone(provider_time_zone)
+            .strftime("%Y-%m-%d")
+            for ts in times
+        }
+    )
+    daily_count = len(daily_dates)
+    daily = {
+        "daily_units": {
+            "precipitation_probability_max": "%",
+            "rain_sum": "mm",
+        },
+        "daily": {
+            "time": daily_dates,
+            "sunrise": [f"{date}T06:30" for date in daily_dates],
+            "sunset": [f"{date}T19:45" for date in daily_dates],
+            "precipitation_probability_max": [80.0] * daily_count,
+            "rain_sum": [2.5] * daily_count,
+        },
+    }
+    if daily_override:
+        daily.update(daily_override)
 
     return {
         "timezone": timezone_name,
@@ -54,7 +83,9 @@ def _hourly_payload(
             "relative_humidity_2m": rh,
             "wind_speed_10m": wind,
             "direct_normal_irradiance": radiation,
+            "uv_index": uv if uv is not None else [0.0] * len(times),
         },
+        **daily,
     }
 
 
@@ -265,7 +296,10 @@ async def test_fetch_weather_forecast_returns_hourly_points_from_now_minus_1h() 
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.params["hourly"] == (
-            "temperature_2m,relative_humidity_2m,wind_speed_10m,direct_normal_irradiance"
+            "temperature_2m,relative_humidity_2m,wind_speed_10m,direct_normal_irradiance,uv_index"
+        )
+        assert request.url.params["daily"] == (
+            "sunrise,sunset,precipitation_probability_max,rain_sum"
         )
         assert request.url.params["wind_speed_unit"] == "ms"
         assert request.url.params["timezone"] == "UTC"
@@ -494,8 +528,7 @@ async def test_fetch_weather_forecast_rejects_provider_timezone_mismatch() -> No
         )
     except WeatherProviderError as exc:
         assert (
-            exc.detail
-            == "Weather provider response timezone did not match the requested timezone"
+            exc.detail == "Weather provider response timezone did not match the requested timezone"
         )
     else:
         raise AssertionError("Expected WeatherProviderError for timezone mismatch")
@@ -608,3 +641,251 @@ async def test_fetch_weather_forecast_rejects_length_mismatch_for_direct_normal_
         raise AssertionError("Expected WeatherProviderError for radiation length mismatch")
     finally:
         await mock_client.aclose()
+
+
+async def test_fetch_weather_forecast_returns_untrimmed_local_calendar_hours() -> None:
+    """Weather-detail hours keep the whole provider series, including hours before now-1h."""
+
+    timezone_name = "Australia/Sydney"
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    earlier = now - timedelta(hours=5)
+    payload = _hourly_payload(
+        times=[earlier, now],
+        tdb=[12.0, 28.0],
+        rh=[70.0, 30.0],
+        wind=[2.0, 4.0],
+        radiation=[0.0, 500.0],
+        uv=[0.0, 6.0],
+        timezone_name=timezone_name,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name=timezone_name,
+    )
+    await mock_client.aclose()
+
+    assert [point.time_utc for point in weather.points] == [now]
+    assert [hour.time_local for hour in weather.calendar_hours] == [earlier, now]
+    assert all(hour.time_local.tzinfo == ZoneInfo(timezone_name) for hour in weather.calendar_hours)
+    assert [hour.tdb for hour in weather.calendar_hours] == [12.0, 28.0]
+    assert [hour.uv_index for hour in weather.calendar_hours] == [0.0, 6.0]
+
+
+async def test_fetch_weather_forecast_returns_provider_daily_rows() -> None:
+    """Daily rows should be parsed alongside hourly points."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+        uv=[7.5],
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert len(weather.daily) == 1
+    row = weather.daily[0]
+    assert row.date_local == now.date()
+    assert row.sunrise_local == "06:30"
+    assert row.sunset_local == "19:45"
+    assert row.precipitation_probability_max_pct == pytest.approx(80.0)
+    assert row.rain_sum_mm == pytest.approx(2.5)
+
+
+async def test_fetch_weather_forecast_ignores_invalid_daily_payload() -> None:
+    """Invalid daily weather should not fail the hourly forecast or hourly-derived details."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+        daily_override={
+            "daily_units": {
+                "precipitation_probability_max": "index",
+                "rain_sum": "mm",
+            }
+        },
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert len(weather.points) == 1
+    assert weather.daily == []
+    assert [hour.tdb for hour in weather.calendar_hours] == [31.0]
+
+
+@pytest.mark.parametrize(
+    "bad_sunrise",
+    [
+        pytest.param("not-a-sunrise", id="unparseable"),
+        pytest.param("{today}", id="date-only"),
+        pytest.param("{next_day}T06:30", id="other-calendar-day"),
+        pytest.param("", id="empty-polar"),
+    ],
+)
+async def test_fetch_weather_forecast_keeps_daily_row_when_sunrise_is_invalid(
+    bad_sunrise: str,
+) -> None:
+    """A bad sunrise only clears daylight; the rest of that day's details are kept."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    next_day = now + timedelta(days=1)
+    payload = _hourly_payload(
+        times=[now, next_day],
+        tdb=[31.0, 32.0],
+        rh=[62.0, 61.0],
+        wind=[1.5, 1.6],
+        radiation=[720.0, 710.0],
+    )
+    payload["daily"]["sunrise"][0] = bad_sunrise.format(
+        today=now.strftime("%Y-%m-%d"),
+        next_day=next_day.strftime("%Y-%m-%d"),
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert [row.date_local for row in weather.daily] == [now.date(), next_day.date()]
+    first, second = weather.daily
+    assert first.sunrise_local is None
+    assert first.sunset_local == "19:45"
+    assert first.precipitation_probability_max_pct == pytest.approx(80.0)
+    assert second.sunrise_local == "06:30"
+
+
+@pytest.mark.parametrize(
+    ("mutate_payload", "expected_uv_index"),
+    [
+        pytest.param(
+            lambda payload: payload["hourly"].pop("uv_index"),
+            None,
+            id="series-missing",
+        ),
+        pytest.param(
+            lambda payload: payload["hourly"].__setitem__("uv_index", [1.0, 2.0]),
+            None,
+            id="series-misaligned",
+        ),
+        pytest.param(
+            lambda payload: payload["hourly_units"].pop("uv_index"),
+            8.5,
+            id="unit-missing",
+        ),
+        pytest.param(
+            lambda payload: payload["hourly_units"].__setitem__("uv_index", "index"),
+            8.5,
+            id="unit-changed",
+        ),
+    ],
+)
+async def test_fetch_weather_forecast_keeps_risk_points_when_uv_index_is_unusable(
+    mutate_payload,
+    expected_uv_index: float | None,
+) -> None:
+    """UV index only feeds weather details, so it must never fail the hourly risk path."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+        uv=[8.5],
+    )
+    mutate_payload(payload)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert len(weather.points) == 1
+    assert weather.points[0].tdb == pytest.approx(31.0)
+    assert len(weather.calendar_hours) == 1
+    hour = weather.calendar_hours[0]
+    assert hour.tdb == pytest.approx(31.0)
+    assert hour.uv_index == expected_uv_index
+
+
+async def test_fetch_weather_forecast_treats_non_finite_daily_values_as_missing() -> None:
+    """Non-finite daily metrics should be omitted without failing the forecast."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    payload["hourly"]["uv_index"][0] = "NaN"
+    payload["daily"]["precipitation_probability_max"][0] = "Infinity"
+    payload["daily"]["rain_sum"][0] = "1e309"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    weather = await client.fetch_weather_forecast(
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+    await mock_client.aclose()
+
+    assert weather.calendar_hours[0].uv_index is None
+    assert len(weather.daily) == 1
+    row = weather.daily[0]
+    assert row.precipitation_probability_max_pct is None
+    assert row.rain_sum_mm is None
