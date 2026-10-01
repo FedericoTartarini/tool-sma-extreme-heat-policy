@@ -1,4 +1,3 @@
-// Reduce nesting and improve spacing: use a clearer Stack gap, responsive chart height, and fewer small wrapper components
 import { Accordion, Badge, Flex, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { FlatWeatherDetailsGrid } from "@/components/home/weather/FlatWeatherDetailsGrid";
@@ -24,7 +23,7 @@ const DEFAULT_FORECAST_CHART_HEIGHT = 340;
 const MOBILE_FORECAST_CHART_HEIGHT = 280;
 
 /**
- * Renders the 24-hour forecast chart and upcoming daily forecast accordions.
+ * Renders today's 24-hour risk chart, optional weather details, and later days in accordions.
  */
 export function ForecastSection() {
   const { i18n, t } = useTranslation();
@@ -68,7 +67,6 @@ export function ForecastSection() {
       title={t("home.sections.forecast.title")}
       actions={<ShowWeatherDetailsSwitch />}
     >
-      {/* Use a single Stack with an explicit gap to control spacing between chart and accordion */}
       <Stack gap={CONTENT_GAP}>
         <EChart
           option={buildForecastOption(
@@ -95,8 +93,7 @@ export function ForecastSection() {
             <Accordion.Item key={day.date} value={day.date}>
               <Accordion.Control>
                 <Group justify="space-between" wrap="nowrap">
-                  {/* Reduced nesting: simple column for weekday + date */}
-                  <Flex direction={"column"}>
+                  <Flex direction="column">
                     <Text fw={600}>
                       {formatWeekdayLabel(day.date, {
                         locale: dateLocale,
