@@ -34,7 +34,6 @@ def _hourly_payload(
     uv: list[float | None] | None = None,
     timezone_name: str = "UTC",
     units_override: dict[str, str] | None = None,
-    daily_override: dict | None = None,
 ) -> dict:
     """Build a minimal Open-Meteo hourly payload for tests."""
 
@@ -71,9 +70,6 @@ def _hourly_payload(
             "precipitation_sum": [2.5] * daily_count,
         },
     }
-    if daily_override:
-        daily.update(daily_override)
-
     return {
         "timezone": timezone_name,
         "hourly_units": units,
@@ -712,8 +708,42 @@ async def test_fetch_weather_forecast_returns_provider_daily_rows() -> None:
     assert row.precipitation_sum_mm == pytest.approx(2.5)
 
 
-async def test_fetch_weather_forecast_ignores_invalid_daily_payload() -> None:
-    """Invalid daily weather should not fail the hourly forecast or hourly-derived details."""
+@pytest.mark.parametrize(
+    ("mutate_payload", "expected_precip_prob", "expected_precip_sum", "expected_warning"),
+    [
+        pytest.param(
+            lambda payload: payload["daily"].pop("precipitation_sum"),
+            80.0,
+            None,
+            "daily.precipitation_sum series",
+            id="series-missing",
+        ),
+        pytest.param(
+            lambda payload: payload["daily"].__setitem__("precipitation_sum", [1.0, 2.0]),
+            80.0,
+            None,
+            "daily.precipitation_sum series",
+            id="series-misaligned",
+        ),
+        pytest.param(
+            lambda payload: payload["daily_units"].__setitem__(
+                "precipitation_probability_max", "index"
+            ),
+            None,
+            2.5,
+            "daily.precipitation_probability_max with unexpected unit",
+            id="unit-changed",
+        ),
+    ],
+)
+async def test_fetch_weather_forecast_clears_only_the_unusable_daily_series(
+    caplog: pytest.LogCaptureFixture,
+    mutate_payload,
+    expected_precip_prob: float | None,
+    expected_precip_sum: float | None,
+    expected_warning: str,
+) -> None:
+    """An unusable daily series is logged and clears only its own field."""
 
     now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
     payload = _hourly_payload(
@@ -722,29 +752,65 @@ async def test_fetch_weather_forecast_ignores_invalid_daily_payload() -> None:
         rh=[62.0],
         wind=[1.5],
         radiation=[720.0],
-        daily_override={
-            "daily_units": {
-                "precipitation_probability_max": "index",
-                "precipitation_sum": "mm",
-            }
-        },
     )
+    mutate_payload(payload)
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(status_code=200, json=payload)
 
     client, mock_client = _build_client(handler)
 
-    weather = await client.fetch_weather_forecast(
-        latitude=-33.847,
-        longitude=151.067,
-        timezone_name="UTC",
+    with caplog.at_level("WARNING"):
+        weather = await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    await mock_client.aclose()
+
+    assert len(weather.points) == 1
+    assert len(weather.daily) == 1
+    row = weather.daily[0]
+    assert row.sunrise_local == "06:30"
+    assert row.sunset_local == "19:45"
+    assert row.precipitation_probability_max_pct == expected_precip_prob
+    assert row.precipitation_sum_mm == expected_precip_sum
+    assert expected_warning in caplog.text
+
+
+async def test_fetch_weather_forecast_logs_missing_daily_block(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A missing daily block is logged and leaves hourly risk and hourly details intact."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
     )
+    payload.pop("daily")
+    payload.pop("daily_units")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    with caplog.at_level("WARNING"):
+        weather = await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
     await mock_client.aclose()
 
     assert len(weather.points) == 1
     assert weather.daily == []
     assert [hour.tdb for hour in weather.calendar_hours] == [31.0]
+    assert "missing daily weather" in caplog.text
 
 
 @pytest.mark.parametrize(

@@ -178,29 +178,6 @@ def _validate_hourly_units(payload: dict[str, Any]) -> None:
             )
 
 
-def _validate_daily_units(payload: dict[str, Any]) -> None:
-    """Fail fast when Open-Meteo changes any required daily unit contract."""
-
-    daily = payload.get("daily")
-    if not isinstance(daily, dict):
-        return
-
-    daily_units = payload.get("daily_units")
-    if not isinstance(daily_units, dict):
-        raise WeatherProviderError("Weather provider response was missing daily_units")
-
-    for field, expected_units in _EXPECTED_DAILY_UNITS.items():
-        received = daily_units.get(field)
-        if not isinstance(received, str):
-            raise WeatherProviderError(f"Weather provider unit was missing for {field}")
-        if received not in expected_units:
-            expected_text = ", ".join(sorted(expected_units))
-            raise WeatherProviderError(
-                f"Unexpected unit for {field}: received '{received}', "
-                f"expected one of [{expected_text}]"
-            )
-
-
 def _extract_hourly_series(
     payload: dict[str, Any],
     *,
@@ -255,6 +232,34 @@ def _extract_optional_hourly_series(
         return values
 
     LOGGER.warning("Ignoring missing or misaligned Open-Meteo hourly.%s series", field)
+    return [None] * expected_length
+
+
+def _extract_optional_daily_series(
+    daily: dict[str, Any],
+    daily_units: dict[str, Any],
+    field: str,
+    *,
+    expected_length: int,
+) -> list[Any]:
+    """Return one daily series, or all-missing values when absent, misaligned or mis-unitted."""
+
+    expected_units = _EXPECTED_DAILY_UNITS.get(field)
+    if expected_units is not None:
+        received_unit = daily_units.get(field)
+        if received_unit not in expected_units:
+            LOGGER.warning(
+                "Ignoring Open-Meteo daily.%s with unexpected unit %r",
+                field,
+                received_unit,
+            )
+            return [None] * expected_length
+
+    values = daily.get(field)
+    if isinstance(values, list) and len(values) == expected_length:
+        return values
+
+    LOGGER.warning("Ignoring missing or misaligned Open-Meteo daily.%s series", field)
     return [None] * expected_length
 
 
@@ -347,37 +352,34 @@ def _select_calendar_hours(
 
 
 def _select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather]:
-    """Parse aligned Open-Meteo daily rows for the forecast window."""
+    """Parse Open-Meteo daily rows; each unusable series only clears its own field.
+
+    Never raises, so daily weather can't fail the hourly risk forecast.
+    """
 
     daily = payload.get("daily")
     if not isinstance(daily, dict):
+        LOGGER.warning("Open-Meteo response was missing daily weather")
         return []
 
     raw_dates = daily.get("time")
     if not isinstance(raw_dates, list):
-        raise WeatherProviderError("Weather provider response was missing daily.time")
+        LOGGER.warning("Ignoring Open-Meteo daily weather without a daily.time series")
+        return []
 
-    series_data: dict[str, list[Any]] = {}
-    for field_name in _DAILY_FIELDS:
-        if field_name in {"sunrise", "sunset"}:
-            continue
-        values = daily.get(field_name)
-        if not isinstance(values, list):
-            raise WeatherProviderError(f"Weather provider response was missing daily.{field_name}")
-        if len(values) != len(raw_dates):
-            raise WeatherProviderError(
-                f"Weather provider response length mismatch for daily.{field_name}"
-            )
-        series_data[field_name] = values
-
-    sunrise_values = daily.get("sunrise")
-    sunset_values = daily.get("sunset")
-    if not isinstance(sunrise_values, list) or not isinstance(sunset_values, list):
-        raise WeatherProviderError("Weather provider response was missing daily sunrise/sunset")
-    if len(sunrise_values) != len(raw_dates) or len(sunset_values) != len(raw_dates):
-        raise WeatherProviderError(
-            "Weather provider response length mismatch for daily sunrise/sunset"
+    raw_daily_units = payload.get("daily_units")
+    daily_units = raw_daily_units if isinstance(raw_daily_units, dict) else {}
+    series_data = {
+        field_name: _extract_optional_daily_series(
+            daily,
+            daily_units,
+            field_name,
+            expected_length=len(raw_dates),
         )
+        for field_name in _DAILY_FIELDS
+    }
+    sunrise_values = series_data["sunrise"]
+    sunset_values = series_data["sunset"]
 
     rows: list[ProviderDailyWeather] = []
     for idx, raw_date in enumerate(raw_dates):
@@ -402,9 +404,10 @@ def _select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather
             sunset_values[idx],
             expected_date=raw_date,
         )
-        if sunrise_local is None or sunset_local is None:
-            # Daylight is one optional metric; keep the row so the other
-            # per-day details still reach the client.
+        # A None raw value is a provider null or an already-logged unusable series.
+        if (sunrise_local is None and sunrise_values[idx] is not None) or (
+            sunset_local is None and sunset_values[idx] is not None
+        ):
             LOGGER.warning(
                 "Omitting invalid Open-Meteo sunrise/sunset for %s",
                 raw_date,
@@ -425,20 +428,6 @@ def _select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather
         )
 
     return rows
-
-
-def _try_select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather]:
-    """Parse daily rows without failing the hourly risk forecast or hourly-derived details."""
-
-    try:
-        _validate_daily_units(payload)
-        return _select_provider_daily(payload)
-    except WeatherProviderError:
-        LOGGER.warning(
-            "Ignoring invalid Open-Meteo daily weather payload",
-            exc_info=True,
-        )
-        return []
 
 
 class OpenMeteoClient:
@@ -485,7 +474,7 @@ class OpenMeteoClient:
         return WeatherForecast(
             points=points,
             calendar_hours=_select_calendar_hours(payload, requested_timezone_name=timezone_name),
-            daily=_try_select_provider_daily(payload),
+            daily=_select_provider_daily(payload),
         )
 
     def _build_async_client(self) -> httpx.AsyncClient:

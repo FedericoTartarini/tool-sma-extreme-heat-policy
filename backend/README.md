@@ -216,12 +216,23 @@ Example response:
    - hourly `uv_index` is not unit-validated or required: a missing or misaligned
      series is logged at warning level and only clears the UV fields in
      `daily_weather`.
-   - daily parse failures are non-fatal: an invalid daily payload or row is logged
-     at warning level and only clears that day's sunrise, sunset and precipitation
-     fields; hourly-derived details and hourly risk calculation continue
-     unchanged. Every metric inside a `daily_weather` row
-     (including `sunrise_local`/`sunset_local`) is nullable and is omitted on
-     its own without dropping the rest of the day.
+   - daily provider data is non-fatal; hourly-derived details and hourly risk
+     calculation continue unchanged. The provider daily fields are
+     `sunrise_local`, `sunset_local`, `precip_prob_max_pct` and
+     `cumulative_rainfall_mm`:
+     - each daily series is checked on its own: a missing or misaligned
+       series, or an unexpected or missing unit for
+       `precipitation_probability_max` / `precipitation_sum`, is logged at
+       warning level and only sets that field to `null` for every day.
+     - a missing `daily` block or `daily.time` series is logged at warning
+       level and leaves all four fields `null` for every day.
+     - a daily row with an invalid date is logged and skipped, so only that
+       day's fields are `null`.
+     - an invalid sunrise or sunset is logged and only clears that value.
+       A non-numeric or non-finite precipitation value is set to `null`
+       without logging.
+   - Every metric inside a `daily_weather` row is nullable. Missing values are
+     returned as `null`; the keys are always present.
    - `daily_weather` also includes calendar-day temperature, humidity, UV max
      (value and time), and average wind derived from the full provider hourly
      series (not the risk-trimmed `forecast[]` window).
