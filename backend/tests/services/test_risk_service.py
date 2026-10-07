@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytest
@@ -9,12 +10,18 @@ from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     SportsHeatStressInput,
     SportsHeatStressOutput,
 )
-from sma_extreme_heat_backend.clients.open_meteo import HourlyWeatherPoint, WeatherForecast
+from sma_extreme_heat_backend.clients.open_meteo import (
+    CalendarHourlyWeatherPoint,
+    HourlyWeatherPoint,
+    ProviderDailyWeather,
+    WeatherForecast,
+)
 from sma_extreme_heat_backend.core.errors import ModelInputUnavailableError
 from sma_extreme_heat_backend.schemas.home import RiskRequest
 from sma_extreme_heat_backend.services.risk_service import RiskService
 
 VALID_PROFILES = ("ADULT", "UNDER_10", "AGE_10_13", "AGE_14_17")
+SYDNEY = ZoneInfo("Australia/Sydney")
 
 
 class FakeWeatherClient:
@@ -26,11 +33,15 @@ class FakeWeatherClient:
         expected_latitude: float | None = -33.847,
         expected_longitude: float | None = 151.067,
         expected_timezone_name: str | None = "Australia/Sydney",
+        calendar_hours: list[CalendarHourlyWeatherPoint] | None = None,
+        daily: list[ProviderDailyWeather] | None = None,
     ) -> None:
         self.calls = 0
         self.expected_latitude = expected_latitude
         self.expected_longitude = expected_longitude
         self.expected_timezone_name = expected_timezone_name
+        self.calendar_hours = calendar_hours or []
+        self.daily = daily or []
         base_time = datetime(2026, 3, 9, 0, 0, tzinfo=UTC)
         self.points = [
             HourlyWeatherPoint(
@@ -59,7 +70,11 @@ class FakeWeatherClient:
             assert longitude == self.expected_longitude
         if self.expected_timezone_name is not None:
             assert timezone_name == self.expected_timezone_name
-        return WeatherForecast(points=self.points)
+        return WeatherForecast(
+            points=self.points,
+            calendar_hours=self.calendar_hours,
+            daily=self.daily,
+        )
 
     async def aclose(self) -> None:
         """Match the real client shutdown interface."""
@@ -454,6 +469,63 @@ async def test_risk_service_uses_only_height_scaled_wind_for_lower_values(
     )
 
     assert calculator.payloads[0].vr == pytest.approx(0.61)
+
+
+async def test_risk_service_returns_daily_weather_from_provider_details(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Daily weather summaries should flow from the provider into the risk response."""
+
+    local_day_start = datetime(2026, 3, 9, 10, 0, tzinfo=SYDNEY)
+    calendar_hours = [
+        CalendarHourlyWeatherPoint(
+            time_local=local_day_start + timedelta(hours=offset),
+            tdb=28.0 + offset,
+            rh=50.0 + offset,
+            v_z1=2.0,
+            uv_index=6.0 + offset,
+        )
+        for offset in range(4)
+    ]
+    provider_daily = [
+        ProviderDailyWeather(
+            date_local=date(2026, 3, 9),
+            sunrise_local="06:30",
+            sunset_local="19:45",
+            precipitation_probability_max_pct=55.0,
+            precipitation_sum_mm=3.2,
+        )
+    ]
+    weather_client = FakeWeatherClient(
+        calendar_hours=calendar_hours,
+        daily=provider_daily,
+    )
+    calculator = FakeCalculator()
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=weather_client,
+        calculator=calculator,
+        ttl_seconds=600,
+    )
+
+    response = await service.calculate_home_risk(
+        RiskRequest(
+            sport="SOCCER",
+            latitude=-33.847,
+            longitude=151.067,
+            profile="ADULT",
+        )
+    )
+
+    assert len(response.daily_weather) == 1
+    summary = response.daily_weather[0]
+    assert summary.date.isoformat() == "2026-03-09"
+    assert summary.sunrise_local == "06:30"
+    assert summary.sunset_local == "19:45"
+    assert summary.precip_prob_max_pct == pytest.approx(55.0)
+    assert summary.cumulative_rainfall_mm == pytest.approx(3.2)
+    assert summary.max_temp_c == pytest.approx(31.0)
+    assert summary.uv_index_max == pytest.approx(9.0)
 
 
 async def test_risk_service_uses_only_height_scaled_wind_for_higher_values(
