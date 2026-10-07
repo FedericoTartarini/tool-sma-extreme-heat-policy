@@ -181,47 +181,68 @@ function isLocalCalendarDateKey(value: unknown): value is string {
   );
 }
 
-function isOptionalFiniteNumber(
-  value: unknown,
-): value is number | null | undefined {
-  return (
-    value === null ||
-    value === undefined ||
-    (typeof value === "number" && Number.isFinite(value))
-  );
+function isLocalTimeLabel(value: unknown): value is string {
+  return typeof value === "string" && /^\d{2}:\d{2}$/.test(value);
 }
 
-function isDailyWeatherApiSummary(
+const DAILY_WEATHER_FIELD_VALIDATORS = {
+  sunrise_local: isLocalTimeLabel,
+  sunset_local: isLocalTimeLabel,
+  uv_index_max: isFiniteNumber,
+  precip_prob_max_pct: isFiniteNumber,
+  cumulative_rainfall_mm: isFiniteNumber,
+  max_temp_c: isFiniteNumber,
+  min_temp_c: isFiniteNumber,
+  max_temp_time_local: isLocalTimeLabel,
+  min_temp_time_local: isLocalTimeLabel,
+  humidity_at_max_pct: isFiniteNumber,
+  humidity_at_min_pct: isFiniteNumber,
+  uv_index_max_time_local: isLocalTimeLabel,
+  avg_wind_speed_ms: isFiniteNumber,
+} satisfies Record<
+  Exclude<keyof DailyWeatherApiSummary, "date">,
+  (value: unknown) => boolean
+>;
+
+/**
+ * Keeps a daily weather row with a valid date; each malformed metric becomes
+ * `null` so one bad value does not hide the rest of that day's details.
+ */
+function toDailyWeatherApiSummary(
   value: unknown,
-): value is DailyWeatherApiSummary {
-  if (!isRecord(value)) {
-    return false;
+): DailyWeatherApiSummary | null {
+  if (!isRecord(value) || !isLocalCalendarDateKey(value.date)) {
+    console.warn("Ignoring daily weather row without a valid date.", value);
+    return null;
   }
 
-  return (
-    isLocalCalendarDateKey(value.date) &&
-    isOptionalLocalTimeLabel(value.sunrise_local) &&
-    isOptionalLocalTimeLabel(value.sunset_local) &&
-    isOptionalFiniteNumber(value.uv_index_max) &&
-    isOptionalFiniteNumber(value.precip_prob_max_pct) &&
-    isOptionalFiniteNumber(value.cumulative_rainfall_mm) &&
-    isOptionalFiniteNumber(value.max_temp_c) &&
-    isOptionalFiniteNumber(value.min_temp_c) &&
-    isOptionalFiniteNumber(value.humidity_at_max_pct) &&
-    isOptionalFiniteNumber(value.humidity_at_min_pct) &&
-    isOptionalFiniteNumber(value.avg_wind_speed_ms) &&
-    isOptionalLocalTimeLabel(value.max_temp_time_local) &&
-    isOptionalLocalTimeLabel(value.min_temp_time_local) &&
-    isOptionalLocalTimeLabel(value.uv_index_max_time_local)
-  );
-}
+  const summary: Record<string, unknown> = { date: value.date };
+  const invalidFields: string[] = [];
 
-function isOptionalLocalTimeLabel(value: unknown): boolean {
-  return (
-    value === null ||
-    value === undefined ||
-    (typeof value === "string" && /^\d{2}:\d{2}$/.test(value))
-  );
+  for (const [field, isValid] of Object.entries(
+    DAILY_WEATHER_FIELD_VALIDATORS,
+  )) {
+    const fieldValue = value[field];
+    if (fieldValue === undefined) {
+      continue;
+    }
+
+    if (fieldValue === null || isValid(fieldValue)) {
+      summary[field] = fieldValue;
+    } else {
+      summary[field] = null;
+      invalidFields.push(field);
+    }
+  }
+
+  if (invalidFields.length > 0) {
+    console.warn("Ignoring malformed daily weather fields.", {
+      date: value.date,
+      fields: invalidFields,
+    });
+  }
+
+  return summary as unknown as DailyWeatherApiSummary;
 }
 
 function isHeatRiskApiRequestSummary(
@@ -237,8 +258,8 @@ function isHeatRiskApiRequestSummary(
 }
 
 /**
- * Keeps only well-formed daily weather rows so extra weather can be dropped
- * without rejecting the rest of the heat-risk payload.
+ * Parses daily weather rows so malformed weather never rejects the rest of the
+ * heat-risk payload.
  */
 function listDailyWeatherApiSummaries(
   value: unknown,
@@ -247,7 +268,10 @@ function listDailyWeatherApiSummaries(
     return [];
   }
 
-  return value.filter(isDailyWeatherApiSummary);
+  return value.flatMap((row) => {
+    const summary = toDailyWeatherApiSummary(row);
+    return summary ? [summary] : [];
+  });
 }
 
 function isHeatRiskApiCore(

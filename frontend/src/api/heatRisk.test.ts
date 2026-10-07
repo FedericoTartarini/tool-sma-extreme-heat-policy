@@ -45,6 +45,7 @@ describe("fetchHeatRisk", () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("sends Croquet with the frozen ADULT profile in the Home risk payload", async () => {
@@ -83,7 +84,8 @@ describe("fetchHeatRisk", () => {
     );
   });
 
-  it("keeps valid daily weather rows and drops malformed ones", async () => {
+  it("clears malformed daily weather fields one at a time and drops rows without a valid date", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -111,6 +113,12 @@ describe("fetchHeatRisk", () => {
               sunset_local: null,
               max_temp_c: 27.5,
             },
+            {
+              date: "2026-03-12",
+              max_temp_c: "hot",
+              min_temp_c: 0,
+              cumulative_rainfall_mm: 0,
+            },
           ],
         }),
         { status: 200 },
@@ -137,12 +145,36 @@ describe("fetchHeatRisk", () => {
         uv_index_max: 8.2,
       },
       {
+        date: "2026-03-10",
+        sunrise_local: null,
+        sunset_local: "19:45",
+      },
+      {
         date: "2026-03-11",
         sunrise_local: null,
         sunset_local: null,
         max_temp_c: 27.5,
       },
+      {
+        date: "2026-03-12",
+        max_temp_c: null,
+        min_temp_c: 0,
+        cumulative_rainfall_mm: 0,
+      },
     ]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring daily weather row without a valid date.",
+      expect.objectContaining({ date: "2026-3-10" }),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring malformed daily weather fields.",
+      { date: "2026-03-10", fields: ["sunrise_local"] },
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring malformed daily weather fields.",
+      { date: "2026-03-12", fields: ["max_temp_c"] },
+    );
+    expect(warnSpy).toHaveBeenCalledTimes(3);
   });
 
   it("returns missing_config without calling fetch when the API base URL is absent", async () => {
