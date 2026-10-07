@@ -77,7 +77,7 @@ function PairedCategoryRow({
   return (
     <SimpleGrid cols={2} spacing={WEATHER_DETAILS_GRID_SPACING}>
       {groups.map((group) => (
-        <Box key={group.id} style={{ minWidth: 0 }}>
+        <Box key={group.id} miw={0}>
           <WeatherDetailsCategorySection
             group={group}
             details={details}
@@ -97,16 +97,16 @@ function DesktopHalvesRow({
   right: ReactNode;
 }) {
   if (left && !right) {
-    return <Box style={{ minWidth: 0 }}>{left}</Box>;
+    return <Box miw={0}>{left}</Box>;
   }
 
   if (!left && right) {
-    return <Box style={{ minWidth: 0 }}>{right}</Box>;
+    return <Box miw={0}>{right}</Box>;
   }
 
   return (
     <Flex align="stretch" wrap="nowrap" gap={0}>
-      <Box flex={1} style={{ minWidth: 0 }}>
+      <Box flex={1} miw={0}>
         {left}
       </Box>
       <Divider
@@ -114,7 +114,7 @@ function DesktopHalvesRow({
         color="gray.3"
         mx={WEATHER_DETAILS_GRID_SPACING}
       />
-      <Box flex={1} style={{ minWidth: 0 }}>
+      <Box flex={1} miw={0}>
         {right}
       </Box>
     </Flex>
@@ -147,7 +147,7 @@ function DesktopGroupedCategories({
   return (
     <Flex align="stretch" wrap="nowrap" gap={WEATHER_DETAILS_GRID_SPACING}>
       {groups.map((group) => (
-        <Box key={group.id} flex={1} style={{ minWidth: 0 }}>
+        <Box key={group.id} flex={1} miw={0}>
           <WeatherDetailsCategorySection
             group={group}
             details={details}

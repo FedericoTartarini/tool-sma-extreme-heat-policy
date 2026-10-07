@@ -290,6 +290,7 @@
             "daylight": "Daylight"
           },
           "valueAtTime": "{{value}} @ {{time}}",
+          "labelValue": "{{label}}: {{value}}",
           "metrics": {
             "maxTempC": "Max temp",
             "minTempC": "Min temp",

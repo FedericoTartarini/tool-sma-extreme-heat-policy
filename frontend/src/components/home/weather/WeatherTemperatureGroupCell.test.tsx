@@ -10,6 +10,10 @@ function translate(key: string, options?: Record<string, string>): string {
     return `${options?.value} @ ${options?.time}`;
   }
 
+  if (key === "home.sections.forecast.weatherDetails.labelValue") {
+    return `${options?.label} | ${options?.value}`;
+  }
+
   return key;
 }
 
@@ -39,6 +43,9 @@ describe("WeatherTemperatureGroupCell", () => {
     );
 
     expect(markup).toContain("@ 2 PM");
+    expect(markup).toContain(
+      "home.sections.forecast.weatherDetails.metrics.humidityAtMaxPct | ",
+    );
   });
 
   it("does not render peak time without a maximum temperature", () => {

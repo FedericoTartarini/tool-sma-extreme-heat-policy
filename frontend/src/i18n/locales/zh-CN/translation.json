@@ -290,6 +290,7 @@
             "daylight": "日照"
           },
           "valueAtTime": "{{value}} @ {{time}}",
+          "labelValue": "{{label}}：{{value}}",
           "metrics": {
             "maxTempC": "最高温度",
             "minTempC": "最低温度",

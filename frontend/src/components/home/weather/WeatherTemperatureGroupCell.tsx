@@ -27,7 +27,10 @@ export function WeatherTemperatureGroupCell({
     .map((field) => {
       const metric = getWeatherMetricDefinition(field);
 
-      return `${t(metric.labelKey)}: ${formatWeatherMetricValue(details, metric, t)}`;
+      return t("home.sections.forecast.weatherDetails.labelValue", {
+        label: t(metric.labelKey),
+        value: formatWeatherMetricValue(details, metric, t),
+      });
     });
 
   const hasPrimary = isWeatherMetricAvailable(details, group.primaryField);
