@@ -1,10 +1,34 @@
 import { describe, expect, it } from "vitest";
+import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
 import {
   getRiskBadgeForegroundColor,
   getRiskBands,
+  RISK_LEVELS,
+  RISK_REGISTRY,
+  type RiskLevel,
   toRiskDisplayScore,
   toRiskLevel,
 } from "@/domain/riskRegistry";
+import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
+
+const EXPECTED_KEY_ICON_ASSETS = {
+  low: [
+    RECOMMENDATION_ACTION_ASSETS.hydration,
+    RECOMMENDATION_ACTION_ASSETS.clothing,
+  ],
+  moderate: [
+    RECOMMENDATION_ACTION_ASSETS.hydration,
+    RECOMMENDATION_ACTION_ASSETS.clothing,
+    RECOMMENDATION_ACTION_ASSETS.pause,
+  ],
+  high: [
+    RECOMMENDATION_ACTION_ASSETS.hydration,
+    RECOMMENDATION_ACTION_ASSETS.clothing,
+    RECOMMENDATION_ACTION_ASSETS.pause,
+    RECOMMENDATION_ACTION_ASSETS.cooling,
+  ],
+  extreme: [RECOMMENDATION_ACTION_ASSETS.stop],
+} satisfies Record<RiskLevel, (ResponsiveImageAsset | null)[]>;
 
 describe("toRiskLevel", () => {
   it("maps threshold boundaries into the expected risk levels", () => {
@@ -45,5 +69,15 @@ describe("getRiskBadgeForegroundColor", () => {
     expect(getRiskBadgeForegroundColor("moderate")).toBe("#000000");
     expect(getRiskBadgeForegroundColor("high")).toBe("#ffffff");
     expect(getRiskBadgeForegroundColor("extreme")).toBe("#ffffff");
+  });
+});
+
+describe("recommendation action assets", () => {
+  it("keeps responsive action assets in the configured order", () => {
+    for (const level of RISK_LEVELS) {
+      expect(RISK_REGISTRY[level].keyIconAssets).toEqual(
+        EXPECTED_KEY_ICON_ASSETS[level],
+      );
+    }
   });
 });

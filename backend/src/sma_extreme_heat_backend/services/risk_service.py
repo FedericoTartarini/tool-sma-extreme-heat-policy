@@ -146,29 +146,24 @@ class RiskService:
         first_candidate_point = self._first_candidate_forecast_point(
             forecast_mrt_df=forecast_mrt_df
         )
-        forecast: list[ForecastPoint] = []
-        for timestamp, point in forecast_mrt_df.iterrows():
-            missing_inputs = self._missing_required_input_fields(point)
-            if missing_inputs:
-                # Skip incomplete leading/future rows so `forecast[0]` is always the earliest
-                # complete point that the frontend can safely treat as "current".
-                continue
+        complete_rows = forecast_mrt_df.dropna(subset=list(_REQUIRED_INPUT_FIELDS))
+        if complete_rows.empty:
+            # The earliest candidate explains why no usable forecast point remains.
+            raise self._missing_input_error_for_point(point=first_candidate_point)
 
+        forecast: list[ForecastPoint] = []
+        for timestamp, point in complete_rows.iterrows():
+            inputs = ForecastInputs.model_validate(
+                {field: point[field] for field in _REQUIRED_INPUT_FIELDS}
+            )
             forecast_point = self._to_forecast_point(
                 timestamp=timestamp.to_pydatetime(),
-                point=point,
+                inputs=inputs,
                 sport=sport,
             )
             forecast.append(forecast_point)
 
-        if forecast:
-            return forecast
-
-        # Only return 422 when every candidate row is incomplete; the earliest row explains why
-        # the backend could not produce any usable current/forecast point.
-        raise self._missing_input_error_for_point(
-            point=first_candidate_point,
-        )
+        return forecast
 
     @staticmethod
     def _missing_required_input_fields(point: pd.Series) -> list[str]:
@@ -218,40 +213,27 @@ class RiskService:
         self,
         *,
         timestamp: datetime,
-        point: pd.Series,
+        inputs: ForecastInputs,
         sport: str,
     ) -> ForecastPoint:
         """Calculate one forecast point and map it into the public response model."""
 
-        assert not pd.isna(point.tdb)
-        assert not pd.isna(point.rh)
-        assert not pd.isna(point.v_z1)
-        assert not pd.isna(point.sol_radiation_dir)
-        assert not pd.isna(point.tr)
-
-        v_z1 = float(point.v_z1)
         # Convert the provider's 10 m wind speed into the model's required 1.1 m input.
-        wind_speed_model_ms = self._resolve_model_wind_speed(vr=v_z1)
+        wind_speed_model_ms = self._resolve_model_wind_speed(vr=inputs.v_z1)
         computed = self.calculator.model_sports_heat_stress(
             SportsHeatStressInput(
                 sport=sport,
-                tdb=float(point.tdb),
-                rh=float(point.rh),
+                tdb=inputs.tdb,
+                rh=inputs.rh,
                 vr=wind_speed_model_ms,
-                tr=float(point.tr),
+                tr=inputs.tr,
             )
         )
 
         return ForecastPoint(
             time_utc=timestamp.astimezone(UTC),
             time_local=timestamp,
-            inputs=ForecastInputs(
-                tdb=float(point.tdb),
-                tr=float(point.tr),
-                rh=float(point.rh),
-                v_z1=v_z1,
-                sol_radiation_dir=float(point.sol_radiation_dir),
-            ),
+            inputs=inputs,
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )
 

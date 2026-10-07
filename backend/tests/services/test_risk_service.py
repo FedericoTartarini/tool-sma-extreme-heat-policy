@@ -552,25 +552,28 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
     }
 
 
+@pytest.mark.parametrize("field", ["tdb", "rh", "v_z1", "sol_radiation_dir", "tr"])
 async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
     monkeypatch: pytest.MonkeyPatch,
+    field: str,
 ) -> None:
     """A 422 should only be returned when every forecast candidate row is incomplete."""
 
     _install_mrt_pipeline(
         monkeypatch,
         df=_build_mrt_dataframe(
-            current_missing={"v_z1"},
-            future_missing_by_row={1: {"v_z1"}, 2: {"v_z1"}},
+            current_missing={field},
+            future_missing_by_row={1: {field}, 2: {field}},
         ),
     )
+    calculator = FakeCalculator()
     service = RiskService(
         weather_client=FakeWeatherClient(),
-        calculator=FakeCalculator(),
+        calculator=calculator,
         ttl_seconds=600,
     )
 
-    try:
+    with pytest.raises(ModelInputUnavailableError) as caught:
         await service.calculate_home_risk(
             RiskRequest(
                 sport="SOCCER",
@@ -579,15 +582,17 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
                 profile="ADULT",
             )
         )
-    except ModelInputUnavailableError as exc:
-        assert exc.status_code == 422
-        assert exc.detail["unknown_inputs"] == ["v_z1"]
-        assert exc.detail["available_inputs"] == {
+    assert caught.value.status_code == 422
+    assert caught.value.detail == {
+        "message": "Required model inputs are missing or uncertain",
+        "unknown_inputs": [field],
+        "available_inputs": {
             "tdb": 31.0,
             "tr": 37.25,
             "rh": 62.0,
-            "v_z1": None,
+            "v_z1": 1.5,
             "sol_radiation_dir": 525.0,
-        }
-    else:
-        raise AssertionError("Expected ModelInputUnavailableError")
+            field: None,
+        },
+    }
+    assert calculator.calls == 0
