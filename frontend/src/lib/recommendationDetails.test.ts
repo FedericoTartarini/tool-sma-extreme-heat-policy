@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RiskLevel } from "@/domain/riskRegistry";
+import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
 import enTranslations from "@/i18n/locales/en/translation.json";
 import { getRecommendationDetailContent } from "@/lib/recommendationDetails";
 
@@ -14,6 +15,11 @@ function translate(key: string): unknown {
       enTranslations,
     );
 }
+
+afterEach(() => {
+  vi.doUnmock("@/domain/recommendationActionAssets");
+  vi.resetModules();
+});
 
 describe("getRecommendationDetailContent", () => {
   it.each<[RiskLevel, string, string[], string[]]>([
@@ -71,9 +77,77 @@ describe("getRecommendationDetailContent", () => {
       expect(content.levelLabel).toBe(expectedLabel);
       expect(content.items.map((item) => item.label)).toEqual(expectedItems);
       expect(content.items).toHaveLength(expectedItems.length);
-      expect(content.items.every((item) => item.src.length > 0)).toBe(true);
+      for (const item of content.items) {
+        expect(item.image).not.toBeNull();
+      }
       expect(content.description.length).toBeGreaterThan(0);
       expect(content.suggestions).toEqual(expectedSuggestions);
     },
   );
+
+  it("keeps labels aligned when an action image is unavailable", async () => {
+    vi.resetModules();
+    vi.doMock("@/domain/recommendationActionAssets", () => ({
+      RECOMMENDATION_ACTION_ASSETS: {
+        hydration: null,
+        clothing: {
+          src: "/actions/clothing-96.webp",
+          srcSet:
+            "/actions/clothing-48.webp 48w, /actions/clothing-96.webp 96w",
+          sizes: "2.5rem",
+        },
+        pause: null,
+        cooling: null,
+        stop: null,
+      },
+    }));
+
+    const { getRecommendationDetailContent: getContent } =
+      await import("@/lib/recommendationDetails");
+
+    expect(getContent("low", translate).items).toEqual([
+      { image: null, label: "Stay hydrated" },
+      {
+        image: {
+          src: "/actions/clothing-96.webp",
+          srcSet:
+            "/actions/clothing-48.webp 48w, /actions/clothing-96.webp 96w",
+          sizes: "2.5rem",
+        },
+        label: "Wear light clothing",
+      },
+    ]);
+  });
+
+  it("keeps extreme stop advice when its image is unavailable", async () => {
+    vi.resetModules();
+    vi.doMock("@/domain/recommendationActionAssets", () => ({
+      RECOMMENDATION_ACTION_ASSETS: {
+        ...RECOMMENDATION_ACTION_ASSETS,
+        stop: null,
+      },
+    }));
+
+    const { getRecommendationDetailContent: getContent } =
+      await import("@/lib/recommendationDetails");
+
+    expect(getContent("extreme", translate).items).toEqual([
+      { image: null, label: "Consider Suspending Play" },
+    ]);
+  });
+
+  it("omits recommendations with empty labels", () => {
+    const content = getRecommendationDetailContent("low", (key) =>
+      key === "recommendations.key.low"
+        ? ["", "Wear light clothing"]
+        : translate(key),
+    );
+
+    expect(content.items).toEqual([
+      {
+        image: RECOMMENDATION_ACTION_ASSETS.clothing,
+        label: "Wear light clothing",
+      },
+    ]);
+  });
 });

@@ -1,10 +1,8 @@
 import { Box, Image, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { CONTENT_GAP } from "@/config/uiLayout";
-import {
-  ACTION_IMAGE_ICON_SIZE,
-  COMPACT_RECOMMENDATION_LAYOUT_QUERY,
-} from "@/config/uiScale";
+import { RECOMMENDATION_ACTION_IMAGE_CONFIG } from "@/config/responsiveImages";
+import { COMPACT_RECOMMENDATION_LAYOUT_QUERY } from "@/config/uiScale";
 import type { RecommendationDetailItem } from "@/lib/recommendationDetails";
 
 interface RecommendationActionGridProps {
@@ -41,7 +39,7 @@ export function RecommendationActionGrid({
     >
       {items.map((item, index) => (
         <Box
-          key={`${item.src}-${item.label}`}
+          key={`${index}-${item.label}`}
           style={{
             ...(shouldCenterLastRecommendation && index === items.length - 1
               ? {
@@ -57,13 +55,18 @@ export function RecommendationActionGrid({
           }}
         >
           <Stack align="center" gap={CONTENT_GAP}>
-            <Image
-              src={item.src}
-              alt={item.label}
-              w={ACTION_IMAGE_ICON_SIZE}
-              h={ACTION_IMAGE_ICON_SIZE}
-              fit="contain"
-            />
+            {item.image !== null && (
+              <Image
+                src={item.image.src}
+                srcSet={item.image.srcSet}
+                sizes={item.image.sizes}
+                loading="lazy"
+                alt={item.label}
+                w={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
+                h={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
+                fit="contain"
+              />
+            )}
             <Text
               fw={600}
               fz={{ base: "sm", sm: "md" }}
