@@ -31,7 +31,7 @@ All three pass when ruff and pytest exit 0 and, with the server running, `curl h
 ## API contract
 
 - Route `POST /home/risk`. Request is `sport`, `latitude`, `longitude`, `profile`; `sport` is an official pythermalcomfort `Sports` enum name (e.g. `SOCCER`).
-- Response: `request` (context including `sport`, `profile`, `location.timezone`) and `forecast` (hourly points with `time_utc`, `time_local`, explicit inputs, raw pythermalcomfort keys under `heat_risk`).
+- Response: `request` (context including `sport`, `profile`, `location.timezone`), `forecast` (hourly points with `time_utc`, `time_local`, explicit inputs, raw pythermalcomfort keys under `heat_risk`) and `daily_weather` (one weather-details summary per provider-local calendar day: `date` plus nullable metrics, sent as `null` when missing). Daily weather failures never fail the risk response; `README.md` Risk Flow lists the fallback rules.
 - Keys are snake_case at both boundaries. Routes take and return Pydantic schemas.
 - Upstream weather data is untrusted: validate before model invocation. Upstream failures and timeouts return explicit, stable error shapes without secrets or internals.
 - Tests: unit tests for calculators and services, API-level tests for route contracts, all running without network.

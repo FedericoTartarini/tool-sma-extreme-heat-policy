@@ -89,6 +89,7 @@ Import rules:
 - Prefilled location labels restored from shared URL (`loc`) or local persistence automatically attempt `suggest + retrieve` once using exact normalized canonical label matching; old or non-canonical labels show Mapbox candidates for manual selection when suggestions are available.
 - Risk API request sends `sport + latitude + longitude + profile` (no Mapbox identifiers).
 - Risk API response returns a non-empty `forecast[]` plus a nested `request` block containing `sport`, `profile`, and `location`; backend defines `forecast[0]` as the earliest complete forecast point, each forecast row includes both `time_utc` and `time_local`, and frontend derives the current risk from `forecast[0]` while grouping chart days from `time_local`.
+- Risk API response also returns `daily_weather[]`, one weather-details summary per local calendar day with nullable metrics (temperature, humidity, UV, wind, precipitation, sunrise/sunset). The frontend matches each summary to a forecast day by the date of `time_local`. A missing or non-array `daily_weather` is treated as empty, and a malformed row is dropped without rejecting the response. Days without a summary show the weather details as unavailable.
 - Risk is fetched automatically when:
   - a location suggestion is selected (manual or auto-resolved) and coordinates are resolved, and
   - the sport changes.
@@ -103,6 +104,11 @@ Import rules:
 - Profile support is reserved for a future release. The frontend keeps the profile domain/store/API contract, but the Home filters do not currently expose a Profile select and bootstrap keeps the active profile fixed to `ADULT`.
 - Public reserved profile values are `ADULT`, `UNDER_10`, `AGE_10_13`, and `AGE_14_17`.
 - The current frozen profile is sent to the backend and written to URLs/local persistence for contract compatibility; restored URL/local profile values are ignored until profile selection is re-enabled.
+
+## Weather details toggle
+
+- The forecast section's "show weather details" switch lives in `src/store/homeUiStore.ts` (Zustand); persistence helpers live in `src/lib/homeUiPreferencesStorage.ts`.
+- Stored under the localStorage key `home-ui-preferences:v1` as `{ "showWeatherDetails": boolean }`. Defaults to off; a missing or invalid value falls back to the default, and storage write failures are ignored.
 
 ## Saved locations
 
