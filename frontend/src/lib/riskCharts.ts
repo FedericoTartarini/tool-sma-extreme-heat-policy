@@ -102,7 +102,7 @@ function parseForecastTimeToMinutes(rawTime: string): number | null {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-function formatForecastMinutesLabel(rawMinutes: number): string {
+export function formatForecastMinutesLabel(rawMinutes: number): string {
   const roundedMinutes = Math.round(rawMinutes);
   const minutesInDay = 24 * 60;
   const normalizedMinutes =
