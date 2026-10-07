@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { ForecastSection } from "@/components/home/ForecastSection";
 import type { DayWeatherDetails } from "@/domain/weatherSummary";
+import type { ForecastDayWithWeatherDetails } from "@/lib/homeRisk";
+import type { HomeUiPreferences } from "@/store/homeUiStore";
 
 const TODAY_WEATHER: DayWeatherDetails = {
   maxTempC: 31,
@@ -25,6 +27,27 @@ const TOMORROW_WEATHER: DayWeatherDetails = {
   minTempC: 16,
 };
 
+const FORECAST_DAYS: ForecastDayWithWeatherDetails[] = [
+  {
+    date: "2026-03-09T11:00:00+11:00",
+    risk: "moderate",
+    points: [{ time: "11:00", value: 1.2 }],
+    weatherDetails: TODAY_WEATHER,
+  },
+  {
+    date: "2026-03-10T00:00:00+11:00",
+    risk: "high",
+    points: [{ time: "00:00", value: 2.4 }],
+    weatherDetails: TOMORROW_WEATHER,
+  },
+  {
+    date: "2026-03-11T00:00:00+11:00",
+    risk: "low",
+    points: [{ time: "00:00", value: 0.8 }],
+    weatherDetails: null,
+  },
+];
+
 function translate(key: string, options?: Record<string, string>): string {
   if (options?.value) {
     return `${key}:${options.value}`;
@@ -42,10 +65,11 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("@/store/homeUiStore", () => ({
   useHomeUiStore: (
-    selector: (state: {
-      showWeatherDetails: boolean;
-      setShowWeatherDetails: (showWeatherDetails: boolean) => void;
-    }) => unknown,
+    selector: (
+      state: HomeUiPreferences & {
+        setShowWeatherDetails: (showWeatherDetails: boolean) => void;
+      },
+    ) => unknown,
   ) =>
     selector({
       showWeatherDetails: true,
@@ -56,32 +80,13 @@ vi.mock("@/store/homeUiStore", () => ({
 vi.mock("@/hooks/useHomeHeatRisk", () => ({
   useHomeHeatRisk: () => ({
     hasCalculatedRisk: true,
-    forecast: [
-      {
-        date: "2026-03-09T11:00:00+11:00",
-        risk: "moderate",
-        points: [{ time: "11:00", value: 1.2 }],
-        weatherDetails: TODAY_WEATHER,
-      },
-      {
-        date: "2026-03-10T00:00:00+11:00",
-        risk: "high",
-        points: [{ time: "00:00", value: 2.4 }],
-        weatherDetails: TOMORROW_WEATHER,
-      },
-      {
-        date: "2026-03-11T00:00:00+11:00",
-        risk: "low",
-        points: [{ time: "00:00", value: 0.8 }],
-        weatherDetails: null,
-      },
-    ],
+    forecast: FORECAST_DAYS,
     meta: { timeZone: "Australia/Sydney" },
   }),
 }));
 
 describe("ForecastSection", () => {
-  it("passes mapped weather details into each day's panel", () => {
+  it("renders weather values for days with details and unavailable for days without", () => {
     const markup = renderToStaticMarkup(
       <MantineProvider>
         <ForecastSection />

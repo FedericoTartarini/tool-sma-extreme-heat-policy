@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { HeatRiskApiResponse } from "@/api/heatRisk";
+import type { HeatRiskProfile } from "@/domain/heatRiskProfile";
+import type { SportType } from "@/domain/sport";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 
 const { LATITUDE, LONGITUDE } = vi.hoisted(() => ({
@@ -12,8 +14,8 @@ const { LATITUDE, LONGITUDE } = vi.hoisted(() => ({
 vi.mock("@/store/homeStore", () => ({
   useHomeStore: (
     selector: (state: {
-      profile: string;
-      sport: string;
+      profile: HeatRiskProfile;
+      sport: SportType;
       selectedLocation: { latitude: number; longitude: number };
     }) => unknown,
   ) =>
@@ -115,7 +117,7 @@ function renderHeatRiskHook(): HeatRiskHookResult | null {
     { ok: true, data: API_RESPONSE },
   );
 
-  let result = null as HeatRiskHookResult | null;
+  let result: HeatRiskHookResult | null = null;
 
   renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
@@ -131,7 +133,7 @@ function renderHeatRiskHook(): HeatRiskHookResult | null {
 }
 
 describe("useHomeHeatRisk", () => {
-  it("maps daily_weather onto forecast days for the weather details panel", () => {
+  it("attaches daily weather to each forecast day", () => {
     const result = renderHeatRiskHook();
 
     expect(result?.hasCalculatedRisk).toBe(true);
