@@ -84,13 +84,13 @@ describe("buildFlatWeatherDetailsDesktopLayout", () => {
     });
     const layout = buildFlatWeatherDetailsDesktopLayout(groups);
 
-    expect(layout.topRow?.left?.id).toBe("temperatureHumidity");
-    expect(layout.topRow?.right.map((group) => group.id)).toEqual([
+    expect(layout.rows[0]?.left?.id).toBe("temperatureHumidity");
+    expect(layout.rows[0]?.right.map((group) => group.id)).toEqual([
       "uv",
       "wind",
     ]);
-    expect(layout.bottomRow?.left?.id).toBe("precipitation");
-    expect(layout.bottomRow?.right.map((group) => group.id)).toEqual([
+    expect(layout.rows[1]?.left?.id).toBe("precipitation");
+    expect(layout.rows[1]?.right.map((group) => group.id)).toEqual([
       "daylight",
     ]);
   });
@@ -100,8 +100,26 @@ describe("buildFlatWeatherDetailsDesktopLayout", () => {
       listAvailableWeatherGroups(BASE_DETAILS),
     );
 
-    expect(layout.topRow?.left?.id).toBe("temperatureHumidity");
-    expect(layout.topRow?.right.map((group) => group.id)).toEqual(["wind"]);
-    expect(layout.bottomRow).toBeNull();
+    expect(layout.rows).toHaveLength(1);
+    expect(layout.rows[0]?.left?.id).toBe("temperatureHumidity");
+    expect(layout.rows[0]?.right.map((group) => group.id)).toEqual(["wind"]);
+  });
+
+  it("keeps every configured desktop row, including rows after the first two", () => {
+    const groups = listAvailableWeatherGroups({
+      ...BASE_DETAILS,
+      uvIndexMax: 7.4,
+    });
+    const layout = buildFlatWeatherDetailsDesktopLayout(groups, [
+      { left: "temperatureHumidity", right: [] },
+      { left: null, right: ["uv"] },
+      { left: null, right: ["wind"] },
+    ]);
+
+    expect(layout.rows.map((row) => row.left?.id ?? row.right[0]?.id)).toEqual([
+      "temperatureHumidity",
+      "uv",
+      "wind",
+    ]);
   });
 });

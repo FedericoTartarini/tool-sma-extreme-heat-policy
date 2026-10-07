@@ -1,6 +1,7 @@
 import {
   WEATHER_DETAILS_DESKTOP_ROWS,
   WEATHER_DETAILS_MOBILE_PAIRS,
+  type WeatherDetailsDesktopRowLayout,
 } from "@/config/weatherDetailsGridConfig";
 import type {
   WeatherDetailsGroupDefinition,
@@ -14,11 +15,11 @@ export type FlatWeatherDetailsSection =
 export interface FlatWeatherDetailsDesktopHalves {
   left: WeatherDetailsGroupDefinition | null;
   right: WeatherDetailsGroupDefinition[];
+  metricColumns: 1 | 2;
 }
 
 export interface FlatWeatherDetailsDesktopLayout {
-  topRow: FlatWeatherDetailsDesktopHalves | null;
-  bottomRow: FlatWeatherDetailsDesktopHalves | null;
+  rows: FlatWeatherDetailsDesktopHalves[];
 }
 
 function isConfiguredMobilePair(
@@ -35,8 +36,9 @@ function isConfiguredMobilePair(
 }
 
 function buildDesktopRow(
-  row: (typeof WEATHER_DETAILS_DESKTOP_ROWS)[number],
+  row: WeatherDetailsDesktopRowLayout,
   groupsById: Map<WeatherDetailsGroupId, WeatherDetailsGroupDefinition>,
+  metricColumns: 1 | 2,
 ): FlatWeatherDetailsDesktopHalves | null {
   const left = row.left ? (groupsById.get(row.left) ?? null) : null;
   const right = row.right
@@ -49,7 +51,7 @@ function buildDesktopRow(
     return null;
   }
 
-  return { left, right };
+  return { left, right, metricColumns };
 }
 
 /**
@@ -83,12 +85,14 @@ export function buildFlatWeatherDetailsSections(
  */
 export function buildFlatWeatherDetailsDesktopLayout(
   groups: readonly WeatherDetailsGroupDefinition[],
+  desktopRows: readonly WeatherDetailsDesktopRowLayout[] = WEATHER_DETAILS_DESKTOP_ROWS,
 ): FlatWeatherDetailsDesktopLayout {
   const groupsById = new Map(groups.map((group) => [group.id, group]));
-  const [topRowConfig, bottomRowConfig] = WEATHER_DETAILS_DESKTOP_ROWS;
 
   return {
-    topRow: buildDesktopRow(topRowConfig, groupsById),
-    bottomRow: buildDesktopRow(bottomRowConfig, groupsById),
+    rows: desktopRows.flatMap((row, index) => {
+      const desktopRow = buildDesktopRow(row, groupsById, index === 0 ? 1 : 2);
+      return desktopRow ? [desktopRow] : [];
+    }),
   };
 }

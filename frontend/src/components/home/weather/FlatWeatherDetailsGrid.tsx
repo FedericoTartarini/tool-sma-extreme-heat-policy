@@ -188,6 +188,16 @@ function MobileFlatWeatherDetailsLayout({
   );
 }
 
+function desktopRowKey(row: {
+  left: WeatherDetailsGroupDefinition | null;
+  right: WeatherDetailsGroupDefinition[];
+}): string {
+  return [row.left, ...row.right]
+    .filter((group): group is WeatherDetailsGroupDefinition => group !== null)
+    .map((group) => group.id)
+    .join("-");
+}
+
 function DesktopFlatWeatherDetailsLayout({
   details,
   groups,
@@ -195,56 +205,35 @@ function DesktopFlatWeatherDetailsLayout({
   details: DayWeatherDetails;
   groups: WeatherDetailsGroupDefinition[];
 }) {
-  const { topRow, bottomRow } = buildFlatWeatherDetailsDesktopLayout(groups);
+  const { rows } = buildFlatWeatherDetailsDesktopLayout(groups);
 
   return (
     <Stack gap={WEATHER_DETAILS_GRID_SPACING}>
-      {topRow ? (
-        <DesktopHalvesRow
-          left={
-            topRow.left ? (
-              <WeatherDetailsCategorySection
-                group={topRow.left}
-                details={details}
-                metricColumns={1}
-              />
-            ) : null
-          }
-          right={
-            topRow.right.length > 0 ? (
-              <DesktopGroupedCategories
-                groups={topRow.right}
-                details={details}
-              />
-            ) : null
-          }
-        />
-      ) : null}
-
-      {topRow && bottomRow ? <Divider color="gray.3" /> : null}
-
-      {bottomRow ? (
-        <DesktopHalvesRow
-          left={
-            bottomRow.left ? (
-              <WeatherDetailsCategorySection
-                group={bottomRow.left}
-                details={details}
-                metricColumns={2}
-              />
-            ) : null
-          }
-          right={
-            bottomRow.right.length > 0 ? (
-              <DesktopGroupedCategories
-                groups={bottomRow.right}
-                details={details}
-                metricColumns={2}
-              />
-            ) : null
-          }
-        />
-      ) : null}
+      {rows.map((row, index) => (
+        <Fragment key={desktopRowKey(row)}>
+          {index > 0 ? <Divider color="gray.3" /> : null}
+          <DesktopHalvesRow
+            left={
+              row.left ? (
+                <WeatherDetailsCategorySection
+                  group={row.left}
+                  details={details}
+                  metricColumns={row.metricColumns}
+                />
+              ) : null
+            }
+            right={
+              row.right.length > 0 ? (
+                <DesktopGroupedCategories
+                  groups={row.right}
+                  details={details}
+                  metricColumns={row.metricColumns}
+                />
+              ) : null
+            }
+          />
+        </Fragment>
+      ))}
     </Stack>
   );
 }
