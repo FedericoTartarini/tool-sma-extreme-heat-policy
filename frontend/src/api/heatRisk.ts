@@ -289,16 +289,6 @@ function isHeatRiskApiCore(
   );
 }
 
-/**
- * Validates the backend heat-risk response payload shape at runtime.
- * Daily weather is not checked here; `fetchHeatRisk` filters it separately.
- */
-export function isHeatRiskApiResponse(
-  value: unknown,
-): value is HeatRiskApiCore {
-  return isHeatRiskApiCore(value);
-}
-
 function parseHeatRiskApiResponse(value: unknown): HeatRiskApiResponse | null {
   if (!isHeatRiskApiCore(value)) {
     return null;
