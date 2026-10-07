@@ -85,6 +85,7 @@ export function ForecastSection() {
           <FlatWeatherDetailsGrid
             details={today.weatherDetails}
             isMobile={isMobile}
+            showFullCalendarDayNote
           />
         ) : null}
 

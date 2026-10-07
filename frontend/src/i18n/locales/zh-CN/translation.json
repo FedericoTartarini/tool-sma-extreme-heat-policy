@@ -280,6 +280,7 @@
         "maxRiskLabel": "最高风险：",
         "weatherDetails": {
           "title": "天气详情",
+          "fullCalendarDayNote": "（整个日历日）",
           "unavailable": "—",
           "unavailableForDay": "当天天气详情不可用",
           "groups": {

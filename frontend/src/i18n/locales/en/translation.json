@@ -280,6 +280,7 @@
         "maxRiskLabel": "Max risk:",
         "weatherDetails": {
           "title": "Weather details",
+          "fullCalendarDayNote": "(Full calendar day)",
           "unavailable": "—",
           "unavailableForDay": "Weather details unavailable for this day",
           "groups": {

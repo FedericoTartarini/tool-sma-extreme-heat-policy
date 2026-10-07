@@ -2,6 +2,7 @@ import {
   Box,
   Divider,
   Flex,
+  Group,
   Paper,
   SimpleGrid,
   Stack,
@@ -30,6 +31,7 @@ import type { DayWeatherDetails } from "@/domain/weatherSummary";
 interface FlatWeatherDetailsGridProps {
   details: DayWeatherDetails | null;
   isMobile: boolean;
+  showFullCalendarDayNote?: boolean;
 }
 
 /**
@@ -38,15 +40,23 @@ interface FlatWeatherDetailsGridProps {
 export function FlatWeatherDetailsGrid({
   details,
   isMobile,
+  showFullCalendarDayNote = false,
 }: FlatWeatherDetailsGridProps) {
   const { t } = useTranslation();
   const groups = details ? listAvailableWeatherGroups(details) : [];
 
   return (
     <Stack gap={CONTENT_GAP}>
-      <Text {...WEATHER_DETAILS_TITLE}>
-        {t("home.sections.forecast.weatherDetails.title")}
-      </Text>
+      <Group gap="xs" wrap="wrap" align="baseline">
+        <Text {...WEATHER_DETAILS_TITLE}>
+          {t("home.sections.forecast.weatherDetails.title")}
+        </Text>
+        {showFullCalendarDayNote ? (
+          <Text {...WEATHER_DETAILS_METRIC_LABEL}>
+            {t("home.sections.forecast.weatherDetails.fullCalendarDayNote")}
+          </Text>
+        ) : null}
+      </Group>
       <Paper withBorder p={CONTENT_PADDING} bg="gray.0">
         {details && groups.length > 0 ? (
           isMobile ? (

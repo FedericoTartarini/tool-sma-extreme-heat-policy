@@ -83,6 +83,30 @@ describe("FlatWeatherDetailsGrid", () => {
     expect(markup).toContain("mantine-Divider-root");
   });
 
+  it("shows the full-calendar-day note only when requested", () => {
+    const withoutNote = renderToStaticMarkup(
+      <MantineProvider>
+        <FlatWeatherDetailsGrid details={DETAILS} isMobile />
+      </MantineProvider>,
+    );
+    const withNote = renderToStaticMarkup(
+      <MantineProvider>
+        <FlatWeatherDetailsGrid
+          details={DETAILS}
+          isMobile
+          showFullCalendarDayNote
+        />
+      </MantineProvider>,
+    );
+
+    expect(withoutNote).not.toContain(
+      "home.sections.forecast.weatherDetails.fullCalendarDayNote",
+    );
+    expect(withNote).toContain(
+      "home.sections.forecast.weatherDetails.fullCalendarDayNote",
+    );
+  });
+
   it("renders an empty state when daily weather details are missing", () => {
     const markup = renderToStaticMarkup(
       <MantineProvider>

@@ -98,5 +98,9 @@ describe("ForecastSection", () => {
       markup.split("home.sections.forecast.weatherDetails.unavailableForDay")
         .length - 1,
     ).toBe(1);
+    expect(
+      markup.split("home.sections.forecast.weatherDetails.fullCalendarDayNote")
+        .length - 1,
+    ).toBe(1);
   });
 });
