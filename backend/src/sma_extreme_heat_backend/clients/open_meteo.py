@@ -30,12 +30,12 @@ _DAILY_FIELDS: tuple[str, ...] = (
     "sunrise",
     "sunset",
     "precipitation_probability_max",
-    "rain_sum",
+    "precipitation_sum",
 )
 
 _EXPECTED_DAILY_UNITS: dict[str, set[str]] = {
     "precipitation_probability_max": {"%"},
-    "rain_sum": {"mm"},
+    "precipitation_sum": {"mm"},
 }
 
 _EXPECTED_HOURLY_UNITS: dict[str, set[str]] = {
@@ -79,7 +79,7 @@ class ProviderDailyWeather:
     sunrise_local: str | None
     sunset_local: str | None
     precipitation_probability_max_pct: float | None
-    rain_sum_mm: float | None
+    precipitation_sum_mm: float | None
 
 
 @dataclass(frozen=True)
@@ -418,7 +418,9 @@ def _select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather
                 precipitation_probability_max_pct=_to_finite_float_or_none(
                     series_data["precipitation_probability_max"][idx]
                 ),
-                rain_sum_mm=_to_finite_float_or_none(series_data["rain_sum"][idx]),
+                precipitation_sum_mm=_to_finite_float_or_none(
+                    series_data["precipitation_sum"][idx]
+                ),
             )
         )
 

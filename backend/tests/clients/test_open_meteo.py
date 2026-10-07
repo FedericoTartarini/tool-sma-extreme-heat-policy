@@ -61,14 +61,14 @@ def _hourly_payload(
     daily = {
         "daily_units": {
             "precipitation_probability_max": "%",
-            "rain_sum": "mm",
+            "precipitation_sum": "mm",
         },
         "daily": {
             "time": daily_dates,
             "sunrise": [f"{date}T06:30" for date in daily_dates],
             "sunset": [f"{date}T19:45" for date in daily_dates],
             "precipitation_probability_max": [80.0] * daily_count,
-            "rain_sum": [2.5] * daily_count,
+            "precipitation_sum": [2.5] * daily_count,
         },
     }
     if daily_override:
@@ -299,7 +299,7 @@ async def test_fetch_weather_forecast_returns_hourly_points_from_now_minus_1h() 
             "temperature_2m,relative_humidity_2m,wind_speed_10m,direct_normal_irradiance,uv_index"
         )
         assert request.url.params["daily"] == (
-            "sunrise,sunset,precipitation_probability_max,rain_sum"
+            "sunrise,sunset,precipitation_probability_max,precipitation_sum"
         )
         assert request.url.params["wind_speed_unit"] == "ms"
         assert request.url.params["timezone"] == "UTC"
@@ -709,7 +709,7 @@ async def test_fetch_weather_forecast_returns_provider_daily_rows() -> None:
     assert row.sunrise_local == "06:30"
     assert row.sunset_local == "19:45"
     assert row.precipitation_probability_max_pct == pytest.approx(80.0)
-    assert row.rain_sum_mm == pytest.approx(2.5)
+    assert row.precipitation_sum_mm == pytest.approx(2.5)
 
 
 async def test_fetch_weather_forecast_ignores_invalid_daily_payload() -> None:
@@ -725,7 +725,7 @@ async def test_fetch_weather_forecast_ignores_invalid_daily_payload() -> None:
         daily_override={
             "daily_units": {
                 "precipitation_probability_max": "index",
-                "rain_sum": "mm",
+                "precipitation_sum": "mm",
             }
         },
     )
@@ -870,7 +870,7 @@ async def test_fetch_weather_forecast_treats_non_finite_daily_values_as_missing(
     )
     payload["hourly"]["uv_index"][0] = "NaN"
     payload["daily"]["precipitation_probability_max"][0] = "Infinity"
-    payload["daily"]["rain_sum"][0] = "1e309"
+    payload["daily"]["precipitation_sum"][0] = "1e309"
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(status_code=200, json=payload)
@@ -888,4 +888,4 @@ async def test_fetch_weather_forecast_treats_non_finite_daily_values_as_missing(
     assert len(weather.daily) == 1
     row = weather.daily[0]
     assert row.precipitation_probability_max_pct is None
-    assert row.rain_sum_mm is None
+    assert row.precipitation_sum_mm is None

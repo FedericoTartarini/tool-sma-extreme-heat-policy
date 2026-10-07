@@ -207,12 +207,12 @@ Example response:
    - `sunrise`
    - `sunset`
    - `precipitation_probability_max`
-   - `rain_sum`
+   - `precipitation_sum`
    - `timezone=<resolved IANA timezone>`
    - `wind_speed_unit=ms`
 2. Validate provider units at runtime:
    - hourly: `temperature_2m: °C`, `relative_humidity_2m: %`, `wind_speed_10m: m/s`, `direct_normal_irradiance: W/m²`
-   - daily: `precipitation_probability_max: %`, `rain_sum: mm`
+   - daily: `precipitation_probability_max: %`, `precipitation_sum: mm`
    - hourly `uv_index` is not unit-validated or required: a missing or misaligned
      series is logged at warning level and only clears the UV fields in
      `daily_weather`.

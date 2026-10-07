@@ -55,7 +55,7 @@ def _build_day(
         sunset_local=daily.sunset_local if daily else None,
         uv_index_max=max_uv_hour.uv_index if max_uv_hour else None,
         precip_prob_max_pct=daily.precipitation_probability_max_pct if daily else None,
-        cumulative_rainfall_mm=daily.rain_sum_mm if daily else None,
+        cumulative_rainfall_mm=daily.precipitation_sum_mm if daily else None,
         max_temp_c=max_temp_hour.tdb if max_temp_hour else None,
         min_temp_c=min_temp_hour.tdb if min_temp_hour else None,
         max_temp_time_local=_time_label(max_temp_hour),

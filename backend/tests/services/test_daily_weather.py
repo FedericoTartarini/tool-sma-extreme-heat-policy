@@ -43,7 +43,7 @@ def _daily(date_local: date) -> ProviderDailyWeather:
         sunrise_local="06:30",
         sunset_local="19:45",
         precipitation_probability_max_pct=40.0,
-        rain_sum_mm=0.5,
+        precipitation_sum_mm=0.5,
     )
 
 
