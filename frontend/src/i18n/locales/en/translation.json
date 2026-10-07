@@ -260,6 +260,7 @@
         "selectedSportFallback": "Selected sport",
         "sportImageUnavailable": "Sport image unavailable",
         "sportImageHelp": "Add an image for {{sportLabel}} at {{path}}.",
+        "sportImageNotConfigured": "No image is configured for {{sportLabel}}.",
         "sportImageAlt": "{{sportLabel}} preview",
         "helperText": "Search and select a location to calculate risk automatically"
       },
