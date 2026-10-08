@@ -734,6 +734,22 @@ async def test_fetch_weather_forecast_returns_provider_daily_rows() -> None:
             "daily.precipitation_probability_max with unexpected unit",
             id="unit-changed",
         ),
+        pytest.param(
+            lambda payload: payload["daily_units"].__setitem__(
+                "precipitation_probability_max", ["%"]
+            ),
+            None,
+            2.5,
+            "daily.precipitation_probability_max with unexpected unit",
+            id="unit-list",
+        ),
+        pytest.param(
+            lambda payload: payload["daily_units"].__setitem__("precipitation_sum", {"unit": "mm"}),
+            80.0,
+            None,
+            "daily.precipitation_sum with unexpected unit",
+            id="unit-object",
+        ),
     ],
 )
 async def test_fetch_weather_forecast_clears_only_the_unusable_daily_series(

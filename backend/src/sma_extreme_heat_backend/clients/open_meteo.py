@@ -247,7 +247,9 @@ def _extract_optional_daily_series(
     expected_units = _EXPECTED_DAILY_UNITS.get(field)
     if expected_units is not None:
         received_unit = daily_units.get(field)
-        if received_unit not in expected_units:
+        # A list or object is unhashable, so the membership test must follow a
+        # text check or it raises and fails the whole risk response.
+        if not isinstance(received_unit, str) or received_unit not in expected_units:
             LOGGER.warning(
                 "Ignoring Open-Meteo daily.%s with unexpected unit %r",
                 field,
