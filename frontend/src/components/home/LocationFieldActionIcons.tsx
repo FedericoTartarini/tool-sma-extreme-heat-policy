@@ -1,6 +1,9 @@
 import { ActionIcon, Text } from "@mantine/core";
 import { IconBookmarkPlus, IconCurrentLocation } from "@tabler/icons-react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import type { HomeCurrentLocationErrorReason } from "@/domain/homeErrorMap";
+import { useHomeCurrentLocation } from "@/hooks/useHomeCurrentLocation";
 
 const ACTION_ICON_SIZE = 18;
 
@@ -8,11 +11,16 @@ interface LocationFieldActionIconsProps {
   canSaveCurrentLocation: boolean;
   hasSavedLocations: boolean;
   onOpenSavedLocations: () => void;
+  onCurrentLocationError?: (reason: HomeCurrentLocationErrorReason) => void;
 }
 
 /**
  * Use-my-location and Save controls for the Home location field (Issue #51 / #56).
  * Rendered outside the combobox so the input stays a standard Mantine field.
+ *
+ * The crosshair icon triggers browser geolocation plus reverse geocoding. Each
+ * failed click always emits a distinct error event so the toast shows even
+ * when the reason has not changed from a previous click.
  *
  * The bookmark is the only entry point to the saved-location dialog, so it stays
  * enabled whenever there is something to save or something already saved.
@@ -21,18 +29,28 @@ export function LocationFieldActionIcons({
   canSaveCurrentLocation,
   hasSavedLocations,
   onOpenSavedLocations,
+  onCurrentLocationError,
 }: LocationFieldActionIconsProps) {
   const { t } = useTranslation();
+  const { isDetecting, error, requestCurrentLocation } =
+    useHomeCurrentLocation();
+
+  useEffect(() => {
+    if (error) {
+      onCurrentLocationError?.(error.reason);
+    }
+  }, [error, onCurrentLocationError]);
 
   return (
     <>
-      {/* Issue #56 placeholder — layout only until geolocation is wired. */}
       <ActionIcon
         variant="subtle"
         color="gray"
         size="sm"
-        disabled
+        disabled={isDetecting}
+        aria-busy={isDetecting}
         aria-label={t("home.savedLocations.useMyLocationButton")}
+        onClick={requestCurrentLocation}
       >
         <IconCurrentLocation size={ACTION_ICON_SIZE} />
       </ActionIcon>

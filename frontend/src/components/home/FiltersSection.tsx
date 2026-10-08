@@ -1,302 +1,293 @@
-import {
-  Box,
-  Combobox,
-  InputBase,
-  Loader,
-  Group,
-  Select,
-  Stack,
-  Text,
-  useCombobox,
-} from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconBookmarkFilled } from "@tabler/icons-react";
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { Box, Grid, Select, Stack } from "@mantine/core";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
-import { SaveLocationModal } from "@/components/home/SaveLocationModal";
-import { SportImagePreview } from "@/components/home/SportImagePreview";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { CONTENT_GAP } from "@/config/uiLayout";
-import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
+import {
+  LocationFieldActionIcons,
+  type LocationFieldActionIconsProps,
+} from "@/components/home/LocationFieldActionIcons";
+import {
+  SaveLocationModal,
+  type SaveLocationModalHandlers,
+} from "@/components/home/SaveLocationModal";
+import { SavedLocationChips } from "@/components/home/SavedLocationChips";
+import {
+  sportAssets,
+  type SportDisplayAsset,
+} from "@/domain/sportDisplayAssets";
+import { DEFAULT_HEAT_RISK_PROFILE } from "@/domain/heatRiskProfile";
 import { isSportType, sports, type SportType } from "@/domain/sport";
 import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
+import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import {
+  useHomeCurrentLocation,
+  type HomeCurrentLocationErrorReason,
+} from "@/hooks/useHomeCurrentLocation";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
+import { Combobox, ComboboxChevron } from "@/components/ui/Combobox";
+import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
+import { appBreakpoints } from "@/config/uiBreakpoints";
+import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
 
-interface SelectOption<T extends string = string> {
-  value: T;
-  label: string;
-}
+type SportOption = {
+  value: SportType;
+  asset: SportDisplayAsset;
+};
 
-const FIELD_LABEL_WIDTH = 72;
-const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
-const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
+const SPORT_OPTIONS: SportOption[] = sports
+  .filter((sportType): sportType is NonNullable<SportType> =>
+    isSportType(sportType),
+  )
+  .map((sportType) => ({
+    value: sportType,
+    asset: sportAssets(sportType),
+  }));
 
-interface FiltersSectionProps {
-  onLocationError?: (reason: LocationSuggestErrorReason) => void;
+const PROFILE_OPTIONS = Object.freeze([
+  {
+    value: "GENERAL",
+    labelKey: "home.filters.profiles.general",
+  },
+  {
+    value: "AGE_14_17",
+    labelKey: "home.filters.profiles.age1417",
+  },
+  {
+    value: "AGE_18_PLUS",
+    labelKey: "home.filters.profiles.age18Plus",
+  },
+] as const);
+
+const GRID_SPACING = "md";
+
+export type HomeFiltersSectionSaveLocationModalHandlers =
+  SaveLocationModalHandlers;
+
+export interface HomeFiltersSectionProps {
+  onLocationError?: (reason: HomeLocationErrorReason) => void;
+  onCalculationError?: (reason: unknown) => void;
+  saveLocationModalHandlers: HomeFiltersSectionSaveLocationModalHandlers;
 }
 
 /**
- * Renders sport and location filters for Home risk calculation.
+ * Top-of-page filter grid for the Home page: profile, sport, and the location
+ * combobox with the Issue #56 auto-detect crosshair and the Issue #51
+ * saved-locations bookmark.
  */
-export function FiltersSection({ onLocationError }: FiltersSectionProps) {
+export function FiltersSection({
+  onLocationError,
+  onCalculationError,
+  saveLocationModalHandlers,
+}: HomeFiltersSectionProps) {
   const { t } = useTranslation();
-  const locationCombobox = useCombobox();
-  const [
-    isSaveSavedLocationModalOpen,
-    { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
-  ] = useDisclosure(false);
-  /*
   const profile = useHomeStore((state) => state.profile);
-  const setProfile = useHomeStore((state) => state.setProfile);
-  */
   const sport = useHomeStore((state) => state.sport);
-  const selectedLocation = useHomeStore((state) => state.selectedLocation);
+  const setProfile = useHomeStore((state) => state.setProfile);
   const setSport = useHomeStore((state) => state.setSport);
+  const [isEditingSavedLocations, setIsEditingSavedLocations] = useState(false);
   const savedLocations = useSavedLocationsStore(
     (state) => state.savedLocations,
   );
-  const [failedSportImageUrl, setFailedSportImageUrl] = useState<string | null>(
-    null,
+  const canSaveCurrentLocation = useHomeStore(
+    (state) => state.selectedLocation !== null,
   );
-
-  /*
-  const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
-    () =>
-      heatRiskProfiles.map((profileMeta) => ({
-        value: profileMeta.type,
-        label: t(profileMeta.labelKey),
-      })),
-    [t],
-  );
-  */
-  const sportOptions = useMemo<SelectOption<SportType>[]>(
-    () =>
-      sports.map((sportMeta) => ({
-        value: sportMeta.type,
-        label: t(sportMeta.labelKey),
-      })),
-    [t],
-  );
-
-  const selectedSportMeta = useMemo(
-    () => sports.find((sportMeta) => sportMeta.type === sport)!,
-    [sport],
-  );
-
-  const selectedSportLabel = useMemo(
-    () =>
-      sportOptions.find((option) => option.value === sport)?.label ??
-      t("home.sections.filters.selectedSportFallback"),
-    [sport, sportOptions, t],
-  );
-  const sportImage = selectedSportMeta.image;
+  const hasSavedLocations = savedLocations.length > 0;
 
   const {
-    locationSearchInput,
     locationSuggestions,
-    isSuggestLoading,
-    shouldOpenLocationDropdown,
-    suggestErrorReason,
+    locationSearchInput,
+    locationSuggestIsLoading,
+    selectedLocation,
+    prefilledLocationResolveState,
     onLocationSearchInputChange,
-    onLocationOptionSubmit,
-  } = useHomeLocationSuggest();
-  const isShowingCommittedLocation =
-    selectedLocation !== null &&
-    locationSearchInput === selectedLocation.displayLabel;
-  const shouldRenderLocationDropdown = locationSuggestions.length > 0;
-  const locationOptions = locationSuggestions.map((suggestion) => {
-    const isSavedSuggestion = isSuggestionAlreadySaved(
-      savedLocations,
-      suggestion,
-    );
-
-    return (
-      <Combobox.Option value={suggestion.id} key={suggestion.id}>
-        <Group justify="space-between" wrap="nowrap" gap="xs">
-          <Text span fz="md" lineClamp={1} flex={1} miw={0}>
-            {suggestion.displayLabel}
-          </Text>
-          {isSavedSuggestion ? (
-            <Box
-              component="span"
-              role="img"
-              c="brand"
-              aria-label={t("home.savedLocations.suggestionSaved")}
-            >
-              <IconBookmarkFilled
-                size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE}
-              />
-            </Box>
-          ) : null}
-        </Group>
-      </Combobox.Option>
-    );
+    onLocationSuggestionSelected,
+    onLocationInputBlur,
+    isLocationDropdownOpen,
+    setIsLocationDropdownOpen,
+    activeSuggestionIndex,
+    onComboboxKeydown,
+  } = useHomeLocationSuggest({
+    onSuggestError: (reason: LocationSuggestErrorReason) =>
+      onLocationError?.(reason),
   });
 
-  useEffect(() => {
-    if (shouldOpenLocationDropdown && shouldRenderLocationDropdown) {
-      locationCombobox.openDropdown();
-    }
-  }, [
-    locationCombobox,
-    shouldOpenLocationDropdown,
-    shouldRenderLocationDropdown,
-  ]);
+  const onCurrentLocationError: LocationFieldActionIconsProps["onCurrentLocationError"] =
+    (reason: HomeCurrentLocationErrorReason) => onLocationError?.(reason);
+  const { requestCurrentLocation } = useHomeCurrentLocation();
 
-  useEffect(() => {
-    if (suggestErrorReason) {
-      onLocationError?.(suggestErrorReason);
-    }
-  }, [onLocationError, suggestErrorReason]);
-
-  /*
-  const handleProfileChange = (value: string | null) => {
-    if (value !== null && isHeatRiskProfile(value)) {
-      setProfile(value);
-    }
-  };
-  */
-  const handleLocationInputClick = (event: MouseEvent<HTMLInputElement>) => {
-    if (isShowingCommittedLocation) {
-      event.currentTarget.select();
-    }
-
-    if (shouldRenderLocationDropdown) {
-      locationCombobox.openDropdown();
-    }
-  };
-
-  const closeLocationDropdown = () => {
-    locationCombobox.closeDropdown();
-    locationCombobox.resetSelectedOption();
-  };
-
-  const handleSportChange = (value: string | null) => {
-    setFailedSportImageUrl(null);
-
-    if (value === null) {
-      return;
-    }
-
-    if (isSportType(value)) {
-      setSport(value);
-    }
-  };
+  const profileOptions = useMemo(
+    () =>
+      PROFILE_OPTIONS.map((option) => ({
+        value: option.value,
+        label: t(option.labelKey),
+      })),
+    [t],
+  );
+  const sportOptions = useMemo(
+    () =>
+      SPORT_OPTIONS.map((option) => ({
+        value: option.value,
+        label: t(option.asset.labelKey),
+      })),
+    [t],
+  );
+  const { isFetching } = useHomeHeatRisk({
+    onError: (reason) => onCalculationError?.(reason),
+  });
 
   return (
-    <SectionCard>
-      <Stack gap={CONTENT_GAP}>
-        {/*
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.profileLabel")}:
-          </Text>
-          <Box flex={1}>
-            <Select
-              aria-label={t("home.sections.filters.profileLabel")}
-              size="md"
-              data={profileOptions}
-              value={profile}
-              onChange={handleProfileChange}
-              searchable={false}
-              allowDeselect={false}
-            />
+    <Stack gap="xs">
+      <Grid gutter={GRID_SPACING}>
+        <Grid.Col span={{ base: 12, sm: 6, md: 4 }} order={{ base: 2, md: 1 }}>
+          <Select
+            label={t("home.filters.profile.label")}
+            data={profileOptions}
+            value={profile === DEFAULT_HEAT_RISK_PROFILE ? null : profile}
+            placeholder={t("home.filters.profile.placeholder")}
+            allowDeselect={false}
+            checkIconPosition="right"
+            rightSection={<ComboboxChevron />}
+            comboboxProps={{ transitionProps: { transition: "pop", duration: 120 } }}
+            onChange={(value) => value && setProfile(value as typeof profile)}
+          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, sm: 6, md: 4 }} order={{ base: 3, md: 2 }}>
+          <Select
+            label={t("home.filters.sport.label")}
+            data={sportOptions}
+            value={sport}
+            placeholder={t("home.filters.sport.placeholder")}
+            allowDeselect={false}
+            checkIconPosition="right"
+            rightSection={<ComboboxChevron />}
+            comboboxProps={{ transitionProps: { transition: "pop", duration: 120 } }}
+            leftSection={
+              sport ? (
+                <img
+                  src={toPublicAssetUrl(sportAssets(sport).image.filename)}
+                  alt=""
+                  aria-hidden
+                  width={20}
+                  height={20}
+                  style={{ objectFit: "contain" }}
+                />
+              ) : undefined
+            }
+            onChange={(value) => value && isSportType(value) && setSport(value)}
+          />
+        </Grid.Col>
+        <Grid.Col
+          span={{ base: 12, md: 4 }}
+          order={{ base: 1, md: 3 }}
+          visibleFrom={appBreakpoints.mobile.max ?? undefined}
+        >
+          <Box aria-hidden c="transparent" fz="xs" lh={1.2}>
+            &nbsp;
           </Box>
-        </Group>
-        */}
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.locationLabel")}:
-          </Text>
-          <Group wrap="nowrap" align="center" gap="xs" flex={1} miw={0}>
-            <Box flex={1} miw={0}>
-              <Combobox
-                store={locationCombobox}
-                onOptionSubmit={(value) => {
-                  onLocationOptionSubmit(value);
-                  closeLocationDropdown();
-                }}
-                size="md"
-              >
-                <Combobox.Target targetType="input">
-                  <InputBase
-                    __staticSelector="Select"
-                    aria-label={t("home.sections.filters.locationLabel")}
-                    size="md"
-                    placeholder={t("home.sections.filters.locationPlaceholder")}
-                    value={locationSearchInput}
-                    onChange={(event) => {
-                      onLocationSearchInputChange(event.currentTarget.value);
-                      locationCombobox.openDropdown();
-                    }}
-                    onFocus={() => {
-                      if (shouldRenderLocationDropdown) {
-                        locationCombobox.openDropdown();
-                      }
-                    }}
-                    onBlur={closeLocationDropdown}
-                    onClick={handleLocationInputClick}
-                    rightSection={
-                      isSuggestLoading ? (
-                        <Loader size={16} />
-                      ) : (
-                        <Combobox.Chevron size="md" />
-                      )
-                    }
-                    rightSectionWidth={LOCATION_INPUT_CHEVRON_SECTION_WIDTH}
-                    rightSectionPointerEvents="none"
-                    autoComplete="off"
-                  />
-                </Combobox.Target>
-
-                {shouldRenderLocationDropdown ? (
-                  <Combobox.Dropdown>
-                    <Combobox.Options>{locationOptions}</Combobox.Options>
-                  </Combobox.Dropdown>
-                ) : null}
-              </Combobox>
-            </Box>
-            <LocationFieldActionIcons
-              canSaveCurrentLocation={selectedLocation !== null}
-              hasSavedLocations={savedLocations.length > 0}
-              onOpenSavedLocations={openSaveSavedLocationModal}
-            />
-          </Group>
-        </Group>
-
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.sportLabel")}:
-          </Text>
-          <Box flex={1}>
-            <Select
-              aria-label={t("home.sections.filters.sportLabel")}
-              size="md"
-              data={sportOptions}
-              value={sport}
-              onChange={handleSportChange}
-              searchable
-              nothingFoundMessage={t("home.sections.filters.sportNotFound")}
-            />
-          </Box>
-        </Group>
-
-        <SportImagePreview
-          image={sportImage}
-          sportLabel={selectedSportLabel}
-          failedImageUrl={failedSportImageUrl}
-          onImageLoadFailure={setFailedSportImageUrl}
-        />
-      </Stack>
+          <Combobox
+            label={t("home.filters.location.label")}
+            placeholder={t("home.filters.location.placeholder")}
+            value={locationSearchInput}
+            data={locationSuggestions}
+            onChange={onLocationSearchInputChange}
+            onOptionSubmit={(value) => {
+              const suggestion = locationSuggestions.find(
+                (suggestion) => suggestion.value === value,
+              );
+              if (suggestion) {
+                onLocationSuggestionSelected(suggestion);
+              }
+            }}
+            onBlur={onLocationInputBlur}
+            onDropdownOpen={setIsLocationDropdownOpen}
+            onDropdownClose={() => setIsLocationDropdownOpen(false)}
+            isLoading={locationSuggestIsLoading || isFetching}
+            dropdownOpened={isLocationDropdownOpen}
+            onComboboxKeydown={onComboboxKeydown}
+            activeOptionIndex={activeSuggestionIndex}
+            inputValue={selectedLocation?.displayLabel ?? undefined}
+            selectedValue={
+              selectedLocation
+                ? {
+                    id: selectedLocation.id,
+                    displayLabel: selectedLocation.displayLabel,
+                    name: selectedLocation.name,
+                  }
+                : undefined
+            }
+            selectedValuePrefillState={prefilledLocationResolveState}
+            section="location"
+            icon={<LocationFieldActionIcons
+              canSaveCurrentLocation={canSaveCurrentLocation}
+              hasSavedLocations={hasSavedLocations}
+              onOpenSavedLocations={() =>
+                setIsEditingSavedLocations((state) => !state)
+              }
+              onCurrentLocationError={onCurrentLocationError}
+            />}
+          />
+        </Grid.Col>
+        <Grid.Col
+          span={{ base: 12, md: 4 }}
+          order={{ base: 1, md: 3 }}
+          hiddenFrom={appBreakpoints.mobile.max ?? undefined}
+        >
+          <Combobox
+            label={t("home.filters.location.label")}
+            placeholder={t("home.filters.location.placeholder")}
+            value={locationSearchInput}
+            data={locationSuggestions}
+            onChange={onLocationSearchInputChange}
+            onOptionSubmit={(value) => {
+              const suggestion = locationSuggestions.find(
+                (suggestion) => suggestion.value === value,
+              );
+              if (suggestion) {
+                onLocationSuggestionSelected(suggestion);
+              }
+            }}
+            onBlur={onLocationInputBlur}
+            onDropdownOpen={setIsLocationDropdownOpen}
+            onDropdownClose={() => setIsLocationDropdownOpen(false)}
+            isLoading={locationSuggestIsLoading || isFetching}
+            dropdownOpened={isLocationDropdownOpen}
+            onComboboxKeydown={onComboboxKeydown}
+            activeOptionIndex={activeSuggestionIndex}
+            inputValue={selectedLocation?.displayLabel ?? undefined}
+            selectedValue={
+              selectedLocation
+                ? {
+                    id: selectedLocation.id,
+                    displayLabel: selectedLocation.displayLabel,
+                    name: selectedLocation.name,
+                  }
+                : undefined
+            }
+            selectedValuePrefillState={prefilledLocationResolveState}
+            section="location"
+            icon={<LocationFieldActionIcons
+              canSaveCurrentLocation={canSaveCurrentLocation}
+              hasSavedLocations={hasSavedLocations}
+              onOpenSavedLocations={() =>
+                setIsEditingSavedLocations((state) => !state)
+              }
+              onCurrentLocationError={onCurrentLocationError}
+              requestCurrentLocationOverride={requestCurrentLocation}
+            />}
+          />
+        </Grid.Col>
+      </Grid>
       <SaveLocationModal
-        opened={isSaveSavedLocationModalOpen}
-        onClose={closeSaveSavedLocationModal}
+        {...saveLocationModalHandlers}
+        hasSavedLocations={hasSavedLocations}
+        canSaveCurrentLocation={canSaveCurrentLocation}
       />
-    </SectionCard>
+      {hasSavedLocations ? (
+        <SavedLocationChips isEditing={isEditingSavedLocations} />
+      ) : null}
+    </Stack>
   );
 }
