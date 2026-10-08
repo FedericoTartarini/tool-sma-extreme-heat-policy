@@ -1,4 +1,5 @@
 import type {
+  DailyWeatherApiSummary,
   ForecastApiPoint,
   HeatRiskApiData,
   HeatRiskApiLocation,
@@ -6,6 +7,7 @@ import type {
 } from "@/api/heatRisk";
 import type { ForecastDay, HeatRisk } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
+import type { DayWeatherDetails } from "@/domain/weatherSummary";
 import { toCoordinatesOrNull } from "@/lib/coordinates";
 import { parseOffsetIsoDateTime } from "@/lib/offsetIsoDateTime";
 
@@ -13,6 +15,10 @@ export interface HeatRiskMeta {
   latitude?: number;
   longitude?: number;
   timeZone?: string;
+}
+
+export interface ForecastDayWithWeatherDetails extends ForecastDay {
+  weatherDetails: DayWeatherDetails | null;
 }
 
 /**
@@ -69,13 +75,40 @@ export function toHeatRiskMeta(location: HeatRiskApiLocation): HeatRiskMeta {
   };
 }
 
+function toDayWeatherDetails(
+  summary: DailyWeatherApiSummary,
+): DayWeatherDetails {
+  return {
+    maxTempC: summary.max_temp_c ?? null,
+    minTempC: summary.min_temp_c ?? null,
+    humidityAtMaxPct: summary.humidity_at_max_pct ?? null,
+    humidityAtMinPct: summary.humidity_at_min_pct ?? null,
+    avgWindSpeedMs: summary.avg_wind_speed_ms ?? null,
+    maxTempTimeLocal: summary.max_temp_time_local ?? null,
+    minTempTimeLocal: summary.min_temp_time_local ?? null,
+    uvIndexMax: summary.uv_index_max ?? null,
+    uvIndexMaxTimeLocal: summary.uv_index_max_time_local ?? null,
+    cumulativeRainfallMm: summary.cumulative_rainfall_mm ?? null,
+    precipProbMaxPct: summary.precip_prob_max_pct ?? null,
+    sunriseLocal: summary.sunrise_local ?? null,
+    sunsetLocal: summary.sunset_local ?? null,
+  };
+}
+
 /**
  * Groups forecast points into location-local daily chart data for the UI.
  */
-export function toForecastDays(points: ForecastApiPoint[]): ForecastDay[] {
+export function toForecastDays(
+  points: ForecastApiPoint[],
+  dailyWeather: DailyWeatherApiSummary[] = [],
+): ForecastDayWithWeatherDetails[] {
   if (points.length === 0) {
     return [];
   }
+
+  const dailyWeatherByDate = new Map(
+    dailyWeather.map((summary) => [summary.date, toDayWeatherDetails(summary)]),
+  );
 
   const groupedDays = new Map<
     string,
@@ -119,11 +152,12 @@ export function toForecastDays(points: ForecastApiPoint[]): ForecastDay[] {
     });
   }
 
-  return Array.from(groupedDays.values())
+  return Array.from(groupedDays.entries())
     .slice(0, 7)
-    .map((day) => ({
+    .map(([dateKey, day]) => ({
       date: day.date,
       risk: toRiskLevel(day.maxRisk),
       points: day.points,
+      weatherDetails: dailyWeatherByDate.get(dateKey) ?? null,
     }));
 }

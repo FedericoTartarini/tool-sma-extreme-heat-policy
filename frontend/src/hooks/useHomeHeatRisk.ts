@@ -4,7 +4,7 @@ import { ApiError, isApiError } from "@/api/apiErrors";
 import { getRetryDelayMs, heatRiskRetryPolicy } from "@/api/apiRetryPolicy";
 import { fetchHeatRisk, type HeatRiskApiResponse } from "@/api/heatRisk";
 import type { HomeCalculationErrorReason } from "@/domain/homeErrorMap";
-import type { ForecastDay, HeatRisk, RiskLevel } from "@/domain/risk";
+import type { HeatRisk, RiskLevel } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
 import { toCoordinatesOrNull } from "@/lib/coordinates";
 import {
@@ -12,6 +12,7 @@ import {
   toForecastDays,
   toHeatRisk,
   toHeatRiskMeta,
+  type ForecastDayWithWeatherDetails,
   type HeatRiskMeta,
 } from "@/lib/homeRisk";
 import { useHomeStore } from "@/store/homeStore";
@@ -19,7 +20,7 @@ import { useHomeStore } from "@/store/homeStore";
 export type HeatRiskCalculationErrorReason = HomeCalculationErrorReason;
 
 interface UseHomeHeatRiskBaseResult {
-  forecast: ForecastDay[];
+  forecast: ForecastDayWithWeatherDetails[];
   meta: HeatRiskMeta;
   isFetching: boolean;
   errorReason: HeatRiskCalculationErrorReason | null;
@@ -47,7 +48,7 @@ type UseHomeHeatRiskResult =
 function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
   risk: HeatRisk;
   riskLevel: RiskLevel;
-  forecast: ForecastDay[];
+  forecast: ForecastDayWithWeatherDetails[];
   meta: HeatRiskMeta;
 } {
   const currentPoint = getCurrentForecastPoint(data);
@@ -57,7 +58,7 @@ function toCalculatedHeatRisk(data: HeatRiskApiResponse): {
   return {
     risk,
     riskLevel: toRiskLevel(risk.riskLevelInterpolated),
-    forecast: toForecastDays(data.forecast),
+    forecast: toForecastDays(data.forecast, data.daily_weather),
     meta,
   };
 }

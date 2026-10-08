@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import traceback
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from dataclasses import field as dataclass_field
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -20,6 +22,21 @@ _HOURLY_FIELDS: tuple[str, ...] = (
     "wind_speed_10m",
     "direct_normal_irradiance",
 )
+
+# Requested for weather details only; never required for hourly risk calculation.
+_OPTIONAL_HOURLY_FIELDS: tuple[str, ...] = ("uv_index",)
+
+_DAILY_FIELDS: tuple[str, ...] = (
+    "sunrise",
+    "sunset",
+    "precipitation_probability_max",
+    "precipitation_sum",
+)
+
+_EXPECTED_DAILY_UNITS: dict[str, set[str]] = {
+    "precipitation_probability_max": {"%"},
+    "precipitation_sum": {"mm"},
+}
 
 _EXPECTED_HOURLY_UNITS: dict[str, set[str]] = {
     "temperature_2m": {"\N{DEGREE SIGN}C"},
@@ -44,10 +61,34 @@ class HourlyWeatherPoint:
 
 
 @dataclass(frozen=True)
+class CalendarHourlyWeatherPoint:
+    """Untrimmed provider-local hourly weather used only for daily weather details."""
+
+    time_local: datetime
+    tdb: float | None
+    rh: float | None
+    v_z1: float | None
+    uv_index: float | None
+
+
+@dataclass(frozen=True)
+class ProviderDailyWeather:
+    """Normalized Open-Meteo daily row for one location-local calendar day."""
+
+    date_local: date
+    sunrise_local: str | None
+    sunset_local: str | None
+    precipitation_probability_max_pct: float | None
+    precipitation_sum_mm: float | None
+
+
+@dataclass(frozen=True)
 class WeatherForecast:
-    """Normalized hourly weather forecast returned by Open-Meteo."""
+    """Normalized weather forecast returned by Open-Meteo."""
 
     points: list[HourlyWeatherPoint]
+    calendar_hours: list[CalendarHourlyWeatherPoint] = dataclass_field(default_factory=list)
+    daily: list[ProviderDailyWeather] = dataclass_field(default_factory=list)
 
 
 def _to_float_or_none(value: Any) -> float | None:
@@ -60,6 +101,13 @@ def _to_float_or_none(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _to_finite_float_or_none(value: Any) -> float | None:
+    """Convert weather-detail values to finite floats, treating anything else as missing."""
+
+    parsed = _to_float_or_none(value)
+    return parsed if parsed is not None and math.isfinite(parsed) else None
 
 
 def _resolve_provider_timezone(payload: dict[str, Any]) -> tuple[str, ZoneInfo]:
@@ -170,6 +218,53 @@ def _extract_hourly_series(
     return timestamps, series_data
 
 
+def _extract_optional_hourly_series(
+    payload: dict[str, Any],
+    field: str,
+    *,
+    expected_length: int,
+) -> list[Any]:
+    """Return an optional hourly series, or all-missing values when absent or misaligned."""
+
+    hourly = payload.get("hourly")
+    values = hourly.get(field) if isinstance(hourly, dict) else None
+    if isinstance(values, list) and len(values) == expected_length:
+        return values
+
+    LOGGER.warning("Ignoring missing or misaligned Open-Meteo hourly.%s series", field)
+    return [None] * expected_length
+
+
+def _extract_optional_daily_series(
+    daily: dict[str, Any],
+    daily_units: dict[str, Any],
+    field: str,
+    *,
+    expected_length: int,
+) -> list[Any]:
+    """Return one daily series, or all-missing values when absent, misaligned or mis-unitted."""
+
+    expected_units = _EXPECTED_DAILY_UNITS.get(field)
+    if expected_units is not None:
+        received_unit = daily_units.get(field)
+        # A list or object is unhashable, so the membership test must follow a
+        # text check or it raises and fails the whole risk response.
+        if not isinstance(received_unit, str) or received_unit not in expected_units:
+            LOGGER.warning(
+                "Ignoring Open-Meteo daily.%s with unexpected unit %r",
+                field,
+                received_unit,
+            )
+            return [None] * expected_length
+
+    values = daily.get(field)
+    if isinstance(values, list) and len(values) == expected_length:
+        return values
+
+    LOGGER.warning("Ignoring missing or misaligned Open-Meteo daily.%s series", field)
+    return [None] * expected_length
+
+
 def _select_hourly_points(
     payload: dict[str, Any],
     *,
@@ -203,6 +298,140 @@ def _select_hourly_points(
     ]
 
 
+def _to_local_time_label(value: Any, *, expected_date: str) -> str | None:
+    """Extract an HH:MM label from an Open-Meteo local timestamp."""
+
+    if not isinstance(value, str) or value.strip() == "":
+        return None
+
+    if "T" not in value:
+        return None
+
+    normalized = value.replace("Z", "+00:00")
+    try:
+        timestamp = datetime.fromisoformat(normalized)
+        expected = date.fromisoformat(expected_date)
+    except ValueError:
+        return None
+
+    if timestamp.date() != expected:
+        return None
+
+    return timestamp.strftime("%H:%M")
+
+
+def _select_calendar_hours(
+    payload: dict[str, Any],
+    *,
+    requested_timezone_name: str,
+) -> list[CalendarHourlyWeatherPoint]:
+    """Normalize every provider hour, untrimmed, in the provider's local time."""
+
+    timestamps, series_data = _extract_hourly_series(
+        payload,
+        requested_timezone_name=requested_timezone_name,
+    )
+    _, provider_time_zone = _resolve_provider_timezone(payload)
+    uv_index_values = _extract_optional_hourly_series(
+        payload,
+        "uv_index",
+        expected_length=len(timestamps),
+    )
+
+    return sorted(
+        (
+            CalendarHourlyWeatherPoint(
+                time_local=timestamp.astimezone(provider_time_zone),
+                tdb=_to_finite_float_or_none(series_data["temperature_2m"][idx]),
+                rh=_to_finite_float_or_none(series_data["relative_humidity_2m"][idx]),
+                v_z1=_to_finite_float_or_none(series_data["wind_speed_10m"][idx]),
+                uv_index=_to_finite_float_or_none(uv_index_values[idx]),
+            )
+            for idx, timestamp in enumerate(timestamps)
+        ),
+        key=lambda point: point.time_local,
+    )
+
+
+def _select_provider_daily(payload: dict[str, Any]) -> list[ProviderDailyWeather]:
+    """Parse Open-Meteo daily rows; each unusable series only clears its own field.
+
+    Never raises, so daily weather can't fail the hourly risk forecast.
+    """
+
+    daily = payload.get("daily")
+    if not isinstance(daily, dict):
+        LOGGER.warning("Open-Meteo response was missing daily weather")
+        return []
+
+    raw_dates = daily.get("time")
+    if not isinstance(raw_dates, list):
+        LOGGER.warning("Ignoring Open-Meteo daily weather without a daily.time series")
+        return []
+
+    raw_daily_units = payload.get("daily_units")
+    daily_units = raw_daily_units if isinstance(raw_daily_units, dict) else {}
+    series_data = {
+        field_name: _extract_optional_daily_series(
+            daily,
+            daily_units,
+            field_name,
+            expected_length=len(raw_dates),
+        )
+        for field_name in _DAILY_FIELDS
+    }
+    sunrise_values = series_data["sunrise"]
+    sunset_values = series_data["sunset"]
+
+    rows: list[ProviderDailyWeather] = []
+    for idx, raw_date in enumerate(raw_dates):
+        if not isinstance(raw_date, str) or raw_date.strip() == "":
+            LOGGER.warning("Ignoring Open-Meteo daily row with invalid time at index %s", idx)
+            continue
+
+        try:
+            date_local = date.fromisoformat(raw_date)
+        except ValueError:
+            LOGGER.warning(
+                "Ignoring Open-Meteo daily row with invalid date format for %s",
+                raw_date,
+            )
+            continue
+
+        sunrise_local = _to_local_time_label(
+            sunrise_values[idx],
+            expected_date=raw_date,
+        )
+        sunset_local = _to_local_time_label(
+            sunset_values[idx],
+            expected_date=raw_date,
+        )
+        # A None raw value is a provider null or an already-logged unusable series.
+        if (sunrise_local is None and sunrise_values[idx] is not None) or (
+            sunset_local is None and sunset_values[idx] is not None
+        ):
+            LOGGER.warning(
+                "Omitting invalid Open-Meteo sunrise/sunset for %s",
+                raw_date,
+            )
+
+        rows.append(
+            ProviderDailyWeather(
+                date_local=date_local,
+                sunrise_local=sunrise_local,
+                sunset_local=sunset_local,
+                precipitation_probability_max_pct=_to_finite_float_or_none(
+                    series_data["precipitation_probability_max"][idx]
+                ),
+                precipitation_sum_mm=_to_finite_float_or_none(
+                    series_data["precipitation_sum"][idx]
+                ),
+            )
+        )
+
+    return rows
+
+
 class OpenMeteoClient:
     """Thin HTTP client for the Open-Meteo hourly forecast endpoint."""
 
@@ -234,7 +463,8 @@ class OpenMeteoClient:
         params = {
             "latitude": latitude,
             "longitude": longitude,
-            "hourly": ",".join(_HOURLY_FIELDS),
+            "hourly": ",".join(_HOURLY_FIELDS + _OPTIONAL_HOURLY_FIELDS),
+            "daily": ",".join(_DAILY_FIELDS),
             "wind_speed_unit": "ms",
             "timezone": timezone_name,
         }
@@ -243,7 +473,11 @@ class OpenMeteoClient:
 
         _validate_hourly_units(payload)
         points = _select_hourly_points(payload, requested_timezone_name=timezone_name)
-        return WeatherForecast(points=points)
+        return WeatherForecast(
+            points=points,
+            calendar_hours=_select_calendar_hours(payload, requested_timezone_name=timezone_name),
+            daily=_select_provider_daily(payload),
+        )
 
     def _build_async_client(self) -> httpx.AsyncClient:
         """Build an owned HTTPX client with the configured Open-Meteo settings."""

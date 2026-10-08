@@ -277,7 +277,40 @@
       },
       "forecast": {
         "title": "风险预报",
-        "maxRiskLabel": "最高风险："
+        "maxRiskLabel": "最高风险：",
+        "weatherDetails": {
+          "title": "天气详情",
+          "fullCalendarDayNote": "（整个日历日）",
+          "unavailable": "—",
+          "unavailableForDay": "当天天气详情不可用",
+          "groups": {
+            "temperatureHumidity": "温度与湿度",
+            "wind": "风",
+            "uv": "紫外线",
+            "precipitation": "降水",
+            "daylight": "日照"
+          },
+          "valueAtTime": "{{value}} @ {{time}}",
+          "labelValue": "{{label}}：{{value}}",
+          "metrics": {
+            "maxTempC": "最高温度",
+            "minTempC": "最低温度",
+            "humidityAtMaxPct": "最高温时湿度",
+            "humidityAtMinPct": "最低温时湿度",
+            "avgWindSpeedMs": "平均风速",
+            "uvIndexMax": "最大紫外线指数",
+            "cumulativeRainfallMm": "降水量",
+            "precipProbMaxPct": "最高降水概率",
+            "sunriseLocal": "日出",
+            "sunsetLocal": "日落"
+          },
+          "units": {
+            "celsius": "{{value}}°C",
+            "percent": "{{value}}%",
+            "metersPerSecond": "{{value}} m/s",
+            "millimeters": "{{value}} mm"
+          }
+        }
       },
       "map": {
         "title": "地点地图",

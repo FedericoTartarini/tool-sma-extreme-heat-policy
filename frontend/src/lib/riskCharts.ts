@@ -93,7 +93,7 @@ function getBandUpperValue(value: number, upper: number): number {
   return Math.max(0, Math.min(value, upper));
 }
 
-function parseForecastTimeToMinutes(rawTime: string): number | null {
+export function parseForecastTimeToMinutes(rawTime: string): number | null {
   const match = FORECAST_HOUR_MINUTE_PATTERN.exec(rawTime);
   if (!match) {
     return null;
@@ -102,7 +102,7 @@ function parseForecastTimeToMinutes(rawTime: string): number | null {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-function formatForecastMinutesLabel(rawMinutes: number): string {
+export function formatForecastMinutesLabel(rawMinutes: number): string {
   const roundedMinutes = Math.round(rawMinutes);
   const minutesInDay = 24 * 60;
   const normalizedMinutes =

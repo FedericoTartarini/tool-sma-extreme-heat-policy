@@ -1,6 +1,7 @@
-// Reduce nesting and improve spacing: use a clearer Stack gap, responsive chart height, and fewer small wrapper components
 import { Accordion, Badge, Flex, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { FlatWeatherDetailsGrid } from "@/components/home/weather/FlatWeatherDetailsGrid";
+import { ShowWeatherDetailsSwitch } from "@/components/home/weather/ShowWeatherDetailsSwitch";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
@@ -16,21 +17,27 @@ import { formatDateLabel, formatWeekdayLabel } from "@/lib/formatDate";
 import { ForecastSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { EChart } from "@/components/ui/EChart";
 import { SectionCard } from "@/components/ui/SectionCard";
+import { useHomeUiStore } from "@/store/homeUiStore";
 
 const DEFAULT_FORECAST_CHART_HEIGHT = 340;
 const MOBILE_FORECAST_CHART_HEIGHT = 280;
 
 /**
- * Renders the 24-hour forecast chart and upcoming daily forecast accordions.
+ * Renders today's 24-hour risk chart, optional weather details, and later days in accordions.
  */
 export function ForecastSection() {
   const { i18n, t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const { hasCalculatedRisk, forecast, meta } = useHomeHeatRisk();
-
+  const showWeatherDetails = useHomeUiStore(
+    (state) => state.showWeatherDetails,
+  );
   if (!hasCalculatedRisk) {
     return (
-      <SectionCard title={t("home.sections.forecast.title")}>
+      <SectionCard
+        title={t("home.sections.forecast.title")}
+        actions={<ShowWeatherDetailsSwitch disabled />}
+      >
         <ForecastSkeleton />
       </SectionCard>
     );
@@ -56,8 +63,10 @@ export function ForecastSection() {
     : DEFAULT_FORECAST_CHART_HEIGHT;
 
   return (
-    <SectionCard title={t("home.sections.forecast.title")}>
-      {/* Use a single Stack with an explicit gap to control spacing between chart and accordion */}
+    <SectionCard
+      title={t("home.sections.forecast.title")}
+      actions={<ShowWeatherDetailsSwitch />}
+    >
       <Stack gap={CONTENT_GAP}>
         <EChart
           option={buildForecastOption(
@@ -72,13 +81,20 @@ export function ForecastSection() {
           }
         />
 
+        {showWeatherDetails ? (
+          <FlatWeatherDetailsGrid
+            details={today.weatherDetails}
+            isMobile={isMobile}
+            showFullCalendarDayNote
+          />
+        ) : null}
+
         <Accordion chevronPosition="right" variant="separated" radius="md">
           {nextDays.map((day) => (
             <Accordion.Item key={day.date} value={day.date}>
               <Accordion.Control>
                 <Group justify="space-between" wrap="nowrap">
-                  {/* Reduced nesting: simple column for weekday + date */}
-                  <Flex direction={"column"}>
+                  <Flex direction="column">
                     <Text fw={600}>
                       {formatWeekdayLabel(day.date, {
                         locale: dateLocale,
@@ -111,18 +127,26 @@ export function ForecastSection() {
               </Accordion.Control>
 
               <Accordion.Panel>
-                <EChart
-                  option={buildForecastOption(
-                    day.points,
-                    forecastLabels,
-                    undefined,
-                    isMobile,
-                  )}
-                  height={chartHeight}
-                  bindChart={(chart, container) =>
-                    bindForecastHoverPoint(chart, container, day.points)
-                  }
-                />
+                <Stack gap={CONTENT_GAP}>
+                  <EChart
+                    option={buildForecastOption(
+                      day.points,
+                      forecastLabels,
+                      undefined,
+                      isMobile,
+                    )}
+                    height={chartHeight}
+                    bindChart={(chart, container) =>
+                      bindForecastHoverPoint(chart, container, day.points)
+                    }
+                  />
+                  {showWeatherDetails ? (
+                    <FlatWeatherDetailsGrid
+                      details={day.weatherDetails}
+                      isMobile={isMobile}
+                    />
+                  ) : null}
+                </Stack>
               </Accordion.Panel>
             </Accordion.Item>
           ))}
