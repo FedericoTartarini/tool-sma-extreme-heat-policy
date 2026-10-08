@@ -24,6 +24,7 @@ import {
 import {
   buildFlatWeatherDetailsDesktopLayout,
   buildFlatWeatherDetailsSections,
+  type FlatWeatherDetailsDesktopHalves,
   type FlatWeatherDetailsSection,
 } from "@/lib/weatherDetailsGridLayout";
 import type { DayWeatherDetails } from "@/domain/weatherSummary";
@@ -198,10 +199,7 @@ function MobileFlatWeatherDetailsLayout({
   );
 }
 
-function desktopRowKey(row: {
-  left: WeatherDetailsGroupDefinition | null;
-  right: WeatherDetailsGroupDefinition[];
-}): string {
+function desktopRowKey(row: FlatWeatherDetailsDesktopHalves): string {
   return [row.left, ...row.right]
     .filter((group): group is WeatherDetailsGroupDefinition => group !== null)
     .map((group) => group.id)

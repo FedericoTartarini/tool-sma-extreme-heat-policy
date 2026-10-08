@@ -199,10 +199,11 @@ const DAILY_WEATHER_FIELD_VALIDATORS = {
   humidity_at_min_pct: isFiniteNumber,
   uv_index_max_time_local: isLocalTimeLabel,
   avg_wind_speed_ms: isFiniteNumber,
-} satisfies Record<
-  Exclude<keyof DailyWeatherApiSummary, "date">,
-  (value: unknown) => boolean
->;
+} satisfies {
+  [Field in Exclude<keyof DailyWeatherApiSummary, "date">]: (
+    value: unknown,
+  ) => value is NonNullable<DailyWeatherApiSummary[Field]>;
+};
 
 /**
  * Keeps a daily weather row with a valid date; each malformed metric becomes
