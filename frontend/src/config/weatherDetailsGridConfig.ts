@@ -3,6 +3,7 @@ import type { WeatherDetailsGroupId } from "@/domain/weatherDetailsRegistry";
 export interface WeatherDetailsDesktopRowLayout {
   left: WeatherDetailsGroupId | null;
   right: readonly WeatherDetailsGroupId[];
+  metricColumns: 1 | 2;
 }
 
 /**
@@ -19,6 +20,6 @@ export const WEATHER_DETAILS_MOBILE_PAIRS: readonly (readonly [
  */
 export const WEATHER_DETAILS_DESKTOP_ROWS: readonly WeatherDetailsDesktopRowLayout[] =
   [
-    { left: "temperatureHumidity", right: ["uv", "wind"] },
-    { left: "precipitation", right: ["daylight"] },
+    { left: "temperatureHumidity", right: ["uv", "wind"], metricColumns: 1 },
+    { left: "precipitation", right: ["daylight"], metricColumns: 2 },
   ];

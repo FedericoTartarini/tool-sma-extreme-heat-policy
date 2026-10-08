@@ -85,14 +85,39 @@ describe("buildFlatWeatherDetailsDesktopLayout", () => {
     const layout = buildFlatWeatherDetailsDesktopLayout(groups);
 
     expect(layout.rows[0]?.left?.id).toBe("temperatureHumidity");
+    expect(layout.rows[0]?.metricColumns).toBe(1);
     expect(layout.rows[0]?.right.map((group) => group.id)).toEqual([
       "uv",
       "wind",
     ]);
     expect(layout.rows[1]?.left?.id).toBe("precipitation");
+    expect(layout.rows[1]?.metricColumns).toBe(2);
     expect(layout.rows[1]?.right.map((group) => group.id)).toEqual([
       "daylight",
     ]);
+  });
+
+  it("keeps each row's column count when the config order changes", () => {
+    const groups = listAvailableWeatherGroups({
+      ...BASE_DETAILS,
+      uvIndexMax: 7.4,
+      cumulativeRainfallMm: 0,
+      precipProbMaxPct: 0,
+      sunriseLocal: "07:13",
+      sunsetLocal: "18:56",
+    });
+    const [temperatureRow, precipitationRow] = WEATHER_DETAILS_DESKTOP_ROWS;
+    const layout = buildFlatWeatherDetailsDesktopLayout(groups, [
+      precipitationRow,
+      temperatureRow,
+    ]);
+
+    expect(layout.rows.map((row) => [row.left?.id, row.metricColumns])).toEqual(
+      [
+        ["precipitation", 2],
+        ["temperatureHumidity", 1],
+      ],
+    );
   });
 
   it("omits empty desktop halves when optional groups are missing", () => {
@@ -111,9 +136,9 @@ describe("buildFlatWeatherDetailsDesktopLayout", () => {
       uvIndexMax: 7.4,
     });
     const layout = buildFlatWeatherDetailsDesktopLayout(groups, [
-      { left: "temperatureHumidity", right: [] },
-      { left: null, right: ["uv"] },
-      { left: null, right: ["wind"] },
+      { left: "temperatureHumidity", right: [], metricColumns: 1 },
+      { left: null, right: ["uv"], metricColumns: 2 },
+      { left: null, right: ["wind"], metricColumns: 1 },
     ]);
 
     expect(layout.rows.map((row) => row.left?.id ?? row.right[0]?.id)).toEqual([
@@ -121,5 +146,6 @@ describe("buildFlatWeatherDetailsDesktopLayout", () => {
       "uv",
       "wind",
     ]);
+    expect(layout.rows.map((row) => row.metricColumns)).toEqual([1, 2, 1]);
   });
 });

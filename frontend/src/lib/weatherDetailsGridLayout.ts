@@ -38,7 +38,6 @@ function isConfiguredMobilePair(
 function buildDesktopRow(
   row: WeatherDetailsDesktopRowLayout,
   groupsById: Map<WeatherDetailsGroupId, WeatherDetailsGroupDefinition>,
-  metricColumns: 1 | 2,
 ): FlatWeatherDetailsDesktopHalves | null {
   const left = row.left ? (groupsById.get(row.left) ?? null) : null;
   const right = row.right
@@ -51,7 +50,7 @@ function buildDesktopRow(
     return null;
   }
 
-  return { left, right, metricColumns };
+  return { left, right, metricColumns: row.metricColumns };
 }
 
 /**
@@ -90,8 +89,8 @@ export function buildFlatWeatherDetailsDesktopLayout(
   const groupsById = new Map(groups.map((group) => [group.id, group]));
 
   return {
-    rows: desktopRows.flatMap((row, index) => {
-      const desktopRow = buildDesktopRow(row, groupsById, index === 0 ? 1 : 2);
+    rows: desktopRows.flatMap((row) => {
+      const desktopRow = buildDesktopRow(row, groupsById);
       return desktopRow ? [desktopRow] : [];
     }),
   };
