@@ -18,6 +18,10 @@ interface LocationFieldActionIconsProps {
  * Use-my-location and Save controls for the Home location field (Issue #51 / #56).
  * Rendered outside the combobox so the input stays a standard Mantine field.
  *
+ * The crosshair icon triggers browser geolocation plus reverse geocoding. Each
+ * failed click always emits a distinct error event so the toast shows even
+ * when the reason has not changed from a previous click.
+ *
  * The bookmark is the only entry point to the saved-location dialog, so it stays
  * enabled whenever there is something to save or something already saved.
  */
@@ -28,14 +32,14 @@ export function LocationFieldActionIcons({
   onCurrentLocationError,
 }: LocationFieldActionIconsProps) {
   const { t } = useTranslation();
-  const { isDetecting, errorReason, requestCurrentLocation } =
+  const { isDetecting, error, requestCurrentLocation } =
     useHomeCurrentLocation();
 
   useEffect(() => {
-    if (errorReason) {
-      onCurrentLocationError?.(errorReason);
+    if (error) {
+      onCurrentLocationError?.(error.reason);
     }
-  }, [errorReason, onCurrentLocationError]);
+  }, [error, onCurrentLocationError]);
 
   return (
     <>

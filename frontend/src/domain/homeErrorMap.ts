@@ -10,7 +10,8 @@ export type HomeCurrentLocationErrorReason =
   | "geolocation_permission_denied"
   | "geolocation_unavailable"
   | "geolocation_timeout"
-  | "reverse_geocode_failed";
+  | "reverse_geocode_failed"
+  | "location_not_resolved";
 
 export type HomeLocationErrorReason =
   | HomeSuggestErrorReason
@@ -32,6 +33,7 @@ const LOCATION_ERROR_I18N_KEY_BY_REASON: Record<
   missing_token: "errors.mapbox.missingToken",
   retrieve_failed: "errors.mapbox.retrieveFailed",
   reverse_geocode_failed: "errors.mapbox.reverseFailed",
+  location_not_resolved: "errors.location.notResolved",
   prefilled_location_not_matched: "errors.location.prefilledNotMatched",
   unavailable: "errors.mapbox.unavailable",
   no_results: "errors.mapbox.noResults",

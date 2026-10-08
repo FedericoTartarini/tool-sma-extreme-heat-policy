@@ -18,8 +18,8 @@ import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionI
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
-import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
 import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
+import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
 import {
   isSportType,
   sports,
@@ -47,6 +47,13 @@ interface FiltersSectionProps {
 
 /**
  * Renders sport and location filters for Home risk calculation.
+ *
+ * The location combobox supports two selection paths:
+ * - Searching via the text input (Mapbox suggest + retrieve), and
+ * - Clicking the crosshair icon (browser geolocation + Mapbox reverse).
+ *
+ * Both paths flow through the same error prop so the Home page can surface
+ * failures in the shared bottom toast.
  */
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();

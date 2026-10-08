@@ -14,6 +14,7 @@ describe("homeErrorMap", () => {
       no_results: "errors.mapbox.noResults",
       retrieve_failed: "errors.mapbox.retrieveFailed",
       reverse_geocode_failed: "errors.mapbox.reverseFailed",
+      location_not_resolved: "errors.location.notResolved",
       prefilled_location_not_matched: "errors.location.prefilledNotMatched",
       geolocation_permission_denied: "errors.location.permissionDenied",
       geolocation_unavailable: "errors.location.geolocationUnavailable",

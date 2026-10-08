@@ -324,6 +324,7 @@
     "location": {
       "missingCoordinates": "This location has no coordinates. Choose another suggestion.",
       "prefilledNotMatched": "Please choose a location from the suggestions.",
+      "notResolved": "A nearby supported suburb or town could not be found for your coordinates.\nPlease search manually.",
       "permissionDenied": "Location permission was denied. Allow access in your browser or search manually.",
       "geolocationUnavailable": "Your current location is unavailable. Check your device settings or search manually.",
       "geolocationTimeout": "Getting your current location took too long. Try again or search manually."

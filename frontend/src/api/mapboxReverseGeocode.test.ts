@@ -106,7 +106,7 @@ describe("reverseGeocodeCoordinates", () => {
       }),
     ).resolves.toEqual([
       {
-        id: "address-regent-street:locality",
+        id: "address-regent-street",
         mapboxId: "address-regent-street",
         displayLabel: "Redfern, New South Wales, Australia",
         name: "Redfern",
@@ -117,6 +117,45 @@ describe("reverseGeocodeCoordinates", () => {
         longitude: 151.20461,
       },
     ]);
+  });
+
+  it("falls back to district context when no supported tier is present", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          features: [
+            {
+              properties: {
+                mapbox_id: "rural-property-abc",
+                feature_type: "address",
+                name: "Outback Sports Ground",
+                context: {
+                  country: { name: "Australia", country_code: "AU" },
+                  region: { name: "Queensland" },
+                  district: { name: "Western Downs" },
+                },
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const [suggestion] = await reverseGeocodeCoordinates({
+      latitude: -27.5,
+      longitude: 150.5,
+      accessToken: "token",
+    });
+
+    expect(suggestion).toEqual(
+      expect.objectContaining({
+        name: "Western Downs",
+        displayLabel: "Western Downs, Queensland, Australia",
+        id: "rural-property-abc",
+        mapboxId: "rural-property-abc",
+      }),
+    );
   });
 
   it("throws a structured error for non-OK responses", async () => {
