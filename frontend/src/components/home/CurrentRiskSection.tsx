@@ -67,12 +67,7 @@ export function CurrentRiskSection() {
     <SectionCard title={currentRiskTitle}>
       <Stack gap={CONTENT_GAP} align="center">
         {profileBadge}
-        <RiskGauge
-          score={heatRisk.risk.riskLevelInterpolated}
-          title={t("charts.gauge.seriesName")}
-          unavailableLabel={t("charts.gauge.riskUnavailable")}
-          riskLevelLabels={longRiskLabels}
-        />
+        <RiskGauge score={heatRisk.risk.riskLevelInterpolated} />
         <Badge
           component={Link}
           to="/detailed-recommendations"

@@ -353,12 +353,23 @@
     "gauge": {
       "seriesName": "Heat Risk",
       "riskLabel": "Heat Risk",
-      "riskUnavailable": "N/A"
+      "riskUnavailable": "N/A",
+      "a11y": {
+        "label": "{{title}}: {{value}} on a scale from {{min}} to {{max}}, {{level}}.",
+        "labelUnavailable": "{{title}}: not available."
+      }
     },
     "forecast": {
       "xAxisName": "Time",
       "yAxisRiskName": "Risk",
-      "tooltipRiskLabel": "Risk"
+      "tooltipRiskLabel": "Risk",
+      "a11y": {
+        "chartLabel": "Heat risk forecast for {{day}}. Peak risk is {{peakLevel}} at {{peakTime}}. Risk is {{startLevel}} at the start of the forecast and {{endLevel}} at the end.",
+        "tableCaption": "Hourly heat risk for {{day}}",
+        "timeHeader": "Time",
+        "levelHeader": "Risk level",
+        "valueHeader": "Risk score"
+      }
     }
   },
   "sports": {

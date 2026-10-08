@@ -12,6 +12,7 @@ const forecastLabels = {
     high: "High",
     extreme: "Extreme",
   },
+  locale: "en-AU",
 };
 
 describe("buildForecastOption", () => {
@@ -323,9 +324,9 @@ describe("buildForecastOption", () => {
 
     const formatTickLabel = formatter as (value: number) => string;
 
-    expect(formatTickLabel(1080)).toBe("6 PM");
-    expect(formatTickLabel(1200)).toBe("8 PM");
-    expect(formatTickLabel(1320)).toBe("10 PM");
+    expect(formatTickLabel(1080)).toBe("6 pm");
+    expect(formatTickLabel(1200)).toBe("8 pm");
+    expect(formatTickLabel(1320)).toBe("10 pm");
     expect(formatTickLabel(1380)).toBe("");
   });
 });
