@@ -254,6 +254,70 @@ describe("fetchHeatRisk", () => {
     });
   });
 
+  it("rejects responses that still expose top-level location", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          request: {
+            sport: "SOCCER",
+            profile: "ADULT",
+          },
+          location: {
+            latitude: -33.847,
+            longitude: 151.067,
+            timezone: "Australia/Sydney",
+          },
+          forecast: VALID_HEAT_RISK_RESPONSE.forecast,
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "invalid_response",
+    });
+  });
+
+  it("rejects forecast points without time_local", async () => {
+    const [validPoint] = VALID_HEAT_RISK_RESPONSE.forecast;
+
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...VALID_HEAT_RISK_RESPONSE,
+          forecast: [
+            {
+              time_utc: validPoint.time_utc,
+              inputs: validPoint.inputs,
+              heat_risk: validPoint.heat_risk,
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "invalid_response",
+    });
+  });
+
   it("classifies network failures", async () => {
     fetchMock.mockRejectedValue(new Error("offline"));
 
