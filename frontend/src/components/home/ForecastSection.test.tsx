@@ -63,6 +63,10 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+const weatherDetailsPreference = vi.hoisted(() => ({
+  show: true,
+}));
+
 vi.mock("@/store/homeUiStore", () => ({
   useHomeUiStore: (
     selector: (
@@ -72,7 +76,7 @@ vi.mock("@/store/homeUiStore", () => ({
     ) => unknown,
   ) =>
     selector({
-      showWeatherDetails: true,
+      showWeatherDetails: weatherDetailsPreference.show,
       setShowWeatherDetails: () => undefined,
     }),
 }));
@@ -87,6 +91,7 @@ vi.mock("@/hooks/useHomeHeatRisk", () => ({
 
 describe("ForecastSection", () => {
   it("renders weather values for days with details and unavailable for days without", () => {
+    weatherDetailsPreference.show = true;
     const markup = renderToStaticMarkup(
       <MantineProvider>
         <ForecastSection />
@@ -107,5 +112,26 @@ describe("ForecastSection", () => {
       markup.split("home.sections.forecast.weatherDetails.fullCalendarDayNote")
         .length - 1,
     ).toBe(1);
+  });
+
+  it("hides weather details when the toggle is off", () => {
+    weatherDetailsPreference.show = false;
+    const markup = renderToStaticMarkup(
+      <MantineProvider>
+        <ForecastSection />
+      </MantineProvider>,
+    );
+
+    expect(markup).toContain("home.sections.forecast.title");
+    expect(markup).toContain("home.sections.forecast.weatherDetails.title");
+    expect(markup).not.toContain(
+      "home.sections.forecast.weatherDetails.units.celsius:31.0",
+    );
+    expect(markup).not.toContain(
+      "home.sections.forecast.weatherDetails.unavailableForDay",
+    );
+    expect(markup).not.toContain(
+      "home.sections.forecast.weatherDetails.fullCalendarDayNote",
+    );
   });
 });

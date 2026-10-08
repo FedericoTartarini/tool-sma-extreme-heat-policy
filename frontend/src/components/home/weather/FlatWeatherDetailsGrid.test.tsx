@@ -66,6 +66,35 @@ describe("FlatWeatherDetailsGrid", () => {
     expect(markup).not.toContain("mantine-Divider-root");
   });
 
+  it("renders precipitation and daylight on the second desktop row", () => {
+    const markup = renderToStaticMarkup(
+      <MantineProvider>
+        <FlatWeatherDetailsGrid
+          details={{
+            ...DETAILS,
+            precipProbMaxPct: 55,
+            cumulativeRainfallMm: 3.2,
+            sunriseLocal: "06:30",
+            sunsetLocal: "19:45",
+          }}
+          isMobile={false}
+        />
+      </MantineProvider>,
+    );
+
+    const precipitationIndex = markup.indexOf(
+      "home.sections.forecast.weatherDetails.groups.precipitation",
+    );
+    const daylightIndex = markup.indexOf(
+      "home.sections.forecast.weatherDetails.groups.daylight",
+    );
+
+    expect(precipitationIndex).toBeGreaterThan(-1);
+    expect(daylightIndex).toBeGreaterThan(precipitationIndex);
+    expect(markup).toContain("6:30 AM");
+    expect(markup).toContain("7:45 PM");
+  });
+
   it("renders a desktop divider between temperature and UV/wind halves", () => {
     const markup = renderToStaticMarkup(
       <MantineProvider>

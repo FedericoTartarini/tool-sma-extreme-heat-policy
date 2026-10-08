@@ -794,6 +794,93 @@ async def test_fetch_weather_forecast_clears_only_the_unusable_daily_series(
     assert expected_warning in caplog.text
 
 
+async def test_fetch_weather_forecast_clears_precipitation_when_daily_units_are_missing(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A missing daily units block clears precipitation only and keeps the risk forecast."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    payload.pop("daily_units")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    with caplog.at_level("WARNING"):
+        weather = await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    await mock_client.aclose()
+
+    assert len(weather.points) == 1
+    assert len(weather.daily) == 1
+    row = weather.daily[0]
+    assert row.sunrise_local == "06:30"
+    assert row.sunset_local == "19:45"
+    assert row.precipitation_probability_max_pct is None
+    assert row.precipitation_sum_mm is None
+    assert "daily.precipitation_probability_max with unexpected unit" in caplog.text
+    assert "daily.precipitation_sum with unexpected unit" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("field_name", "expected_sunrise", "expected_sunset"),
+    [
+        pytest.param("sunrise", None, "19:45", id="sunrise-missing"),
+        pytest.param("sunset", "06:30", None, id="sunset-missing"),
+    ],
+)
+async def test_fetch_weather_forecast_clears_only_a_missing_daylight_series(
+    caplog: pytest.LogCaptureFixture,
+    field_name: str,
+    expected_sunrise: str | None,
+    expected_sunset: str | None,
+) -> None:
+    """A missing sunrise or sunset series clears only that daylight value."""
+
+    now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
+    payload = _hourly_payload(
+        times=[now],
+        tdb=[31.0],
+        rh=[62.0],
+        wind=[1.5],
+        radiation=[720.0],
+    )
+    payload["daily"].pop(field_name)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, json=payload)
+
+    client, mock_client = _build_client(handler)
+
+    with caplog.at_level("WARNING"):
+        weather = await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    await mock_client.aclose()
+
+    assert len(weather.points) == 1
+    assert len(weather.daily) == 1
+    row = weather.daily[0]
+    assert row.sunrise_local == expected_sunrise
+    assert row.sunset_local == expected_sunset
+    assert row.precipitation_probability_max_pct == pytest.approx(80.0)
+    assert row.precipitation_sum_mm == pytest.approx(2.5)
+    assert f"daily.{field_name} series" in caplog.text
+
+
 async def test_fetch_weather_forecast_logs_missing_daily_block(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
