@@ -9,9 +9,10 @@ import { USYD_ORANGE_HEX } from "@/config/uiColors";
 import {
   formatForecastMinutesLabel,
   parseForecastTimeToMinutes,
-  toForecastMinuteOffsets,
+  toForecastTimePoints,
 } from "@/lib/forecastTime";
 import {
+  formatRiskScore,
   getRiskBands,
   getRiskColor,
   RISK_DISPLAY_AXIS_MAX,
@@ -24,7 +25,6 @@ const FORECAST_VISUAL_SERIES_ID = "forecast-visual-line";
 const FORECAST_POINT_SERIES_ID = "forecast-data-points";
 const FORECAST_TOOLTIP_SERIES_ID = "forecast-tooltip-line";
 const FORECAST_HIGHLIGHT_SERIES_ID = "forecast-highlight-point";
-const FORECAST_DISPLAY_PRECISION = 1;
 const FORECAST_AXIS_ALIGNMENT_EPSILON = 0.001;
 const FORECAST_POINT_SYMBOL_SIZE = 6;
 
@@ -73,9 +73,13 @@ interface ForecastLabels {
   yAxisRiskName: string;
   tooltipRiskLabel: string;
   riskLevelLong: Record<RiskLevel, string>;
+  /** BCP 47 tag the axis and tooltip format times in. */
+  locale: string;
 }
 
-interface ForecastChartPoint extends ForecastPoint {
+/** A forecast point placed on the chart. Nothing here is shown as text. */
+interface ForecastChartPoint {
+  value: number;
   displayValue: number;
   minuteOffset: number;
 }
@@ -100,14 +104,12 @@ function getBandUpperValue(value: number, upper: number): number {
 function toForecastCoordinatePoints(
   points: ForecastPoint[],
 ): ForecastChartPoint[] {
-  const minuteOffsets = toForecastMinuteOffsets(
-    points.map((point) => point.time),
-  );
+  const timePoints = toForecastTimePoints(points.map((point) => point.time));
 
   return points.map<ForecastChartPoint>((point, index) => ({
-    ...point,
+    value: point.value,
     displayValue: toRiskDisplayScore(point.value) ?? 0,
-    minuteOffset: minuteOffsets[index],
+    minuteOffset: timePoints[index].minuteOffset,
   }));
 }
 
@@ -159,7 +161,6 @@ function toForecastChartPoints(
             previousPoint.value +
             (nextPoint.value - previousPoint.value) * crossingPoint.ratio,
           displayValue: crossingPoint.threshold,
-          time: formatForecastMinutesLabel(minuteOffset),
           minuteOffset,
         });
       }
@@ -324,18 +325,18 @@ function toRiskBandSeries(points: ForecastChartPoint[]) {
   }));
 }
 
-function formatForecastTimeLabel(rawTime: string): string {
+function formatForecastTimeLabel(rawTime: string, locale: string): string {
   const minuteOffset = parseForecastTimeToMinutes(rawTime);
   if (minuteOffset === null) {
     return rawTime;
   }
 
-  return formatForecastMinutesLabel(minuteOffset);
+  return formatForecastMinutesLabel(minuteOffset, locale);
 }
 
 function formatForecastTooltip(
   params: TooltipComponentFormatterCallbackParams,
-  tooltipRiskLabel: string,
+  labels: ForecastLabels,
   forecastPoints: ForecastChartPoint[],
 ): string {
   const items = Array.isArray(params) ? params : [params];
@@ -352,8 +353,8 @@ function formatForecastTooltip(
     ? findNearestForecastPoint(forecastPoints, numericAxisValue)
     : null;
   const formattedTime = nearestPoint
-    ? formatForecastMinutesLabel(nearestPoint.minuteOffset)
-    : formatForecastTimeLabel(String(firstItem.name ?? ""));
+    ? formatForecastMinutesLabel(nearestPoint.minuteOffset, labels.locale)
+    : formatForecastTimeLabel(String(firstItem.name ?? ""), labels.locale);
   const rawValue = nearestPoint
     ? nearestPoint.value
     : Array.isArray(firstItem.value)
@@ -367,10 +368,10 @@ function formatForecastTooltip(
     : lineColor;
   const marker = `<span style="display:inline-block;margin-right:8px;border-radius:50%;width:10px;height:10px;background-color:${markerColor};"></span>`;
   const valueText = Number.isFinite(numericValue)
-    ? numericValue.toFixed(FORECAST_DISPLAY_PRECISION)
+    ? formatRiskScore(numericValue)
     : String(rawValue ?? "");
 
-  return `${formattedTime}<br/>${marker} ${tooltipRiskLabel}&nbsp;&nbsp;${valueText}`;
+  return `${formattedTime}<br/>${marker} ${labels.tooltipRiskLabel}&nbsp;&nbsp;${valueText}`;
 }
 
 function createForecastXAxis(
@@ -421,7 +422,7 @@ function createForecastXAxis(
           return "";
         }
 
-        return formatForecastMinutesLabel(numericValue);
+        return formatForecastMinutesLabel(numericValue, labels.locale);
       },
     },
   };
@@ -637,7 +638,7 @@ export function buildForecastOption(
         },
       },
       formatter: (params: TooltipComponentFormatterCallbackParams) =>
-        formatForecastTooltip(params, labels.tooltipRiskLabel, forecastPoints),
+        formatForecastTooltip(params, labels, forecastPoints),
     },
   };
 }

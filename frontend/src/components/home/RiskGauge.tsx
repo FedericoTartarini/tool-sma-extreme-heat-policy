@@ -1,8 +1,12 @@
 import { Box } from "@mantine/core";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { RiskLevel } from "@/domain/risk";
+import { useTranslation } from "react-i18next";
+import { createRiskLevelLabels } from "@/domain/riskLabels";
+import { RISK_DISPLAY_OFFSET, RISK_RAW_SCALE_MAX } from "@/domain/riskRegistry";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import {
+  formatRiskGaugeValue,
+  getRiskGaugeActiveLevel,
   getRiskGaugeGeometry,
   getRiskGaugeRenderModel,
   RISK_GAUGE_MAX_WIDTH,
@@ -12,9 +16,6 @@ import { EChart } from "@/components/ui/EChart";
 
 interface RiskGaugeProps {
   score: number;
-  ariaLabel: string;
-  unavailableLabel: string;
-  riskLevelLabels: Record<RiskLevel, string>;
 }
 
 function useMeasuredWidth() {
@@ -67,18 +68,17 @@ function useMeasuredWidth() {
 /**
  * Renders the current-risk gauge using ECharts, tuned to resemble the legacy half-circle design.
  *
- * The score is painted onto a canvas and the centre value is hidden from
- * assistive technology, so `ariaLabel` is the only route to that reading and
- * has to carry it in full.
+ * The score is painted onto a canvas and its on-screen copy is aria-hidden, so
+ * the label built here is the only route to that reading. It names the range as
+ * well as the score, because the dial starts at the bottom of Low rather than
+ * at zero.
  */
-export function RiskGauge({
-  score,
-  ariaLabel,
-  unavailableLabel,
-  riskLevelLabels,
-}: RiskGaugeProps) {
+export function RiskGauge({ score }: RiskGaugeProps) {
+  const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
   const { containerRef, hasMeasuredWidth, width } = useMeasuredWidth();
+  const riskLevelLabels = createRiskLevelLabels((key) => t(key), "long");
+  const unavailableLabel = t("charts.gauge.riskUnavailable");
   const fallbackGeometry = getRiskGaugeGeometry(isMobile);
   const renderModel = hasMeasuredWidth
     ? getRiskGaugeRenderModel(
@@ -90,6 +90,21 @@ export function RiskGauge({
       )
     : null;
   const gaugeGeometry = renderModel?.geometry ?? fallbackGeometry;
+  const activeLevel = getRiskGaugeActiveLevel(score);
+  const ariaLabel =
+    activeLevel === null
+      ? t("charts.gauge.a11y.labelUnavailable", {
+          title: t("charts.gauge.seriesName"),
+        })
+      : t("charts.gauge.a11y.label", {
+          title: t("charts.gauge.seriesName"),
+          // The same formatter the dial prints in its centre, so the spoken
+          // reading cannot drift from the drawn one.
+          value: formatRiskGaugeValue(score, unavailableLabel),
+          min: RISK_DISPLAY_OFFSET,
+          max: RISK_RAW_SCALE_MAX,
+          level: riskLevelLabels[activeLevel],
+        });
 
   return (
     <Box

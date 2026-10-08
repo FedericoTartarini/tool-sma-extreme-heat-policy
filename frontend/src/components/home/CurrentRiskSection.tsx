@@ -9,9 +9,7 @@ import { createRiskLevelLabels } from "@/domain/riskLabels";
 import {
   getRiskBadgeForegroundColor,
   getRiskColor,
-  RISK_RAW_SCALE_MAX,
 } from "@/domain/riskRegistry";
-import { formatRiskGaugeValue, getRiskGaugeActiveLevel } from "@/lib/riskGauge";
 import { CurrentRiskSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RiskGauge } from "@/components/home/RiskGauge";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -64,31 +62,12 @@ export function CurrentRiskSection() {
     heatRisk.riskLevel,
   );
   const riskBadgeValue = longRiskLabels[heatRisk.riskLevel].toUpperCase();
-  const gaugeScore = heatRisk.risk.riskLevelInterpolated;
-  const gaugeLevel = getRiskGaugeActiveLevel(gaugeScore);
-  const gaugeUnavailableLabel = t("charts.gauge.riskUnavailable");
-  const gaugeAriaLabel =
-    gaugeLevel === null
-      ? t("charts.gauge.a11y.labelUnavailable", {
-          title: t("charts.gauge.seriesName"),
-        })
-      : t("charts.gauge.a11y.label", {
-          title: t("charts.gauge.seriesName"),
-          value: formatRiskGaugeValue(gaugeScore, gaugeUnavailableLabel),
-          max: RISK_RAW_SCALE_MAX,
-          level: longRiskLabels[gaugeLevel],
-        });
 
   return (
     <SectionCard title={currentRiskTitle}>
       <Stack gap={CONTENT_GAP} align="center">
         {profileBadge}
-        <RiskGauge
-          score={gaugeScore}
-          ariaLabel={gaugeAriaLabel}
-          unavailableLabel={gaugeUnavailableLabel}
-          riskLevelLabels={longRiskLabels}
-        />
+        <RiskGauge score={heatRisk.risk.riskLevelInterpolated} />
         <Badge
           component={Link}
           to="/detailed-recommendations"

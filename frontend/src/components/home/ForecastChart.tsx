@@ -2,14 +2,15 @@ import { Box, VisuallyHidden } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { ForecastPoint } from "@/domain/risk";
 import { createRiskLevelLabels } from "@/domain/riskLabels";
+import { formatRiskScore } from "@/domain/riskRegistry";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { toIntlLocale } from "@/i18n/language";
 import { buildForecastSummary } from "@/lib/forecastSummary";
 import { bindForecastHoverPoint, buildForecastOption } from "@/lib/riskCharts";
 import { EChart } from "@/components/ui/EChart";
 
 const DEFAULT_FORECAST_CHART_HEIGHT = 340;
 const MOBILE_FORECAST_CHART_HEIGHT = 280;
-const FORECAST_DISPLAY_PRECISION = 1;
 
 interface ForecastChartProps {
   points: ForecastPoint[];
@@ -23,13 +24,16 @@ interface ForecastChartProps {
  * `role="img"` makes the wrapper's subtree presentational, so the hourly table
  * is a sibling of that wrapper rather than a child; nested inside it, assistive
  * technology would skip the table entirely.
+ *
+ * Neither carries a tab stop: there is nothing here to operate, and a screen
+ * reader reaches both through its own navigation rather than through Tab.
  */
 export function ForecastChart({ points, dayLabel }: ForecastChartProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isMobile = useIsMobileViewport();
+  const locale = toIntlLocale(i18n.resolvedLanguage);
   const riskLevelLong = createRiskLevelLabels((key) => t(key), "long");
-  const { rows, peak, first, last } = buildForecastSummary(points);
-  const hasTextAlternative = peak !== null && first !== null && last !== null;
+  const { rows, endpoints } = buildForecastSummary(points, locale);
 
   const chartOption = buildForecastOption(
     points,
@@ -38,6 +42,7 @@ export function ForecastChart({ points, dayLabel }: ForecastChartProps) {
       yAxisRiskName: t("charts.forecast.yAxisRiskName"),
       tooltipRiskLabel: t("charts.forecast.tooltipRiskLabel"),
       riskLevelLong,
+      locale,
     },
     undefined,
     isMobile,
@@ -46,17 +51,15 @@ export function ForecastChart({ points, dayLabel }: ForecastChartProps) {
   return (
     <>
       <Box
-        // Give every day a direct keyboard entry point, including accordion panels.
-        tabIndex={hasTextAlternative ? 0 : undefined}
-        role={hasTextAlternative ? "img" : undefined}
+        role={endpoints ? "img" : undefined}
         aria-label={
-          hasTextAlternative
+          endpoints
             ? t("charts.forecast.a11y.chartLabel", {
                 day: dayLabel,
-                peakLevel: riskLevelLong[peak.level],
-                peakTime: peak.time,
-                startLevel: riskLevelLong[first.level],
-                endLevel: riskLevelLong[last.level],
+                peakLevel: riskLevelLong[endpoints.peak.level],
+                peakTime: endpoints.peak.time,
+                startLevel: riskLevelLong[endpoints.first.level],
+                endLevel: riskLevelLong[endpoints.last.level],
               })
             : undefined
         }
@@ -74,7 +77,7 @@ export function ForecastChart({ points, dayLabel }: ForecastChartProps) {
         />
       </Box>
 
-      {hasTextAlternative ? (
+      {endpoints ? (
         <VisuallyHidden component="table">
           <caption>
             {t("charts.forecast.a11y.tableCaption", { day: dayLabel })}
@@ -91,7 +94,7 @@ export function ForecastChart({ points, dayLabel }: ForecastChartProps) {
               <tr key={index}>
                 <th scope="row">{row.time}</th>
                 <td>{riskLevelLong[row.level]}</td>
-                <td>{row.displayValue.toFixed(FORECAST_DISPLAY_PRECISION)}</td>
+                <td>{formatRiskScore(row.score)}</td>
               </tr>
             ))}
           </tbody>

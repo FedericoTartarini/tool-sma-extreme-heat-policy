@@ -355,7 +355,7 @@
       "riskLabel": "Heat Risk",
       "riskUnavailable": "N/A",
       "a11y": {
-        "label": "{{title}}: {{value}} out of {{max}}, {{level}}.",
+        "label": "{{title}}: {{value}} on a scale from {{min}} to {{max}}, {{level}}.",
         "labelUnavailable": "{{title}}: not available."
       }
     },

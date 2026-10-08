@@ -1,35 +1,42 @@
 import { toRiskLevel, type ForecastPoint, type RiskLevel } from "@/domain/risk";
 import {
   formatForecastMinutesLabel,
-  toForecastMinuteOffsets,
+  toForecastTimePoints,
 } from "@/lib/forecastTime";
 
 /**
  * One hour of the forecast, expressed for a screen-reader text alternative.
  *
- * `time` is a display label (for example `2 PM`), `level` the risk band, and
- * `displayValue` the raw risk score rounded to the precision the chart tooltip
- * already uses, so both surfaces read the same number.
+ * `time` is a localised display label (for example `2 pm`), `level` the risk
+ * band, and `score` the raw risk score. Note this is the score itself, not the
+ * shifted coordinate the chart plots.
  */
 export interface ForecastSummaryRow {
   time: string;
   level: RiskLevel;
-  displayValue: number;
+  score: number;
+}
+
+/**
+ * The rows a one-line summary of the day quotes: its highest-risk hour, and the
+ * hours it opens and closes on.
+ */
+export interface ForecastSummaryEndpoints {
+  peak: ForecastSummaryRow;
+  first: ForecastSummaryRow;
+  last: ForecastSummaryRow;
 }
 
 /**
  * Structured source for a forecast chart's text alternative.
  *
  * Holds no copy: the caller turns these values into sentences through i18n so
- * the summary stays translatable. `peak` is the highest-risk row of the day,
- * `first` and `last` the day's opening and closing rows. All three are null
- * when the day has no points.
+ * the summary stays translatable. `endpoints` is null exactly when the day has
+ * no points, so one check tells the caller whether a summary can be written.
  */
 export interface ForecastSummary {
   rows: ForecastSummaryRow[];
-  peak: ForecastSummaryRow | null;
-  first: ForecastSummaryRow | null;
-  last: ForecastSummaryRow | null;
+  endpoints: ForecastSummaryEndpoints | null;
 }
 
 /**
@@ -40,31 +47,38 @@ export interface ForecastSummary {
  * `timeHeader` / `levelHeader` / `valueHeader` column labels for the visually
  * hidden hourly table.
  *
- * Points retain their forecast order. Ties resolve to the first occurrence,
- * comparing raw scores before rounding. Time offsets follow the chart, including
- * its hourly fallback for labels that do not advance (for example at midnight).
+ * Points retain their forecast order, and ties resolve to the first occurrence,
+ * comparing raw scores before rounding. Each row is labelled with the time its
+ * own point states, so an hour that repeats when daylight saving ends reads as
+ * itself rather than as the position the chart had to shift it to.
  */
-export function buildForecastSummary(points: ForecastPoint[]): ForecastSummary {
-  const minuteOffsets = toForecastMinuteOffsets(
-    points.map((point) => point.time),
-  );
+export function buildForecastSummary(
+  points: ForecastPoint[],
+  locale: string,
+): ForecastSummary {
+  const timePoints = toForecastTimePoints(points.map((point) => point.time));
   let peakIndex = -1;
+
   const rows = points.map((point, index): ForecastSummaryRow => {
     if (peakIndex === -1 || point.value > points[peakIndex].value) {
       peakIndex = index;
     }
 
+    const { minuteOffset, statedMinutes } = timePoints[index];
+
     return {
-      time: formatForecastMinutesLabel(minuteOffsets[index]),
+      time: formatForecastMinutesLabel(statedMinutes ?? minuteOffset, locale),
       level: toRiskLevel(point.value),
-      displayValue: Number(point.value.toFixed(1)),
+      score: point.value,
     };
   });
 
+  const peak = rows[peakIndex];
+  const first = rows[0];
+  const last = rows.at(-1);
+
   return {
     rows,
-    peak: rows[peakIndex] ?? null,
-    first: rows[0] ?? null,
-    last: rows.at(-1) ?? null,
+    endpoints: peak && first && last ? { peak, first, last } : null,
   };
 }

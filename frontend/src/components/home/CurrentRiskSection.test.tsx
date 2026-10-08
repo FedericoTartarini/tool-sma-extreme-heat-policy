@@ -57,15 +57,17 @@ function renderSection(score: number, riskLevel: RiskLevel): string {
 }
 
 describe("CurrentRiskSection", () => {
-  it("names the gauge with its score, scale and risk level", () => {
+  it("names the gauge with its score, the range and the risk level", () => {
     // The score is painted onto a canvas and its on-screen copy is aria-hidden,
-    // so the label is the only route to the reading.
+    // so the label is the only route to the reading. It has to give the range
+    // too, because the dial starts at the bottom of Low rather than at zero.
     const markup = renderSection(1, "low");
 
     expect(markup).toContain(
       `aria-label="${tFromEn("charts.gauge.a11y.label", {
         title: "Heat Risk",
         value: "1.0",
+        min: 1,
         max: 5,
         level: "Low",
       })}"`,
@@ -79,6 +81,7 @@ describe("CurrentRiskSection", () => {
       `aria-label="${tFromEn("charts.gauge.a11y.label", {
         title: "Heat Risk",
         value: "3.4",
+        min: 1,
         max: 5,
         level: "High",
       })}"`,
@@ -93,7 +96,7 @@ describe("CurrentRiskSection", () => {
         title: "Heat Risk",
       })}"`,
     );
-    expect(markup).not.toContain("out of 5");
+    expect(markup).not.toContain("scale from");
     expect(markup).not.toContain("NaN");
   });
 });

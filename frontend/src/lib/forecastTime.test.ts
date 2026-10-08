@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatForecastMinutesLabel,
   parseForecastTimeToMinutes,
-  toForecastMinuteOffsets,
+  toForecastTimePoints,
 } from "@/lib/forecastTime";
 
 describe("parseForecastTimeToMinutes", () => {
@@ -20,42 +20,71 @@ describe("parseForecastTimeToMinutes", () => {
 });
 
 describe("formatForecastMinutesLabel", () => {
+  it("follows the clock convention of the locale", () => {
+    expect(formatForecastMinutesLabel(540, "en-AU")).toBe("9 am");
+    expect(formatForecastMinutesLabel(540, "zh-CN")).toBe("9时");
+  });
+
   it("formats whole hours without minutes", () => {
-    expect(formatForecastMinutesLabel(0)).toBe("12 AM");
-    expect(formatForecastMinutesLabel(720)).toBe("12 PM");
-    expect(formatForecastMinutesLabel(1380)).toBe("11 PM");
+    expect(formatForecastMinutesLabel(0, "en-AU")).toBe("12 am");
+    expect(formatForecastMinutesLabel(720, "en-AU")).toBe("12 pm");
+    expect(formatForecastMinutesLabel(1380, "en-AU")).toBe("11 pm");
   });
 
   it("keeps minutes and wraps past a full day", () => {
-    expect(formatForecastMinutesLabel(870)).toBe("2:30 PM");
-    expect(formatForecastMinutesLabel(1500)).toBe("1 AM");
+    expect(formatForecastMinutesLabel(870, "en-AU")).toBe("2:30 pm");
+    expect(formatForecastMinutesLabel(1500, "en-AU")).toBe("1 am");
+  });
+
+  it("falls back to the default locale rather than throwing", () => {
+    expect(() => formatForecastMinutesLabel(540, "not a locale")).not.toThrow();
   });
 });
 
-describe("toForecastMinuteOffsets", () => {
+describe("toForecastTimePoints", () => {
   it("keeps parsed offsets while they advance", () => {
-    expect(toForecastMinuteOffsets(["08:00", "09:00", "10:30"])).toEqual([
-      480, 540, 630,
+    expect(toForecastTimePoints(["08:00", "09:00", "10:30"])).toEqual([
+      { minuteOffset: 480, statedMinutes: 480 },
+      { minuteOffset: 540, statedMinutes: 540 },
+      { minuteOffset: 630, statedMinutes: 630 },
     ]);
   });
 
-  it("advances by an hour when a label wraps past midnight", () => {
-    expect(toForecastMinuteOffsets(["22:00", "23:00", "00:00"])).toEqual([
-      1320, 1380, 1440,
+  it("advances the offset past midnight while keeping the stated time", () => {
+    expect(toForecastTimePoints(["22:00", "23:00", "00:00"])).toEqual([
+      { minuteOffset: 1320, statedMinutes: 1320 },
+      { minuteOffset: 1380, statedMinutes: 1380 },
+      { minuteOffset: 1440, statedMinutes: 0 },
     ]);
   });
 
-  it("advances by an hour when a label is malformed", () => {
-    expect(toForecastMinuteOffsets(["08:00", "broken", "10:00"])).toEqual([
-      480, 540, 600,
+  it("separates the plotted offset from a repeated hour", () => {
+    // The hour that comes back when daylight saving ends: the chart has to
+    // place the second 02:00 after the first, but it is still 2 am.
+    expect(toForecastTimePoints(["01:00", "02:00", "02:00", "03:00"])).toEqual([
+      { minuteOffset: 60, statedMinutes: 60 },
+      { minuteOffset: 120, statedMinutes: 120 },
+      { minuteOffset: 180, statedMinutes: 120 },
+      { minuteOffset: 240, statedMinutes: 180 },
+    ]);
+  });
+
+  it("reports no stated time for a malformed label", () => {
+    expect(toForecastTimePoints(["08:00", "broken", "10:00"])).toEqual([
+      { minuteOffset: 480, statedMinutes: 480 },
+      { minuteOffset: 540, statedMinutes: null },
+      { minuteOffset: 600, statedMinutes: 600 },
     ]);
   });
 
   it("starts at midnight when the first label is malformed", () => {
-    expect(toForecastMinuteOffsets(["broken", "01:00"])).toEqual([0, 60]);
+    expect(toForecastTimePoints(["broken", "01:00"])).toEqual([
+      { minuteOffset: 0, statedMinutes: null },
+      { minuteOffset: 60, statedMinutes: 60 },
+    ]);
   });
 
   it("returns nothing for an empty day", () => {
-    expect(toForecastMinuteOffsets([])).toEqual([]);
+    expect(toForecastTimePoints([])).toEqual([]);
   });
 });

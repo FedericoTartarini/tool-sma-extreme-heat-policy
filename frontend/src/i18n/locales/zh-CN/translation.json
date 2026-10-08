@@ -355,7 +355,7 @@
       "riskLabel": "热应激风险",
       "riskUnavailable": "暂无",
       "a11y": {
-        "label": "{{title}}：{{value}}（满分 {{max}}），{{level}}。",
+        "label": "{{title}}：{{value}}（量程 {{min}} 到 {{max}}），{{level}}。",
         "labelUnavailable": "{{title}}：暂无数据。"
       }
     },

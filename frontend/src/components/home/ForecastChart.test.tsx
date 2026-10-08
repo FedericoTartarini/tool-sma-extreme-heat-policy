@@ -20,6 +20,7 @@ vi.mock("react-i18next", async () => {
   return {
     useTranslation: () => ({
       t: translate,
+      i18n: { resolvedLanguage: "en" },
     }),
   };
 });
@@ -46,13 +47,13 @@ describe("ForecastChart", () => {
 
     expect(markup).toContain('role="img"');
     expect(markup).toContain(
-      tFromEn("charts.forecast.a11y.chartLabel", {
+      `aria-label="${tFromEn("charts.forecast.a11y.chartLabel", {
         day: DAY_LABEL,
         peakLevel: "High",
-        peakTime: "12 PM",
+        peakTime: "12 pm",
         startLevel: "Low",
         endLevel: "Moderate",
-      }),
+      })}"`,
     );
   });
 
@@ -78,20 +79,21 @@ describe("ForecastChart", () => {
     expect(markup).toContain('<th scope="col">Time</th>');
     expect(markup).toContain('<th scope="col">Risk level</th>');
     expect(markup).toContain('<th scope="col">Risk score</th>');
-    expect(markup).toContain('<th scope="row">12 PM</th>');
+    expect(markup).toContain('<th scope="row">12 pm</th>');
     expect(markup).toContain("<td>High</td>");
     expect(markup).toContain("<td>3.4</td>");
   });
 
-  it("offers a keyboard entry point to the chart", () => {
-    expect(renderChart(POINTS)).toContain('tabindex="0"');
+  it("leaves the chart out of the tab order", () => {
+    // Nothing here can be operated, and a screen reader reaches the summary
+    // and the table through its own navigation rather than through Tab.
+    expect(renderChart(POINTS)).not.toContain("tabindex");
   });
 
   it("drops the text alternative for a day with no points", () => {
     const markup = renderChart([]);
 
     expect(markup).not.toContain('role="img"');
-    expect(markup).not.toContain("tabindex");
     expect(markup).not.toContain("<table");
     expect(markup).not.toContain("Heat risk forecast for");
     expect(markup).not.toContain("undefined");

@@ -1,4 +1,39 @@
 const FORECAST_HOUR_MINUTE_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const MINUTES_IN_DAY = 24 * 60;
+const MS_IN_MINUTE = 60_000;
+
+/** Any date works: only the time of day is ever formatted, always read as UTC. */
+const FORECAST_TIME_BASE = Date.UTC(2000, 0, 1);
+
+const forecastTimeFormats = new Map<string, Intl.DateTimeFormat>();
+
+function getForecastTimeFormat(
+  locale: string,
+  withMinutes: boolean,
+): Intl.DateTimeFormat {
+  const key = `${locale}|${withMinutes}`;
+  const cached = forecastTimeFormats.get(key);
+
+  if (cached) {
+    return cached;
+  }
+
+  const options: Intl.DateTimeFormatOptions = withMinutes
+    ? { hour: "numeric", minute: "2-digit", timeZone: "UTC" }
+    : { hour: "numeric", timeZone: "UTC" };
+
+  let format: Intl.DateTimeFormat;
+
+  try {
+    format = new Intl.DateTimeFormat(locale, options);
+  } catch {
+    format = new Intl.DateTimeFormat(undefined, options);
+  }
+
+  forecastTimeFormats.set(key, format);
+
+  return format;
+}
 
 /**
  * Parses a backend `HH:MM` forecast label into minutes past local midnight.
@@ -15,46 +50,58 @@ export function parseForecastTimeToMinutes(rawTime: string): number | null {
 }
 
 /**
- * Formats minutes past local midnight as a 12-hour label, wrapping across days.
+ * Formats minutes past local midnight for display, wrapping across days.
+ *
+ * The clock convention follows the locale, so the chart axis and the
+ * screen-reader text read the same way in whichever language is selected.
+ * Whole hours drop the minutes, which keeps axis ticks short.
  */
-export function formatForecastMinutesLabel(rawMinutes: number): string {
+export function formatForecastMinutesLabel(
+  rawMinutes: number,
+  locale: string,
+): string {
   const roundedMinutes = Math.round(rawMinutes);
-  const minutesInDay = 24 * 60;
   const normalizedMinutes =
-    ((roundedMinutes % minutesInDay) + minutesInDay) % minutesInDay;
-  const hour24 = Math.floor(normalizedMinutes / 60);
-  const minute = normalizedMinutes % 60;
-  const meridiem = hour24 >= 12 ? "PM" : "AM";
-  const hour12 = hour24 % 12 || 12;
+    ((roundedMinutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY;
 
-  if (minute === 0) {
-    return `${hour12} ${meridiem}`;
-  }
-
-  return `${hour12}:${String(minute).padStart(2, "0")} ${meridiem}`;
+  return getForecastTimeFormat(locale, normalizedMinutes % 60 !== 0).format(
+    FORECAST_TIME_BASE + normalizedMinutes * MS_IN_MINUTE,
+  );
 }
 
 /**
- * Maps a day's `HH:MM` forecast labels onto minutes past local midnight.
+ * One forecast label, separated into where it plots and what it says.
  *
- * A label that is malformed, or that does not advance on the previous one
- * (a day wrapping past midnight, for example), falls back to one hour after
- * its predecessor, so the sequence stays strictly increasing and plottable.
+ * `minuteOffset` is forced to keep increasing so that a label which repeats
+ * (the hour that comes back when daylight saving ends) or fails to parse still
+ * lands after its predecessor on the axis. `statedMinutes` keeps the time the
+ * label itself gives, so text that quotes an hour quotes the real one rather
+ * than the shifted coordinate. It is null when the label did not parse.
  */
-export function toForecastMinuteOffsets(times: readonly string[]): number[] {
+export interface ForecastTimePoint {
+  minuteOffset: number;
+  statedMinutes: number | null;
+}
+
+/**
+ * Maps a day's `HH:MM` forecast labels onto chart coordinates and stated times.
+ */
+export function toForecastTimePoints(
+  times: readonly string[],
+): ForecastTimePoint[] {
   let previousMinuteOffset = -1;
 
   return times.map((time) => {
-    const parsedMinuteOffset = parseForecastTimeToMinutes(time);
+    const statedMinutes = parseForecastTimeToMinutes(time);
     const minuteOffset =
-      parsedMinuteOffset !== null && parsedMinuteOffset > previousMinuteOffset
-        ? parsedMinuteOffset
+      statedMinutes !== null && statedMinutes > previousMinuteOffset
+        ? statedMinutes
         : previousMinuteOffset < 0
-          ? (parsedMinuteOffset ?? 0)
+          ? (statedMinutes ?? 0)
           : previousMinuteOffset + 60;
 
     previousMinuteOffset = minuteOffset;
 
-    return minuteOffset;
+    return { minuteOffset, statedMinutes };
   });
 }
