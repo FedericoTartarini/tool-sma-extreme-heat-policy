@@ -13,6 +13,9 @@ export function AboutPage() {
     returnObjects: true,
   }) as AboutSection[];
   const defaultSectionValue = sections[0]?.iconKey;
+  const defaultExpandedValues = defaultSectionValue
+    ? [defaultSectionValue]
+    : [];
 
   return (
     <SectionCard>
@@ -20,7 +23,8 @@ export function AboutPage() {
         chevronPosition="right"
         variant="separated"
         radius="md"
-        defaultValue={defaultSectionValue}
+        multiple
+        defaultValue={defaultExpandedValues}
       >
         {sections.map((section) => (
           <AboutSectionBlock key={section.iconKey} section={section} />
