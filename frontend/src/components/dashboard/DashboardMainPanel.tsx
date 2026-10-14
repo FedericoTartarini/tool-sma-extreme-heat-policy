@@ -97,12 +97,6 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
     }
   }, [addErrorReason, onAddError]);
 
-  useEffect(() => {
-    if (!canAddMoreCards && isAddModalOpen) {
-      setIsAddModalOpen(false);
-    }
-  }, [canAddMoreCards, isAddModalOpen]);
-
   const closeLocationDropdown = () => {
     locationCombobox.closeDropdown();
     locationCombobox.resetSelectedOption();
@@ -171,7 +165,7 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
       </SectionCard>
 
       <Modal
-        opened={isAddModalOpen}
+        opened={isAddModalOpen && canAddMoreCards}
         onClose={() => setIsAddModalOpen(false)}
         title={t("dashboard.addLocation.modalTitle")}
         centered
