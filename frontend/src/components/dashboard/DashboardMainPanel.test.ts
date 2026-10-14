@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
 import { createInstance } from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardMainPanel } from "@/components/dashboard/DashboardMainPanel";
 import en from "@/i18n/locales/en/translation.json";
@@ -102,7 +103,7 @@ function render() {
             withCssVariables: false,
             withGlobalClasses: false,
           },
-          createElement(DashboardMainPanel),
+          createElement(MemoryRouter, null, createElement(DashboardMainPanel)),
         ),
       ),
     ),
@@ -126,6 +127,16 @@ function weekdayCheckbox(label: string): HTMLInputElement {
 }
 
 describe("dashboard add panel schedule fields", () => {
+  it("links to detailed recommendations in the header summary", () => {
+    render();
+
+    const recommendationsLink = document.querySelector(
+      'a[href="/detailed-recommendations"]',
+    );
+    expect(recommendationsLink).not.toBeNull();
+    expect(recommendationsLink?.textContent).toBe("detailed recommendations");
+  });
+
   it("keeps the add form inside a modal until opened", () => {
     render();
 
