@@ -342,6 +342,12 @@
       "title": "{{sport}} · {{location}}",
       "openHomeAriaLabel": "在首页打开 {{title}}",
       "delete": "删除",
+      "deleteConfirm": {
+        "title": "移除卡片？",
+        "message": "此卡片将从仪表盘中移除。您可以稍后再次添加。",
+        "confirm": "移除卡片",
+        "cancel": "取消"
+      },
       "moreActions": "卡片操作",
       "moveLeft": "左移",
       "moveRight": "右移",

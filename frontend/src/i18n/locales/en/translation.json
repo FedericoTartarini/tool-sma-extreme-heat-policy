@@ -342,6 +342,12 @@
       "title": "{{sport}} · {{location}}",
       "openHomeAriaLabel": "Open {{title}} on the home page",
       "delete": "Delete",
+      "deleteConfirm": {
+        "title": "Remove card?",
+        "message": "This card will be removed from your dashboard. You can add it again later.",
+        "confirm": "Remove card",
+        "cancel": "Cancel"
+      },
       "moreActions": "Card actions",
       "moveLeft": "Move left",
       "moveRight": "Move right",
