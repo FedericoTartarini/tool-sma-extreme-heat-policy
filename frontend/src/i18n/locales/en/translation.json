@@ -322,7 +322,7 @@
     },
     "header": {
       "title": "My dashboard",
-      "description": "Select a location, sport, and practice schedule to add a card. Switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows average and min/max risk for the next occurrence of a weekday and time range you choose. You can add up to {{maxCards}} cards."
+      "description": "Use this dashboard to view sport heat risk for saved scheduled events by adding cards through the \"Add card\" button.\nYou can switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows the risk for the next occurrence of a day time range chosen.\nNote: you can add up to {{maxCards}} cards."
     },
     "addLocation": {
       "openFormButton": "Add card",
@@ -336,8 +336,7 @@
       "scheduleRequired": "Choose at least one day and a time range ending later that day or at midnight. All schedule fields are required."
     },
     "emptyState": {
-      "title": "No saved cards on your dashboard yet",
-      "body": "Search for a city, choose a sport and schedule, and add a card to start monitoring heat risk across multiple locations."
+      "title": "No saved cards on your dashboard yet. Start monitoring heat risk by adding a card."
     },
     "cards": {
       "title": "{{sport}} · {{location}}",

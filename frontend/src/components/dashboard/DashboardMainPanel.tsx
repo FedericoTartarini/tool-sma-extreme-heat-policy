@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { DashboardScheduleFields } from "@/components/dashboard/DashboardScheduleFields";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
+import { RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT } from "@/config/uiTypography";
 import { MAX_DASHBOARD_CARDS } from "@/domain/dashboard";
 import { isSportType, sports, type SportType } from "@/domain/sport";
 import { useDashboardLocationAdd } from "@/hooks/useDashboardLocationAdd";
@@ -123,13 +124,28 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
     }
   };
 
+  const descriptionLines = t("dashboard.header.description", {
+    maxCards: MAX_DASHBOARD_CARDS,
+  }).split("\n");
+
   return (
     <>
       <SectionCard
         title={t("dashboard.header.title")}
-        subtitle={t("dashboard.header.description", {
-          maxCards: MAX_DASHBOARD_CARDS,
-        })}
+        subtitle={
+          <Stack gap={0}>
+            {descriptionLines.map((line, index) => (
+              <Text
+                key={index}
+                c="dimmed"
+                fz={{ base: "md", sm: "lg" }}
+                lh={RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT}
+              >
+                {line}
+              </Text>
+            ))}
+          </Stack>
+        }
       >
         <Stack gap={CONTENT_GAP}>
           <Button
@@ -149,10 +165,7 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
           ) : null}
 
           {cards.length === 0 ? (
-            <Stack gap="xs">
-              <Text fw={600}>{t("dashboard.emptyState.title")}</Text>
-              <Text c="dimmed">{t("dashboard.emptyState.body")}</Text>
-            </Stack>
+            <Text fw={600}>{t("dashboard.emptyState.title")}</Text>
           ) : null}
         </Stack>
       </SectionCard>
