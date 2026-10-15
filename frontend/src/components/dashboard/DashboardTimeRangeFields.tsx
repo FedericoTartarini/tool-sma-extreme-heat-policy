@@ -56,7 +56,6 @@ export function DashboardTimeRangeFields({
         onChange={(value) =>
           onStartMinutesChange(value === null ? null : Number(value))
         }
-        clearable
         disabled={disabled}
       />
       <Select
@@ -69,7 +68,6 @@ export function DashboardTimeRangeFields({
         onChange={(value) =>
           onEndMinutesChange(value === null ? null : Number(value))
         }
-        clearable
         disabled={disabled}
       />
     </Group>

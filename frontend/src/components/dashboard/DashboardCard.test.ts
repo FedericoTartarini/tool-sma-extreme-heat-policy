@@ -56,6 +56,7 @@ const CARD_ACTIONS = {
   onRemove: vi.fn(),
   onMoveUp: vi.fn(),
   onMoveDown: vi.fn(),
+  onUpdateSchedule: vi.fn(() => ({ ok: true }) as const),
 };
 
 let harness: Awaited<ReturnType<typeof createDashboardComponentHost>>;
@@ -226,6 +227,23 @@ describe("dashboard card schedule", () => {
     renderCard({ ...sydneyCard, schedule: eveningSchedule }, "my_schedule");
 
     expect(harness.host.textContent).toContain("Tue, Thu · 6:00 pm – 8:00 pm");
+  });
+
+  it("offers schedule editing only in My schedule mode", () => {
+    renderCard({ ...sydneyCard, schedule: eveningSchedule }, "now");
+    expect(
+      document.body.querySelector('[aria-label="Edit schedule"]'),
+    ).toBeNull();
+
+    renderCard({ ...sydneyCard, schedule: eveningSchedule }, "my_schedule");
+    const editButton = document.body.querySelector(
+      '[aria-label="Edit schedule"]',
+    ) as HTMLButtonElement;
+    expect(editButton).not.toBeNull();
+
+    act(() => editButton.click());
+    expect(document.body.textContent).toContain("Edit My schedule card");
+    expect(document.body.textContent).toContain("Editing Soccer · Sydney");
   });
 
   it("marks an end time of midnight as the next day", () => {

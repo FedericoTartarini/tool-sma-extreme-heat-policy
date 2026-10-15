@@ -332,7 +332,7 @@
       "openFormButton": "添加卡片",
       "modalTitle": "添加仪表盘卡片",
       "addButton": "添加到仪表盘",
-      "weekdaysLabel": "每逢",
+      "weekdaysLabel": "星期",
       "timeLabel": "时间",
       "startTime": "开始时间",
       "endTime": "结束时间",
@@ -351,6 +351,15 @@
         "message": "此卡片将从仪表盘中移除。您可以稍后再次添加。",
         "confirm": "移除卡片",
         "cancel": "取消"
+      },
+      "editSchedule": {
+        "action": "编辑日程",
+        "title": "编辑“我的日程”卡片",
+        "cardLabel": "正在编辑 {{title}}",
+        "save": "保存更改",
+        "cancel": "取消",
+        "duplicate": "另一张卡片已使用相同的位置、运动和日程。",
+        "failed": "无法更新此卡片，请重试。"
       },
       "moreActions": "卡片操作",
       "moveLeft": "左移",

@@ -10,6 +10,7 @@ const ACTION_PROPS = {
   onRemove: vi.fn(),
   onMoveUp: vi.fn(),
   onMoveDown: vi.fn(),
+  onEditSchedule: vi.fn(),
 };
 
 let harness: Awaited<ReturnType<typeof createDashboardComponentHost>>;
@@ -36,6 +37,34 @@ function getButtonByName(name: string): HTMLButtonElement {
 beforeEach(async () => {
   harness = await createDashboardComponentHost();
   ACTION_PROPS.onRemove.mockReset();
+  ACTION_PROPS.onEditSchedule.mockReset();
+});
+
+describe("DashboardCardActions schedule editing", () => {
+  it("shows the edit action only for editable schedule cards", () => {
+    harness.render(
+      createElement(DashboardCardActions, {
+        ...ACTION_PROPS,
+        canEditSchedule: true,
+      }),
+      { withRouter: false },
+    );
+
+    const editButton = document.body.querySelector(
+      '[aria-label="Edit schedule"]',
+    ) as HTMLButtonElement;
+    expect(editButton).not.toBeNull();
+
+    act(() => editButton.click());
+    expect(ACTION_PROPS.onEditSchedule).toHaveBeenCalledTimes(1);
+
+    harness.render(createElement(DashboardCardActions, ACTION_PROPS), {
+      withRouter: false,
+    });
+    expect(
+      document.body.querySelector('[aria-label="Edit schedule"]'),
+    ).toBeNull();
+  });
 });
 
 afterEach(() => {

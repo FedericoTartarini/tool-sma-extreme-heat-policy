@@ -337,6 +337,59 @@ describe("dashboardStore", () => {
     expect(useDashboardStore.getState().cards).toHaveLength(2);
   });
 
+  it("updates a saved card schedule", () => {
+    useDashboardStore
+      .getState()
+      .addCard(SportType.Soccer, SYDNEY_LOCATION, TUESDAY_THURSDAY_EVENING);
+    const cardId = useDashboardStore.getState().cards[0]!.id;
+
+    expect(
+      useDashboardStore.getState().updateCardSchedule(cardId, MONDAY_MORNING),
+    ).toEqual({ ok: true });
+    expect(useDashboardStore.getState().cards[0]?.schedule).toEqual(
+      MONDAY_MORNING,
+    );
+  });
+
+  it("rejects a schedule update that duplicates another saved card", () => {
+    useDashboardStore
+      .getState()
+      .addCard(SportType.Soccer, SYDNEY_LOCATION, TUESDAY_THURSDAY_EVENING);
+    useDashboardStore
+      .getState()
+      .addCard(SportType.Soccer, SYDNEY_LOCATION, MONDAY_MORNING);
+    const secondCardId = useDashboardStore.getState().cards[1]!.id;
+
+    expect(
+      useDashboardStore
+        .getState()
+        .updateCardSchedule(secondCardId, TUESDAY_THURSDAY_EVENING),
+    ).toEqual({ ok: false, reason: "duplicate" });
+    expect(useDashboardStore.getState().cards[1]?.schedule).toEqual(
+      MONDAY_MORNING,
+    );
+  });
+
+  it("rejects invalid and unknown-card schedule updates", () => {
+    useDashboardStore
+      .getState()
+      .addCard(SportType.Soccer, SYDNEY_LOCATION, TUESDAY_THURSDAY_EVENING);
+    const cardId = useDashboardStore.getState().cards[0]!.id;
+
+    expect(
+      useDashboardStore.getState().updateCardSchedule(cardId, {
+        weekdays: [2],
+        startMinutes: 1200,
+        endMinutes: 1080,
+      }),
+    ).toEqual({ ok: false, reason: "invalid_schedule" });
+    expect(
+      useDashboardStore
+        .getState()
+        .updateCardSchedule("missing-card", MONDAY_MORNING),
+    ).toEqual({ ok: false, reason: "not_found" });
+  });
+
   it("rejects an invalid schedule at the store boundary", () => {
     expect(
       useDashboardStore.getState().addCard(SportType.Soccer, SYDNEY_LOCATION, {

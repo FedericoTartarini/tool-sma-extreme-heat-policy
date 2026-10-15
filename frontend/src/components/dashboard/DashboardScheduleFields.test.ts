@@ -118,7 +118,7 @@ describe("dashboard schedule fields", () => {
   it("shows every weekday from Sunday and both time fields", () => {
     render();
 
-    const weekdays = host.querySelector('[role="group"][aria-label="Every"]');
+    const weekdays = host.querySelector('[role="group"][aria-label="Days"]');
     expect(
       Array.from(weekdays!.querySelectorAll("label")).map(
         (label) => label.textContent,
@@ -150,6 +150,12 @@ describe("dashboard schedule fields", () => {
     choose("End time", "Midnight (next day)");
 
     expect(onEndMinutesChange).toHaveBeenCalledWith(1440);
+  });
+
+  it("does not render clear buttons in the time selectors", () => {
+    render({ startMinutes: 540, endMinutes: 660 });
+
+    expect(host.querySelectorAll("button")).toHaveLength(0);
   });
 
   it("disables every field when disabled", () => {

@@ -39,6 +39,9 @@ export function DashboardCardList({
   const removeCard = useDashboardStore((state) => state.removeCard);
   const moveCardUp = useDashboardStore((state) => state.moveCardUp);
   const moveCardDown = useDashboardStore((state) => state.moveCardDown);
+  const updateCardSchedule = useDashboardStore(
+    (state) => state.updateCardSchedule,
+  );
 
   const renderCard = (card: SavedDashboardCard, index: number) => (
     <DashboardCard
@@ -61,6 +64,7 @@ export function DashboardCardList({
       onRemove={() => removeCard(card.id)}
       onMoveUp={() => moveCardUp(card.id)}
       onMoveDown={() => moveCardDown(card.id)}
+      onUpdateSchedule={(schedule) => updateCardSchedule(card.id, schedule)}
     />
   );
 
