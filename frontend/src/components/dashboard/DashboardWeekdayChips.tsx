@@ -56,13 +56,14 @@ export function DashboardWeekdayChips(props: DashboardWeekdayChipsProps) {
           props.onChange(Number(value) as Weekday);
         }}
       >
-        <Group flex={1} gap="xs" role="group" aria-label={ariaLabel}>
+        <Group flex={1} gap={4} role="group" aria-label={ariaLabel}>
           {weekdayOptions.map((option) => (
             <Chip
               key={option.value}
               value={option.value}
               size="sm"
               disabled={props.disabled}
+              styles={{ label: { paddingInline: 8 } }}
             >
               {option.label}
             </Chip>
@@ -84,13 +85,14 @@ export function DashboardWeekdayChips(props: DashboardWeekdayChipsProps) {
         )
       }
     >
-      <Group flex={1} gap="xs" role="group" aria-label={ariaLabel}>
+      <Group flex={1} gap={4} role="group" aria-label={ariaLabel}>
         {weekdayOptions.map((option) => (
           <Chip
             key={option.value}
             value={option.value}
             size="sm"
             disabled={props.disabled}
+            styles={{ label: { paddingInline: 8 } }}
           >
             {option.label}
           </Chip>

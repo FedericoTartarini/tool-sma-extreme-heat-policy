@@ -141,7 +141,7 @@ describe("dashboard add panel schedule fields", () => {
     render();
 
     expect(
-      document.querySelector('[role="group"][aria-label="Every"]'),
+      document.querySelector('[role="group"][aria-label="Days"]'),
     ).toBeNull();
     expect(
       Array.from(document.querySelectorAll("button")).some(
@@ -152,7 +152,7 @@ describe("dashboard add panel schedule fields", () => {
     openAddModal();
 
     expect(
-      document.querySelector('[role="group"][aria-label="Every"]'),
+      document.querySelector('[role="group"][aria-label="Days"]'),
     ).not.toBeNull();
     expect(
       document.querySelector('input[aria-label="Start time"]'),
@@ -192,7 +192,7 @@ describe("dashboard add panel schedule fields", () => {
     render();
     // Modal stays closed when max reached; open path is blocked by the button.
     expect(
-      document.querySelector('[role="group"][aria-label="Every"]'),
+      document.querySelector('[role="group"][aria-label="Days"]'),
     ).toBeNull();
   });
 

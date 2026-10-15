@@ -16,6 +16,7 @@ import {
   IconChevronRight,
   IconChevronUp,
   IconDotsVertical,
+  IconPencil,
   IconTrash,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -35,6 +36,8 @@ interface DashboardCardActionsProps {
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  canEditSchedule?: boolean;
+  onEditSchedule?: () => void;
 }
 
 /**
@@ -46,6 +49,8 @@ export function DashboardCardActions({
   onRemove,
   onMoveUp,
   onMoveDown,
+  canEditSchedule = false,
+  onEditSchedule,
 }: DashboardCardActionsProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
@@ -115,6 +120,11 @@ export function DashboardCardActions({
     onMoveDown();
   };
 
+  const handleEditSchedule = (event: { stopPropagation: () => void }) => {
+    stopPropagation(event);
+    onEditSchedule?.();
+  };
+
   if (isMobile) {
     const moreActionsLabel = t("dashboard.cards.moreActions");
 
@@ -135,6 +145,22 @@ export function DashboardCardActions({
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
+              {canEditSchedule ? (
+                <>
+                  <Menu.Item
+                    leftSection={
+                      <IconPencil
+                        size={UI_INLINE_ICON_SIZE}
+                        aria-hidden="true"
+                      />
+                    }
+                    onClick={handleEditSchedule}
+                  >
+                    {t("dashboard.cards.editSchedule.action")}
+                  </Menu.Item>
+                  <Menu.Divider />
+                </>
+              ) : null}
               <Menu.Item
                 leftSection={
                   <IconChevronUp
@@ -180,6 +206,22 @@ export function DashboardCardActions({
   return (
     <>
       <Group gap={4} wrap="nowrap" style={controlLayerStyle}>
+        {canEditSchedule ? (
+          <Tooltip label={t("dashboard.cards.editSchedule.action")}>
+            <ActionIcon
+              variant="light"
+              color="gray"
+              size="sm"
+              aria-label={t("dashboard.cards.editSchedule.action")}
+              onClick={handleEditSchedule}
+            >
+              <IconPencil
+                size={UI_INLINE_ICON_SIZE}
+                stroke={UI_INLINE_ICON_STROKE}
+              />
+            </ActionIcon>
+          </Tooltip>
+        ) : null}
         <Tooltip label={t("dashboard.cards.moveLeft")}>
           <ActionIcon
             variant="light"

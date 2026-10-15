@@ -5,7 +5,9 @@ import {
   type AddDashboardCardResult,
   type DashboardCardSchedule,
   type SavedDashboardCard,
+  type UpdateDashboardCardScheduleResult,
   validateAddSavedDashboardCard,
+  validateUpdateSavedDashboardCardSchedule,
 } from "@/domain/dashboard";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 import type { DashboardOtherPeriodDraft } from "@/domain/dashboardOtherPeriod";
@@ -53,6 +55,10 @@ interface DashboardStoreState {
     schedule: DashboardCardSchedule,
   ) => AddDashboardCardResult;
   removeCard: (cardId: string) => void;
+  updateCardSchedule: (
+    cardId: string,
+    schedule: DashboardCardSchedule,
+  ) => UpdateDashboardCardScheduleResult;
   moveCardUp: (cardId: string) => void;
   moveCardDown: (cardId: string) => void;
 }
@@ -204,6 +210,25 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
     set((state) => ({
       cards: state.cards.filter((card) => card.id !== cardId),
     }));
+  },
+
+  updateCardSchedule: (cardId, schedule) => {
+    const validation = validateUpdateSavedDashboardCardSchedule(
+      get().cards,
+      cardId,
+      schedule,
+    );
+    if (!validation.ok) {
+      return validation;
+    }
+
+    set((state) => ({
+      cards: state.cards.map((card) =>
+        card.id === cardId ? { ...card, schedule } : card,
+      ),
+    }));
+
+    return { ok: true };
   },
 
   moveCardUp: (cardId) => {

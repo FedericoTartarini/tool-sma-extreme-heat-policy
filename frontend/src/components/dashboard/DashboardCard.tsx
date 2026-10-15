@@ -1,5 +1,5 @@
 import { Box, Group, Paper, Stack, Text } from "@mantine/core";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -9,11 +9,14 @@ import {
   DashboardMetricColumnLabel,
 } from "@/components/dashboard/DashboardCardMetrics";
 import { DashboardCardActions } from "@/components/dashboard/DashboardCardActions";
+import { DashboardEditScheduleModal } from "@/components/dashboard/DashboardEditScheduleModal";
 import { DashboardCardSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import { RiskStackedBar } from "@/components/dashboard/RiskStackedBar";
 import {
   buildDashboardHomePath,
+  type DashboardCardSchedule,
   type SavedDashboardCard,
+  type UpdateDashboardCardScheduleResult,
 } from "@/domain/dashboard";
 import { type DashboardCardState } from "@/domain/dashboardCardState";
 import type { DashboardOtherPeriodCardState } from "@/domain/dashboardOtherPeriodCardState";
@@ -53,6 +56,9 @@ interface DashboardCardProps {
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onUpdateSchedule: (
+    schedule: DashboardCardSchedule,
+  ) => UpdateDashboardCardScheduleResult;
 }
 
 function DashboardCardStatusMessage({
@@ -311,8 +317,10 @@ export function DashboardCard({
   onRemove,
   onMoveUp,
   onMoveDown,
+  onUpdateSchedule,
 }: DashboardCardProps) {
   const { t, i18n } = useTranslation();
+  const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
   const sportLabel = useMemo(() => {
     const sportMeta = sports.find((meta) => meta.type === card.sport);
 
@@ -378,39 +386,51 @@ export function DashboardCard({
     onRemove,
     onMoveUp,
     onMoveDown,
+    canEditSchedule: viewMode === "my_schedule" && card.schedule !== undefined,
+    onEditSchedule: () => setIsEditScheduleOpen(true),
   };
 
   return (
-    <Box pos="relative">
-      <Paper
-        withBorder
-        pos="relative"
-        radius="md"
-        p={CONTENT_PADDING.base}
-        style={{
-          minHeight: 168,
-          cursor: "pointer",
-        }}
-      >
-        <Stack gap="sm">
-          <DashboardCardHeader
-            homePath={homePath}
-            title={cardTitle}
-            scheduleLabel={scheduleLabel}
-            openHomeAriaLabel={openHomeAriaLabel}
-            lineClamp={2}
-            actions={<DashboardCardActions {...cardActionsProps} />}
-          />
-          <DashboardCardMetricsContent
-            cardState={cardState}
-            scheduledCardState={scheduledCardState}
-            otherPeriodCardState={otherPeriodCardState}
-            viewMode={viewMode}
-            intlLocale={intlLocale}
-          />
-        </Stack>
-        <DashboardCardHomeOverlay homePath={homePath} />
-      </Paper>
-    </Box>
+    <>
+      <Box pos="relative">
+        <Paper
+          withBorder
+          pos="relative"
+          radius="md"
+          p={CONTENT_PADDING.base}
+          style={{
+            minHeight: 168,
+            cursor: "pointer",
+          }}
+        >
+          <Stack gap="sm">
+            <DashboardCardHeader
+              homePath={homePath}
+              title={cardTitle}
+              scheduleLabel={scheduleLabel}
+              openHomeAriaLabel={openHomeAriaLabel}
+              lineClamp={2}
+              actions={<DashboardCardActions {...cardActionsProps} />}
+            />
+            <DashboardCardMetricsContent
+              cardState={cardState}
+              scheduledCardState={scheduledCardState}
+              otherPeriodCardState={otherPeriodCardState}
+              viewMode={viewMode}
+              intlLocale={intlLocale}
+            />
+          </Stack>
+          <DashboardCardHomeOverlay homePath={homePath} />
+        </Paper>
+      </Box>
+      {isEditScheduleOpen && card.schedule ? (
+        <DashboardEditScheduleModal
+          schedule={card.schedule}
+          cardTitle={cardTitle}
+          onClose={() => setIsEditScheduleOpen(false)}
+          onSave={onUpdateSchedule}
+        />
+      ) : null}
+    </>
   );
 }

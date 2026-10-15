@@ -47,6 +47,15 @@ export type AddDashboardCardResult =
   | { ok: true }
   | { ok: false; reason: AddDashboardCardFailureReason };
 
+export type UpdateDashboardCardScheduleFailureReason =
+  | "not_found"
+  | "duplicate"
+  | "invalid_schedule";
+
+export type UpdateDashboardCardScheduleResult =
+  | { ok: true }
+  | { ok: false; reason: UpdateDashboardCardScheduleFailureReason };
+
 export function toCoordinateKey(latitude: number, longitude: number): string {
   return `${latitude.toFixed(COORDINATE_KEY_DECIMALS)}|${longitude.toFixed(COORDINATE_KEY_DECIMALS)}`;
 }
@@ -207,6 +216,43 @@ export function validateAddSavedDashboardCard(
       mapboxId: suggestion.mapboxId,
       schedule,
     })
+  ) {
+    return { ok: false, reason: "duplicate" };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Validates a schedule update without treating the edited card as a duplicate
+ * of itself.
+ */
+export function validateUpdateSavedDashboardCardSchedule(
+  cards: readonly SavedDashboardCard[],
+  cardId: string,
+  schedule: DashboardCardSchedule,
+): UpdateDashboardCardScheduleResult {
+  const card = cards.find((candidate) => candidate.id === cardId);
+
+  if (!card) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  if (validateDashboardCardSchedule(schedule)) {
+    return { ok: false, reason: "invalid_schedule" };
+  }
+
+  if (
+    isDuplicateSavedDashboardCard(
+      cards.filter((candidate) => candidate.id !== cardId),
+      {
+        sport: card.sport,
+        latitude: card.latitude,
+        longitude: card.longitude,
+        mapboxId: card.mapboxId,
+        schedule,
+      },
+    )
   ) {
     return { ok: false, reason: "duplicate" };
   }

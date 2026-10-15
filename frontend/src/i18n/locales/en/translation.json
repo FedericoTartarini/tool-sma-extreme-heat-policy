@@ -332,7 +332,7 @@
       "openFormButton": "Add card",
       "modalTitle": "Add a dashboard card",
       "addButton": "Add to dashboard",
-      "weekdaysLabel": "Every",
+      "weekdaysLabel": "Days",
       "timeLabel": "Time",
       "startTime": "Start time",
       "endTime": "End time",
@@ -351,6 +351,14 @@
         "message": "This card will be removed from your dashboard. You can add it again later.",
         "confirm": "Remove card",
         "cancel": "Cancel"
+      },
+      "editSchedule": {
+        "action": "Edit schedule",
+        "title": "Editing schedule for {{title}}",
+        "save": "Save changes",
+        "cancel": "Cancel",
+        "duplicate": "Another card already uses this location, sport, and schedule.",
+        "failed": "This card could not be updated. Please try again."
       },
       "moreActions": "Card actions",
       "moveLeft": "Move left",
