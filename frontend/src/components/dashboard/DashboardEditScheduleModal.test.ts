@@ -53,7 +53,9 @@ describe("DashboardEditScheduleModal", () => {
       { withRouter: false },
     );
 
-    expect(document.body.textContent).toContain("Editing Soccer · Sydney");
+    expect(document.body.textContent).toContain(
+      "Editing schedule for Soccer · Sydney",
+    );
     expect(weekdayCheckbox("Tue").checked).toBe(true);
     expect(weekdayCheckbox("Thu").checked).toBe(true);
     expect(

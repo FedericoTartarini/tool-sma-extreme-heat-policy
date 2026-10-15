@@ -354,8 +354,7 @@
       },
       "editSchedule": {
         "action": "Edit schedule",
-        "title": "Edit My schedule card",
-        "cardLabel": "Editing {{title}}",
+        "title": "Editing schedule for {{title}}",
         "save": "Save changes",
         "cancel": "Cancel",
         "duplicate": "Another card already uses this location, sport, and schedule.",

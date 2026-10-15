@@ -354,8 +354,7 @@
       },
       "editSchedule": {
         "action": "编辑日程",
-        "title": "编辑“我的日程”卡片",
-        "cardLabel": "正在编辑 {{title}}",
+        "title": "正在编辑 {{title}} 的日程",
         "save": "保存更改",
         "cancel": "取消",
         "duplicate": "另一张卡片已使用相同的位置、运动和日程。",

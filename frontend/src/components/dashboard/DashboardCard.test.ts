@@ -242,8 +242,9 @@ describe("dashboard card schedule", () => {
     expect(editButton).not.toBeNull();
 
     act(() => editButton.click());
-    expect(document.body.textContent).toContain("Edit My schedule card");
-    expect(document.body.textContent).toContain("Editing Soccer · Sydney");
+    expect(document.body.textContent).toContain(
+      "Editing schedule for Soccer · Sydney",
+    );
   });
 
   it("marks an end time of midnight as the next day", () => {

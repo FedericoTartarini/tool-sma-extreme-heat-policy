@@ -73,15 +73,11 @@ export function DashboardEditScheduleModal({
     <Modal
       opened
       onClose={onClose}
-      title={t("dashboard.cards.editSchedule.title")}
+      title={t("dashboard.cards.editSchedule.title", { title: cardTitle })}
       centered
       size="lg"
     >
       <Stack gap={CONTENT_GAP}>
-        <Text fw={600}>
-          {t("dashboard.cards.editSchedule.cardLabel", { title: cardTitle })}
-        </Text>
-
         <DashboardScheduleFields
           weekdays={weekdays}
           startMinutes={startMinutes}
