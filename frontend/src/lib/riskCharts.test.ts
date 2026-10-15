@@ -329,4 +329,22 @@ describe("buildForecastOption", () => {
     expect(formatTickLabel(1320)).toBe("10 pm");
     expect(formatTickLabel(1380)).toBe("");
   });
+
+  it("formats axis times in the selected language", () => {
+    const option = buildForecastOption(
+      [
+        { time: "18:00", value: 0 },
+        { time: "19:00", value: 0.2 },
+      ],
+      { ...forecastLabels, locale: "zh-CN" },
+    );
+    const xAxis = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+    const formatter =
+      xAxis && typeof xAxis === "object" && "axisLabel" in xAxis
+        ? xAxis.axisLabel?.formatter
+        : undefined;
+
+    expect(typeof formatter).toBe("function");
+    expect((formatter as (value: number) => string)(1080)).toBe("18时");
+  });
 });

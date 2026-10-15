@@ -58,9 +58,9 @@ function renderSection(score: number, riskLevel: RiskLevel): string {
 
 describe("CurrentRiskSection", () => {
   it("names the gauge with its score, the range and the risk level", () => {
-    // The score is painted onto a canvas and its on-screen copy is aria-hidden,
-    // so the label is the only route to the reading. It has to give the range
-    // too, because the dial starts at the bottom of Low rather than at zero.
+    // The score shown over the dial is aria-hidden, so the label is the only
+    // route to the reading. It has to give the range too, because the dial
+    // starts at the bottom of Low rather than at zero.
     const markup = renderSection(1, "low");
 
     expect(markup).toContain(

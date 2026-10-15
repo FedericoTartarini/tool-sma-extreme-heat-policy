@@ -77,7 +77,7 @@ interface ForecastLabels {
   locale: string;
 }
 
-/** A forecast point placed on the chart. Nothing here is shown as text. */
+/** A forecast point placed on the chart; the tooltip shows its time and score. */
 interface ForecastChartPoint {
   value: number;
   displayValue: number;

@@ -68,10 +68,9 @@ function useMeasuredWidth() {
 /**
  * Renders the current-risk gauge using ECharts, tuned to resemble the legacy half-circle design.
  *
- * The score is painted onto a canvas and its on-screen copy is aria-hidden, so
- * the label built here is the only route to that reading. It names the range as
- * well as the score, because the dial starts at the bottom of Low rather than
- * at zero.
+ * The score shown over the dial is aria-hidden, so the label built here is the
+ * only route to that reading. It names the range as well as the score, because
+ * the dial starts at the bottom of Low rather than at zero.
  */
 export function RiskGauge({ score }: RiskGaugeProps) {
   const { t } = useTranslation();
