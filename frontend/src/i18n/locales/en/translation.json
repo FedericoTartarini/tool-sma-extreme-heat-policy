@@ -322,6 +322,8 @@
     },
     "header": {
       "title": "My dashboard",
+      "showSummary": "Show dashboard info",
+      "hideSummary": "Hide dashboard info",
       "description": {
         "intro": "Use this dashboard to view sport heat risk for saved scheduled events by adding cards through the \"Add card\" button.",
         "modes": "You can switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows the risk for the next occurrence of a day time range chosen. For guidance at each risk level, see the <recommendationsLink>detailed recommendations</recommendationsLink> page.",
