@@ -8,6 +8,7 @@ import { sydneyCard } from "@/test/weeklyWindowFixtures";
 
 const EMPTY_STATE_TEXT =
   "No saved cards on your dashboard yet. Start monitoring heat risk by adding a card.";
+const VIEW_MODE_SELECTOR = '[aria-label="Dashboard mode"]';
 
 let harness: Awaited<ReturnType<typeof createDashboardComponentHost>>;
 
@@ -42,5 +43,18 @@ describe("DashboardOverviewSection", () => {
     harness.render(createElement(DashboardOverviewSection));
 
     expect(document.body.textContent).not.toContain(EMPTY_STATE_TEXT);
+  });
+
+  it("shows the dashboard mode selector once a card is saved", () => {
+    useDashboardStore.setState({ cards: [sydneyCard] });
+    harness.render(createElement(DashboardOverviewSection));
+
+    expect(document.querySelector(VIEW_MODE_SELECTOR)).not.toBeNull();
+  });
+
+  it("hides the dashboard mode selector when no cards are saved", () => {
+    harness.render(createElement(DashboardOverviewSection));
+
+    expect(document.querySelector(VIEW_MODE_SELECTOR)).toBeNull();
   });
 });

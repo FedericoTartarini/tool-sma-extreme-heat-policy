@@ -12,9 +12,7 @@ import { WeeklyWindowPreview } from "@/components/dashboard/WeeklyWindowPreview"
 import { DashboardCardList } from "@/components/dashboard/DashboardCardList";
 import { DashboardMainPanel } from "@/components/dashboard/DashboardMainPanel";
 import { DashboardOverviewSection } from "@/components/dashboard/DashboardOverviewSection";
-import { DashboardViewModeSelector } from "@/components/dashboard/DashboardViewModeSelector";
 import { BottomToast } from "@/components/ui/BottomToast";
-import { SectionCard } from "@/components/ui/SectionCard";
 import { SECTION_STACK_GAP } from "@/config/uiLayout";
 import { MAX_DASHBOARD_CARDS } from "@/domain/dashboard";
 import type { DashboardLocationAddErrorReason } from "@/hooks/useDashboardLocationAdd";
@@ -45,7 +43,6 @@ export function DashboardPage() {
   useDashboardBootstrap();
   const cards = useDashboardStore((state) => state.cards);
   const viewMode = useDashboardStore((state) => state.viewMode);
-  const setViewMode = useDashboardStore((state) => state.setViewMode);
   const heatRisk = useDashboardHeatRisk();
   const scheduleNow = useDashboardScheduleClock();
   const [toastEvent, setToastEvent] = useState<DashboardToastEvent | null>(
@@ -116,22 +113,14 @@ export function DashboardPage() {
       <Stack gap={SECTION_STACK_GAP}>
         <DashboardOverviewSection />
         {cards.length > 0 ? (
-          <Stack gap={SECTION_STACK_GAP}>
-            <SectionCard title={t("dashboard.viewMode.label")}>
-              <DashboardViewModeSelector
-                value={viewMode}
-                onChange={setViewMode}
-              />
-            </SectionCard>
-            <DashboardCardList
-              cards={cards}
-              viewMode={viewMode}
-              getCardState={heatRisk.getCardState}
-              getScheduledCardState={heatRisk.getScheduledCardState}
-              getOtherPeriodCardState={heatRisk.getOtherPeriodCardState}
-              scheduleNow={scheduleNow}
-            />
-          </Stack>
+          <DashboardCardList
+            cards={cards}
+            viewMode={viewMode}
+            getCardState={heatRisk.getCardState}
+            getScheduledCardState={heatRisk.getScheduledCardState}
+            getOtherPeriodCardState={heatRisk.getOtherPeriodCardState}
+            scheduleNow={scheduleNow}
+          />
         ) : null}
         <DashboardMainPanel onAddError={handleAddError} />
         {import.meta.env.DEV && searchParams.get("weeklyPreview") === "1" ? (

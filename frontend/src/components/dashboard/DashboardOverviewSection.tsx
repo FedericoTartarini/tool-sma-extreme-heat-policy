@@ -1,6 +1,7 @@
 import { Anchor, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { DashboardViewModeSelector } from "@/components/dashboard/DashboardViewModeSelector";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT } from "@/config/uiTypography";
 import { MAX_DASHBOARD_CARDS } from "@/domain/dashboard";
@@ -13,11 +14,14 @@ const descriptionTextProps = {
 };
 
 /**
- * Renders the dashboard heading, summary, and empty-state message.
+ * Renders the dashboard heading and summary, followed by the empty-state
+ * message or, once cards exist, the dashboard mode selector.
  */
 export function DashboardOverviewSection() {
   const { t } = useTranslation();
   const hasCards = useDashboardStore((state) => state.cards.length > 0);
+  const viewMode = useDashboardStore((state) => state.viewMode);
+  const setViewMode = useDashboardStore((state) => state.setViewMode);
 
   return (
     <SectionCard
@@ -49,7 +53,12 @@ export function DashboardOverviewSection() {
         </Stack>
       }
     >
-      {hasCards ? null : (
+      {hasCards ? (
+        <Stack gap="xs">
+          <Text fw={600}>{t("dashboard.viewMode.label")}</Text>
+          <DashboardViewModeSelector value={viewMode} onChange={setViewMode} />
+        </Stack>
+      ) : (
         <Text fw={600}>{t("dashboard.emptyState.title")}</Text>
       )}
     </SectionCard>
