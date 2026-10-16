@@ -11,6 +11,7 @@ import { useSearchParams } from "react-router-dom";
 import { WeeklyWindowPreview } from "@/components/dashboard/WeeklyWindowPreview";
 import { DashboardCardList } from "@/components/dashboard/DashboardCardList";
 import { DashboardMainPanel } from "@/components/dashboard/DashboardMainPanel";
+import { DashboardOverviewSection } from "@/components/dashboard/DashboardOverviewSection";
 import { DashboardViewModeSelector } from "@/components/dashboard/DashboardViewModeSelector";
 import { BottomToast } from "@/components/ui/BottomToast";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -113,7 +114,7 @@ export function DashboardPage() {
   return (
     <>
       <Stack gap={SECTION_STACK_GAP}>
-        <DashboardMainPanel onAddError={handleAddError} />
+        <DashboardOverviewSection />
         {cards.length > 0 ? (
           <Stack gap={SECTION_STACK_GAP}>
             <SectionCard title={t("dashboard.viewMode.label")}>
@@ -132,6 +133,7 @@ export function DashboardPage() {
             />
           </Stack>
         ) : null}
+        <DashboardMainPanel onAddError={handleAddError} />
         {import.meta.env.DEV && searchParams.get("weeklyPreview") === "1" ? (
           <WeeklyWindowPreview
             cards={cards}
