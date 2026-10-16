@@ -1,7 +1,6 @@
 import {
   Box,
   Combobox,
-  Image,
   InputBase,
   Loader,
   Group,
@@ -16,20 +15,15 @@ import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
+import { SportImagePreview } from "@/components/home/SportImagePreview";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
-import {
-  isSportType,
-  sports,
-  toSportAssetName,
-  type SportType,
-} from "@/domain/sport";
+import { isSportType, sports, type SportType } from "@/domain/sport";
 import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
@@ -39,7 +33,6 @@ interface SelectOption<T extends string = string> {
 }
 
 const FIELD_LABEL_WIDTH = 72;
-const SPORT_IMAGE_HEIGHT = 104;
 const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
 const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
@@ -67,7 +60,9 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const savedLocations = useSavedLocationsStore(
     (state) => state.savedLocations,
   );
-  const [hasSportImageError, setHasSportImageError] = useState(false);
+  const [failedSportImageUrl, setFailedSportImageUrl] = useState<string | null>(
+    null,
+  );
 
   /*
   const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
@@ -89,7 +84,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   );
 
   const selectedSportMeta = useMemo(
-    () => sports.find((sportMeta) => sportMeta.type === sport),
+    () => sports.find((sportMeta) => sportMeta.type === sport)!,
     [sport],
   );
 
@@ -99,9 +94,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
       t("home.sections.filters.selectedSportFallback"),
     [sport, sportOptions, t],
   );
-  const sportImageSrc =
-    selectedSportMeta?.imagePath ??
-    toPublicAssetUrl(`sports/${toSportAssetName(sport)}.webp`);
+  const sportImage = selectedSportMeta.image;
 
   const {
     locationSearchInput,
@@ -184,7 +177,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   };
 
   const handleSportChange = (value: string | null) => {
-    setHasSportImageError(false);
+    setFailedSportImageUrl(null);
 
     if (value === null) {
       return;
@@ -293,38 +286,12 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           </Box>
         </Group>
 
-        <Box h={SPORT_IMAGE_HEIGHT}>
-          {!hasSportImageError ? (
-            <Image
-              src={sportImageSrc}
-              alt={t("home.sections.filters.sportImageAlt", {
-                sportLabel: selectedSportLabel,
-              })}
-              w="100%"
-              h={SPORT_IMAGE_HEIGHT}
-              radius="sm"
-              onError={() => setHasSportImageError(true)}
-            />
-          ) : (
-            <Stack
-              align="center"
-              justify="center"
-              gap={CONTENT_GAP}
-              h="100%"
-              px={CONTENT_GAP}
-            >
-              <Text fw={500} fz="sm">
-                {t("home.sections.filters.sportImageUnavailable")}
-              </Text>
-              <Text c="dimmed" fz="xs" ta="center">
-                {t("home.sections.filters.sportImageHelp", {
-                  sportLabel: selectedSportLabel,
-                  path: sportImageSrc,
-                })}
-              </Text>
-            </Stack>
-          )}
-        </Box>
+        <SportImagePreview
+          image={sportImage}
+          sportLabel={selectedSportLabel}
+          failedImageUrl={failedSportImageUrl}
+          onImageLoadFailure={setFailedSportImageUrl}
+        />
       </Stack>
       <SaveLocationModal
         opened={isSaveSavedLocationModalOpen}

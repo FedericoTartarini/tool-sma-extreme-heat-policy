@@ -86,7 +86,7 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={appTheme} defaultColorScheme="light">
+      <MantineProvider theme={appTheme} forceColorScheme="light">
         <I18nextProvider i18n={i18n}>
           <AppContent />
         </I18nextProvider>
