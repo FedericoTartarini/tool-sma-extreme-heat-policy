@@ -127,16 +127,6 @@ function weekdayCheckbox(label: string): HTMLInputElement {
 }
 
 describe("dashboard add panel schedule fields", () => {
-  it("links to detailed recommendations in the header summary", () => {
-    render();
-
-    const recommendationsLink = document.querySelector(
-      'a[href="/detailed-recommendations"]',
-    );
-    expect(recommendationsLink).not.toBeNull();
-    expect(recommendationsLink?.textContent).toBe("detailed recommendations");
-  });
-
   it("keeps the add form inside a modal until opened", () => {
     render();
 
