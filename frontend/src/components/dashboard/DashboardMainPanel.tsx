@@ -1,31 +1,16 @@
-import {
-  Box,
-  Button,
-  Combobox,
-  Group,
-  InputBase,
-  Loader,
-  Modal,
-  Select,
-  Stack,
-  Text,
-  useCombobox,
-} from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DashboardScheduleFields } from "@/components/dashboard/DashboardScheduleFields";
+import {
+  FILTER_FIELD_LABEL_WIDTH,
+  LocationSuggestField,
+} from "@/components/filters/LocationSuggestField";
+import { SportSelectField } from "@/components/filters/SportSelectField";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { MAX_DASHBOARD_CARDS } from "@/domain/dashboard";
-import { isSportType, sports, type SportType } from "@/domain/sport";
 import { useDashboardLocationAdd } from "@/hooks/useDashboardLocationAdd";
 import { useDashboardStore } from "@/store/dashboardStore";
-
-interface SelectOption<T extends string = string> {
-  value: T;
-  label: string;
-}
-
-const FIELD_LABEL_WIDTH = 72;
 
 interface DashboardMainPanelProps {
   onAddError?: (
@@ -40,7 +25,6 @@ interface DashboardMainPanelProps {
  */
 export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
   const { t } = useTranslation();
-  const locationCombobox = useCombobox();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const draftSport = useDashboardStore((state) => state.draftSport);
   const setDraftSport = useDashboardStore((state) => state.setDraftSport);
@@ -65,45 +49,11 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
   } = useDashboardLocationAdd();
   const isAddFormDisabled = !canAddMoreCards || isResolvingLocation;
 
-  const sportOptions = useMemo<SelectOption<SportType>[]>(
-    () =>
-      sports.map((sportMeta) => ({
-        value: sportMeta.type,
-        label: t(sportMeta.labelKey),
-      })),
-    [t],
-  );
-
-  const shouldRenderLocationDropdown =
-    !isShowingCommittedDraftLocation && locationSuggestions.length > 0;
-  const locationRightSection =
-    isSuggestLoading || isResolvingLocation ? (
-      <Loader size={16} />
-    ) : (
-      <Combobox.Chevron size="md" />
-    );
-  const locationOptions = locationSuggestions.map((suggestion) => (
-    <Combobox.Option value={suggestion.id} key={suggestion.id}>
-      {suggestion.displayLabel}
-    </Combobox.Option>
-  ));
-
   useEffect(() => {
     if (addErrorReason) {
       onAddError?.(addErrorReason);
     }
   }, [addErrorReason, onAddError]);
-
-  const closeLocationDropdown = () => {
-    locationCombobox.closeDropdown();
-    locationCombobox.resetSelectedOption();
-  };
-
-  const handleSportChange = (value: string | null) => {
-    if (value !== null && isSportType(value)) {
-      setDraftSport(value);
-    }
-  };
 
   const handleAddCardClick = () => {
     const cardCountBeforeAdd = useDashboardStore.getState().cards.length;
@@ -143,71 +93,22 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
         size="lg"
       >
         <Stack gap={CONTENT_GAP}>
-          <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-            <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-              {t("home.sections.filters.locationLabel")}:
-            </Text>
-            <Box flex={1}>
-              <Combobox
-                store={locationCombobox}
-                onOptionSubmit={(value) => {
-                  onLocationOptionSubmit(value);
-                  closeLocationDropdown();
-                }}
-                size="md"
-              >
-                <Combobox.Target targetType="input">
-                  <InputBase
-                    __staticSelector="Select"
-                    aria-label={t("home.sections.filters.locationLabel")}
-                    size="md"
-                    placeholder={t("home.sections.filters.locationPlaceholder")}
-                    value={locationSearchInput}
-                    onChange={(event) => {
-                      onLocationSearchInputChange(event.currentTarget.value);
-                      if (!isShowingCommittedDraftLocation) {
-                        locationCombobox.openDropdown();
-                      }
-                    }}
-                    onFocus={() => {
-                      if (shouldRenderLocationDropdown) {
-                        locationCombobox.openDropdown();
-                      }
-                    }}
-                    onBlur={closeLocationDropdown}
-                    rightSection={locationRightSection}
-                    rightSectionPointerEvents="none"
-                    autoComplete="off"
-                    disabled={isAddFormDisabled}
-                  />
-                </Combobox.Target>
+          <LocationSuggestField
+            value={locationSearchInput}
+            suggestions={locationSuggestions}
+            isLoading={isSuggestLoading || isResolvingLocation}
+            disabled={isAddFormDisabled}
+            isCommitted={isShowingCommittedDraftLocation}
+            openDropdownWhenTyping={!isShowingCommittedDraftLocation}
+            onChange={onLocationSearchInputChange}
+            onOptionSubmit={onLocationOptionSubmit}
+          />
 
-                {shouldRenderLocationDropdown ? (
-                  <Combobox.Dropdown>
-                    <Combobox.Options>{locationOptions}</Combobox.Options>
-                  </Combobox.Dropdown>
-                ) : null}
-              </Combobox>
-            </Box>
-          </Group>
-
-          <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-            <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-              {t("home.sections.filters.sportLabel")}:
-            </Text>
-            <Box flex={1}>
-              <Select
-                aria-label={t("home.sections.filters.sportLabel")}
-                size="md"
-                data={sportOptions}
-                value={draftSport}
-                onChange={handleSportChange}
-                searchable
-                nothingFoundMessage={t("home.sections.filters.sportNotFound")}
-                disabled={isAddFormDisabled}
-              />
-            </Box>
-          </Group>
+          <SportSelectField
+            value={draftSport}
+            onChange={setDraftSport}
+            disabled={isAddFormDisabled}
+          />
 
           <DashboardScheduleFields
             weekdays={draftWeekdays}
@@ -216,19 +117,19 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
             onWeekdaysChange={onDraftWeekdaysChange}
             onStartMinutesChange={onDraftStartMinutesChange}
             onEndMinutesChange={onDraftEndMinutesChange}
-            labelWidth={FIELD_LABEL_WIDTH}
+            labelWidth={FILTER_FIELD_LABEL_WIDTH}
             disabled={isAddFormDisabled}
           />
 
           <Group wrap="nowrap" align="flex-start" gap={CONTENT_GAP}>
-            <Box w={FIELD_LABEL_WIDTH} visibleFrom="xs" />
+            <Box w={FILTER_FIELD_LABEL_WIDTH} visibleFrom="xs" />
             <Text c="dimmed" fz="sm" flex={1}>
               {t("dashboard.addLocation.scheduleRequired")}
             </Text>
           </Group>
 
           <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-            <Box w={FIELD_LABEL_WIDTH} visibleFrom="xs" />
+            <Box w={FILTER_FIELD_LABEL_WIDTH} visibleFrom="xs" />
             <Button
               flex={1}
               size="md"
