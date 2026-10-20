@@ -22,7 +22,11 @@ export function useHomeUrlSync({
     (state) => state.selectedLocation?.displayLabel ?? null,
   );
   const setQueryStatesRef = useRef(setQueryStates);
-  setQueryStatesRef.current = setQueryStates;
+
+  useEffect(() => {
+    setQueryStatesRef.current = setQueryStates;
+  }, [setQueryStates]);
+
   const lastAppliedRef = useRef<{
     profile: HeatRiskProfile;
     sport: string;
