@@ -326,7 +326,7 @@
       "hideSummary": "Hide dashboard info",
       "description": {
         "intro": "Use this dashboard to view sport heat risk for saved scheduled events by adding cards through the \"Add card\" button.",
-        "modes": "You can switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows the risk for the next occurrence of a day time range chosen. For guidance at each risk level, see the <recommendationsLink>detailed recommendations</recommendationsLink> page.",
+        "modes": "You can switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows the risk for the next occurrence of the chosen day and time range. For guidance at each risk level, see the <recommendationsLink>detailed recommendations</recommendationsLink> page.",
         "note": "Note: you can add up to {{maxCards}} cards."
       }
     },
@@ -398,7 +398,7 @@
       "unavailable": "Location search is temporarily unavailable. Please try again.",
       "no_results": "No locations matched your search.",
       "duplicate": "This location, sport, and schedule are already saved.",
-      "max_reached": "You can save up to {{maxCards}} locations.",
+      "max_reached": "You can save up to {{maxCards}} cards.",
       "missing_coordinates": "The selected location could not be resolved.",
       "missing_draft_location": "Select a location before adding to your dashboard.",
       "invalid_schedule": "Choose at least one day and a valid same-day time range."

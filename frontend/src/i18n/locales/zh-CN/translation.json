@@ -398,7 +398,7 @@
       "unavailable": "地点搜索暂时不可用，请重试。",
       "no_results": "没有匹配的地点。",
       "duplicate": "此地点、运动项目和日程组合已保存。",
-      "max_reached": "最多可保存 {{maxCards}} 个地点。",
+      "max_reached": "最多可保存 {{maxCards}} 张卡片。",
       "missing_coordinates": "无法解析所选地点。",
       "missing_draft_location": "请先选择地点，再添加到仪表盘。",
       "invalid_schedule": "请选择至少一个星期日期和有效的当天时间段。"
