@@ -1,7 +1,7 @@
 /**
  * Stable identifiers for the five Active Cooling methods in policy order.
- * This order mirrors `recommendations.detailed.high.suggestions` and is
- * independent from the product's eventual list of selectable options.
+ * This order mirrors `recommendations.detailed.high.suggestions` and is also
+ * the approved display order for the selectable options.
  */
 export const ACTIVE_COOLING_METHOD_IDS = [
   "cold-fluids-or-slushies",
@@ -12,6 +12,23 @@ export const ACTIVE_COOLING_METHOD_IDS = [
 ] as const;
 
 export type ActiveCoolingMethodId = (typeof ACTIVE_COOLING_METHOD_IDS)[number];
+
+/**
+ * The approved options are the five policy methods themselves. Keeping the
+ * option ids identical to the method ids avoids a second, drifting identity.
+ */
+export const ACTIVE_COOLING_OPTION_IDS = ACTIVE_COOLING_METHOD_IDS;
+
+export type CoolingOptionId = ActiveCoolingMethodId;
+
+const ACTIVE_COOLING_OPTION_ID_SET: ReadonlySet<string> = new Set(
+  ACTIVE_COOLING_OPTION_IDS,
+);
+
+/** Validates persisted or otherwise untrusted values at runtime. */
+export function isCoolingOptionId(value: unknown): value is CoolingOptionId {
+  return typeof value === "string" && ACTIVE_COOLING_OPTION_ID_SET.has(value);
+}
 
 /**
  * Browser-owned Active Cooling preference shared by the domain and Home UI.
@@ -31,10 +48,24 @@ export type CoolingSelection<OptionId extends string = string> =
 
 /**
  * Maps selectable option identifiers to the policy methods they enable.
- * The concrete mapping will be supplied after the product decision is final.
+ * The generic shape remains useful for resolver tests and future adapters.
  */
 export type ActiveCoolingOptionMap<OptionId extends string = string> = Readonly<
   Partial<Record<OptionId, readonly ActiveCoolingMethodId[]>>
+>;
+
+/**
+ * Production mapping approved for the first release. Each selectable policy
+ * method enables only its matching recommendation method.
+ */
+export const ACTIVE_COOLING_OPTION_TO_METHOD_IDS = {
+  "cold-fluids-or-slushies": ["cold-fluids-or-slushies"],
+  "arm-or-foot-immersion": ["arm-or-foot-immersion"],
+  "water-dousing": ["water-dousing"],
+  "ice-packs-or-towels": ["ice-packs-or-towels"],
+  fans: ["fans"],
+} as const satisfies Readonly<
+  Record<CoolingOptionId, readonly ActiveCoolingMethodId[]>
 >;
 
 /**
@@ -51,9 +82,8 @@ export interface ActiveCoolingResolution<
 }
 
 /**
- * Generic boundary used to resolve Home advice independently from the final
- * product option list. A concrete domain adapter can bind the approved map
- * before the Home UI consumes it.
+ * Generic boundary used to resolve Home advice from an option-to-method map.
+ * The Home integration can bind the approved production mapping above.
  */
 export type ActiveCoolingAdviceResolver<OptionId extends string = string> = (
   selection: CoolingSelection<OptionId>,

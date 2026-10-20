@@ -1,13 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
   ACTIVE_COOLING_METHOD_IDS,
+  ACTIVE_COOLING_OPTION_IDS,
+  ACTIVE_COOLING_OPTION_TO_METHOD_IDS,
   type ActiveCoolingMethodId,
   type ActiveCoolingOptionMap,
+  type CoolingOptionId,
   type CoolingSelection,
+  isCoolingOptionId,
   resolveActiveCoolingAdvice,
 } from "@/domain/activeCooling";
 
 const EXPECTED_METHOD_IDS: readonly ActiveCoolingMethodId[] = [
+  "cold-fluids-or-slushies",
+  "arm-or-foot-immersion",
+  "water-dousing",
+  "ice-packs-or-towels",
+  "fans",
+];
+
+const EXPECTED_OPTION_IDS: readonly CoolingOptionId[] = [
   "cold-fluids-or-slushies",
   "arm-or-foot-immersion",
   "water-dousing",
@@ -32,6 +44,54 @@ describe("ACTIVE_COOLING_METHOD_IDS", () => {
     expect(new Set(ACTIVE_COOLING_METHOD_IDS).size).toBe(
       ACTIVE_COOLING_METHOD_IDS.length,
     );
+  });
+});
+
+describe("approved Active Cooling options", () => {
+  it("uses the five policy methods as options in policy order", () => {
+    expect(ACTIVE_COOLING_OPTION_IDS).toEqual(EXPECTED_OPTION_IDS);
+    expect(new Set(ACTIVE_COOLING_OPTION_IDS).size).toBe(
+      ACTIVE_COOLING_OPTION_IDS.length,
+    );
+  });
+
+  it.each(EXPECTED_OPTION_IDS)(
+    "maps %s one-to-one to its policy method",
+    (optionId) => {
+      expect(ACTIVE_COOLING_OPTION_TO_METHOD_IDS[optionId]).toEqual([optionId]);
+    },
+  );
+
+  it("includes Fans and does not introduce Shade", () => {
+    expect(ACTIVE_COOLING_OPTION_IDS).toContain("fans");
+    expect(ACTIVE_COOLING_OPTION_IDS).not.toContain("shade");
+    expect(ACTIVE_COOLING_OPTION_TO_METHOD_IDS).not.toHaveProperty("shade");
+  });
+
+  it.each(EXPECTED_OPTION_IDS)("recognises %s as a valid option id", (id) => {
+    expect(isCoolingOptionId(id)).toBe(true);
+  });
+
+  it.each(["shade", "water", "", null, undefined, 42, {}])(
+    "rejects invalid option id %j",
+    (value) => {
+      expect(isCoolingOptionId(value)).toBe(false);
+    },
+  );
+
+  it("resolves approved selections in policy order", () => {
+    expect(
+      resolveActiveCoolingAdvice(
+        {
+          configured: true,
+          selectedOptionIds: ["fans", "arm-or-foot-immersion"],
+        },
+        ACTIVE_COOLING_OPTION_TO_METHOD_IDS,
+      ),
+    ).toEqual({
+      visibleMethodIds: ["arm-or-foot-immersion", "fans"],
+      showPrepareReminder: false,
+    });
   });
 });
 
