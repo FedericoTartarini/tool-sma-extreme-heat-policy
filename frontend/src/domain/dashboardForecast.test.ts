@@ -9,11 +9,11 @@ import {
 
 const BASE_POINT: Omit<ForecastApiPoint, "time_utc" | "time_local"> = {
   inputs: {
-    air_temperature_c: 31,
-    mean_radiant_temperature_c: 37,
-    relative_humidity_pct: 62,
-    wind_speed_10m_ms: 1.5,
-    direct_normal_irradiance_wm2: 700,
+    tdb: 31,
+    tr: 37,
+    rh: 62,
+    v_z1: 1.5,
+    sol_radiation_dir: 700,
   },
   heat_risk: {
     risk_level_interpolated: 1.2,

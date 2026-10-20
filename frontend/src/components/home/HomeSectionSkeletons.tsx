@@ -1,6 +1,6 @@
 import { SimpleGrid, Skeleton, Stack } from "@mantine/core";
 import { CONTENT_GAP } from "@/config/uiLayout";
-import { ACTION_IMAGE_ICON_SIZE } from "@/config/uiScale";
+import { RECOMMENDATION_ACTION_IMAGE_CONFIG } from "@/config/responsiveImages";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 import { getRiskGaugeGeometry, RISK_GAUGE_MAX_WIDTH } from "@/lib/riskGauge";
 
@@ -49,8 +49,8 @@ export function CurrentRiskRecommendationsSkeleton() {
           gap={CONTENT_GAP}
         >
           <Skeleton
-            h={ACTION_IMAGE_ICON_SIZE}
-            w={ACTION_IMAGE_ICON_SIZE}
+            h={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
+            w={RECOMMENDATION_ACTION_IMAGE_CONFIG.renderedSize}
             circle
           />
           <Skeleton h={14} w="70%" maw={120} />

@@ -22,11 +22,11 @@ function point(hour: number, score = 1.2): ForecastApiPoint {
     time_utc: new Date(instant).toISOString(),
     time_local: `${new Date(instant + 10 * 3_600_000).toISOString().slice(0, 19)}+10:00`,
     inputs: {
-      air_temperature_c: 25,
-      mean_radiant_temperature_c: 30,
-      relative_humidity_pct: 50,
-      wind_speed_10m_ms: 2,
-      direct_normal_irradiance_wm2: 200,
+      tdb: 25,
+      tr: 30,
+      rh: 50,
+      v_z1: 2,
+      sol_radiation_dir: 200,
     },
     heat_risk: {
       risk_level_interpolated: score,

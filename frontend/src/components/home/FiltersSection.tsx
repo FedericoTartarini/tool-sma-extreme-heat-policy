@@ -1,19 +1,22 @@
-import { Box, Image, Stack, Text } from "@mantine/core";
+import { Stack } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocationSuggestField } from "@/components/filters/LocationSuggestField";
 import { SportSelectField } from "@/components/filters/SportSelectField";
+import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
+import { SaveLocationModal } from "@/components/home/SaveLocationModal";
+import { SportImagePreview } from "@/components/home/SportImagePreview";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
-import { sports, toSportAssetName } from "@/domain/sport";
+import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
+import { sports } from "@/domain/sport";
 import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 import { useHomeStore } from "@/store/homeStore";
-
-const SPORT_IMAGE_HEIGHT = 104;
+import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
@@ -24,13 +27,22 @@ interface FiltersSectionProps {
  */
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
+  const [
+    isSaveSavedLocationModalOpen,
+    { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
+  ] = useDisclosure(false);
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const setSport = useHomeStore((state) => state.setSport);
-  const [hasSportImageError, setHasSportImageError] = useState(false);
+  const savedLocations = useSavedLocationsStore(
+    (state) => state.savedLocations,
+  );
+  const [failedSportImageUrl, setFailedSportImageUrl] = useState<string | null>(
+    null,
+  );
 
   const selectedSportMeta = useMemo(
-    () => sports.find((sportMeta) => sportMeta.type === sport),
+    () => sports.find((sportMeta) => sportMeta.type === sport)!,
     [sport],
   );
 
@@ -41,9 +53,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
         : t("home.sections.filters.selectedSportFallback"),
     [selectedSportMeta, t],
   );
-  const sportImageSrc =
-    selectedSportMeta?.imagePath ??
-    toPublicAssetUrl(`sports/${toSportAssetName(sport)}.webp`);
+  const sportImage = selectedSportMeta.image;
 
   const {
     locationSearchInput,
@@ -75,6 +85,16 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           openDropdownWhenTyping
           enableSelectOnCommittedClick
           autoOpenWhenSuggestionsReady={shouldOpenLocationDropdown}
+          isSuggestionSaved={(suggestion) =>
+            isSuggestionAlreadySaved(savedLocations, suggestion)
+          }
+          locationFieldActions={
+            <LocationFieldActionIcons
+              canSaveCurrentLocation={selectedLocation !== null}
+              hasSavedLocations={savedLocations.length > 0}
+              onOpenSavedLocations={openSaveSavedLocationModal}
+            />
+          }
           onChange={onLocationSearchInputChange}
           onOptionSubmit={onLocationOptionSubmit}
         />
@@ -82,44 +102,22 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
         <SportSelectField
           value={sport}
           onChange={(nextSport) => {
-            setHasSportImageError(false);
+            setFailedSportImageUrl(null);
             setSport(nextSport);
           }}
         />
 
-        <Box h={SPORT_IMAGE_HEIGHT}>
-          {!hasSportImageError ? (
-            <Image
-              src={sportImageSrc}
-              alt={t("home.sections.filters.sportImageAlt", {
-                sportLabel: selectedSportLabel,
-              })}
-              w="100%"
-              h={SPORT_IMAGE_HEIGHT}
-              radius="sm"
-              onError={() => setHasSportImageError(true)}
-            />
-          ) : (
-            <Stack
-              align="center"
-              justify="center"
-              gap={CONTENT_GAP}
-              h="100%"
-              px={CONTENT_GAP}
-            >
-              <Text fw={500} fz="sm">
-                {t("home.sections.filters.sportImageUnavailable")}
-              </Text>
-              <Text c="dimmed" fz="xs" ta="center">
-                {t("home.sections.filters.sportImageHelp", {
-                  sportLabel: selectedSportLabel,
-                  path: sportImageSrc,
-                })}
-              </Text>
-            </Stack>
-          )}
-        </Box>
+        <SportImagePreview
+          image={sportImage}
+          sportLabel={selectedSportLabel}
+          failedImageUrl={failedSportImageUrl}
+          onImageLoadFailure={setFailedSportImageUrl}
+        />
       </Stack>
+      <SaveLocationModal
+        opened={isSaveSavedLocationModalOpen}
+        onClose={closeSaveSavedLocationModal}
+      />
     </SectionCard>
   );
 }

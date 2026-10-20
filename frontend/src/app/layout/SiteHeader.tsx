@@ -14,8 +14,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { CONTENT_PADDING } from "@/config/uiLayout";
+import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
 
 const NAV_DRAWER_SIZE_MOBILE = "66.67vw";
 const NAV_DRAWER_SIZE_DESKTOP = "md";
@@ -32,6 +32,7 @@ export function SiteHeader() {
   const isMobile = useIsMobileViewport();
   const location = useLocation();
   const { t } = useTranslation();
+  const headerLogo = BRANDING_ASSETS.headerUsyd;
   const navItems = [
     { label: t("nav.home"), to: "/" },
     { label: t("nav.about"), to: "/about" },
@@ -82,24 +83,30 @@ export function SiteHeader() {
             columnGap: "12px",
           }}
         >
-          <Anchor
-            component={Link}
-            to="/"
-            onClick={close}
-            style={{
-              justifySelf: "start",
-              display: "inline-flex",
-              alignItems: "center",
-            }}
-          >
-            <Image
-              src={toPublicAssetUrl("branding/logo-usyd-black.png")}
-              alt={t("nav.logoAlt")}
-              height={35}
-              width="auto"
-              fit="contain"
-            />
-          </Anchor>
+          {headerLogo !== null ? (
+            <Anchor
+              component={Link}
+              to="/"
+              onClick={close}
+              style={{
+                justifySelf: "start",
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              <Image
+                src={headerLogo.src}
+                srcSet={headerLogo.srcSet}
+                sizes={headerLogo.sizes}
+                alt={t("nav.logoAlt")}
+                h={headerLogo.renderedHeight}
+                w="auto"
+                fit="contain"
+              />
+            </Anchor>
+          ) : (
+            <Box aria-hidden style={{ justifySelf: "start" }} />
+          )}
 
           <Text
             fw={700}

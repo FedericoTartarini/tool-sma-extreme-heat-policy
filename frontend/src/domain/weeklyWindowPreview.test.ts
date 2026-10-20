@@ -21,11 +21,11 @@ function location(
       time_utc: `2026-09-15T${String(hour).padStart(2, "0")}:00:00Z`,
       time_local: `2026-09-15T${hour + 10}:00:00+10:00`,
       inputs: {
-        air_temperature_c: 25,
-        mean_radiant_temperature_c: 30,
-        relative_humidity_pct: 50,
-        wind_speed_10m_ms: 2,
-        direct_normal_irradiance_wm2: 200,
+        tdb: 25,
+        tr: 30,
+        rh: 50,
+        v_z1: 2,
+        sol_radiation_dir: 200,
       },
       heat_risk: {
         risk_level_interpolated: 1.2,
