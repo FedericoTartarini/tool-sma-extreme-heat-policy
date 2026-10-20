@@ -1,5 +1,6 @@
 import { Accordion, Badge, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import {
   RISK_LEVELS,
   getRiskBadgeForegroundColor,
@@ -10,12 +11,17 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { STANDARD_TEXT_LINE_HEIGHT } from "@/config/uiTypography";
 import { getRecommendationDetailContent } from "@/lib/recommendationDetails";
+import { parseRecommendationLevelParam } from "@/lib/recommendationRouteState";
 
 /**
  * Renders static detailed recommendations for all risk levels.
  */
 export function AllRiskRecommendationsSection() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const initialOpenLevel = parseRecommendationLevelParam(
+    searchParams.get("level"),
+  );
 
   return (
     <SectionCard title={t("recommendations.manual.title")}>
@@ -23,7 +29,12 @@ export function AllRiskRecommendationsSection() {
         <Text lh={STANDARD_TEXT_LINE_HEIGHT}>
           {t("recommendations.manual.intro")}
         </Text>
-        <Accordion chevronPosition="right" variant="separated" radius="md">
+        <Accordion
+          chevronPosition="right"
+          variant="separated"
+          radius="md"
+          defaultValue={initialOpenLevel}
+        >
           {RISK_LEVELS.map((level) => {
             const content = getRecommendationDetailContent(level, t);
 
