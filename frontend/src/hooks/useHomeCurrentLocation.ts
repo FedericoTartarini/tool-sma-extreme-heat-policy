@@ -4,6 +4,7 @@ import { reverseGeocodeCoordinates } from "@/api/mapboxReverseGeocode";
 import type { HomeCurrentLocationErrorReason } from "@/domain/homeErrorMap";
 import { LOCATION_SUGGEST_TYPES_PARAM } from "@/domain/locationSearch";
 import { createLatestAbortableRequestController } from "@/lib/latestAbortableRequest";
+import { requestGeolocation } from "@/lib/requestGeolocation";
 import { useHomeStore } from "@/store/homeStore";
 
 /**
@@ -114,8 +115,18 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
     setError(null);
     setIsDetecting(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    requestGeolocation({
+      geolocation: navigator.geolocation,
+      signal: request.signal,
+      onTimeout: () => {
+        if (!request.isCurrent()) {
+          return;
+        }
+        requestController.cancel();
+        setIsDetecting(false);
+        emitError("geolocation_timeout");
+      },
+      onSuccess: (position) => {
         void (async () => {
           try {
             const suggestions = await reverseGeocodeCoordinates({
@@ -159,7 +170,7 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
           }
         })();
       },
-      (error) => {
+      onError: (error) => {
         if (!request.isCurrent()) {
           return;
         }
@@ -168,12 +179,7 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
         emitError(toCurrentLocationErrorReason(error));
         request.finish();
       },
-      {
-        enableHighAccuracy: false,
-        timeout: 10_000,
-        maximumAge: 5 * 60_000,
-      },
-    );
+    });
   }, [
     emitError,
     hasMapboxToken,
