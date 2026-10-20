@@ -18,7 +18,11 @@ export function useHomeUrlSync({
 }: UseHomeUrlSyncParams): void {
   const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
-  const selectedLocation = useHomeStore((state) => state.selectedLocation);
+  const selectedLocationLabel = useHomeStore(
+    (state) => state.selectedLocation?.displayLabel ?? null,
+  );
+  const setQueryStatesRef = useRef(setQueryStates);
+  setQueryStatesRef.current = setQueryStates;
   const lastAppliedRef = useRef<{
     profile: HeatRiskProfile;
     sport: string;
@@ -60,7 +64,7 @@ export function useHomeUrlSync({
     const runId = ++syncRunRef.current;
 
     void (async () => {
-      await setQueryStates(
+      await setQueryStatesRef.current(
         {
           profile: nextSelection.profile,
           sport: nextSelection.sport,
@@ -82,7 +86,6 @@ export function useHomeUrlSync({
 
     return () => {
       syncRunRef.current += 1;
-      lastAppliedRef.current = null;
     };
-  }, [canSyncSelection, profile, selectedLocation, setQueryStates, sport]);
+  }, [canSyncSelection, profile, selectedLocationLabel, sport]);
 }

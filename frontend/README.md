@@ -79,18 +79,24 @@ Notes:
 
 ## Weekly-window development preview (#67)
 
+Saved card schedules and dashboard view modes are documented in **Dashboard flow**
+above. This section describes only the optional development panel—not the
+shipped dashboard UI.
+
 With the backend and Vite development server running, open
-`/dashboard?weeklyPreview=1`. Add a dashboard location/sport card first, then
-select its weekday and start/end hours in **Weekly window preview**. The panel
-reuses that card's forecast and the API-provided location timezone. It
-does not create additional API requests or save schedule selections.
+`/dashboard?weeklyPreview=1`. Add a dashboard card first, then select its
+weekday and start/end hours in **Weekly window preview**. The panel reuses that
+card's forecast and the API-provided location timezone. It does not create
+additional API requests. Schedule choices in this panel are not saved; card
+schedules on `/dashboard` are edited on each card and persist separately.
 
-This opt-in panel is for team review: ordinary `/dashboard` and production
-builds do not show it. Existing cards, storage, navigation and risk calculations
-are unchanged. The Home link carries the existing location/sport selection,
-not a time-window filter.
+The panel appears only in development when the query flag is set. Production
+builds do not show it. Enabling it does not change persisted cards, view mode,
+or other-period settings. The Home link on a card still carries location/sport
+only, not a time-window filter.
 
-Provisional rules to agree before integrating scheduled cards:
+Preview panel behavior (shared weekly-window domain logic also powers **My
+schedule** and **Other time period** card metrics):
 
 - Same-day windows, with the next midnight allowed as an end; no fixed
   three-hour limit. The preview selects whole hours.
@@ -100,8 +106,9 @@ Provisional rules to agree before integrating scheduled cards:
 - Missing or ambiguous DST endpoints are reported rather than shifted.
 - Actual hourly samples include both endpoints. Full, uninterrupted forecast
   coverage is required; missing coverage never becomes a low-risk estimate.
-- No min/max/average aggregation, notifications, or shared schedule-storage
-  contract is introduced here.
+- The preview lists hourly risk levels in a table. It does not show the
+  average/min/max summaries that cards display in **My schedule** or **Other
+  time period**.
 
 Forecast sample labels use backend `time_local`; a next-day midnight end is
 explicitly labelled in the summary and sample table in both languages.

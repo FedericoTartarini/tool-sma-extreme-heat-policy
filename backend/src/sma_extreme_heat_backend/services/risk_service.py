@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -36,10 +35,10 @@ from sma_extreme_heat_backend.services.mrt import (
 
 
 @dataclass
-class CacheEntry[T]:
-    """In-memory TTL cache entry for a computed risk result."""
+class CacheEntry:
+    """In-memory TTL cache entry for a computed risk response."""
 
-    value: T
+    value: RiskResponse
     expires_at: float
 
 
@@ -54,7 +53,6 @@ class WindSpeedRefactorConfig:
 
 
 WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
-LOGGER = logging.getLogger(__name__)
 
 _PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
     "tdb": "air_temperature_c",
@@ -80,7 +78,7 @@ class RiskService:
         self.weather_client = weather_client
         self.calculator = calculator
         self.ttl_seconds = ttl_seconds
-        self._cache: dict[str, CacheEntry[RiskResponse]] = {}
+        self._cache: dict[str, CacheEntry] = {}
 
     async def calculate_home_risk(self, payload: RiskRequest) -> RiskResponse:
         """Calculate and cache a forecast-centric heat-risk response."""
