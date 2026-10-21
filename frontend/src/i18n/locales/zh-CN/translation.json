@@ -242,6 +242,23 @@
     ]
   },
   "home": {
+    "coolingPreferences": {
+      "title": "降温偏好设置",
+      "entry": "设置个性化降温建议 · <edit>编辑</edit>",
+      "optionsLabel": "选择现场可用的降温方法",
+      "emptyHint": "如果没有可用方法，请保持所有选项未勾选并保存。",
+      "save": "保存",
+      "cancel": "取消",
+      "close": "关闭降温偏好设置",
+      "saveError": "无法保存你的选择，请重试。",
+      "options": {
+        "cold-fluids-or-slushies": "冷饮或冰沙",
+        "arm-or-foot-immersion": "将手臂或双脚浸入冷水",
+        "water-dousing": "用凉水淋湿皮肤",
+        "ice-packs-or-towels": "冰袋或冰毛巾",
+        "fans": "电风扇或喷雾风扇"
+      }
+    },
     "notifications": {
       "forecastUpdated": "预报已更新"
     },
