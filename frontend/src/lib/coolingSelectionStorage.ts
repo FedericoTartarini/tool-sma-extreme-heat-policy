@@ -1,9 +1,13 @@
-import type { CoolingSelection } from "@/domain/activeCooling";
+import {
+  isCoolingOptionId,
+  type CoolingOptionId,
+  type CoolingSelection,
+} from "@/domain/activeCooling";
 
 const COOLING_SELECTION_STORAGE_KEY = "home-cooling-selection:v1";
 
-/** Restores browser preferences without depending on the eventual option list. */
-export function loadCoolingSelection(): CoolingSelection {
+/** Restores browser preferences using the approved option IDs. */
+export function loadCoolingSelection(): CoolingSelection<CoolingOptionId> {
   if (typeof window === "undefined") {
     return { configured: false };
   }
@@ -34,7 +38,9 @@ export function loadCoolingSelection(): CoolingSelection {
     ) {
       return {
         configured: true,
-        selectedOptionIds: [...new Set(parsed.selectedOptionIds)],
+        selectedOptionIds: [
+          ...new Set(parsed.selectedOptionIds.filter(isCoolingOptionId)),
+        ],
       };
     }
   } catch {
@@ -45,13 +51,15 @@ export function loadCoolingSelection(): CoolingSelection {
 }
 
 /** Writes only the preference contract; false lets the caller offer a retry. */
-export function saveCoolingSelection(selection: CoolingSelection): boolean {
+export function saveCoolingSelection(
+  selection: CoolingSelection<CoolingOptionId>,
+): boolean {
   if (typeof window === "undefined") {
     return false;
   }
 
   try {
-    const payload: CoolingSelection = selection.configured
+    const payload: CoolingSelection<CoolingOptionId> = selection.configured
       ? { configured: true, selectedOptionIds: selection.selectedOptionIds }
       : { configured: false };
 

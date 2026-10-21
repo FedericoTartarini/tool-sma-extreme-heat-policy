@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CoolingPreferencesModal } from "@/components/home/recommendations/CoolingPreferencesModal";
 import {
   ACTIVE_COOLING_OPTION_IDS,
+  type CoolingOptionId,
   type CoolingSelection,
 } from "@/domain/activeCooling";
 import { i18n } from "@/i18n/i18n";
@@ -24,7 +25,9 @@ vi.mock("@mantine/core", async (importOriginal) => {
   };
 });
 
-function renderModal(selection: CoolingSelection = { configured: false }) {
+function renderModal(
+  selection: CoolingSelection<CoolingOptionId> = { configured: false },
+) {
   return renderWithAppTheme(
     <I18nextProvider i18n={i18n}>
       <CoolingPreferencesModal
@@ -71,7 +74,7 @@ describe("CoolingPreferencesModal", () => {
     expect(checked[0]).toContain('value="fans"');
   });
 
-  it.each<CoolingSelection>([
+  it.each<CoolingSelection<CoolingOptionId>>([
     { configured: false },
     { configured: true, selectedOptionIds: [] },
   ])("allows confirming an empty draft for $configured", (selection) => {

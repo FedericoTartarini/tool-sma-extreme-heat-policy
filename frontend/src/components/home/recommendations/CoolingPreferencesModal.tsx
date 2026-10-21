@@ -12,13 +12,15 @@ import { useTranslation } from "react-i18next";
 import { CONTENT_GAP, CONTENT_PADDING } from "@/config/uiLayout";
 import {
   ACTIVE_COOLING_OPTION_IDS,
+  isCoolingOptionId,
+  type CoolingOptionId,
   type CoolingSelection,
 } from "@/domain/activeCooling";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
 
 interface CoolingPreferencesModalProps {
-  selection: CoolingSelection;
-  onSave: (selectedOptionIds: readonly string[]) => boolean;
+  selection: CoolingSelection<CoolingOptionId>;
+  onSave: (selectedOptionIds: readonly CoolingOptionId[]) => boolean;
   onClose: () => void;
 }
 
@@ -30,7 +32,7 @@ export function CoolingPreferencesModal({
 }: CoolingPreferencesModalProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobileViewport();
-  const [draft, setDraft] = useState<string[]>(() =>
+  const [draft, setDraft] = useState<CoolingOptionId[]>(() =>
     selection.configured ? [...selection.selectedOptionIds] : [],
   );
   const [saveFailed, setSaveFailed] = useState(false);
@@ -59,7 +61,7 @@ export function CoolingPreferencesModal({
           label={t("home.coolingPreferences.optionsLabel")}
           value={draft}
           onChange={(value) => {
-            setDraft(value);
+            setDraft(value.filter(isCoolingOptionId));
             setSaveFailed(false);
           }}
         >
