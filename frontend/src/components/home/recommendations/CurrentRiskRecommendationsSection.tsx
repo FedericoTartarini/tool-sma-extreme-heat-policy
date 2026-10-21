@@ -14,7 +14,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CurrentRiskRecommendationsSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RecommendationActionGrid } from "@/components/home/recommendations/RecommendationActionGrid";
-import { RecommendationLevelDetails } from "@/components/home/recommendations/RecommendationLevelDetails";
+import { HomeRecommendationDetails } from "@/components/home/recommendations/HomeRecommendationDetails";
 import { CoolingPreferencesModal } from "@/components/home/recommendations/CoolingPreferencesModal";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
@@ -130,9 +130,9 @@ export function CurrentRiskRecommendationsSection() {
           yOffset={isMobile ? mobileModalOffset : undefined}
           size="lg"
         >
-          <RecommendationLevelDetails
+          <HomeRecommendationDetails
             content={content}
-            showLevelBadge
+            selection={selection}
             footer={
               <Button
                 component={Link}

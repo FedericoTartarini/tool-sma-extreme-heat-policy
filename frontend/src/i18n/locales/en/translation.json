@@ -243,6 +243,7 @@
   },
   "home": {
     "coolingPreferences": {
+      "prepareReminder": "Please prepare at least one cooling method to help manage heat risk.",
       "title": "Cooling preferences",
       "entry": "Personalise cooling advice · <edit>Edit</edit>",
       "optionsLabel": "Select the cooling methods available on site",

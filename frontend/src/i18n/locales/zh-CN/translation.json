@@ -243,6 +243,7 @@
   },
   "home": {
     "coolingPreferences": {
+      "prepareReminder": "请至少准备一种降温方法，以帮助管理高温风险。",
       "title": "降温偏好设置",
       "entry": "设置个性化降温建议 · <edit>编辑</edit>",
       "optionsLabel": "选择现场可用的降温方法",
