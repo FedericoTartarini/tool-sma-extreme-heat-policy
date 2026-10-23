@@ -1,8 +1,8 @@
 import {
   toCalculationErrorI18nKey,
-  toSuggestErrorI18nKey,
+  toLocationErrorI18nKey,
   type HomeCalculationErrorReason,
-  type HomeSuggestErrorReason,
+  type HomeLocationErrorReason,
 } from "@/domain/homeErrorMap";
 
 export type HomeToastVariant = "success" | "error";
@@ -17,6 +17,9 @@ export interface HomeToastEvent {
 export const HOME_SUCCESS_TOAST_DURATION_MS = 3000;
 export const HOME_ERROR_TOAST_DURATION_MS = 5000;
 
+/**
+ * Builds the success toast shown after a heat-risk forecast refresh.
+ */
 export function createForecastUpdatedToast(id: number): HomeToastEvent {
   return {
     id,
@@ -26,6 +29,12 @@ export function createForecastUpdatedToast(id: number): HomeToastEvent {
   };
 }
 
+/**
+ * Builds the error toast shown when a heat-risk calculation fails.
+ *
+ * Returns `null` when the reason has no mapped user-facing message so callers
+ * can silently ignore non-actionable failures.
+ */
 export function createCalculationErrorToast(
   id: number,
   reason: HomeCalculationErrorReason | null,
@@ -44,11 +53,18 @@ export function createCalculationErrorToast(
   };
 }
 
-export function createSuggestErrorToast(
+/**
+ * Builds the error toast shown when a location search or current-location
+ * detection fails.
+ *
+ * Returns `null` when the reason has no mapped user-facing message so callers
+ * can silently ignore non-actionable failures.
+ */
+export function createLocationErrorToast(
   id: number,
-  reason: HomeSuggestErrorReason | null,
+  reason: HomeLocationErrorReason | null,
 ): HomeToastEvent | null {
-  const i18nKey = toSuggestErrorI18nKey(reason);
+  const i18nKey = toLocationErrorI18nKey(reason);
 
   if (!i18nKey) {
     return null;

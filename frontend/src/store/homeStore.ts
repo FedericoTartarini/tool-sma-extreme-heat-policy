@@ -118,6 +118,7 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       locationSearchInput: suggestion.displayLabel,
       locationPrefillSource: "none",
       prefilledLocationResolveState: "idle",
+      locationSessionToken: createSessionToken(),
     }),
   startPrefilledLocationResolve: () =>
     set({ prefilledLocationResolveState: "resolving" }),
