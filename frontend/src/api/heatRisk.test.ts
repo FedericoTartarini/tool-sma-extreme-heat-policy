@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchHeatRisk, isHeatRiskApiResponse } from "@/api/heatRisk";
+import { fetchHeatRisk } from "@/api/heatRisk";
 
 const VALID_HEAT_RISK_RESPONSE = {
   request: {
@@ -45,6 +45,7 @@ describe("fetchHeatRisk", () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("sends Croquet with the frozen ADULT profile in the Home risk payload", async () => {
@@ -81,6 +82,99 @@ describe("fetchHeatRisk", () => {
         }),
       }),
     );
+  });
+
+  it("clears malformed daily weather fields one at a time and drops rows without a valid date", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...VALID_HEAT_RISK_RESPONSE,
+          daily_weather: [
+            {
+              date: "2026-03-09",
+              sunrise_local: "06:30",
+              sunset_local: "19:45",
+              uv_index_max: 8.2,
+            },
+            {
+              date: "2026-03-10",
+              sunrise_local: "",
+              sunset_local: "19:45",
+            },
+            {
+              date: "2026-3-10",
+              sunrise_local: "06:30",
+              sunset_local: "19:45",
+            },
+            {
+              date: "2026-03-11",
+              sunrise_local: null,
+              sunset_local: null,
+              max_temp_c: 27.5,
+            },
+            {
+              date: "2026-03-12",
+              max_temp_c: "hot",
+              min_temp_c: 0,
+              cumulative_rainfall_mm: 0,
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.data.daily_weather).toEqual([
+      {
+        date: "2026-03-09",
+        sunrise_local: "06:30",
+        sunset_local: "19:45",
+        uv_index_max: 8.2,
+      },
+      {
+        date: "2026-03-10",
+        sunrise_local: null,
+        sunset_local: "19:45",
+      },
+      {
+        date: "2026-03-11",
+        sunrise_local: null,
+        sunset_local: null,
+        max_temp_c: 27.5,
+      },
+      {
+        date: "2026-03-12",
+        max_temp_c: null,
+        min_temp_c: 0,
+        cumulative_rainfall_mm: 0,
+      },
+    ]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring daily weather row without a valid date.",
+      expect.objectContaining({ date: "2026-3-10" }),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring malformed daily weather fields.",
+      { date: "2026-03-10", fields: ["sunrise_local"] },
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Ignoring malformed daily weather fields.",
+      { date: "2026-03-12", fields: ["max_temp_c"] },
+    );
+    expect(warnSpy).toHaveBeenCalledTimes(3);
   });
 
   it("returns missing_config without calling fetch when the API base URL is absent", async () => {
@@ -160,6 +254,70 @@ describe("fetchHeatRisk", () => {
     });
   });
 
+  it("rejects responses that still expose top-level location", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          request: {
+            sport: "SOCCER",
+            profile: "ADULT",
+          },
+          location: {
+            latitude: -33.847,
+            longitude: 151.067,
+            timezone: "Australia/Sydney",
+          },
+          forecast: VALID_HEAT_RISK_RESPONSE.forecast,
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "invalid_response",
+    });
+  });
+
+  it("rejects forecast points without time_local", async () => {
+    const [validPoint] = VALID_HEAT_RISK_RESPONSE.forecast;
+
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...VALID_HEAT_RISK_RESPONSE,
+          forecast: [
+            {
+              time_utc: validPoint.time_utc,
+              inputs: validPoint.inputs,
+              heat_risk: validPoint.heat_risk,
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchHeatRisk({
+      sport: "SOCCER",
+      latitude: -33.847,
+      longitude: 151.067,
+      profile: "ADULT",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "invalid_response",
+    });
+  });
+
   it("classifies network failures", async () => {
     fetchMock.mockRejectedValue(new Error("offline"));
 
@@ -190,114 +348,5 @@ describe("fetchHeatRisk", () => {
       ok: false,
       reason: "abort",
     });
-  });
-});
-
-describe("isHeatRiskApiResponse", () => {
-  it("accepts the forecast-centric backend contract", () => {
-    expect(
-      isHeatRiskApiResponse({
-        request: {
-          sport: "SOCCER",
-          profile: "AGE_10_13",
-          location: {
-            latitude: -33.847,
-            longitude: 151.067,
-            timezone: "Australia/Sydney",
-          },
-        },
-        forecast: [
-          {
-            time_utc: "2026-03-09T00:00:00Z",
-            time_local: "2026-03-09T11:00:00+11:00",
-            inputs: {
-              tdb: 31,
-              tr: 37.25,
-              rh: 62,
-              v_z1: 1.5,
-              sol_radiation_dir: 525,
-            },
-            heat_risk: {
-              risk_level_interpolated: 1.94,
-              t_medium: 34.5,
-              t_high: 37.1,
-              t_extreme: 39.2,
-              recommendation: "Increase hydration & modify clothing",
-            },
-          },
-        ],
-      }),
-    ).toBe(true);
-  });
-
-  it("rejects responses that still expose top-level location", () => {
-    expect(
-      isHeatRiskApiResponse({
-        request: {
-          sport: "SOCCER",
-          profile: "ADULT",
-        },
-        location: {
-          latitude: -33.847,
-          longitude: 151.067,
-          timezone: "Australia/Sydney",
-        },
-        forecast: [
-          {
-            time_utc: "2026-03-09T00:00:00Z",
-            time_local: "2026-03-09T11:00:00+11:00",
-            inputs: {
-              tdb: 31,
-              tr: 37.25,
-              rh: 62,
-              v_z1: 1.5,
-              sol_radiation_dir: 525,
-            },
-            heat_risk: {
-              risk_level_interpolated: 1.94,
-              t_medium: 34.5,
-              t_high: 37.1,
-              t_extreme: 39.2,
-              recommendation: "Increase hydration & modify clothing",
-            },
-          },
-        ],
-      }),
-    ).toBe(false);
-  });
-
-  it("rejects forecast points without time_local", () => {
-    expect(
-      isHeatRiskApiResponse({
-        request: {
-          sport: "SOCCER",
-          profile: "ADULT",
-          location: {
-            latitude: -33.847,
-            longitude: 151.067,
-            timezone: "Australia/Sydney",
-          },
-        },
-        forecast: [
-          {
-            time_utc: "2026-03-09T00:00:00Z",
-            inputs: {
-              tdb: 31,
-              tr: 37.25,
-              rh: 62,
-              v_z1: 1.5,
-              sol_radiation_dir: 525,
-            },
-            heat_risk: {
-              risk_level_interpolated: 1.94,
-              t_medium: 34.5,
-              t_high: 37.1,
-              t_extreme: 39.2,
-              recommendation: "Increase hydration & modify clothing",
-            },
-          },
-        ],
-      }),
-    ).toBe(false);
   });
 });

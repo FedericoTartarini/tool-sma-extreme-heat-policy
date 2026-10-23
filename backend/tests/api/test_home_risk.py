@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,6 +10,7 @@ from sma_extreme_heat_backend.core.config import get_settings
 from sma_extreme_heat_backend.core.errors import ModelInputUnavailableError, WeatherProviderError
 from sma_extreme_heat_backend.main import create_app
 from sma_extreme_heat_backend.schemas.home import (
+    DailyWeatherSummary,
     ForecastHeatRisk,
     ForecastInputs,
     ForecastPoint,
@@ -77,6 +80,24 @@ class SuccessfulRiskService:
                         t_extreme=39.2,
                         recommendation="Increase hydration & modify clothing",
                     ),
+                ),
+            ],
+            daily_weather=[
+                DailyWeatherSummary(
+                    date=date(2026, 3, 9),
+                    sunrise_local="06:30",
+                    sunset_local="19:45",
+                    uv_index_max=8.2,
+                    precip_prob_max_pct=55.0,
+                    cumulative_rainfall_mm=3.2,
+                    max_temp_c=31.0,
+                    min_temp_c=18.0,
+                    max_temp_time_local="14:00",
+                    min_temp_time_local="08:00",
+                    humidity_at_max_pct=22.0,
+                    humidity_at_min_pct=49.0,
+                    uv_index_max_time_local="13:00",
+                    avg_wind_speed_ms=2.8,
                 ),
             ],
         )
@@ -177,6 +198,24 @@ def test_post_home_risk_success_returns_forecast_centric_contract(
                     "t_extreme": 39.2,
                     "recommendation": "Increase hydration & modify clothing",
                 },
+            },
+        ],
+        "daily_weather": [
+            {
+                "date": "2026-03-09",
+                "sunrise_local": "06:30",
+                "sunset_local": "19:45",
+                "uv_index_max": 8.2,
+                "precip_prob_max_pct": 55.0,
+                "cumulative_rainfall_mm": 3.2,
+                "max_temp_c": 31.0,
+                "min_temp_c": 18.0,
+                "max_temp_time_local": "14:00",
+                "min_temp_time_local": "08:00",
+                "humidity_at_max_pct": 22.0,
+                "humidity_at_min_pct": 49.0,
+                "uv_index_max_time_local": "13:00",
+                "avg_wind_speed_ms": 2.8,
             },
         ],
     }

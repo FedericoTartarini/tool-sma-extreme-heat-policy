@@ -28,6 +28,7 @@ from sma_extreme_heat_backend.schemas.home import (
     RiskRequest,
     RiskResponse,
 )
+from sma_extreme_heat_backend.services.daily_weather import build_daily_weather
 from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
     resolve_timezone_name,
@@ -114,6 +115,10 @@ class RiskService:
                 ),
             ),
             forecast=self._build_forecast(forecast_mrt_df=mrt_df, sport=payload.sport),
+            daily_weather=build_daily_weather(
+                calendar_hours=weather.calendar_hours,
+                daily=weather.daily,
+            ),
         )
 
         self._cache[key] = CacheEntry(value=response, expires_at=now + self.ttl_seconds)
