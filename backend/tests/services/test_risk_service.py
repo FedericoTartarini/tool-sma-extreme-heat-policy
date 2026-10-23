@@ -154,6 +154,37 @@ def _install_mrt_pipeline(
     )
 
 
+async def test_risk_service_passes_expected_inputs_to_calculator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The calculator should receive the complete expected model input."""
+
+    calculator = FakeCalculator()
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=FakeWeatherClient(),
+        calculator=calculator,
+        ttl_seconds=600,
+    )
+
+    await service.calculate_home_risk(
+        RiskRequest(
+            sport="SOCCER",
+            latitude=-33.847,
+            longitude=151.067,
+            profile="ADULT",
+        )
+    )
+
+    assert calculator.payloads[0] == SportsHeatStressInput(
+        sport="SOCCER",
+        tdb=31.0,
+        rh=62.0,
+        vr=1.02,
+        tr=37.25,
+    )
+
+
 async def test_risk_service_uses_ttl_cache_for_same_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
