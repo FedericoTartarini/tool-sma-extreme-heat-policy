@@ -99,4 +99,15 @@ describe("CurrentRiskSection", () => {
     expect(markup).not.toContain("scale from");
     expect(markup).not.toContain("NaN");
   });
+
+  it("links the risk badge to the recommendations for its level", () => {
+    const markup = renderSection(2.4, "moderate");
+
+    expect(markup).toContain('href="/detailed-recommendations?level=moderate"');
+    expect(markup).toContain(
+      `aria-label="${tFromEn("home.sections.currentRisk.badgeAriaLabel", {
+        level: "Moderate",
+      })}"`,
+    );
+  });
 });
