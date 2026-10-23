@@ -1,5 +1,6 @@
 import { getReadableTextColor } from "@/lib/colorContrast";
 import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
+import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export type RiskLevel = "low" | "moderate" | "high" | "extreme";
 
@@ -7,7 +8,7 @@ export interface RiskRegistryEntry {
   scoreLowerInclusive: number;
   scoreUpperExclusive: number;
   color: string;
-  keyIconPaths: string[];
+  keyIconAssets: (ResponsiveImageAsset | null)[];
   levelKey: string;
   levelShortKey: string;
   keyRecommendationsKey: string;
@@ -31,13 +32,14 @@ export const RISK_LEVELS: readonly RiskLevel[] = [
 export const RISK_RAW_SCALE_MAX = 5;
 export const RISK_DISPLAY_OFFSET = 1;
 export const RISK_DISPLAY_AXIS_MAX = RISK_RAW_SCALE_MAX - RISK_DISPLAY_OFFSET;
+export const RISK_SCORE_DISPLAY_PRECISION = 1;
 
 export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
   low: {
     scoreLowerInclusive: 0,
     scoreUpperExclusive: 1,
     color: "#FFE478",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
     ],
@@ -51,7 +53,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 1,
     scoreUpperExclusive: 2,
     color: "#F5810C",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
       RECOMMENDATION_ACTION_ASSETS.pause,
@@ -66,7 +68,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 2,
     scoreUpperExclusive: 3,
     color: "#CF3838",
-    keyIconPaths: [
+    keyIconAssets: [
       RECOMMENDATION_ACTION_ASSETS.hydration,
       RECOMMENDATION_ACTION_ASSETS.clothing,
       RECOMMENDATION_ACTION_ASSETS.pause,
@@ -82,7 +84,7 @@ export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
     scoreLowerInclusive: 3,
     scoreUpperExclusive: Number.POSITIVE_INFINITY,
     color: "#8C2439",
-    keyIconPaths: [RECOMMENDATION_ACTION_ASSETS.stop],
+    keyIconAssets: [RECOMMENDATION_ACTION_ASSETS.stop],
     levelKey: "risk.level.extreme",
     levelShortKey: "risk.levelShort.extreme",
     keyRecommendationsKey: "recommendations.key.extreme",
@@ -122,6 +124,16 @@ export function toRiskDisplayScore(score: number): number | null {
     Math.max(score - RISK_DISPLAY_OFFSET, 0),
     RISK_DISPLAY_AXIS_MAX,
   );
+}
+
+/**
+ * Formats a raw risk score for display.
+ *
+ * Every surface that quotes a score goes through this, so the chart tooltip and
+ * the screen-reader text cannot drift to different precisions.
+ */
+export function formatRiskScore(score: number): string {
+  return score.toFixed(RISK_SCORE_DISPLAY_PRECISION);
 }
 
 /**

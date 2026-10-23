@@ -1,4 +1,8 @@
-import { toPublicAssetUrl } from "@/lib/publicAssetUrl";
+import { getSportImageConfig } from "@/config/responsiveImages";
+import {
+  createResponsiveImageAsset,
+  type ResponsiveImageAsset,
+} from "@/lib/responsiveImage";
 
 export const SportType = {
   Abseiling: "ABSEILING",
@@ -44,7 +48,7 @@ export const DEFAULT_SPORT_TYPE = SportType.Soccer;
 /**
  * Maps an enum value into an asset/translation-friendly name.
  */
-export function toSportAssetName(type: SportType): string {
+function toSportAssetName(type: SportType): string {
   return type.toLowerCase();
 }
 
@@ -52,18 +56,22 @@ export interface SportMeta {
   type: SportType;
   assetName: string;
   labelKey: string;
-  imagePath: string;
+  image: ResponsiveImageAsset | null;
 }
 
 export const sports: readonly SportMeta[] = Object.values(SportType).map(
   (type) => {
     const assetName = toSportAssetName(type);
+    const imageConfig = getSportImageConfig(assetName);
 
     return {
       type,
       assetName,
       labelKey: `sports.${assetName}`,
-      imagePath: toPublicAssetUrl(`sports/${assetName}.webp`),
+      image: createResponsiveImageAsset({
+        assetPath: `sports/${assetName}`,
+        config: imageConfig,
+      }),
     };
   },
 );

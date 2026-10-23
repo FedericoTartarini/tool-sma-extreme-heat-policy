@@ -3,6 +3,7 @@ import type { RiskLevel } from "@/domain/risk";
 import { toRiskLevel } from "@/domain/risk";
 import { getReadableTextColor } from "@/lib/colorContrast";
 import {
+  formatRiskScore,
   getRiskBands,
   getRiskColor,
   RISK_DISPLAY_AXIS_MAX,
@@ -550,7 +551,7 @@ export function formatRiskGaugeValue(
   score: number,
   unavailableLabel: string,
 ): string {
-  return Number.isFinite(score) ? score.toFixed(1) : unavailableLabel;
+  return Number.isFinite(score) ? formatRiskScore(score) : unavailableLabel;
 }
 
 export function getRiskGaugeValueLayout(

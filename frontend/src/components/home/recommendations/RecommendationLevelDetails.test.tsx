@@ -1,6 +1,8 @@
+import { MantineProvider } from "@mantine/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { RecommendationLevelDetails } from "@/components/home/recommendations/RecommendationLevelDetails";
+import { appTheme } from "@/config/mantineTheme";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -18,16 +20,18 @@ vi.mock("@/components/home/recommendations/RecommendationActionGrid", () => ({
 describe("RecommendationLevelDetails", () => {
   it("uses locale-aware uppercase for the level badge label", () => {
     const markup = renderToStaticMarkup(
-      <RecommendationLevelDetails
-        content={{
-          level: "low",
-          levelLabel: "iyi",
-          items: [],
-          description: "Description",
-          suggestions: ["Stay hydrated"],
-        }}
-        showLevelBadge
-      />,
+      <MantineProvider theme={appTheme}>
+        <RecommendationLevelDetails
+          content={{
+            level: "low",
+            levelLabel: "iyi",
+            items: [],
+            description: "Description",
+            suggestions: ["Stay hydrated"],
+          }}
+          showLevelBadge
+        />
+      </MantineProvider>,
     );
 
     expect(markup).toContain("İYİ");

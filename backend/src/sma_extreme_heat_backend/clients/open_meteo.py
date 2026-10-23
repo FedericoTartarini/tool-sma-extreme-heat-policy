@@ -39,8 +39,8 @@ class HourlyWeatherPoint:
     time_utc: datetime
     tdb: float | None
     rh: float | None
-    wind: float | None
-    radiation: float | None
+    v_z1: float | None
+    dni: float | None
 
 
 @dataclass(frozen=True)
@@ -196,8 +196,8 @@ def _select_hourly_points(
             time_utc=timestamp,
             tdb=_to_float_or_none(series_data["temperature_2m"][idx]),
             rh=_to_float_or_none(series_data["relative_humidity_2m"][idx]),
-            wind=_to_float_or_none(series_data["wind_speed_10m"][idx]),
-            radiation=_to_float_or_none(series_data["direct_normal_irradiance"][idx]),
+            v_z1=_to_float_or_none(series_data["wind_speed_10m"][idx]),
+            dni=_to_float_or_none(series_data["direct_normal_irradiance"][idx]),
         )
         for idx, timestamp in candidate_rows
     ]

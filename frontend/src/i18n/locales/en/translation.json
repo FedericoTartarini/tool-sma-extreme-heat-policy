@@ -10,6 +10,13 @@
     "toggleAriaLabel": "Toggle navigation",
     "logoAlt": "University of Sydney"
   },
+  "language": {
+    "selectorLabel": "Language",
+    "options": {
+      "en": "English",
+      "zhCn": "简体中文"
+    }
+  },
   "footer": {
     "developedBy": "Developed by:",
     "endorsedBy": "Endorsed by:",
@@ -253,6 +260,7 @@
         "selectedSportFallback": "Selected sport",
         "sportImageUnavailable": "Sport image unavailable",
         "sportImageHelp": "Add an image for {{sportLabel}} at {{path}}.",
+        "sportImageNotConfigured": "No image is configured for {{sportLabel}}.",
         "sportImageAlt": "{{sportLabel}} preview",
         "helperText": "Search and select a location to calculate risk automatically"
       },
@@ -276,6 +284,33 @@
         "missingCoordinatesTitle": "Map unavailable",
         "missingCoordinatesBody": "Coordinates for {{location}} are unavailable, so the map cannot be displayed.",
         "locationFallback": "Select a location"
+      }
+    },
+    "savedLocations": {
+      "saveButton": "Save this location",
+      "openSavedLocations": "Open saved locations",
+      "modalTitle": "Save location",
+      "savingLocationNameHint": "Please enter a name for this location.",
+      "labelInput": "Location name",
+      "labelPlaceholder": "e.g. Home, Work, Gym",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirm": "Save",
+      "apply": "Switch to {{label}}",
+      "remove": "Remove {{label}}",
+      "useMyLocationButton": "Use my location",
+      "savedListTitle": "Saved locations",
+      "edit": "Edit",
+      "doneEditing": "Done",
+      "chipHint": "Tap a saved location to switch",
+      "chipHintEditing": "Tap × to remove",
+      "suggestionSaved": "Saved location",
+      "errors": {
+        "empty_label": "Enter a name for this location.",
+        "duplicate_label": "You already have a location with this name.",
+        "limit_reached": "You can save up to {{max}} locations.",
+        "missing_coordinates": "This location can't be saved. Search for it again.",
+        "storage_unavailable": "Couldn't update saved locations. Check that browser storage is available and try again."
       }
     }
   },
@@ -318,12 +353,23 @@
     "gauge": {
       "seriesName": "Heat Risk",
       "riskLabel": "Heat Risk",
-      "riskUnavailable": "N/A"
+      "riskUnavailable": "N/A",
+      "a11y": {
+        "label": "{{title}}: {{value}} on a scale from {{min}} to {{max}}, {{level}}.",
+        "labelUnavailable": "{{title}}: not available."
+      }
     },
     "forecast": {
       "xAxisName": "Time",
       "yAxisRiskName": "Risk",
-      "tooltipRiskLabel": "Risk"
+      "tooltipRiskLabel": "Risk",
+      "a11y": {
+        "chartLabel": "Heat risk forecast for {{day}}. Peak risk is {{peakLevel}} at {{peakTime}}. Risk is {{startLevel}} at the start of the forecast and {{endLevel}} at the end.",
+        "tableCaption": "Hourly heat risk for {{day}}",
+        "timeHeader": "Time",
+        "levelHeader": "Risk level",
+        "valueHeader": "Risk score"
+      }
     }
   },
   "sports": {

@@ -33,8 +33,8 @@ def _build_points(*, start: datetime, radiation: list[float]) -> list[HourlyWeat
                 time_utc=timestamp,
                 tdb=30.0 + offset,
                 rh=55.0 + offset,
-                wind=1.5 + (offset * 0.1),
-                radiation=radiation_value,
+                v_z1=1.5 + (offset * 0.1),
+                dni=radiation_value,
             )
         )
     return points
@@ -64,7 +64,7 @@ def test_build_mrt_dataframe_daytime_produces_positive_delta_mrt_and_higher_tr()
     assert set(result.index.minute) == {0}
     assert (result["delta_mrt"] > 0).all()
     assert (result["tr"] > result["tdb"]).all()
-    assert result["radiation"].tolist() == [800.0, 850.0, 900.0]
+    assert result["dni"].tolist() == [800.0, 850.0, 900.0]
 
 
 def test_build_mrt_dataframe_nighttime_clamps_elevation_and_keeps_delta_mrt_near_zero() -> None:
@@ -105,7 +105,7 @@ def test_build_mrt_dataframe_preserves_hourly_local_time_for_half_hour_timezone(
 
     assert set(result.index.minute) == {0}
     assert set(result.index.tz_convert(UTC).minute) == {30}
-    assert result["radiation"].tolist() == [800.0, 850.0, 900.0]
+    assert result["dni"].tolist() == [800.0, 850.0, 900.0]
 
 
 def test_build_mrt_dataframe_preserves_hourly_local_time_for_quarter_hour_timezone() -> None:
@@ -125,7 +125,7 @@ def test_build_mrt_dataframe_preserves_hourly_local_time_for_quarter_hour_timezo
 
     assert set(result.index.minute) == {0}
     assert set(result.index.tz_convert(UTC).minute) == {15}
-    assert result["radiation"].tolist() == [800.0, 850.0, 900.0]
+    assert result["dni"].tolist() == [800.0, 850.0, 900.0]
 
 
 def test_build_mrt_dataframe_logs_structured_warning_for_negative_delta_mrt(

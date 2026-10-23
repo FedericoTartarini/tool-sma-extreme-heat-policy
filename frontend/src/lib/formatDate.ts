@@ -26,7 +26,7 @@ function formatWithIntl(
 }
 
 /**
- * Formats ISO dates into short, AU-style labels, optionally pinned to a specific timezone.
+ * Formats ISO dates into short day-month labels, optionally pinned to a specific timezone.
  */
 export function formatDateLabel(
   date: string,
@@ -38,7 +38,6 @@ export function formatDateLabel(
     date,
     locale,
     {
-      weekday: "short",
       day: "2-digit",
       month: "short",
     },

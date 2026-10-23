@@ -54,13 +54,8 @@ class WindSpeedRefactorConfig:
 
 WIND_SPEED_REFACTOR_CONFIG = WindSpeedRefactorConfig()
 
-_PUBLIC_INPUT_FIELD_BY_COLUMN: dict[str, str] = {
-    "tdb": "air_temperature_c",
-    "tr": "mean_radiant_temperature_c",
-    "rh": "relative_humidity_pct",
-    "wind": "wind_speed_10m_ms",
-    "radiation": "direct_normal_irradiance_wm2",
-}
+# MRT columns share their names with the public `inputs` fields, so no mapping is needed.
+_REQUIRED_INPUT_FIELDS: tuple[str, ...] = ("tdb", "rh", "v_z1", "sol_radiation_dir", "tr")
 
 
 class RiskService:
@@ -146,46 +141,30 @@ class RiskService:
         first_candidate_point = self._first_candidate_forecast_point(
             forecast_mrt_df=forecast_mrt_df
         )
-        forecast: list[ForecastPoint] = []
-        for timestamp, point in forecast_mrt_df.iterrows():
-            missing_inputs = self._missing_required_input_fields(point)
-            if missing_inputs:
-                # Skip incomplete leading/future rows so `forecast[0]` is always the earliest
-                # complete point that the frontend can safely treat as "current".
-                continue
+        complete_rows = forecast_mrt_df.dropna(subset=list(_REQUIRED_INPUT_FIELDS))
+        if complete_rows.empty:
+            # The earliest candidate explains why no usable forecast point remains.
+            raise self._missing_input_error_for_point(point=first_candidate_point)
 
+        forecast: list[ForecastPoint] = []
+        for timestamp, point in complete_rows.iterrows():
+            inputs = ForecastInputs.model_validate(
+                {field: point[field] for field in _REQUIRED_INPUT_FIELDS}
+            )
             forecast_point = self._to_forecast_point(
                 timestamp=timestamp.to_pydatetime(),
-                point=point,
+                inputs=inputs,
                 sport=sport,
             )
             forecast.append(forecast_point)
 
-        if forecast:
-            return forecast
-
-        # Only return 422 when every candidate row is incomplete; the earliest row explains why
-        # the backend could not produce any usable current/forecast point.
-        raise self._missing_input_error_for_point(
-            point=first_candidate_point,
-        )
+        return forecast
 
     @staticmethod
     def _missing_required_input_fields(point: pd.Series) -> list[str]:
         """List missing public input fields for a forecast row."""
 
-        missing_inputs: list[str] = []
-        if pd.isna(point.tdb):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["tdb"])
-        if pd.isna(point.rh):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["rh"])
-        if pd.isna(point.wind):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["wind"])
-        if pd.isna(point.radiation):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["radiation"])
-        if pd.isna(point.tr):
-            missing_inputs.append(_PUBLIC_INPUT_FIELD_BY_COLUMN["tr"])
-        return missing_inputs
+        return [field for field in _REQUIRED_INPUT_FIELDS if pd.isna(point[field])]
 
     @staticmethod
     def _first_candidate_forecast_point(*, forecast_mrt_df: pd.DataFrame) -> pd.Series:
@@ -216,53 +195,40 @@ class RiskService:
     ) -> dict[str, float | None]:
         """Expose the current point inputs using public API field names."""
 
-        wind_speed_10m_ms = _to_optional_float(point.wind)
+        v_z1 = _to_optional_float(point.v_z1)
         return {
-            "air_temperature_c": _to_optional_float(point.tdb),
-            "mean_radiant_temperature_c": _to_optional_float(point.tr),
-            "relative_humidity_pct": _to_optional_float(point.rh),
-            "wind_speed_10m_ms": wind_speed_10m_ms,
-            "direct_normal_irradiance_wm2": _to_optional_float(point.radiation),
+            "tdb": _to_optional_float(point.tdb),
+            "tr": _to_optional_float(point.tr),
+            "rh": _to_optional_float(point.rh),
+            "v_z1": v_z1,
+            "sol_radiation_dir": _to_optional_float(point.sol_radiation_dir),
         }
 
     def _to_forecast_point(
         self,
         *,
         timestamp: datetime,
-        point: pd.Series,
+        inputs: ForecastInputs,
         sport: str,
     ) -> ForecastPoint:
         """Calculate one forecast point and map it into the public response model."""
 
-        assert not pd.isna(point.tdb)
-        assert not pd.isna(point.rh)
-        assert not pd.isna(point.wind)
-        assert not pd.isna(point.radiation)
-        assert not pd.isna(point.tr)
-
-        wind_speed_10m_ms = float(point.wind)
         # Convert the provider's 10 m wind speed into the model's required 1.1 m input.
-        wind_speed_model_ms = self._resolve_model_wind_speed(vr=wind_speed_10m_ms)
+        wind_speed_model_ms = self._resolve_model_wind_speed(vr=inputs.v_z1)
         computed = self.calculator.model_sports_heat_stress(
             SportsHeatStressInput(
                 sport=sport,
-                tdb=float(point.tdb),
-                rh=float(point.rh),
+                tdb=inputs.tdb,
+                rh=inputs.rh,
                 vr=wind_speed_model_ms,
-                tr=float(point.tr),
+                tr=inputs.tr,
             )
         )
 
         return ForecastPoint(
             time_utc=timestamp.astimezone(UTC),
             time_local=timestamp,
-            inputs=ForecastInputs(
-                air_temperature_c=float(point.tdb),
-                mean_radiant_temperature_c=float(point.tr),
-                relative_humidity_pct=float(point.rh),
-                wind_speed_10m_ms=wind_speed_10m_ms,
-                direct_normal_irradiance_wm2=float(point.radiation),
-            ),
+            inputs=inputs,
             heat_risk=ForecastHeatRisk.model_validate(computed.data),
         )
 
