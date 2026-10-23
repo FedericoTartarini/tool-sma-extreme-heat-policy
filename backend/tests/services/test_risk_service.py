@@ -136,6 +136,67 @@ def _build_mrt_dataframe(
     return pd.DataFrame(rows, index=index_local)
 
 
+def _expected_three_point_forecast_json() -> list[dict]:
+    """Return the shared 3-point forecast JSON used by home service tests."""
+
+    return [
+        {
+            "time_utc": "2026-03-09T00:00:00Z",
+            "time_local": "2026-03-09T11:00:00+11:00",
+            "inputs": {
+                "tdb": 31.0,
+                "tr": 37.25,
+                "rh": 62.0,
+                "v_z1": 1.5,
+                "sol_radiation_dir": 525.0,
+            },
+            "heat_risk": {
+                "risk_level_interpolated": 1.94,
+                "t_medium": 34.5,
+                "t_high": 37.1,
+                "t_extreme": 39.2,
+                "recommendation": "Increase hydration & modify clothing",
+            },
+        },
+        {
+            "time_utc": "2026-03-09T01:00:00Z",
+            "time_local": "2026-03-09T12:00:00+11:00",
+            "inputs": {
+                "tdb": 32.0,
+                "tr": 38.25,
+                "rh": 63.0,
+                "v_z1": 1.6,
+                "sol_radiation_dir": 562.5,
+            },
+            "heat_risk": {
+                "risk_level_interpolated": 2.04,
+                "t_medium": 34.5,
+                "t_high": 37.1,
+                "t_extreme": 39.2,
+                "recommendation": "Increase hydration & modify clothing",
+            },
+        },
+        {
+            "time_utc": "2026-03-09T02:00:00Z",
+            "time_local": "2026-03-09T13:00:00+11:00",
+            "inputs": {
+                "tdb": 33.0,
+                "tr": 39.25,
+                "rh": 64.0,
+                "v_z1": 1.7,
+                "sol_radiation_dir": 600.0,
+            },
+            "heat_risk": {
+                "risk_level_interpolated": 2.14,
+                "t_medium": 34.5,
+                "t_high": 37.1,
+                "t_extreme": 39.2,
+                "recommendation": "Increase hydration & modify clothing",
+            },
+        },
+    ]
+
+
 def _install_mrt_pipeline(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -236,62 +297,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         "t_extreme": 39.2,
         "recommendation": "Increase hydration & modify clothing",
     }
-    assert first.model_dump(mode="json")["forecast"] == [
-        {
-            "time_utc": "2026-03-09T00:00:00Z",
-            "time_local": "2026-03-09T11:00:00+11:00",
-            "inputs": {
-                "tdb": 31.0,
-                "tr": 37.25,
-                "rh": 62.0,
-                "v_z1": 1.5,
-                "sol_radiation_dir": 525.0,
-            },
-            "heat_risk": {
-                "risk_level_interpolated": 1.94,
-                "t_medium": 34.5,
-                "t_high": 37.1,
-                "t_extreme": 39.2,
-                "recommendation": "Increase hydration & modify clothing",
-            },
-        },
-        {
-            "time_utc": "2026-03-09T01:00:00Z",
-            "time_local": "2026-03-09T12:00:00+11:00",
-            "inputs": {
-                "tdb": 32.0,
-                "tr": 38.25,
-                "rh": 63.0,
-                "v_z1": 1.6,
-                "sol_radiation_dir": 562.5,
-            },
-            "heat_risk": {
-                "risk_level_interpolated": 2.04,
-                "t_medium": 34.5,
-                "t_high": 37.1,
-                "t_extreme": 39.2,
-                "recommendation": "Increase hydration & modify clothing",
-            },
-        },
-        {
-            "time_utc": "2026-03-09T02:00:00Z",
-            "time_local": "2026-03-09T13:00:00+11:00",
-            "inputs": {
-                "tdb": 33.0,
-                "tr": 39.25,
-                "rh": 64.0,
-                "v_z1": 1.7,
-                "sol_radiation_dir": 600.0,
-            },
-            "heat_risk": {
-                "risk_level_interpolated": 2.14,
-                "t_medium": 34.5,
-                "t_high": 37.1,
-                "t_extreme": 39.2,
-                "recommendation": "Increase hydration & modify clothing",
-            },
-        },
-    ]
+    assert first.model_dump(mode="json")["forecast"] == _expected_three_point_forecast_json()
 
 
 async def test_risk_service_cache_key_changes_with_coordinates(

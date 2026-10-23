@@ -494,8 +494,7 @@ async def test_fetch_weather_forecast_rejects_provider_timezone_mismatch() -> No
         )
     except WeatherProviderError as exc:
         assert (
-            exc.detail
-            == "Weather provider response timezone did not match the requested timezone"
+            exc.detail == "Weather provider response timezone did not match the requested timezone"
         )
     else:
         raise AssertionError("Expected WeatherProviderError for timezone mismatch")

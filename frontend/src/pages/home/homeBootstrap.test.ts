@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_HEAT_RISK_PROFILE } from "@/domain/heatRiskProfile";
 import { DEFAULT_SPORT_TYPE, SportType } from "@/domain/sport";
 import type { PersistedHomeFilters } from "@/pages/home/browserState";
-import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
+import {
+  resolveHomeBootstrapState,
+  shouldRebootstrapHomeFromUrl,
+} from "@/pages/home/homeBootstrap";
 
 describe("resolveHomeBootstrapState", () => {
   it("keeps the default adult profile when URL state provides a younger profile", () => {
@@ -102,6 +105,56 @@ describe("resolveHomeBootstrapState", () => {
       locationPrefillSource: "persisted",
       prefilledLocationResolveState: "pending",
     });
+  });
+
+  it("detects when URL bootstrap state differs from the current store", () => {
+    const bootstrapState = resolveHomeBootstrapState({
+      hasUrlState: true,
+      defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+      defaultSport: DEFAULT_SPORT_TYPE,
+      defaultLocationLabel: "Sydney, New South Wales, Australia",
+      urlProfile: null,
+      urlSport: SportType.Soccer,
+      urlLocation: "Melbourne, Victoria, Australia",
+      persistedFilters: null,
+    });
+
+    expect(
+      shouldRebootstrapHomeFromUrl(
+        {
+          profile: DEFAULT_HEAT_RISK_PROFILE,
+          sport: SportType.Running,
+          locationSearchInput: "Perth, Western Australia, Australia",
+          selectedLocationDisplayLabel: "Perth, Western Australia, Australia",
+        },
+        bootstrapState,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps the current store when URL bootstrap state already matches", () => {
+    const bootstrapState = resolveHomeBootstrapState({
+      hasUrlState: true,
+      defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+      defaultSport: DEFAULT_SPORT_TYPE,
+      defaultLocationLabel: "Sydney, New South Wales, Australia",
+      urlProfile: null,
+      urlSport: SportType.Running,
+      urlLocation: "Perth, Western Australia, Australia",
+      persistedFilters: null,
+    });
+
+    expect(
+      shouldRebootstrapHomeFromUrl(
+        {
+          profile: DEFAULT_HEAT_RISK_PROFILE,
+          sport: SportType.Running,
+          locationSearchInput: "Perth, Western Australia, Australia",
+          selectedLocationDisplayLabel: "Perth, Western Australia, Australia",
+        },
+        bootstrapState,
+      ),
+    ).toBe(false);
   });
 
   it("leaves prefilled location resolve idle when no location is available", () => {

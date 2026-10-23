@@ -92,3 +92,30 @@ export function resolveHomeBootstrapState({
     prefilledLocationResolveState,
   };
 }
+
+interface HomeStoreUrlComparisonState {
+  profile: HeatRiskProfile;
+  sport: SportType;
+  locationSearchInput: string;
+  selectedLocationDisplayLabel: string | null;
+}
+
+/**
+ * Returns true when URL-driven bootstrap state no longer matches the Home store.
+ */
+export function shouldRebootstrapHomeFromUrl(
+  storeState: HomeStoreUrlComparisonState,
+  bootstrapState: HomeStoreBootstrapPayload,
+): boolean {
+  const locationMatches =
+    storeState.selectedLocationDisplayLabel ===
+      bootstrapState.locationSearchInput ||
+    (storeState.locationSearchInput === bootstrapState.locationSearchInput &&
+      bootstrapState.locationPrefillSource !== "none");
+
+  return (
+    storeState.sport !== bootstrapState.sport ||
+    storeState.profile !== bootstrapState.profile ||
+    !locationMatches
+  );
+}

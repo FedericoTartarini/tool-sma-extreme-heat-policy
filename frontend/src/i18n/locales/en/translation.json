@@ -1,10 +1,39 @@
 {
+  "weeklyPreview": {
+    "title": "Weekly window preview",
+    "badge": "Local prototype",
+    "description": "Uses an existing dashboard card and its forecast. Schedule selections are not saved; this preview is for team discussion only.",
+    "empty": "Add a location and sport above to try a weekly window.",
+    "card": "Location and sport",
+    "weekday": "Every",
+    "start": "Start time",
+    "end": "End time",
+    "midnight": "Midnight (next day)",
+    "nextDayTime": "{{time}} (next day)",
+    "rules": "Draft rules: same-day, hourly selections; passed start times move to the next occurrence. There is no fixed three-hour limit.",
+    "next": "Next occurrence",
+    "samples": "Actual hourly risk samples, including both endpoints. No average-risk calculation is applied.",
+    "tableCaption": "Hourly forecast for the selected window",
+    "time": "Time at location",
+    "risk": "Risk level",
+    "openHome": "Open full forecast on Home",
+    "status": {
+      "loading": "Loading the location forecast…",
+      "unavailable": "The forecast is unavailable. No risk estimate is shown.",
+      "invalid_time_zone": "A valid location timezone is required. The browser timezone is not used as a substitute.",
+      "invalid_window": "Choose an end time later than the start. Overnight windows are not supported in this preview.",
+      "unresolved_local_time": "This window includes a missing or repeated daylight-saving time. Choose a different window.",
+      "incomplete_forecast": "The next occurrence is not fully covered by the available hourly forecast. No risk estimate is shown.",
+      "invalid_forecast": "The forecast contains invalid or duplicate data. No risk estimate is shown."
+    }
+  },
   "app": {
     "title": "Sports Heat Tool"
   },
   "nav": {
     "home": "Home",
     "about": "About",
+    "dashboard": "My dashboard",
     "detailedRecommendations": "Recommendations",
     "drawerTitle": "Navigation",
     "toggleAriaLabel": "Toggle navigation",
@@ -311,6 +340,106 @@
         "limit_reached": "You can save up to {{max}} locations.",
         "missing_coordinates": "This location can't be saved. Search for it again.",
         "storage_unavailable": "Couldn't update saved locations. Check that browser storage is available and try again."
+      }
+    }
+  },
+  "dashboard": {
+    "notifications": {
+      "riskUpdated": "Risk updated",
+      "refreshFailed": "Could not refresh dashboard risk data. Please try again."
+    },
+    "header": {
+      "title": "My dashboard",
+      "showSummary": "Show dashboard info",
+      "hideSummary": "Hide dashboard info",
+      "description": {
+        "intro": "Use this dashboard to view sport heat risk for saved scheduled events by adding cards through the \"Add card\" button.",
+        "modes": "You can switch dashboard mode between Now, My schedule, and Other time period to control what each card shows. Now shows live risk at each location. My schedule shows risk details for the next upcoming session on that card's saved schedule. Other time period shows the risk for the next occurrence of the chosen day and time range. For guidance at each risk level, see the <recommendationsLink>detailed recommendations</recommendationsLink> page.",
+        "note": "Note: you can add up to {{maxCards}} cards."
+      }
+    },
+    "addLocation": {
+      "openFormButton": "Add card",
+      "modalTitle": "Add a dashboard card",
+      "addButton": "Add to dashboard",
+      "weekdaysLabel": "Days",
+      "timeLabel": "Time",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "midnight": "Midnight (next day)",
+      "scheduleRequired": "Choose at least one day and a time range ending later that day or at midnight. All schedule fields are required."
+    },
+    "emptyState": {
+      "title": "No saved cards on your dashboard yet. Start monitoring heat risk by adding a card."
+    },
+    "cards": {
+      "title": "{{sport}} · {{location}}",
+      "openHomeAriaLabel": "Open {{title}} on the home page",
+      "delete": "Delete",
+      "deleteConfirm": {
+        "title": "Remove card?",
+        "message": "This card will be removed from your dashboard. You can add it again later.",
+        "confirm": "Remove card",
+        "cancel": "Cancel"
+      },
+      "editSchedule": {
+        "action": "Edit schedule",
+        "title": "Editing schedule for {{title}}",
+        "save": "Save changes",
+        "cancel": "Cancel",
+        "duplicate": "Another card already uses this location, sport, and schedule.",
+        "failed": "This card could not be updated. Please try again."
+      },
+      "moreActions": "Card actions",
+      "moveLeft": "Move left",
+      "moveRight": "Move right",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "nextDayTime": "{{time}} (next day)",
+      "nextSessionHeading": "Next session · {{date}}",
+      "selectedPeriodHeader": "Selected · {{date}} · {{times}}",
+      "selectedPeriodDateHeader": "Selected · {{date}}",
+      "metrics": {
+        "current": "Current",
+        "maxRiskToday": "Max risk (today):",
+        "average": "Average",
+        "minimum": "Min:",
+        "maximum": "Max:",
+        "rangeSeparator": " · ",
+        "stackedBarAriaLabel": "Risk score {{score}}, {{level}}"
+      }
+    },
+    "cardErrors": {
+      "generic": "Risk data could not be loaded for this location.",
+      "missingResult": "Risk data is unavailable for this location.",
+      "unknownInputs": "Weather inputs are unavailable for this location.",
+      "riskCalculationFailed": "Risk could not be calculated for this location.",
+      "missingSchedule": "This card has no saved schedule.",
+      "scheduleForecastUnavailable": "Forecast data does not yet cover the next scheduled window.",
+      "scheduleUnavailable": "The next scheduled window could not be calculated.",
+      "otherPeriodForecastUnavailable": "Forecast data does not cover the selected time period at this location.",
+      "otherPeriodUnavailable": "The selected time period could not be calculated for this location."
+    },
+    "errors": {
+      "missing_token": "Location search is unavailable because Mapbox is not configured.",
+      "retrieve_failed": "Could not resolve the selected location. Please try again.",
+      "unavailable": "Location search is temporarily unavailable. Please try again.",
+      "no_results": "No locations matched your search.",
+      "duplicate": "This location, sport, and schedule are already saved.",
+      "max_reached": "You can save up to {{maxCards}} cards.",
+      "missing_coordinates": "The selected location could not be resolved.",
+      "missing_draft_location": "Select a location before adding to your dashboard.",
+      "invalid_schedule": "Choose at least one day and a valid same-day time range."
+    },
+    "viewMode": {
+      "label": "Dashboard mode",
+      "otherPeriodDayLabel": "Day",
+      "otherPeriodTimeHint": "Choose a day and a time range to view for all cards.",
+      "otherPeriodInvalidHint": "Choose an end time later than the start. Overnight windows are not supported.",
+      "options": {
+        "now": "Now",
+        "my_schedule": "My schedule",
+        "other_time_period": "Other time period"
       }
     }
   },

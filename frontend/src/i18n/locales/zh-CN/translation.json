@@ -1,10 +1,39 @@
 {
+  "weeklyPreview": {
+    "title": "每周时间窗口预览",
+    "badge": "本地原型",
+    "description": "复用现有面板卡片及其预报。时间设置不会保存；此预览仅用于团队讨论。",
+    "empty": "请先在上方添加地点和运动，再尝试每周时间窗口。",
+    "card": "地点与运动",
+    "weekday": "每逢",
+    "start": "开始时间",
+    "end": "结束时间",
+    "midnight": "次日零点",
+    "nextDayTime": "{{time}}（次日）",
+    "rules": "暂定规则：选择同一天内的整点时间；开始时间已过则显示下一次。不固定限制为三小时。",
+    "next": "下一次活动时间",
+    "samples": "展示实际逐小时风险数据，包含起止时刻；不计算平均风险。",
+    "tableCaption": "所选时间窗口的逐小时预报",
+    "time": "地点当地时间",
+    "risk": "风险等级",
+    "openHome": "在首页查看完整预报",
+    "status": {
+      "loading": "正在加载地点预报…",
+      "unavailable": "预报暂不可用，不显示风险估计。",
+      "invalid_time_zone": "需要有效的地点时区，不会使用浏览器时区代替。",
+      "invalid_window": "结束时间必须晚于开始时间。此预览不支持跨夜活动。",
+      "unresolved_local_time": "此时间窗口包含夏令时跳过或重复的时间，请选择其他时间窗口。",
+      "incomplete_forecast": "现有逐小时预报未完整覆盖下一次活动时间，因此不显示风险估计。",
+      "invalid_forecast": "预报中存在无效或重复数据，不显示风险估计。"
+    }
+  },
   "app": {
     "title": "运动热应激风险工具"
   },
   "nav": {
     "home": "首页",
     "about": "关于",
+    "dashboard": "我的仪表盘",
     "detailedRecommendations": "建议",
     "drawerTitle": "导航",
     "toggleAriaLabel": "切换导航菜单",
@@ -311,6 +340,106 @@
         "limit_reached": "最多可保存 {{max}} 个地点。",
         "missing_coordinates": "该地点无法保存，请重新搜索。",
         "storage_unavailable": "无法更新已保存地点。请确认浏览器允许本地存储后重试。"
+      }
+    }
+  },
+  "dashboard": {
+    "notifications": {
+      "riskUpdated": "风险已更新",
+      "refreshFailed": "无法刷新仪表盘风险数据，请重试。"
+    },
+    "header": {
+      "title": "我的仪表盘",
+      "showSummary": "显示仪表盘说明",
+      "hideSummary": "收起仪表盘说明",
+      "description": {
+        "intro": "使用此仪表盘，通过「添加卡片」按钮添加卡片，查看已保存日程活动的热风险。",
+        "modes": "可在「当前」「我的日程」和「其他时间段」之间切换仪表盘模式，以控制每张卡片显示的内容。当前模式显示各地点的实时风险。我的日程模式显示该卡片已保存日程中下一次时段的风险详情。其他时间段模式显示所选日期时间段下一次出现时的风险。如需了解各风险等级的指导建议，请查看<recommendationsLink>详细建议</recommendationsLink>页面。",
+        "note": "注意：最多可添加 {{maxCards}} 张卡片。"
+      }
+    },
+    "addLocation": {
+      "openFormButton": "添加卡片",
+      "modalTitle": "添加仪表盘卡片",
+      "addButton": "添加到仪表盘",
+      "weekdaysLabel": "星期",
+      "timeLabel": "时间",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "midnight": "次日零点",
+      "scheduleRequired": "请选择至少一个星期日期，结束时间须晚于开始时间，并在当天或次日零点结束。所有日程字段均为必填项。"
+    },
+    "emptyState": {
+      "title": "仪表盘上还没有已保存的卡片。添加卡片即可开始监控热风险。"
+    },
+    "cards": {
+      "title": "{{sport}} · {{location}}",
+      "openHomeAriaLabel": "在首页打开 {{title}}",
+      "delete": "删除",
+      "deleteConfirm": {
+        "title": "移除卡片？",
+        "message": "此卡片将从仪表盘中移除。您可以稍后再次添加。",
+        "confirm": "移除卡片",
+        "cancel": "取消"
+      },
+      "editSchedule": {
+        "action": "编辑日程",
+        "title": "正在编辑 {{title}} 的日程",
+        "save": "保存更改",
+        "cancel": "取消",
+        "duplicate": "另一张卡片已使用相同的位置、运动和日程。",
+        "failed": "无法更新此卡片，请重试。"
+      },
+      "moreActions": "卡片操作",
+      "moveLeft": "左移",
+      "moveRight": "右移",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "nextDayTime": "{{time}}（次日）",
+      "nextSessionHeading": "下一次日程 · {{date}}",
+      "selectedPeriodHeader": "所选 · {{date}} · {{times}}",
+      "selectedPeriodDateHeader": "所选 · {{date}}",
+      "metrics": {
+        "current": "当前",
+        "maxRiskToday": "今日最高风险：",
+        "average": "平均",
+        "minimum": "最低：",
+        "maximum": "最高：",
+        "rangeSeparator": " · ",
+        "stackedBarAriaLabel": "风险分数 {{score}}，{{level}}"
+      }
+    },
+    "cardErrors": {
+      "generic": "无法加载此地点的风险数据。",
+      "missingResult": "此地点的风险数据不可用。",
+      "unknownInputs": "此地点的天气输入数据不可用。",
+      "riskCalculationFailed": "无法计算此地点的风险。",
+      "missingSchedule": "此卡片没有已保存的日程。",
+      "scheduleForecastUnavailable": "天气预报暂未覆盖下一次日程时段。",
+      "scheduleUnavailable": "无法计算下一次日程时段。",
+      "otherPeriodForecastUnavailable": "预报数据尚未覆盖该地点的所选时段。",
+      "otherPeriodUnavailable": "无法为该地点计算所选时段。"
+    },
+    "errors": {
+      "missing_token": "Mapbox 未配置，地点搜索不可用。",
+      "retrieve_failed": "无法解析所选地点，请重试。",
+      "unavailable": "地点搜索暂时不可用，请重试。",
+      "no_results": "没有匹配的地点。",
+      "duplicate": "此地点、运动项目和日程组合已保存。",
+      "max_reached": "最多可保存 {{maxCards}} 张卡片。",
+      "missing_coordinates": "无法解析所选地点。",
+      "missing_draft_location": "请先选择地点，再添加到仪表盘。",
+      "invalid_schedule": "请选择至少一个星期日期和有效的当天时间段。"
+    },
+    "viewMode": {
+      "label": "仪表盘模式",
+      "otherPeriodDayLabel": "星期",
+      "otherPeriodTimeHint": "请选择星期几和时间段，以便在所有卡片上查看。",
+      "otherPeriodInvalidHint": "结束时间须晚于开始时间。不支持跨夜时段。",
+      "options": {
+        "now": "当前",
+        "my_schedule": "我的日程",
+        "other_time_period": "其他时间段"
       }
     }
   },

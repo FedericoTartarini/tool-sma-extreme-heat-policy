@@ -56,6 +56,71 @@ Notes:
 - `VITE_API_BASE_URL` is required for backend forecast and current-risk data.
 - `.env.local` is ignored by git via `*.local`.
 
+## Dashboard flow
+
+- Route: `/dashboard`.
+- Users can save up to **10** location/sport cards. The frontend cap is
+  `MAX_DASHBOARD_CARDS` in `src/domain/dashboard.ts`.
+- Saved cards persist in `localStorage` via `src/pages/dashboard/browserState.ts`.
+- Card metrics load through one `POST /home/risk` request per **unique**
+  saved location/sport pair using the same forecast pipeline as Home. React Query
+  keys use normalized coordinates (not card id) so duplicate locations share one
+  request. The backend in-memory cache also dedupes by sport, profile, and
+  coordinates within a single server process.
+- Dashboard heat-risk requests always use `DEFAULT_HEAT_RISK_PROFILE` (`ADULT`).
+  Home profile selection does not apply on `/dashboard`.
+- **Now** mode shows the stacked risk bar plus today's max on each card.
+  **My schedule** shows average and min/max risk for the next upcoming session
+  on each card's saved weekly schedule. **Other time period** uses the same card
+  metrics for the current or next occurrence of a weekday and time range you choose in the
+  dashboard mode panel; each card resolves that window in its location timezone. The
+  selected mode and other-period picker are persisted in `localStorage`
+  (`dashboard-view-mode:v1`, `dashboard-other-period:v1`).
+
+## Weekly-window development preview (#67)
+
+Saved card schedules and dashboard view modes are documented in **Dashboard flow**
+above. This section describes only the optional development panel—not the
+shipped dashboard UI.
+
+With the backend and Vite development server running, open
+`/dashboard?weeklyPreview=1`. Add a dashboard card first, then select its
+weekday and start/end hours in **Weekly window preview**. The panel reuses that
+card's forecast and the API-provided location timezone. It does not create
+additional API requests. Schedule choices in this panel are not saved; card
+schedules on `/dashboard` are edited on each card and persist separately.
+
+The panel appears only in development when the query flag is set. Production
+builds do not show it. Enabling it does not change persisted cards, view mode,
+or other-period settings. The Home link on a card still carries location/sport
+only, not a time-window filter.
+
+Preview panel behavior (shared weekly-window domain logic also powers **My
+schedule** and **Other time period** card metrics):
+
+- Same-day windows, with the next midnight allowed as an end; no fixed
+  three-hour limit. The preview selects whole hours.
+- A start at the current instant is included; already-started windows move to
+  the next occurrence. The preview refreshes just after the start boundary,
+  on selection changes and tab resume/focus, with a one-minute fallback.
+- Missing or ambiguous DST endpoints are reported rather than shifted.
+- Actual hourly samples include both endpoints. Full, uninterrupted forecast
+  coverage is required; missing coverage never becomes a low-risk estimate.
+- The preview lists hourly risk levels in a table. It does not show the
+  average/min/max summaries that cards display in **My schedule** or **Other
+  time period**.
+
+Forecast sample labels use backend `time_local`; a next-day midnight end is
+explicitly labelled in the summary and sample table in both languages.
+
+The domain helpers are `weeklyWindow.ts`, `weeklyWindowForecast.ts` and
+`weeklyWindowPreview.ts`, with matching `.test.ts` tests. The component test
+uses jsdom and real Mantine controls; the query-adapter test supplies mocked
+query states. These are not live-network end-to-end or visual-layout tests.
+Run `pnpm test:ci` and `pnpm run ci` for the configured checks. Test files use
+`.test.ts` to match the existing collector. The jsdom-only `nwsapi` override
+avoids a recursive `:fullscreen` matcher in version 2.2.27.
+
 ## Project structure (Layer-first)
 
 | Path             | Responsibility                              |

@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: true
+
+# nwsapi 2.2.27 recurses on :fullscreen in jsdom; keep DOM interaction tests runnable.
+overrides:
+  jsdom>nwsapi: 2.2.22

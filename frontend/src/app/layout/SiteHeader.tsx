@@ -5,19 +5,20 @@ import {
   Button,
   Container,
   Drawer,
-  Group,
   Image,
   Stack,
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { CONTENT_PADDING } from "@/config/uiLayout";
 import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+
+const NAV_DRAWER_SIZE_MOBILE = "66.67vw";
+const NAV_DRAWER_SIZE_DESKTOP = "md";
 
 function isRouteActive(currentPath: string, target: string): boolean {
   return target === "/" ? currentPath === "/" : currentPath.startsWith(target);
@@ -35,29 +36,16 @@ export function SiteHeader() {
   const navItems = [
     { label: t("nav.home"), to: "/" },
     { label: t("nav.about"), to: "/about" },
-  ];
-  const mobileNavItems = [
-    ...navItems,
+    { label: t("nav.dashboard"), to: "/dashboard" },
     {
       label: t("nav.detailedRecommendations"),
       to: "/detailed-recommendations",
     },
   ];
 
-  useEffect(() => {
-    if (opened && !isMobile) {
-      close();
-    }
-  }, [close, isMobile, opened]);
-
   const renderNavButton = (
     item: (typeof navItems)[number],
-    options: {
-      inactiveVariant: "subtle" | "light";
-      size?: "xs" | "sm" | "md";
-      justify?: "flex-start";
-      onClick?: () => void;
-    },
+    onClick?: () => void,
   ) => {
     const active = isRouteActive(location.pathname, item.to);
 
@@ -66,11 +54,11 @@ export function SiteHeader() {
         key={item.to}
         component={Link}
         to={item.to}
-        onClick={options.onClick}
-        justify={options.justify}
-        variant={active ? "filled" : options.inactiveVariant}
+        onClick={onClick}
+        justify="flex-start"
+        variant={active ? "filled" : "light"}
         color={active ? "brand.6" : "gray"}
-        size={options.size}
+        size="md"
       >
         {item.label}
       </Button>
@@ -131,23 +119,11 @@ export function SiteHeader() {
           </Text>
 
           <Box style={{ justifySelf: "end" }}>
-            {!isMobile ? (
-              <Group gap="xs" wrap="nowrap">
-                {navItems.map((item) =>
-                  renderNavButton(item, {
-                    inactiveVariant: "subtle",
-                    size: "sm",
-                  }),
-                )}
-                <LanguageSelector compact />
-              </Group>
-            ) : (
-              <Burger
-                opened={opened}
-                onClick={opened ? close : open}
-                aria-label={t("nav.toggleAriaLabel")}
-              />
-            )}
+            <Burger
+              opened={opened}
+              onClick={opened ? close : open}
+              aria-label={t("nav.toggleAriaLabel")}
+            />
           </Box>
         </Box>
       </Container>
@@ -158,17 +134,10 @@ export function SiteHeader() {
         title={t("nav.drawerTitle")}
         padding="md"
         position="right"
-        size="66.67vw"
+        size={isMobile ? NAV_DRAWER_SIZE_MOBILE : NAV_DRAWER_SIZE_DESKTOP}
       >
-        <Stack gap="xs">
-          {mobileNavItems.map((item) =>
-            renderNavButton(item, {
-              inactiveVariant: "light",
-              size: "md",
-              justify: "flex-start",
-              onClick: close,
-            }),
-          )}
+        <Stack gap="sm">
+          {navItems.map((item) => renderNavButton(item, close))}
           <LanguageSelector />
         </Stack>
       </Drawer>

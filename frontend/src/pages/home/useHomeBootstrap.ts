@@ -1,6 +1,6 @@
 import { useQueryStates } from "nuqs";
 import { useOptimisticSearchParams } from "nuqs/adapters/react-router/v7";
-import { useEffect, useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_HEAT_RISK_PROFILE,
@@ -8,7 +8,10 @@ import {
 } from "@/domain/heatRiskProfile";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 import { loadPersistedHomeFilters } from "@/pages/home/browserState";
-import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
+import {
+  resolveHomeBootstrapState,
+  shouldRebootstrapHomeFromUrl,
+} from "@/pages/home/homeBootstrap";
 import {
   HOME_QUERY_PARSERS,
   HOME_QUERY_URL_KEYS,
@@ -76,13 +79,30 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
     [hasUrlState, persistedFilters, t, urlLocation, urlProfile, urlSport],
   );
 
-  useEffect(() => {
-    if (useHomeStore.getState().isBootstrapped) {
+  useLayoutEffect(() => {
+    const state = useHomeStore.getState();
+
+    if (!state.isBootstrapped) {
+      state.bootstrap(bootstrapState);
       return;
     }
 
-    useHomeStore.getState().bootstrap(bootstrapState);
-  }, [bootstrapState]);
+    if (
+      hasUrlState &&
+      shouldRebootstrapHomeFromUrl(
+        {
+          profile: state.profile,
+          sport: state.sport,
+          locationSearchInput: state.locationSearchInput,
+          selectedLocationDisplayLabel:
+            state.selectedLocation?.displayLabel ?? null,
+        },
+        bootstrapState,
+      )
+    ) {
+      state.bootstrap(bootstrapState);
+    }
+  }, [bootstrapState, hasUrlState]);
 
   return {
     bootstrapState,
