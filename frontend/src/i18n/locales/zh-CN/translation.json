@@ -353,12 +353,23 @@
     "gauge": {
       "seriesName": "热应激风险",
       "riskLabel": "热应激风险",
-      "riskUnavailable": "暂无"
+      "riskUnavailable": "暂无",
+      "a11y": {
+        "label": "{{title}}：{{value}}（量程 {{min}} 到 {{max}}），{{level}}。",
+        "labelUnavailable": "{{title}}：暂无数据。"
+      }
     },
     "forecast": {
       "xAxisName": "时间",
       "yAxisRiskName": "风险",
-      "tooltipRiskLabel": "风险"
+      "tooltipRiskLabel": "风险",
+      "a11y": {
+        "chartLabel": "{{day}}的热应激风险预报。风险在 {{peakTime}} 达到最高，为{{peakLevel}}。预报开始时为{{startLevel}}，结束时为{{endLevel}}。",
+        "tableCaption": "{{day}}的逐小时热应激风险",
+        "timeHeader": "时间",
+        "levelHeader": "风险等级",
+        "valueHeader": "风险分值"
+      }
     }
   },
   "sports": {
