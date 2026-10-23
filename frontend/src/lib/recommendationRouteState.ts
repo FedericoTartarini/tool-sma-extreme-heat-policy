@@ -1,24 +1,20 @@
+import { createSerializer, parseAsStringEnum } from "nuqs";
 import { RISK_LEVELS, type RiskLevel } from "@/domain/riskRegistry";
 
-const DETAILED_RECOMMENDATIONS_PATH = "/detailed-recommendations";
-const RECOMMENDATION_LEVEL_QUERY_PARAM = "level";
+export const DETAILED_RECOMMENDATIONS_PATH = "/detailed-recommendations";
+
+export const RECOMMENDATION_QUERY_PARSERS = {
+  level: parseAsStringEnum<RiskLevel>([...RISK_LEVELS]),
+};
+
+const serializeRecommendationQuery = createSerializer(
+  RECOMMENDATION_QUERY_PARSERS,
+);
 
 export function getDetailedRecommendationsPath(level: RiskLevel): string {
-  const params = new URLSearchParams({
-    [RECOMMENDATION_LEVEL_QUERY_PARAM]: level,
-  });
-
-  return `${DETAILED_RECOMMENDATIONS_PATH}?${params.toString()}`;
+  return serializeRecommendationQuery(DETAILED_RECOMMENDATIONS_PATH, { level });
 }
 
-export function parseRecommendationLevelParam(
-  level: string | null,
-): RiskLevel | undefined {
-  if (level === null) {
-    return undefined;
-  }
-
-  return RISK_LEVELS.includes(level as RiskLevel)
-    ? (level as RiskLevel)
-    : undefined;
+export function getRecommendationLevelItemId(level: RiskLevel): string {
+  return `recommendation-level-${level}`;
 }

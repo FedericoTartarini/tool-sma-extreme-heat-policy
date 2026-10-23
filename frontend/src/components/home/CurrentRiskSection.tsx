@@ -75,6 +75,9 @@ export function CurrentRiskSection() {
         <Badge
           component={Link}
           to={getDetailedRecommendationsPath(heatRisk.riskLevel)}
+          aria-label={t("home.sections.currentRisk.badgeAriaLabel", {
+            level: longRiskLabels[heatRisk.riskLevel],
+          })}
           color={riskBadgeColor}
           size={isMobile ? "lg" : "xl"}
           radius="xl"
@@ -103,7 +106,6 @@ export function CurrentRiskSection() {
               size={UI_INLINE_ICON_SIZE}
               stroke={UI_INLINE_ICON_STROKE}
               aria-hidden={true}
-              color={riskBadgeForegroundColor}
             />
           </Group>
         </Badge>

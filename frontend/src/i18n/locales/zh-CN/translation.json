@@ -265,7 +265,8 @@
         "helperText": "搜索并选择地点以自动计算风险"
       },
       "currentRisk": {
-        "title": "当前运动热应激风险"
+        "title": "当前运动热应激风险",
+        "badgeAriaLabel": "{{level}}风险，打开详细建议"
       },
       "keyRecommendations": {
         "title": "关键建议：",

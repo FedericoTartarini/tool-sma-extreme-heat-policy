@@ -18,6 +18,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { CONTENT_PADDING } from "@/config/uiLayout";
 import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { DETAILED_RECOMMENDATIONS_PATH } from "@/lib/recommendationRouteState";
 
 function isRouteActive(currentPath: string, target: string): boolean {
   return target === "/" ? currentPath === "/" : currentPath.startsWith(target);
@@ -40,7 +41,7 @@ export function SiteHeader() {
     ...navItems,
     {
       label: t("nav.detailedRecommendations"),
-      to: "/detailed-recommendations",
+      to: DETAILED_RECOMMENDATIONS_PATH,
     },
   ];
 
