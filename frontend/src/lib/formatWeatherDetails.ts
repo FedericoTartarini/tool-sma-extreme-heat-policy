@@ -18,6 +18,7 @@ export function formatWeatherValueAtTime(
   value: string,
   time: string | null | undefined,
   t: TFunction,
+  locale?: string,
 ): string {
   if (time === null || time === undefined || time.trim().length === 0) {
     return value;
@@ -25,7 +26,7 @@ export function formatWeatherValueAtTime(
 
   return t("home.sections.forecast.weatherDetails.valueAtTime", {
     value,
-    time: formatLocalTimeLabel(time),
+    time: formatLocalTimeLabel(time, locale),
   });
 }
 
@@ -36,6 +37,7 @@ export function formatWeatherMetricValue(
   details: DayWeatherDetails,
   metric: WeatherDetailsMetricDefinition,
   t: TFunction,
+  locale?: string,
 ): string {
   const rawValue = getWeatherMetricValue(details, metric.field);
 
@@ -44,7 +46,7 @@ export function formatWeatherMetricValue(
   }
 
   if (typeof rawValue === "string") {
-    return formatLocalTimeLabel(rawValue);
+    return formatLocalTimeLabel(rawValue, locale);
   }
 
   if (!Number.isFinite(rawValue)) {
@@ -69,6 +71,7 @@ export function formatWeatherMetricValue(
       formattedValue,
       typeof time === "string" ? time : null,
       t,
+      locale,
     );
   }
 

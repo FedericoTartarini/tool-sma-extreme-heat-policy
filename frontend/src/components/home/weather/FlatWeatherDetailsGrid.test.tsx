@@ -6,6 +6,7 @@ import { FlatWeatherDetailsGrid } from "@/components/home/weather/FlatWeatherDet
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
+    i18n: { resolvedLanguage: "en" },
   }),
 }));
 
@@ -91,8 +92,8 @@ describe("FlatWeatherDetailsGrid", () => {
 
     expect(precipitationIndex).toBeGreaterThan(-1);
     expect(daylightIndex).toBeGreaterThan(precipitationIndex);
-    expect(markup).toContain("6:30 AM");
-    expect(markup).toContain("7:45 PM");
+    expect(markup).toContain("6:30 am");
+    expect(markup).toContain("7:45 pm");
   });
 
   it("renders a desktop divider between temperature and UV/wind halves", () => {

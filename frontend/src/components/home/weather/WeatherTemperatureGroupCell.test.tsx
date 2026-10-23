@@ -18,7 +18,10 @@ function translate(key: string, options?: Record<string, string>): string {
 }
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: translate }),
+  useTranslation: () => ({
+    t: translate,
+    i18n: { resolvedLanguage: "en" },
+  }),
 }));
 
 const MAX_TEMPERATURE_GROUP = WEATHER_TEMPERATURE_GROUPS.find(
@@ -42,7 +45,7 @@ describe("WeatherTemperatureGroupCell", () => {
       </MantineProvider>,
     );
 
-    expect(markup).toContain("@ 2 PM");
+    expect(markup).toContain("@ 2 pm");
     expect(markup).toContain(
       "home.sections.forecast.weatherDetails.metrics.humidityAtMaxPct | ",
     );

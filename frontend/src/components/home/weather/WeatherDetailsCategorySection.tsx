@@ -8,6 +8,7 @@ import {
 } from "@/config/weatherDetailsPresentation";
 import type { WeatherDetailsGroupDefinition } from "@/domain/weatherDetailsRegistry";
 import type { DayWeatherDetails } from "@/domain/weatherSummary";
+import { toIntlLocale } from "@/i18n/language";
 import { formatWeatherMetricValue } from "@/lib/formatWeatherDetails";
 
 interface WeatherDetailsCategorySectionProps {
@@ -24,7 +25,8 @@ export function WeatherDetailsCategorySection({
   details,
   metricColumns,
 }: WeatherDetailsCategorySectionProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const locale = toIntlLocale(i18n.resolvedLanguage);
   const temperatureGroups = group.temperatureGroups ?? [];
 
   return (
@@ -46,7 +48,7 @@ export function WeatherDetailsCategorySection({
             <WeatherMetricCell
               key={metric.field}
               label={t(metric.labelKey)}
-              value={formatWeatherMetricValue(details, metric, t)}
+              value={formatWeatherMetricValue(details, metric, t, locale)}
             />
           ))}
         </SimpleGrid>

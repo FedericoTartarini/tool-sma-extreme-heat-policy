@@ -1,7 +1,9 @@
 import { MantineProvider } from "@mantine/core";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
 import { ForecastSection } from "@/components/home/ForecastSection";
+import { appTheme } from "@/config/mantineTheme";
+import type { ForecastDay } from "@/domain/risk";
 import type { DayWeatherDetails } from "@/domain/weatherSummary";
 import type { ForecastDayWithWeatherDetails } from "@/lib/homeRisk";
 import type { HomeUiPreferences } from "@/store/homeUiStore";
@@ -27,7 +29,28 @@ const TOMORROW_WEATHER: DayWeatherDetails = {
   minTempC: 16,
 };
 
-const FORECAST_DAYS: ForecastDayWithWeatherDetails[] = [
+// 08:00 on the 22nd in Sydney is still the 21st in UTC, so the second day is
+// named differently depending on which zone the forecast is read in.
+const FORECAST_A11Y: ForecastDay[] = [
+  {
+    date: "2026-09-21T11:00:00+10:00",
+    risk: "low",
+    points: [
+      { time: "11:00", value: 1 },
+      { time: "12:00", value: 2 },
+    ],
+  },
+  {
+    date: "2026-09-22T08:00:00+10:00",
+    risk: "moderate",
+    points: [
+      { time: "08:00", value: 2 },
+      { time: "09:00", value: 3 },
+    ],
+  },
+];
+
+const FORECAST_WEATHER: ForecastDayWithWeatherDetails[] = [
   {
     date: "2026-03-09T11:00:00+11:00",
     risk: "moderate",
@@ -48,23 +71,28 @@ const FORECAST_DAYS: ForecastDayWithWeatherDetails[] = [
   },
 ];
 
-function translate(key: string, options?: Record<string, string>): string {
-  if (options?.value) {
-    return `${key}:${options.value}`;
-  }
-
-  return key;
-}
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: translate,
-    i18n: { resolvedLanguage: "en" },
-  }),
+const fixtures = vi.hoisted(() => ({
+  timeZone: "Australia/Sydney",
+  useWeatherForecast: false,
 }));
 
 const weatherDetailsPreference = vi.hoisted(() => ({
-  show: true,
+  show: false,
+}));
+
+vi.mock("react-i18next", async () => {
+  const { tFromEn: translate } = await import("@/i18n/enTestTranslate");
+
+  return {
+    useTranslation: () => ({
+      t: translate,
+      i18n: { resolvedLanguage: "en" },
+    }),
+  };
+});
+
+vi.mock("@/hooks/useIsMobileViewport", () => ({
+  useIsMobileViewport: () => false,
 }));
 
 vi.mock("@/store/homeUiStore", () => ({
@@ -84,54 +112,93 @@ vi.mock("@/store/homeUiStore", () => ({
 vi.mock("@/hooks/useHomeHeatRisk", () => ({
   useHomeHeatRisk: () => ({
     hasCalculatedRisk: true,
-    forecast: FORECAST_DAYS,
-    meta: { timeZone: "Australia/Sydney" },
+    forecast: fixtures.useWeatherForecast ? FORECAST_WEATHER : FORECAST_A11Y,
+    meta: { timeZone: fixtures.timeZone },
   }),
 }));
 
-describe("ForecastSection", () => {
-  it("renders weather values for days with details and unavailable for days without", () => {
-    weatherDetailsPreference.show = true;
-    const markup = renderToStaticMarkup(
-      <MantineProvider>
-        <ForecastSection />
-      </MantineProvider>,
-    );
+vi.mock("@/components/ui/EChart", () => ({
+  EChart: () => null,
+}));
 
-    expect(markup).toContain(
-      "home.sections.forecast.weatherDetails.units.celsius:31.0",
-    );
-    expect(markup).toContain(
-      "home.sections.forecast.weatherDetails.units.celsius:27.5",
-    );
+function renderForecastMarkup(): string {
+  return renderToStaticMarkup(
+    <MantineProvider theme={appTheme}>
+      <ForecastSection />
+    </MantineProvider>,
+  );
+}
+
+function renderChartLabels(timeZone: string): string[] {
+  fixtures.useWeatherForecast = false;
+  weatherDetailsPreference.show = false;
+  fixtures.timeZone = timeZone;
+
+  const markup = renderForecastMarkup();
+
+  return [...markup.matchAll(/aria-label="([^"]*)"/g)]
+    .map((match) => match[1])
+    .filter((label) => label.startsWith("Heat risk forecast for"));
+}
+
+describe("ForecastSection", () => {
+  it("names every chart after its own day", () => {
+    const labels = renderChartLabels("Australia/Sydney");
+
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).toContain("Monday 21 Sept");
+    expect(labels[0]).not.toContain("22 Sept");
+    expect(labels[1]).toContain("Tuesday 22 Sept");
+    expect(labels[1]).not.toContain("21 Sept");
+  });
+
+  it("reads those days in the forecast's time zone, not the machine's", () => {
+    const sydney = renderChartLabels("Australia/Sydney");
+    const utc = renderChartLabels("UTC");
+
+    expect(sydney[1]).toContain("Tuesday 22 Sept");
+    expect(utc[1]).toContain("Monday 21 Sept");
+  });
+
+  it("captions each hourly table with the same day as its chart", () => {
+    fixtures.timeZone = "Australia/Sydney";
+    weatherDetailsPreference.show = false;
+    fixtures.useWeatherForecast = false;
+
+    const captions = [
+      ...renderForecastMarkup().matchAll(/<caption[^>]*>([^<]*)</g),
+    ]
+      .map((match) => match[1])
+      .filter((caption) => caption.startsWith("Hourly heat risk for"));
+
+    expect(captions).toEqual([
+      "Hourly heat risk for Monday 21 Sept",
+      "Hourly heat risk for Tuesday 22 Sept",
+    ]);
+  });
+
+  it("renders weather values for days with details and unavailable for days without", () => {
+    fixtures.useWeatherForecast = true;
+    weatherDetailsPreference.show = true;
+    const markup = renderForecastMarkup();
+
+    expect(markup).toContain("31.0°C");
+    expect(markup).toContain("27.5°C");
     expect(
-      markup.split("home.sections.forecast.weatherDetails.unavailableForDay")
-        .length - 1,
+      markup.split("Weather details unavailable for this day").length - 1,
     ).toBe(1);
-    expect(
-      markup.split("home.sections.forecast.weatherDetails.fullCalendarDayNote")
-        .length - 1,
-    ).toBe(1);
+    expect(markup.split("(Full calendar day)").length - 1).toBe(1);
   });
 
   it("hides weather details when the toggle is off", () => {
+    fixtures.useWeatherForecast = true;
     weatherDetailsPreference.show = false;
-    const markup = renderToStaticMarkup(
-      <MantineProvider>
-        <ForecastSection />
-      </MantineProvider>,
-    );
+    const markup = renderForecastMarkup();
 
-    expect(markup).toContain("home.sections.forecast.title");
-    expect(markup).toContain("home.sections.forecast.weatherDetails.title");
-    expect(markup).not.toContain(
-      "home.sections.forecast.weatherDetails.units.celsius:31.0",
-    );
-    expect(markup).not.toContain(
-      "home.sections.forecast.weatherDetails.unavailableForDay",
-    );
-    expect(markup).not.toContain(
-      "home.sections.forecast.weatherDetails.fullCalendarDayNote",
-    );
+    expect(markup).toContain("Forecasted risk");
+    expect(markup).toContain("Weather details");
+    expect(markup).not.toContain("31.0°C");
+    expect(markup).not.toContain("Weather details unavailable for this day");
+    expect(markup).not.toContain("(Full calendar day)");
   });
 });

@@ -6,6 +6,7 @@ import {
   isWeatherMetricAvailable,
 } from "@/domain/weatherDetailsRegistry";
 import type { DayWeatherDetails } from "@/domain/weatherSummary";
+import { toIntlLocale } from "@/i18n/language";
 import { formatWeatherMetricValue } from "@/lib/formatWeatherDetails";
 
 interface WeatherTemperatureGroupCellProps {
@@ -20,7 +21,8 @@ export function WeatherTemperatureGroupCell({
   group,
   details,
 }: WeatherTemperatureGroupCellProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const locale = toIntlLocale(i18n.resolvedLanguage);
   const primaryMetric = getWeatherMetricDefinition(group.primaryField);
   const detailLines = group.detailFields
     .filter((field) => isWeatherMetricAvailable(details, field))
@@ -29,7 +31,7 @@ export function WeatherTemperatureGroupCell({
 
       return t("home.sections.forecast.weatherDetails.labelValue", {
         label: t(metric.labelKey),
-        value: formatWeatherMetricValue(details, metric, t),
+        value: formatWeatherMetricValue(details, metric, t, locale),
       });
     });
 
@@ -42,7 +44,7 @@ export function WeatherTemperatureGroupCell({
   return (
     <WeatherMetricCell
       label={t(primaryMetric.labelKey)}
-      value={formatWeatherMetricValue(details, primaryMetric, t)}
+      value={formatWeatherMetricValue(details, primaryMetric, t, locale)}
       details={detailLines}
     />
   );
