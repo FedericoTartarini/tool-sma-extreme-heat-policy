@@ -8,9 +8,9 @@ import {
   Title,
   UnstyledButton,
 } from "@mantine/core";
-import { useFocusReturn, useHover } from "@mantine/hooks";
-import { useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useFocusReturn } from "@mantine/hooks";
+import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CurrentRiskRecommendationsSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RecommendationActionGrid } from "@/components/home/recommendations/RecommendationActionGrid";
@@ -29,7 +29,6 @@ import { useCoolingSelectionStore } from "@/store/coolingSelectionStore";
  */
 export function CurrentRiskRecommendationsSection() {
   const { t } = useTranslation();
-  const { hovered: editHovered, ref: editRef } = useHover<HTMLSpanElement>();
   const isMobile = useIsMobileViewport();
   const heatRisk = useHomeHeatRisk();
   const selection = useCoolingSelectionStore((state) => state.selection);
@@ -37,14 +36,50 @@ export function CurrentRiskRecommendationsSection() {
     (state) => state.saveSelection,
   );
   const [activeDialog, setActiveDialog] = useState<
-    "preferences" | "details" | null
+    "preferences" | "details" | "returning-details" | null
   >(null);
-  // Dialogs unmount on close; keep focus restoration in their mounted parent.
-  useFocusReturn({ opened: activeDialog !== null });
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const detailsScrollTop = useRef<number | null>(null);
+  const isDetailsOpen =
+    activeDialog === "details" || activeDialog === "returning-details";
+  const setEditButtonRef = useCallback((button: HTMLButtonElement | null) => {
+    editButtonRef.current = button;
+    if (!button || detailsScrollTop.current === null) return;
+    const dialog = button.closest<HTMLElement>('[role="dialog"]');
+    if (dialog) dialog.scrollTop = detailsScrollTop.current;
+    detailsScrollTop.current = null;
+    button.scrollIntoView({ block: "nearest" });
+  }, []);
   const mobileModalOffset = `var(--mantine-spacing-${CONTENT_PADDING.base})`;
   const content = heatRisk.hasCalculatedRisk
     ? getRecommendationDetailContent(heatRisk.riskLevel, t)
     : null;
+  // Switching dialogs keeps the Home trigger; return there only after leaving both.
+  useFocusReturn({
+    opened:
+      activeDialog === "preferences" || (isDetailsOpen && content !== null),
+  });
+  const openPreferences = () => {
+    detailsScrollTop.current =
+      editButtonRef.current?.closest<HTMLElement>('[role="dialog"]')
+        ?.scrollTop ?? 0;
+    setActiveDialog("preferences");
+  };
+  const returnToDetails = () => {
+    if (!content) {
+      detailsScrollTop.current = null;
+      setActiveDialog(null);
+      sectionRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    if (content.level !== "high") detailsScrollTop.current = null;
+    setActiveDialog("returning-details");
+  };
+  const closeDetails = () => {
+    detailsScrollTop.current = null;
+    setActiveDialog(null);
+  };
   const modalTitle = (
     <Title order={2} fz={{ base: "h3", sm: "h2" }}>
       {t("recommendations.modal.title")}
@@ -54,27 +89,7 @@ export function CurrentRiskRecommendationsSection() {
   return (
     <>
       <SectionCard title={t("home.sections.keyRecommendations.title")}>
-        <Stack gap={CONTENT_GAP}>
-          <UnstyledButton
-            onClick={() => setActiveDialog("preferences")}
-            aria-haspopup="dialog"
-          >
-            <Text span c="dimmed" size="sm" style={{ whiteSpace: "nowrap" }}>
-              <Trans
-                i18nKey="home.coolingPreferences.entry"
-                components={{
-                  edit: (
-                    <Text
-                      span
-                      ref={editRef}
-                      c={editHovered ? "gray.7" : "dimmed"}
-                      td="underline"
-                    />
-                  ),
-                }}
-              />
-            </Text>
-          </UnstyledButton>
+        <Stack ref={sectionRef} tabIndex={-1} gap={CONTENT_GAP}>
           {content ? (
             <>
               <Paper withBorder p={CONTENT_PADDING} bg="gray.0">
@@ -117,13 +132,13 @@ export function CurrentRiskRecommendationsSection() {
         <CoolingPreferencesModal
           selection={selection}
           onSave={saveSelection}
-          onClose={() => setActiveDialog(null)}
+          onClose={returnToDetails}
         />
       ) : null}
-      {activeDialog === "details" && content ? (
+      {isDetailsOpen && content ? (
         <Modal
           opened
-          onClose={() => setActiveDialog(null)}
+          onClose={closeDetails}
           title={modalTitle}
           centered={!isMobile}
           xOffset={isMobile ? mobileModalOffset : undefined}
@@ -133,6 +148,9 @@ export function CurrentRiskRecommendationsSection() {
           <HomeRecommendationDetails
             content={content}
             selection={selection}
+            onEditPreferences={openPreferences}
+            editButtonRef={setEditButtonRef}
+            focusEditOnMount={activeDialog === "returning-details"}
             footer={
               <Button
                 component={Link}
@@ -140,7 +158,7 @@ export function CurrentRiskRecommendationsSection() {
                 variant="light"
                 color="brand"
                 fullWidth={isMobile}
-                onClick={() => setActiveDialog(null)}
+                onClick={closeDetails}
               >
                 {t("recommendations.modal.viewAllCta")}
               </Button>

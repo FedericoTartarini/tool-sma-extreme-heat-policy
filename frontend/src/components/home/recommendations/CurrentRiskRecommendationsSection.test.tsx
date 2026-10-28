@@ -37,14 +37,6 @@ function renderSection() {
   );
 }
 
-function entryText(markup: string): string {
-  return (
-    markup.match(
-      /<button\b[^>]*aria-haspopup="dialog"[^>]*>[\s\S]*?<\/button>/,
-    )?.[0] ?? ""
-  ).replace(/<[^>]*>/g, "");
-}
-
 describe("CurrentRiskRecommendationsSection cooling preferences", () => {
   beforeEach(async () => {
     await i18n.changeLanguage("en");
@@ -57,41 +49,47 @@ describe("CurrentRiskRecommendationsSection cooling preferences", () => {
     preferences.selection = { configured: false };
   });
 
-  it.each(RISK_LEVELS)("offers setup at %s risk", (level) => {
-    heatRisk.riskLevel = level;
-    const markup = renderSection();
+  it.each(RISK_LEVELS)(
+    "keeps Home free of the preferences entry at %s risk",
+    (level) => {
+      heatRisk.riskLevel = level;
+      const markup = renderSection();
 
-    expect(entryText(markup)).toBe("Personalise cooling advice · Edit");
-    expect(markup).toContain('aria-haspopup="dialog"');
-    expect(markup).not.toContain('role="dialog"');
-  });
+      expect(markup).not.toContain("Personalise cooling advice");
+      expect(markup).not.toContain("Cooling preferences");
+      expect(markup.match(/<button\b/g)).toHaveLength(1);
+      expect(markup).toContain('aria-haspopup="dialog"');
+      expect(markup).not.toContain('role="dialog"');
+    },
+  );
 
-  it("offers setup while recommendations are loading", () => {
+  it("shows only the skeleton while recommendations are loading", () => {
     heatRisk.hasCalculatedRisk = false;
     heatRisk.riskLevel = null;
 
-    expect(entryText(renderSection())).toBe(
-      "Personalise cooling advice · Edit",
-    );
+    const markup = renderSection();
+    expect(markup).not.toContain("Personalise cooling advice");
+    expect(markup).not.toContain("<button");
   });
 
   it.each<CoolingSelection>([
     { configured: false },
     { configured: true, selectedOptionIds: ["fans"] },
     { configured: true, selectedOptionIds: [] },
-  ])("uses the same entry without changing saved state %j", (selection) => {
-    preferences.selection = selection;
+  ])(
+    "does not expose a Home preferences entry or change saved state %j",
+    (selection) => {
+      preferences.selection = selection;
 
-    expect(entryText(renderSection())).toBe(
-      "Personalise cooling advice · Edit",
-    );
-    expect(preferences.selection).toEqual(selection);
-  });
+      expect(renderSection()).not.toContain("Personalise cooling advice");
+      expect(preferences.selection).toEqual(selection);
+    },
+  );
 
-  it("translates the complete entry in Chinese", async () => {
+  it("keeps the Chinese Home free of a preferences entry", async () => {
     await i18n.changeLanguage("zh-CN");
 
-    expect(entryText(renderSection())).toBe("设置个性化降温建议 · 编辑");
+    expect(renderSection()).not.toContain("设置个性化降温建议");
   });
 
   it.each<CoolingSelection>([

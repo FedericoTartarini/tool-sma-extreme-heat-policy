@@ -245,7 +245,13 @@
     "coolingPreferences": {
       "prepareReminder": "请至少准备一种降温方法，以帮助管理高温风险。",
       "title": "降温偏好设置",
-      "entry": "设置个性化降温建议 · <edit>编辑</edit>",
+      "status": {
+        "notSetUp": "尚未设置",
+        "personalised": "已个性化",
+        "noneSelected": "未选择降温方法"
+      },
+      "edit": "编辑",
+      "editAriaLabel": "编辑降温偏好",
       "optionsLabel": "选择现场可用的降温方法",
       "emptyHint": "如果没有可用方法，请保持所有选项未勾选并保存。",
       "save": "保存",

@@ -245,7 +245,13 @@
     "coolingPreferences": {
       "prepareReminder": "Please prepare at least one cooling method to help manage heat risk.",
       "title": "Cooling preferences",
-      "entry": "Personalise cooling advice · <edit>Edit</edit>",
+      "status": {
+        "notSetUp": "Not set up",
+        "personalised": "Personalised",
+        "noneSelected": "No methods selected"
+      },
+      "edit": "Edit",
+      "editAriaLabel": "Edit cooling preferences",
       "optionsLabel": "Select the cooling methods available on site",
       "emptyHint": "If none are available, leave all options unchecked and save.",
       "save": "Save",

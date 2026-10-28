@@ -24,6 +24,7 @@ function renderDetails(
       <HomeRecommendationDetails
         content={content}
         selection={selection}
+        onEditPreferences={() => undefined}
         footer={<span>View all recommendations</span>}
       />
     </I18nextProvider>,
@@ -91,6 +92,64 @@ describe("HomeRecommendationDetails", () => {
       }
     },
   );
+  it.each([
+    {
+      language: "en",
+      selection: states[0],
+      status: "Not set up",
+      edit: "Edit cooling preferences",
+    },
+    {
+      language: "en",
+      selection: states[1],
+      status: "Personalised",
+      edit: "Edit cooling preferences",
+    },
+    {
+      language: "en",
+      selection: states[2],
+      status: "No methods selected",
+      edit: "Edit cooling preferences",
+    },
+    {
+      language: "zh-CN",
+      selection: states[0],
+      status: "尚未设置",
+      edit: "编辑降温偏好",
+    },
+    {
+      language: "zh-CN",
+      selection: states[1],
+      status: "已个性化",
+      edit: "编辑降温偏好",
+    },
+    {
+      language: "zh-CN",
+      selection: states[2],
+      status: "未选择降温方法",
+      edit: "编辑降温偏好",
+    },
+  ])(
+    "shows $status inline after the settings label with an accessible Edit button before the advice list",
+    async ({ language, selection, status, edit }) => {
+      await i18n.changeLanguage(language);
+      const { markup, content } = renderDetails("high", selection);
+      expect(markup).toContain(status);
+      const title = language === "en" ? "Cooling preferences" : "降温偏好设置";
+      expect(markup).toMatch(new RegExp(`<p[^>]*>${title}: `));
+      expect(markup.indexOf(title)).toBeLessThan(markup.indexOf(status));
+      expect(markup).toContain(`aria-label="${edit}"`);
+      expect(markup).toContain('aria-haspopup="dialog"');
+      expect(markup.match(/<button\b/g)).toHaveLength(1);
+      expect(markup.indexOf(status)).toBeGreaterThan(
+        markup.indexOf(content.description),
+      );
+      expect(markup.indexOf(status)).toBeLessThan(
+        markup.indexOf(i18n.t("recommendations.detailed.youShouldLabel")),
+      );
+    },
+  );
+
   it("leaves shared detailed content complete after Home personalisation", () => {
     const { content } = renderDetails("high", states[1]);
     const complete = renderWithAppTheme(
