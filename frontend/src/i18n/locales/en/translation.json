@@ -300,7 +300,7 @@
             "humidityAtMinPct": "Humidity @ min",
             "avgWindSpeedMs": "Avg wind speed",
             "uvIndexMax": "Max UV index",
-            "cumulativeRainfallMm": "Precipitation",
+            "cumulativeRainfallMm": "Daily total",
             "precipProbMaxPct": "Max precip prob",
             "sunriseLocal": "Sunrise",
             "sunsetLocal": "Sunset"

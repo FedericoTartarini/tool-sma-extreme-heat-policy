@@ -70,7 +70,7 @@ describe("WeatherTemperatureGroupCell", () => {
       </MantineProvider>,
     );
 
-    expect(markup).not.toContain("@ 2 PM");
+    expect(markup).not.toContain("@ 2 pm");
     expect(markup).toContain(
       "home.sections.forecast.weatherDetails.metrics.humidityAtMaxPct",
     );
@@ -98,6 +98,6 @@ describe("WeatherTemperatureGroupCell", () => {
     expect(markup).not.toContain(
       "home.sections.forecast.weatherDetails.metrics.maxTempC",
     );
-    expect(markup).not.toContain("@ 2 PM");
+    expect(markup).not.toContain("@ 2 pm");
   });
 });

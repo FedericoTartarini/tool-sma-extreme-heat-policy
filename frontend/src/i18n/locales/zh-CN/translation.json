@@ -300,7 +300,7 @@
             "humidityAtMinPct": "最低温时湿度",
             "avgWindSpeedMs": "平均风速",
             "uvIndexMax": "最大紫外线指数",
-            "cumulativeRainfallMm": "降水量",
+            "cumulativeRainfallMm": "全天总量",
             "precipProbMaxPct": "最高降水概率",
             "sunriseLocal": "日出",
             "sunsetLocal": "日落"

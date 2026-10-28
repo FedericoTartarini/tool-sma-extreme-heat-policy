@@ -227,12 +227,15 @@ Example response:
        warning level and only sets that output to `null` for every day.
      - a missing `daily` block or `daily.time` series is logged at warning
        level and leaves those four outputs `null` for every day.
-     - a daily row with an invalid date is logged and skipped, and that row
-       is omitted. It does not clear outputs for any day built from hours.
+     - a daily row with an invalid date is logged and skipped. If hourly data
+       covers that date, the day is still returned with its hourly-derived
+       values, but its `sunrise_local`, `sunset_local`, `precip_prob_max_pct`
+       and `cumulative_rainfall_mm` are `null`.
      - an invalid sunrise or sunset is logged and only clears that output.
        A non-numeric or non-finite `precipitation_probability_max` or
        `precipitation_sum` value sets only that output to `null` without
-       logging.
+       logging. A boolean value is read as a number (`true` as 1, `false`
+       as 0).
    - Every metric inside a `daily_weather` row is nullable. Missing values are
      returned as `null`; the keys are always present.
    - `daily_weather` also includes calendar-day temperature, humidity, UV max

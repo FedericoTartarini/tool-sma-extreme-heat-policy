@@ -143,6 +143,7 @@ function renderChartLabels(timeZone: string): string[] {
 
 describe("ForecastSection", () => {
   it("names every chart after its own day", () => {
+    // These names are the only way a screen reader user tells the charts apart.
     const labels = renderChartLabels("Australia/Sydney");
 
     expect(labels).toHaveLength(2);
@@ -153,6 +154,8 @@ describe("ForecastSection", () => {
   });
 
   it("reads those days in the forecast's time zone, not the machine's", () => {
+    // Comparing two zones keeps this honest wherever the suite runs: if the
+    // time zone were ignored, both renders would produce the same name.
     const sydney = renderChartLabels("Australia/Sydney");
     const utc = renderChartLabels("UTC");
 

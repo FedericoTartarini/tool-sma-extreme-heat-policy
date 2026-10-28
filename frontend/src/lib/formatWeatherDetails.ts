@@ -8,7 +8,10 @@ import {
 import { formatLocalTimeLabel } from "@/lib/localTimeLabel";
 
 function formatNumericValue(value: number, decimals: number): string {
-  return value.toFixed(decimals);
+  const formatted = value.toFixed(decimals);
+
+  // Small negatives round to "-0.0"; a zero reading carries no sign.
+  return Number(formatted) === 0 ? (0).toFixed(decimals) : formatted;
 }
 
 /**
@@ -18,7 +21,7 @@ export function formatWeatherValueAtTime(
   value: string,
   time: string | null | undefined,
   t: TFunction,
-  locale?: string,
+  locale: string,
 ): string {
   if (time === null || time === undefined || time.trim().length === 0) {
     return value;
@@ -37,7 +40,7 @@ export function formatWeatherMetricValue(
   details: DayWeatherDetails,
   metric: WeatherDetailsMetricDefinition,
   t: TFunction,
-  locale?: string,
+  locale: string,
 ): string {
   const rawValue = getWeatherMetricValue(details, metric.field);
 

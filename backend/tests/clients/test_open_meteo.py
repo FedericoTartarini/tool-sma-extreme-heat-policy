@@ -794,10 +794,20 @@ async def test_fetch_weather_forecast_clears_only_the_unusable_daily_series(
     assert expected_warning in caplog.text
 
 
-async def test_fetch_weather_forecast_clears_precipitation_when_daily_units_are_missing(
+@pytest.mark.parametrize(
+    "mutate_payload",
+    [
+        pytest.param(lambda payload: payload.pop("daily_units"), id="missing"),
+        pytest.param(lambda payload: payload.__setitem__("daily_units", ["%"]), id="list"),
+        pytest.param(lambda payload: payload.__setitem__("daily_units", "mm"), id="string"),
+        pytest.param(lambda payload: payload.__setitem__("daily_units", None), id="null"),
+    ],
+)
+async def test_fetch_weather_forecast_clears_precipitation_when_daily_units_are_unusable(
     caplog: pytest.LogCaptureFixture,
+    mutate_payload,
 ) -> None:
-    """A missing daily units block clears precipitation only and keeps the risk forecast."""
+    """A missing or non-object daily units block clears precipitation and keeps the forecast."""
 
     now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
     payload = _hourly_payload(
@@ -807,7 +817,7 @@ async def test_fetch_weather_forecast_clears_precipitation_when_daily_units_are_
         wind=[1.5],
         radiation=[720.0],
     )
-    payload.pop("daily_units")
+    mutate_payload(payload)
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(status_code=200, json=payload)
