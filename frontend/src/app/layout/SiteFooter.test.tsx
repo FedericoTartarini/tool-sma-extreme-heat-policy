@@ -29,4 +29,19 @@ describe("SiteFooter", () => {
       expect(logoImage).toContain('loading="lazy"');
     }
   });
+
+  it("renders the citation as one paragraph that links to the paper", () => {
+    const markup = renderWithAppTheme(<SiteFooter />);
+
+    const citation = markup
+      .match(/<p\b[^>]*>(.*?)<\/p>/g)
+      ?.find((paragraph) => paragraph.includes("footer.citePrompt"));
+    expect(citation).toBeDefined();
+    expect(citation).toContain(
+      'href="https://doi.org/10.1016/j.jsams.2025.03.006"',
+    );
+    expect(citation).toContain("footer.paperTitle");
+    expect(citation).toContain("footer.authors");
+    expect(citation).toContain("footer.journal");
+  });
 });
