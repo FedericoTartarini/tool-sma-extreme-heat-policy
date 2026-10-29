@@ -214,7 +214,8 @@ Example response:
 - The risk service keeps an in-memory TTL cache keyed by
   `sport + profile + latitude + longitude`.
 - Latitude and longitude are formatted to six decimal places in cache keys.
-  Coordinates that differ only beyond the sixth decimal share the same cache entry.
+  Coordinates share a cache entry only when their six-decimal formatted values match;
+  values that differ beyond the sixth decimal can still round to different keys.
 - Requests from different users will reuse cached results only when they hit the
   same backend process.
 - The cache is not shared across multiple server instances.

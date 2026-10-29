@@ -64,19 +64,30 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
     [hasUrlState],
   );
 
+  const defaultLocationLabel = hasUrlState
+    ? ""
+    : t("home.sections.filters.defaultLocation");
+
   const bootstrapState = useMemo<HomeStoreBootstrapPayload>(
     () =>
       resolveHomeBootstrapState({
         hasUrlState,
         defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
         defaultSport: DEFAULT_SPORT_TYPE,
-        defaultLocationLabel: t("home.sections.filters.defaultLocation"),
+        defaultLocationLabel,
         urlProfile,
         urlSport,
         urlLocation,
         persistedFilters,
       }),
-    [hasUrlState, persistedFilters, t, urlLocation, urlProfile, urlSport],
+    [
+      defaultLocationLabel,
+      hasUrlState,
+      persistedFilters,
+      urlLocation,
+      urlProfile,
+      urlSport,
+    ],
   );
 
   useLayoutEffect(() => {

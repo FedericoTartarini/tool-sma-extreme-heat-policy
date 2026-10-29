@@ -1,5 +1,5 @@
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DashboardScheduleFields } from "@/components/dashboard/DashboardScheduleFields";
 import {
@@ -49,20 +49,13 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
   } = useDashboardLocationAdd();
   const isAddFormDisabled = !canAddMoreCards || isResolvingLocation;
 
-  useEffect(() => {
-    if (addErrorReason) {
-      onAddError?.(addErrorReason);
-    }
-  }, [addErrorReason, onAddError]);
-
   const handleAddCardClick = () => {
-    const cardCountBeforeAdd = useDashboardStore.getState().cards.length;
-    onAddCardClick();
-    const cardCountAfterAdd = useDashboardStore.getState().cards.length;
-
-    if (cardCountAfterAdd > cardCountBeforeAdd) {
-      setIsAddModalOpen(false);
+    const failureReason = onAddCardClick();
+    if (failureReason) {
+      onAddError?.(failureReason);
+      return;
     }
+    setIsAddModalOpen(false);
   };
 
   return (
@@ -103,6 +96,17 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
             onChange={onLocationSearchInputChange}
             onOptionSubmit={onLocationOptionSubmit}
           />
+
+          {addErrorReason ? (
+            <Group wrap="nowrap" align="flex-start" gap={CONTENT_GAP}>
+              <Box w={FILTER_FIELD_LABEL_WIDTH} visibleFrom="xs" />
+              <Text c="red" fz="sm" flex={1}>
+                {t(`dashboard.errors.${addErrorReason}`, {
+                  maxCards: MAX_DASHBOARD_CARDS,
+                })}
+              </Text>
+            </Group>
+          ) : null}
 
           <SportSelectField
             value={draftSport}

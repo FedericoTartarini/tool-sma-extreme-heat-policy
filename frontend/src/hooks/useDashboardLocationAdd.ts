@@ -46,7 +46,7 @@ interface UseDashboardLocationAddResult {
   onDraftEndMinutesChange: (minutes: number | null) => void;
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
-  onAddCardClick: () => void;
+  onAddCardClick: () => DashboardLocationAddErrorReason | null;
 }
 
 function getLanguagePreference(): string | undefined {
@@ -102,8 +102,6 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
   const addCard = useDashboardStore((state) => state.addCard);
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
-  const [addErrorReason, setAddErrorReason] =
-    useState<DashboardLocationAddErrorReason | null>(null);
   const [draftWeekdays, setDraftWeekdays] = useState<readonly Weekday[]>([]);
   const [draftStartMinutes, setDraftStartMinutes] = useState<number | null>(
     null,
@@ -208,7 +206,6 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
     selectedSuggestion: LocationSuggestion,
   ) => {
     setIsResolvingLocation(true);
-    setAddErrorReason(null);
 
     const mapboxId = selectedSuggestion.mapboxId;
     const suggestionSessionToken = selectedSuggestion.sessionToken;
@@ -227,10 +224,7 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
         hasMapboxToken,
         mapboxAccessToken,
         request,
-        selectLocation: (resolvedSuggestion) => {
-          setDraftLocation(resolvedSuggestion);
-          setAddErrorReason(null);
-        },
+        selectLocation: setDraftLocation,
         setHasRetrieveError,
       });
     } finally {
@@ -243,10 +237,6 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
 
     if (hasRetrieveError) {
       setHasRetrieveError(false);
-    }
-
-    if (addErrorReason) {
-      setAddErrorReason(null);
     }
 
     setLocationSearchInput(value);
@@ -265,32 +255,28 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
     void resolveDraftLocation(selectedSuggestion);
   };
 
-  const onAddCardClick = () => {
+  const onAddCardClick = (): DashboardLocationAddErrorReason | null => {
     if (!canAddMoreCards) {
-      setAddErrorReason("max_reached");
-      return;
+      return "max_reached";
     }
 
     if (!hasResolvedCoordinates(draftLocation)) {
-      setAddErrorReason("missing_draft_location");
-      return;
+      return "missing_draft_location";
     }
 
     if (scheduleDraft.status !== "complete") {
-      setAddErrorReason("invalid_schedule");
-      return;
+      return "invalid_schedule";
     }
 
     const result = addCard(draftSport, draftLocation, scheduleDraft.schedule);
     if (!result.ok) {
-      setAddErrorReason(result.reason);
-      return;
+      return result.reason;
     }
 
-    setAddErrorReason(null);
     setDraftWeekdays([]);
     setDraftStartMinutes(null);
     setDraftEndMinutes(null);
+    return null;
   };
 
   return {
@@ -301,7 +287,7 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
     isShowingCommittedDraftLocation,
     canAddMoreCards,
     canSubmitAdd,
-    addErrorReason: addErrorReason ?? resolveSuggestErrorReason(),
+    addErrorReason: resolveSuggestErrorReason(),
     draftWeekdays,
     draftStartMinutes,
     draftEndMinutes,

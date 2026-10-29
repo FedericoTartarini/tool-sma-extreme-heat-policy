@@ -157,6 +157,31 @@ describe("resolveHomeBootstrapState", () => {
     ).toBe(false);
   });
 
+  it("keeps the current store while the URL location is still resolving", () => {
+    const bootstrapState = resolveHomeBootstrapState({
+      hasUrlState: true,
+      defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+      defaultSport: DEFAULT_SPORT_TYPE,
+      defaultLocationLabel: "",
+      urlProfile: null,
+      urlSport: SportType.Running,
+      urlLocation: "Perth, Western Australia, Australia",
+      persistedFilters: null,
+    });
+
+    expect(
+      shouldRebootstrapHomeFromUrl(
+        {
+          profile: DEFAULT_HEAT_RISK_PROFILE,
+          sport: SportType.Running,
+          locationSearchInput: "Perth, Western Australia, Australia",
+          selectedLocationDisplayLabel: null,
+        },
+        bootstrapState,
+      ),
+    ).toBe(false);
+  });
+
   it("leaves prefilled location resolve idle when no location is available", () => {
     expect(
       resolveHomeBootstrapState({
