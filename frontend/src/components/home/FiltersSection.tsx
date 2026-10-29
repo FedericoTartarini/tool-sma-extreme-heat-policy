@@ -24,6 +24,10 @@ import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
 } from "@/hooks/useHomeLocationSuggest";
+import {
+  getSportImageFailureUrl,
+  type SportImageFailure,
+} from "@/lib/sportImageFailure";
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
@@ -60,9 +64,8 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const savedLocations = useSavedLocationsStore(
     (state) => state.savedLocations,
   );
-  const [failedSportImageUrl, setFailedSportImageUrl] = useState<string | null>(
-    null,
-  );
+  const [sportImageFailure, setSportImageFailure] =
+    useState<SportImageFailure | null>(null);
 
   /*
   const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
@@ -95,6 +98,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     [sport, sportOptions, t],
   );
   const sportImage = selectedSportMeta.image;
+  const failedSportImageUrl = getSportImageFailureUrl(sportImageFailure, sport);
 
   const {
     locationSearchInput,
@@ -177,8 +181,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   };
 
   const handleSportChange = (value: string | null) => {
-    setFailedSportImageUrl(null);
-
     if (value === null) {
       return;
     }
@@ -290,7 +292,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
           image={sportImage}
           sportLabel={selectedSportLabel}
           failedImageUrl={failedSportImageUrl}
-          onImageLoadFailure={setFailedSportImageUrl}
+          onImageLoadFailure={(url) => setSportImageFailure({ sport, url })}
         />
       </Stack>
       <SaveLocationModal
