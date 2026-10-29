@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 
 # Virtual env and tool caches
-.venv/
+.venv
 .pytest_cache/
 .ruff_cache/
 

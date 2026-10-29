@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     )
     http_timeout_seconds: float = Field(default=3.0, alias="HTTP_TIMEOUT_SECONDS")
     risk_cache_ttl_seconds: int = Field(default=600, alias="RISK_CACHE_TTL_SECONDS")
+    risk_cache_max_entries: int = Field(default=200, ge=1, alias="RISK_CACHE_MAX_ENTRIES")
 
     model_config = SettingsConfigDict(
         env_file=".env",

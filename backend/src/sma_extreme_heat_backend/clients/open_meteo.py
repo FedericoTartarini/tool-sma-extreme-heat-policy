@@ -284,7 +284,7 @@ class OpenMeteoClient:
             try:
                 response = await self._client.get("/forecast", params=params)
                 response.raise_for_status()
-                return response.json()
+                return _decode_weather_payload(response)
             except httpx.HTTPStatusError as exc:
                 status_code = exc.response.status_code
                 if not _is_retryable_status_code(status_code) or attempt == max_attempts:
@@ -332,6 +332,19 @@ class OpenMeteoClient:
 
         if self._owns_client:
             await self._client.aclose()
+
+
+def _decode_weather_payload(response: httpx.Response) -> dict[str, Any]:
+    """Decode the Open-Meteo body, rejecting malformed JSON and non-object payloads."""
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise WeatherProviderError("Weather provider response was not valid JSON") from exc
+
+    if not isinstance(payload, dict):
+        raise WeatherProviderError("Weather provider response was not a JSON object")
+    return payload
 
 
 def _is_retryable_status_code(status_code: int) -> bool:

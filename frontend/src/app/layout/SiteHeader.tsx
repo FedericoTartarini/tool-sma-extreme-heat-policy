@@ -16,6 +16,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { CONTENT_PADDING } from "@/config/uiLayout";
 import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { DETAILED_RECOMMENDATIONS_PATH } from "@/lib/recommendationRouteState";
 
 const NAV_DRAWER_SIZE_MOBILE = "66.67vw";
 const NAV_DRAWER_SIZE_DESKTOP = "md";
@@ -39,7 +40,7 @@ export function SiteHeader() {
     { label: t("nav.dashboard"), to: "/dashboard" },
     {
       label: t("nav.detailedRecommendations"),
-      to: "/detailed-recommendations",
+      to: DETAILED_RECOMMENDATIONS_PATH,
     },
   ];
 

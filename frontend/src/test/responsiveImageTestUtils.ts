@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { expect } from "vitest";
 import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
+/**
+ * Asserts that every file referenced by an image's `src` and `srcSet` exists
+ * under `public/`.
+ */
 export function expectResponsiveImageFilesToExist(
   image: ResponsiveImageAsset,
   assetName: string,
