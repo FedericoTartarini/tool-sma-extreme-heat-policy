@@ -154,6 +154,38 @@ def _install_mrt_pipeline(
     )
 
 
+async def test_risk_service_passes_expected_inputs_to_calculator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The calculator should receive the complete expected model input."""
+
+    calculator = FakeCalculator()
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=FakeWeatherClient(),
+        calculator=calculator,
+        ttl_seconds=600,
+        max_entries=1000,
+    )
+
+    await service.calculate_home_risk(
+        RiskRequest(
+            sport="SOCCER",
+            latitude=-33.847,
+            longitude=151.067,
+            profile="ADULT",
+        )
+    )
+
+    assert calculator.payloads[0] == SportsHeatStressInput(
+        sport="SOCCER",
+        tdb=31.0,
+        rh=62.0,
+        vr=1.02,
+        tr=37.25,
+    )
+
+
 async def test_risk_service_uses_ttl_cache_for_same_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -167,6 +199,7 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     payload = RiskRequest(
@@ -263,6 +296,108 @@ async def test_risk_service_uses_ttl_cache_for_same_input(
     ]
 
 
+class FakeClock:
+    """Manually advanced monotonic clock for cache expiry tests."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+def _payload_at(latitude: float) -> RiskRequest:
+    """Build a request whose cache key differs only by latitude."""
+
+    return RiskRequest(sport="SOCCER", latitude=latitude, longitude=151.067, profile="ADULT")
+
+
+async def test_risk_service_reuses_cache_within_ttl_and_refetches_after_expiry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A key is a cache hit until its TTL elapses, then it is fetched again."""
+
+    weather_client = FakeWeatherClient(expected_latitude=None)
+    clock = FakeClock()
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=weather_client,
+        calculator=FakeCalculator(),
+        ttl_seconds=600,
+        max_entries=1000,
+        clock=clock,
+    )
+
+    await service.calculate_home_risk(_payload_at(-33.0))
+    clock.now = 599.0
+    await service.calculate_home_risk(_payload_at(-33.0))
+    assert weather_client.calls == 1
+
+    clock.now = 600.0
+    await service.calculate_home_risk(_payload_at(-33.0))
+    assert weather_client.calls == 2
+
+
+async def test_risk_service_prunes_expired_entries_for_other_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Expired entries are deleted when any later request touches the cache."""
+
+    clock = FakeClock()
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=FakeWeatherClient(expected_latitude=None),
+        calculator=FakeCalculator(),
+        ttl_seconds=600,
+        max_entries=1000,
+        clock=clock,
+    )
+
+    await service.calculate_home_risk(_payload_at(-33.0))
+    clock.now = 300.0
+    await service.calculate_home_risk(_payload_at(-34.0))
+    clock.now = 650.0
+    await service.calculate_home_risk(_payload_at(-35.0))
+
+    assert list(service._cache) == [
+        service._cache_key(_payload_at(-34.0)),
+        service._cache_key(_payload_at(-35.0)),
+    ]
+
+
+async def test_risk_service_evicts_oldest_inserted_entry_beyond_max_entries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The cache never exceeds its size limit and evicts in insertion order."""
+
+    weather_client = FakeWeatherClient(expected_latitude=None)
+    _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe())
+    service = RiskService(
+        weather_client=weather_client,
+        calculator=FakeCalculator(),
+        ttl_seconds=600,
+        max_entries=2,
+        clock=FakeClock(),
+    )
+
+    for latitude in (-33.0, -34.0, -35.0):
+        await service.calculate_home_risk(_payload_at(latitude))
+        assert len(service._cache) <= 2
+
+    assert list(service._cache) == [
+        service._cache_key(_payload_at(-34.0)),
+        service._cache_key(_payload_at(-35.0)),
+    ]
+
+    # The evicted oldest key is fetched again, and evicts the next oldest in turn.
+    await service.calculate_home_risk(_payload_at(-33.0))
+    assert weather_client.calls == 4
+    assert list(service._cache) == [
+        service._cache_key(_payload_at(-35.0)),
+        service._cache_key(_payload_at(-33.0)),
+    ]
+
+
 async def test_risk_service_cache_key_changes_with_coordinates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -275,6 +410,7 @@ async def test_risk_service_cache_key_changes_with_coordinates(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     await service.calculate_home_risk(
@@ -319,6 +455,7 @@ async def test_risk_service_returns_local_hourly_times_for_quarter_hour_timezone
         ),
         calculator=FakeCalculator(),
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     response = await service.calculate_home_risk(
@@ -363,6 +500,7 @@ async def test_risk_service_cache_key_changes_with_profile(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     await service.calculate_home_risk(
@@ -399,11 +537,13 @@ async def test_risk_service_returns_same_forecast_for_all_profiles(
         weather_client=FakeWeatherClient(),
         calculator=FakeCalculator(),
         ttl_seconds=600,
+        max_entries=1000,
     )
     comparison_service = RiskService(
         weather_client=FakeWeatherClient(),
         calculator=FakeCalculator(),
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     adult = await adult_service.calculate_home_risk(
@@ -442,6 +582,7 @@ async def test_risk_service_uses_only_height_scaled_wind_for_lower_values(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     await service.calculate_home_risk(
@@ -468,6 +609,7 @@ async def test_risk_service_uses_only_height_scaled_wind_for_higher_values(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     response = await service.calculate_home_risk(
@@ -498,6 +640,7 @@ async def test_risk_service_skips_future_points_with_missing_inputs(
         weather_client=weather_client,
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     response = await service.calculate_home_risk(
@@ -527,6 +670,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
         weather_client=FakeWeatherClient(),
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     response = await service.calculate_home_risk(
@@ -571,6 +715,7 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
         weather_client=FakeWeatherClient(),
         calculator=calculator,
         ttl_seconds=600,
+        max_entries=1000,
     )
 
     with pytest.raises(ModelInputUnavailableError) as caught:

@@ -45,6 +45,7 @@ export const RISK_LEVELS: readonly RiskLevel[] = [
 export const RISK_RAW_SCALE_MAX = 5;
 export const RISK_DISPLAY_OFFSET = 1;
 export const RISK_DISPLAY_AXIS_MAX = RISK_RAW_SCALE_MAX - RISK_DISPLAY_OFFSET;
+export const RISK_SCORE_DISPLAY_PRECISION = 1;
 
 type RiskRegistryEntryDefinition = Omit<RiskRegistryEntry, "keyIconAssets">;
 
@@ -179,6 +180,16 @@ export function toRiskDisplayScore(score: number): number | null {
     Math.max(score - RISK_DISPLAY_OFFSET, 0),
     RISK_DISPLAY_AXIS_MAX,
   );
+}
+
+/**
+ * Formats a raw risk score for display.
+ *
+ * Every surface that quotes a score goes through this, so the chart tooltip and
+ * the screen-reader text cannot drift to different precisions.
+ */
+export function formatRiskScore(score: number): string {
+  return score.toFixed(RISK_SCORE_DISPLAY_PRECISION);
 }
 
 /**
