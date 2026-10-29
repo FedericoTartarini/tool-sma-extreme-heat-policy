@@ -13,6 +13,10 @@ interface SportImagePreviewProps {
   onImageLoadFailure: (url: string) => void;
 }
 
+/**
+ * Renders the selected sport's image, or a fallback message when no image is
+ * configured or the image failed to load.
+ */
 export function SportImagePreview({
   image,
   sportLabel,

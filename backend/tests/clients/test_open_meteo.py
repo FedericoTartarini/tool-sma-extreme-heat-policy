@@ -1068,3 +1068,61 @@ async def test_fetch_weather_forecast_treats_non_finite_daily_values_as_missing(
     row = weather.daily[0]
     assert row.precipitation_probability_max_pct is None
     assert row.precipitation_sum_mm is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [b'{"timezone": "UTC", "hourly": {', b"<html>Service Unavailable</html>"],
+    ids=["truncated_json", "html_body"],
+)
+async def test_fetch_weather_forecast_rejects_invalid_json_body(body: bytes) -> None:
+    """A 200 response that is not valid JSON should surface the stable provider error."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, content=body)
+
+    client, mock_client = _build_client(handler)
+
+    try:
+        await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    except WeatherProviderError as exc:
+        assert exc.status_code == 502
+        assert exc.error_code == "weather_provider_unavailable"
+        assert exc.detail == "Weather provider response was not valid JSON"
+    else:
+        raise AssertionError("Expected WeatherProviderError for invalid JSON body")
+    finally:
+        await mock_client.aclose()
+
+
+@pytest.mark.parametrize(
+    "body",
+    [b"[]", b'"forecast"', b"42", b"true", b"null"],
+    ids=["array", "string", "number", "boolean", "null"],
+)
+async def test_fetch_weather_forecast_rejects_non_object_json_body(body: bytes) -> None:
+    """A 200 response whose top-level JSON is not an object should fail validation."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=200, content=body)
+
+    client, mock_client = _build_client(handler)
+
+    try:
+        await client.fetch_weather_forecast(
+            latitude=-33.847,
+            longitude=151.067,
+            timezone_name="UTC",
+        )
+    except WeatherProviderError as exc:
+        assert exc.status_code == 502
+        assert exc.error_code == "weather_provider_unavailable"
+        assert exc.detail == "Weather provider response was not a JSON object"
+    else:
+        raise AssertionError("Expected WeatherProviderError for non-object JSON body")
+    finally:
+        await mock_client.aclose()

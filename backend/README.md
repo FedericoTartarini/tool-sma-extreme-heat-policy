@@ -265,6 +265,12 @@ Example response:
 
 - The risk service keeps an in-memory TTL cache keyed by:
   `sport + profile + latitude + longitude`
+- `RISK_CACHE_TTL_SECONDS` (default `600`) sets how long an entry is reused.
+  Expired entries are deleted on the next cache read or write, whatever its key.
+- `RISK_CACHE_MAX_ENTRIES` (default `200`, minimum `1`) caps the number of
+  entries. When a new entry would exceed it, the oldest-inserted entry is
+  evicted. A full 7-day response takes roughly 440 KiB in memory, so the
+  default keeps the cache under about 90 MiB.
 - Requests from different users will reuse cached results only when they hit the
   same backend process.
 - The cache is not shared across multiple server instances.

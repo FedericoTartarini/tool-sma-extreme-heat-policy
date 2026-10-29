@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import time
+from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import cache
@@ -68,22 +70,27 @@ class RiskService:
         weather_client: OpenMeteoClient,
         calculator: SportsHeatStressCalculator,
         ttl_seconds: int,
+        max_entries: int,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        """Store the shared collaborators and TTL used by the in-memory risk cache."""
+        """Store the shared collaborators, TTL and size limit of the in-memory risk cache."""
 
         self.weather_client = weather_client
         self.calculator = calculator
         self.ttl_seconds = ttl_seconds
-        self._cache: dict[str, CacheEntry] = {}
+        self.max_entries = max_entries
+        self._clock = clock
+        # Every entry shares one TTL, so insertion order is also expiry order.
+        self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
 
     async def calculate_home_risk(self, payload: RiskRequest) -> RiskResponse:
         """Calculate and cache a forecast-centric heat-risk response."""
 
         key = self._cache_key(payload)
-        now = time.monotonic()
+        self._prune_expired()
         cached = self._cache.get(key)
 
-        if cached and cached.expires_at > now:
+        if cached:
             return cached.value
 
         timezone_name = resolve_timezone_name(
@@ -121,13 +128,29 @@ class RiskService:
             ),
         )
 
-        self._cache[key] = CacheEntry(value=response, expires_at=now + self.ttl_seconds)
+        self._store(key, response)
         return response
 
     async def aclose(self) -> None:
         """Close the owned weather client resources."""
 
         await self.weather_client.aclose()
+
+    def _prune_expired(self) -> None:
+        """Drop expired entries, which always sit at the oldest end of the cache."""
+
+        now = self._clock()
+        while self._cache and next(iter(self._cache.values())).expires_at <= now:
+            self._cache.popitem(last=False)
+
+    def _store(self, key: str, value: RiskResponse) -> None:
+        """Insert a response as the newest entry and evict the oldest beyond the size limit."""
+
+        self._prune_expired()
+        self._cache.pop(key, None)
+        self._cache[key] = CacheEntry(value=value, expires_at=self._clock() + self.ttl_seconds)
+        while len(self._cache) > self.max_entries:
+            self._cache.popitem(last=False)
 
     @staticmethod
     def _cache_key(payload: RiskRequest) -> str:
@@ -265,6 +288,7 @@ def get_risk_service() -> RiskService:
         ),
         calculator=PythermalcomfortSportsHeatStressCalculator(),
         ttl_seconds=settings.risk_cache_ttl_seconds,
+        max_entries=settings.risk_cache_max_entries,
     )
 
 
