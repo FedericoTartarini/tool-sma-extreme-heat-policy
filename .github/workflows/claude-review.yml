@@ -2,7 +2,8 @@ name: Claude Review
 
 # CodeRabbit and Copilot review PRs into main. This workflow reviews PRs into
 # development: Haiku runs when a same-repo PR opens and on every push, Sonnet runs
-# when a maintainer or collaborator comments "@claude" on a PR.
+# when a maintainer or collaborator comments "@claude" on a PR. GitHub runs comment
+# triggers from the default branch, so @claude works once this file is on main.
 
 on:
   pull_request:
@@ -19,7 +20,7 @@ jobs:
       group: claude-review-${{ github.event.pull_request.number }}
       cancel-in-progress: true
 
-    # fork PRs get no secrets, so a maintainer reviews them with an @claude comment
+    # fork PRs get no OIDC token, so a maintainer reviews them with an @claude comment
     if: >
       github.event_name == 'pull_request' &&
       !github.event.pull_request.draft &&
@@ -37,7 +38,12 @@ jobs:
       - name: Review with Claude Haiku
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # workload identity federation: the job's GitHub OIDC token is exchanged for a
+          # short-lived Claude API token, so no API key is stored. These are IDs, not secrets.
+          anthropic_federation_rule_id: fdrl_01G4gMJTMqY5bmmZYRwSAB8a
+          anthropic_organization_id: a62f5bc4-c745-4716-b3ee-b5950d745127
+          anthropic_service_account_id: svac_0176BtXcPtyWTqQ6PXwBn1FX
+          anthropic_workspace_id: wrkspc_017KVQw4mCovgzMMzfAwJ37Q
           # posts a tracking comment that Claude fills in with the summary
           track_progress: true
           # edits the same tracking comment on every push, rather than adding one each time
@@ -93,7 +99,12 @@ jobs:
       - name: Review with Claude Sonnet
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # workload identity federation: the job's GitHub OIDC token is exchanged for a
+          # short-lived Claude API token, so no API key is stored. These are IDs, not secrets.
+          anthropic_federation_rule_id: fdrl_01G4gMJTMqY5bmmZYRwSAB8a
+          anthropic_organization_id: a62f5bc4-c745-4716-b3ee-b5950d745127
+          anthropic_service_account_id: svac_0176BtXcPtyWTqQ6PXwBn1FX
+          anthropic_workspace_id: wrkspc_017KVQw4mCovgzMMzfAwJ37Q
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 40
