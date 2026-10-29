@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import logging
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
@@ -697,19 +699,18 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
 
 
 @pytest.mark.parametrize("field", ["tdb", "rh", "v_z1", "sol_radiation_dir", "tr"])
+@pytest.mark.parametrize("unavailable_value", [float("nan"), float("inf"), float("-inf")])
 async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
     field: str,
+    unavailable_value: float,
 ) -> None:
     """A 422 should only be returned when every forecast candidate row is incomplete."""
 
-    _install_mrt_pipeline(
-        monkeypatch,
-        df=_build_mrt_dataframe(
-            current_missing={field},
-            future_missing_by_row={1: {field}, 2: {field}},
-        ),
-    )
+    df = _build_mrt_dataframe()
+    df[field] = unavailable_value
+    _install_mrt_pipeline(monkeypatch, df=df)
     calculator = FakeCalculator()
     service = RiskService(
         weather_client=FakeWeatherClient(),
@@ -718,7 +719,10 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
         max_entries=1000,
     )
 
-    with pytest.raises(ModelInputUnavailableError) as caught:
+    with (
+        caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"),
+        pytest.raises(ModelInputUnavailableError) as caught,
+    ):
         await service.calculate_home_risk(
             RiskRequest(
                 sport="SOCCER",
@@ -727,17 +731,199 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
                 profile="ADULT",
             )
         )
+    expected_inputs = {
+        "tdb": 31.0,
+        "tr": 37.25,
+        "rh": 62.0,
+        "v_z1": 1.5,
+        "sol_radiation_dir": 525.0,
+    }
+    expected_inputs[field] = None
     assert caught.value.status_code == 422
     assert caught.value.detail == {
         "message": "Required model inputs are missing or uncertain",
         "unknown_inputs": [field],
-        "available_inputs": {
-            "tdb": 31.0,
-            "tr": 37.25,
-            "rh": 62.0,
-            "v_z1": 1.5,
-            "sol_radiation_dir": 525.0,
-            field: None,
-        },
+        "available_inputs": expected_inputs,
     }
+    assert json.loads(json.dumps(caught.value.detail, allow_nan=False)) == caught.value.detail
     assert calculator.calls == 0
+    if pd.isna(unavailable_value):
+        assert caplog.records == []
+    else:
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert record.levelno == logging.WARNING
+        assert record.skipped_hours == [
+            {"time_utc": timestamp.tz_convert(UTC).isoformat(), "infinite_inputs": [field]}
+            for timestamp in df.index
+        ]
+        message = logging.Formatter("%(message)s").format(record)
+        for timestamp in df.index:
+            assert f"{timestamp.tz_convert(UTC).isoformat()}: {field}" in message
+
+
+@pytest.mark.parametrize("field", ["tdb", "rh", "v_z1", "sol_radiation_dir", "tr"])
+@pytest.mark.parametrize("infinite_value", [float("inf"), float("-inf")])
+@pytest.mark.parametrize("row_index", [0, 2], ids=["leading-hour", "future-hour"])
+async def test_risk_service_skips_and_logs_hours_with_infinite_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    field: str,
+    infinite_value: float,
+    row_index: int,
+) -> None:
+    """An infinite input must not hide other hours or reach the calculator."""
+
+    df = _build_mrt_dataframe()
+    timestamp = df.index[row_index]
+    df.loc[timestamp, field] = infinite_value
+    _install_mrt_pipeline(monkeypatch, df=df)
+    calculator = FakeCalculator()
+    service = RiskService(
+        weather_client=FakeWeatherClient(),
+        calculator=calculator,
+        ttl_seconds=600,
+        max_entries=1000,
+    )
+
+    with caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"):
+        response = await service.calculate_home_risk(
+            RiskRequest(sport="SOCCER", latitude=-33.847, longitude=151.067, profile="ADULT")
+        )
+
+    assert calculator.calls == 2
+    assert [point.time_utc for point in response.forecast] == [
+        candidate.to_pydatetime().astimezone(UTC)
+        for candidate in df.index
+        if candidate != timestamp
+    ]
+    expected_inputs = [
+        {
+            "tdb": 31.0 + offset,
+            "tr": 37.25 + offset,
+            "rh": 62.0 + offset,
+            "v_z1": 1.5 + 0.1 * offset,
+            "sol_radiation_dir": 525.0 + 37.5 * offset,
+        }
+        for offset in range(3)
+        if offset != row_index
+    ]
+    assert [point.inputs.model_dump() for point in response.forecast] == expected_inputs
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    assert record.levelno == logging.WARNING
+    assert record.skipped_hours == [
+        {"time_utc": timestamp.tz_convert(UTC).isoformat(), "infinite_inputs": [field]}
+    ]
+    assert logging.Formatter("%(message)s").format(record) == (
+        "Skipping forecast hours with infinite required inputs: "
+        f"{timestamp.tz_convert(UTC).isoformat()}: {field}"
+    )
+
+
+@pytest.mark.parametrize(
+    "all_unavailable", [False, True], ids=["valid-hour-remains", "no-valid-hour"]
+)
+async def test_risk_service_handles_mixed_missing_and_infinite_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    all_unavailable: bool,
+) -> None:
+    """Summarise corrupt hours once, including hours that also have missing inputs."""
+
+    df = _build_mrt_dataframe(
+        current_missing={"rh"},
+        future_missing_by_row={1: {"v_z1"}, 2: {"tr"}} if all_unavailable else {},
+    )
+    df.loc[df.index[0], "tdb"] = float("inf")
+    df.loc[df.index[0], "tr"] = float("-inf")
+    df.loc[df.index[2], "v_z1"] = float("-inf")
+    _install_mrt_pipeline(monkeypatch, df=df)
+    calculator = FakeCalculator()
+    service = RiskService(
+        weather_client=FakeWeatherClient(),
+        calculator=calculator,
+        ttl_seconds=600,
+        max_entries=1000,
+    )
+    payload = RiskRequest(sport="SOCCER", latitude=-33.847, longitude=151.067, profile="ADULT")
+
+    with caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"):
+        if all_unavailable:
+            with pytest.raises(ModelInputUnavailableError) as caught:
+                await service.calculate_home_risk(payload)
+            assert caught.value.status_code == 422
+            assert caught.value.detail == {
+                "message": "Required model inputs are missing or uncertain",
+                "unknown_inputs": ["tdb", "rh", "tr"],
+                "available_inputs": {
+                    "tdb": None,
+                    "rh": None,
+                    "tr": None,
+                    "v_z1": 1.5,
+                    "sol_radiation_dir": 525.0,
+                },
+            }
+            assert (
+                json.loads(json.dumps(caught.value.detail, allow_nan=False)) == caught.value.detail
+            )
+            assert calculator.calls == 0
+        else:
+            response = await service.calculate_home_risk(payload)
+            assert [point.time_utc for point in response.forecast] == [
+                datetime(2026, 3, 9, 1, tzinfo=UTC)
+            ]
+            assert calculator.calls == 1
+
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    assert record.levelno == logging.WARNING
+    assert record.skipped_hours == [
+        {"time_utc": "2026-03-09T00:00:00+00:00", "infinite_inputs": ["tdb", "tr"]},
+        {"time_utc": "2026-03-09T02:00:00+00:00", "infinite_inputs": ["v_z1"]},
+    ]
+    assert logging.Formatter("%(message)s").format(record) == (
+        "Skipping forecast hours with infinite required inputs: "
+        "2026-03-09T00:00:00+00:00: tdb, tr; 2026-03-09T02:00:00+00:00: v_z1"
+    )
+
+
+async def test_risk_service_logs_one_summary_per_cache_miss(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Summarise each new calculation without repeating warnings on cache hits."""
+
+    df = _build_mrt_dataframe()
+    df.loc[df.index[0], "tdb"] = float("inf")
+    df.loc[df.index[2], "tr"] = float("-inf")
+    _install_mrt_pipeline(monkeypatch, df=df)
+    weather_client = FakeWeatherClient()
+    calculator = FakeCalculator()
+    service = RiskService(
+        weather_client=weather_client,
+        calculator=calculator,
+        ttl_seconds=600,
+        max_entries=1000,
+    )
+    payload = RiskRequest(sport="SOCCER", latitude=-33.847, longitude=151.067, profile="ADULT")
+
+    with caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"):
+        response = await service.calculate_home_risk(payload)
+        assert len(caplog.records) == 1
+        cached_response = await service.calculate_home_risk(payload)
+        assert len(caplog.records) == 1
+        await service.calculate_home_risk(payload.model_copy(update={"profile": "UNDER_10"}))
+
+    assert response == cached_response
+    assert weather_client.calls == 2
+    assert calculator.calls == 2
+    assert [point.time_utc for point in response.forecast] == [
+        datetime(2026, 3, 9, 1, tzinfo=UTC)
+    ]
+    assert len(caplog.records) == 2
+    for record in caplog.records:
+        assert record.skipped_hours == [
+            {"time_utc": "2026-03-09T00:00:00+00:00", "infinite_inputs": ["tdb"]},
+            {"time_utc": "2026-03-09T02:00:00+00:00", "infinite_inputs": ["tr"]},
+        ]

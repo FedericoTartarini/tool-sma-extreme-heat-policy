@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import cache
+from math import isfinite
 
 import pandas as pd
 from pythermalcomfort.utils.scale_wind_speed_log import scale_wind_speed_log
@@ -34,6 +36,8 @@ from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
     resolve_timezone_name,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -161,12 +165,35 @@ class RiskService:
     ) -> list[ForecastPoint]:
         """Convert MRT rows into forecast points, using the earliest complete row as current."""
 
-        first_candidate_point = self._first_candidate_forecast_point(
-            forecast_mrt_df=forecast_mrt_df
+        infinite_inputs = forecast_mrt_df[list(_REQUIRED_INPUT_FIELDS)].isin(
+            [float("inf"), float("-inf")]
         )
-        complete_rows = forecast_mrt_df.dropna(subset=list(_REQUIRED_INPUT_FIELDS))
+        has_infinite_inputs = infinite_inputs.any(axis=1)
+        skipped_hours = [
+            {
+                "time_utc": timestamp.tz_convert(UTC).isoformat(),
+                "infinite_inputs": fields.index[fields].tolist(),
+            }
+            for timestamp, fields in infinite_inputs.loc[has_infinite_inputs].iterrows()
+        ]
+        if skipped_hours:
+            LOGGER.warning(
+                "Skipping forecast hours with infinite required inputs: %s",
+                "; ".join(
+                    f"{hour['time_utc']}: {', '.join(hour['infinite_inputs'])}"
+                    for hour in skipped_hours
+                ),
+                extra={"skipped_hours": skipped_hours},
+            )
+
+        complete_rows = forecast_mrt_df.loc[~has_infinite_inputs].dropna(
+            subset=list(_REQUIRED_INPUT_FIELDS)
+        )
         if complete_rows.empty:
             # The earliest candidate explains why no usable forecast point remains.
+            first_candidate_point = self._first_candidate_forecast_point(
+                forecast_mrt_df=forecast_mrt_df
+            )
             raise self._missing_input_error_for_point(point=first_candidate_point)
 
         forecast: list[ForecastPoint] = []
@@ -185,9 +212,11 @@ class RiskService:
 
     @staticmethod
     def _missing_required_input_fields(point: pd.Series) -> list[str]:
-        """List missing public input fields for a forecast row."""
+        """List missing or infinite public input fields for a forecast row."""
 
-        return [field for field in _REQUIRED_INPUT_FIELDS if pd.isna(point[field])]
+        return [
+            field for field in _REQUIRED_INPUT_FIELDS if _to_optional_float(point[field]) is None
+        ]
 
     @staticmethod
     def _first_candidate_forecast_point(*, forecast_mrt_df: pd.DataFrame) -> pd.Series:
@@ -301,6 +330,6 @@ async def shutdown_risk_service() -> None:
 def _to_optional_float(value: float | None) -> float | None:
     """Convert a pandas scalar into a JSON-safe float-or-none value."""
 
-    if value is None or pd.isna(value):
+    if value is None or pd.isna(value) or not isfinite(value):
         return None
     return float(value)
