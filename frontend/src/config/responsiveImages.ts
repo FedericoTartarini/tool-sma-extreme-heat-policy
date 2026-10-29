@@ -78,6 +78,12 @@ export function getSportImageConfig(assetName: string): ResponsiveImageConfig {
   return SPORT_IMAGE_CONFIG_BY_ASSET_NAME[configuredAssetName];
 }
 
+// The footer logo slot and both footer logos share one height, so the slot
+// and the logos' sizes cannot drift apart.
+const FOOTER_LOGO_RENDERED_HEIGHT_PX = 50;
+
+export const FOOTER_LOGO_SLOT_HEIGHT = toRem(FOOTER_LOGO_RENDERED_HEIGHT_PX);
+
 // Intrinsic dimensions come from the original 471x163 USYD and 1314x527 SMA
 // logo files. Source sizes are rendered height multiplied by the source ratio.
 export const BRANDING_IMAGE_CONFIG = {
@@ -91,12 +97,12 @@ export const BRANDING_IMAGE_CONFIG = {
     widths: [160, 320, 471],
     sourceWidth: 471,
     sourceHeight: 163,
-    renderedHeightPx: 50,
+    renderedHeightPx: FOOTER_LOGO_RENDERED_HEIGHT_PX,
   }),
   footerSma: createFixedHeightResponsiveImageConfig({
     widths: [160, 320, 480],
     sourceWidth: 1314,
     sourceHeight: 527,
-    renderedHeightPx: 50,
+    renderedHeightPx: FOOTER_LOGO_RENDERED_HEIGHT_PX,
   }),
 } as const satisfies Record<string, FixedHeightResponsiveImageConfig>;

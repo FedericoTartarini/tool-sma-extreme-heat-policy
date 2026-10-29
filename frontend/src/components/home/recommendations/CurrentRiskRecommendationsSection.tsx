@@ -20,6 +20,7 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP, CONTENT_PADDING } from "@/config/uiLayout";
 import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
 import { getRecommendationDetailContent } from "@/lib/recommendationDetails";
+import { getDetailedRecommendationsPath } from "@/lib/recommendationRouteState";
 
 /**
  * Renders compact recommendation cards for the current risk level.
@@ -95,7 +96,7 @@ export function CurrentRiskRecommendationsSection() {
           footer={
             <Button
               component={Link}
-              to="/detailed-recommendations"
+              to={getDetailedRecommendationsPath(content.level)}
               variant="light"
               color="brand"
               fullWidth={isMobile}

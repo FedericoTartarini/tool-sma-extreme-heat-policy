@@ -48,6 +48,7 @@ def _create_test_app(radiation: list[float | None]):
         weather_client=RadiationWeatherClient(radiation),
         calculator=PythermalcomfortSportsHeatStressCalculator(),
         ttl_seconds=0,
+        max_entries=1000,
     )
     app.dependency_overrides[get_risk_service] = lambda: service
     return app

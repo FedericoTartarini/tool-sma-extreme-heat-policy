@@ -265,7 +265,8 @@
         "helperText": "Search and select a location to calculate risk automatically"
       },
       "currentRisk": {
-        "title": "Current Sport Heat Risk"
+        "title": "Current Sport Heat Risk",
+        "badgeAriaLabel": "{{level}} risk, open detailed recommendations"
       },
       "keyRecommendations": {
         "title": "Key recommendations:",
