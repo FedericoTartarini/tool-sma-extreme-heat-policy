@@ -181,6 +181,9 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   };
 
   const handleSportChange = (value: string | null) => {
+    // Picking a sport in the Select retries its image, even after an earlier failure.
+    setSportImageFailure(null);
+
     if (value === null) {
       return;
     }
