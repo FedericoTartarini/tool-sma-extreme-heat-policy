@@ -9,6 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
+import { FOOTER_LOGO_SLOT_HEIGHT } from "@/config/responsiveImages";
 import { CONTENT_GAP, CONTENT_PADDING } from "@/config/uiLayout";
 import {
   PARAGRAPH_GAP,
@@ -19,7 +20,6 @@ import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 const APP_VERSION = "1.2.2";
 const COPYRIGHT_YEAR = 2025;
 const REVIEW_YEAR = 2025;
-const FOOTER_LOGO_SLOT_HEIGHT = 50;
 const OPEN_METEO_URL = "https://open-meteo.com/";
 const CC_BY_4_URL = "https://creativecommons.org/licenses/by/4.0/";
 const FOOTER_TEXT_PROPS = {
