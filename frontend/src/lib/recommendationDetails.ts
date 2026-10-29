@@ -1,7 +1,16 @@
-import { RISK_REGISTRY, type RiskLevel } from "@/domain/riskRegistry";
+import {
+  ACTIVE_COOLING_METHOD_IDS,
+  type ActiveCoolingResolution,
+} from "@/domain/activeCooling";
+import {
+  RISK_REGISTRY,
+  type RecommendationActionId,
+  type RiskLevel,
+} from "@/domain/riskRegistry";
 import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export interface RecommendationDetailItem {
+  id: RecommendationActionId;
   image: ResponsiveImageAsset | null;
   label: string;
 }
@@ -12,6 +21,11 @@ export interface RecommendationDetailContent {
   items: RecommendationDetailItem[];
   description: string;
   suggestions: string[];
+}
+
+export interface PersonalisedHomeRecommendationContent {
+  readonly content: RecommendationDetailContent;
+  readonly showPrepareCoolingReminder: boolean;
 }
 
 export type RecommendationDetailTranslator = (
@@ -48,9 +62,10 @@ export function getRecommendationDetailContent(
   return {
     level,
     levelLabel: toString(translate(details.levelKey)),
-    items: details.keyIconAssets
-      .map((image, index) => ({
-        image,
+    items: details.keyActions
+      .map((action, index) => ({
+        id: action.id,
+        image: action.image,
         label: labels[index] ?? "",
       }))
       .filter((item) => item.label !== ""),
@@ -60,5 +75,36 @@ export function getRecommendationDetailContent(
         returnObjects: true,
       }),
     ),
+  };
+}
+
+/**
+ * Applies Active Cooling personalisation to Home content only.
+ * Shared recommendation content remains complete for the detailed page.
+ */
+export function personaliseHomeRecommendationContent(
+  content: RecommendationDetailContent,
+  resolution: ActiveCoolingResolution,
+): PersonalisedHomeRecommendationContent {
+  if (content.level !== "high") {
+    return {
+      content,
+      showPrepareCoolingReminder: resolution.showPrepareReminder,
+    };
+  }
+
+  const visibleMethodIds = new Set(resolution.visibleMethodIds);
+  const suggestions = content.suggestions.filter((_suggestion, index) => {
+    const methodId = ACTIVE_COOLING_METHOD_IDS[index];
+
+    return methodId !== undefined && visibleMethodIds.has(methodId);
+  });
+
+  return {
+    content: {
+      ...content,
+      suggestions,
+    },
+    showPrepareCoolingReminder: resolution.showPrepareReminder,
   };
 }

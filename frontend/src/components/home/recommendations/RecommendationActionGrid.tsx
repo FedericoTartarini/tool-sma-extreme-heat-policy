@@ -39,7 +39,7 @@ export function RecommendationActionGrid({
     >
       {items.map((item, index) => (
         <Box
-          key={`${index}-${item.label}`}
+          key={item.id}
           style={{
             ...(shouldCenterLastRecommendation && index === items.length - 1
               ? {

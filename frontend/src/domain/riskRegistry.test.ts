@@ -5,30 +5,62 @@ import {
   getRiskBands,
   RISK_LEVELS,
   RISK_REGISTRY,
+  type RecommendationActionDefinition,
   type RiskLevel,
   toRiskDisplayScore,
   toRiskLevel,
 } from "@/domain/riskRegistry";
-import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
-const EXPECTED_KEY_ICON_ASSETS = {
+const EXPECTED_KEY_ACTIONS = {
   low: [
-    RECOMMENDATION_ACTION_ASSETS.hydration,
-    RECOMMENDATION_ACTION_ASSETS.clothing,
+    {
+      id: "hydration",
+      image: RECOMMENDATION_ACTION_ASSETS.hydration,
+    },
+    {
+      id: "clothing",
+      image: RECOMMENDATION_ACTION_ASSETS.clothing,
+    },
   ],
   moderate: [
-    RECOMMENDATION_ACTION_ASSETS.hydration,
-    RECOMMENDATION_ACTION_ASSETS.clothing,
-    RECOMMENDATION_ACTION_ASSETS.pause,
+    {
+      id: "hydration",
+      image: RECOMMENDATION_ACTION_ASSETS.hydration,
+    },
+    {
+      id: "clothing",
+      image: RECOMMENDATION_ACTION_ASSETS.clothing,
+    },
+    {
+      id: "rest",
+      image: RECOMMENDATION_ACTION_ASSETS.pause,
+    },
   ],
   high: [
-    RECOMMENDATION_ACTION_ASSETS.hydration,
-    RECOMMENDATION_ACTION_ASSETS.clothing,
-    RECOMMENDATION_ACTION_ASSETS.pause,
-    RECOMMENDATION_ACTION_ASSETS.cooling,
+    {
+      id: "hydration",
+      image: RECOMMENDATION_ACTION_ASSETS.hydration,
+    },
+    {
+      id: "clothing",
+      image: RECOMMENDATION_ACTION_ASSETS.clothing,
+    },
+    {
+      id: "rest",
+      image: RECOMMENDATION_ACTION_ASSETS.pause,
+    },
+    {
+      id: "cooling",
+      image: RECOMMENDATION_ACTION_ASSETS.cooling,
+    },
   ],
-  extreme: [RECOMMENDATION_ACTION_ASSETS.stop],
-} satisfies Record<RiskLevel, (ResponsiveImageAsset | null)[]>;
+  extreme: [
+    {
+      id: "suspend",
+      image: RECOMMENDATION_ACTION_ASSETS.stop,
+    },
+  ],
+} satisfies Record<RiskLevel, RecommendationActionDefinition[]>;
 
 describe("toRiskLevel", () => {
   it("maps threshold boundaries into the expected risk levels", () => {
@@ -73,10 +105,13 @@ describe("getRiskBadgeForegroundColor", () => {
 });
 
 describe("recommendation action assets", () => {
-  it("keeps responsive action assets in the configured order", () => {
+  it("keeps stable action ids and responsive assets in display order", () => {
     for (const level of RISK_LEVELS) {
+      expect(RISK_REGISTRY[level].keyActions).toEqual(
+        EXPECTED_KEY_ACTIONS[level],
+      );
       expect(RISK_REGISTRY[level].keyIconAssets).toEqual(
-        EXPECTED_KEY_ICON_ASSETS[level],
+        EXPECTED_KEY_ACTIONS[level].map((action) => action.image),
       );
     }
   });

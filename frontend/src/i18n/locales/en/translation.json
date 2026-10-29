@@ -242,6 +242,30 @@
     ]
   },
   "home": {
+    "coolingPreferences": {
+      "prepareReminder": "Please prepare at least one cooling method to help manage heat risk.",
+      "title": "Cooling preferences",
+      "status": {
+        "notSetUp": "Not set up",
+        "personalised": "Personalised",
+        "noneSelected": "No methods selected"
+      },
+      "edit": "Edit",
+      "editAriaLabel": "Edit cooling preferences",
+      "optionsLabel": "Select the cooling methods available on site",
+      "emptyHint": "If none are available, leave all options unchecked and save.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close cooling preferences",
+      "saveError": "Your selection could not be saved. Please try again.",
+      "options": {
+        "cold-fluids-or-slushies": "Cold drinks or ice slushies",
+        "arm-or-foot-immersion": "Arm or foot immersion in cold water",
+        "water-dousing": "Water dousing",
+        "ice-packs-or-towels": "Ice packs or ice towels",
+        "fans": "Electric or misting fans"
+      }
+    },
     "notifications": {
       "forecastUpdated": "Forecast updated"
     },
