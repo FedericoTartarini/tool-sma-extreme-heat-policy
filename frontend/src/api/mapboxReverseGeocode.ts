@@ -5,10 +5,6 @@ import {
   toMapboxResponseJsonError,
 } from "@/api/mapboxErrors";
 import type { LocationSuggestion } from "@/domain/location";
-import {
-  LOCATION_SUGGEST_TYPES,
-  LOCATION_SUGGEST_TYPES_PARAM,
-} from "@/domain/locationSearch";
 
 const MAPBOX_REVERSE_ENDPOINT =
   "https://api.mapbox.com/search/searchbox/v1/reverse";
@@ -31,36 +27,17 @@ export interface MapboxReverseGeocodeParams {
   latitude: number;
   longitude: number;
   accessToken: string;
-  types?: string;
-  limit?: number;
   language?: string;
   signal?: AbortSignal;
 }
 
-const LOCATION_TYPE_SET = new Set<string>(LOCATION_SUGGEST_TYPES);
-
-/**
- * Hierarchical order in which we look for a supported weather-location identity.
- *
- * The Search Box reverse endpoint frequently returns an `address` or `street`
- * top-level feature even with a `neighborhood,locality,place,city` filter. The
- * first pass prefers those primary types. If none is present (rural areas,
- * Singapore, some overseas regions) we fall back to broader administrative
- * levels so the user still lands on the nearest recognisable town/district.
- */
+/** Prefer a suburb to a town when both have their own searchable identity. */
 const LOCATION_CONTEXT_PRIORITY = [
   "neighborhood",
   "locality",
   "place",
   "city",
 ] as const;
-
-/**
- * Secondary administrative tiers used only when the primary tiers above are
- * absent. Values here do not appear in the search suggest endpoint, but they
- * let us derive a usable fallback result for rural and overseas coordinates.
- */
-const FALLBACK_CONTEXT_PRIORITY = ["district", "postcode", "region"] as const;
 
 /**
  * Feature types where the top-level feature name itself is an acceptable
@@ -72,7 +49,7 @@ const COUNTRY_NAME_FALLBACK_TYPE_SET = new Set<string>(["place", "city"]);
  * Returns true for arbitrary values that are plain objects (not null/array).
  */
 function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -161,23 +138,12 @@ function toCountryName(params: {
 interface ResolvedLocationIdentity {
   featureType: string;
   name: string;
+  mapboxId: string;
 }
 
 /**
- * Resolves a reverse-geocoded feature into a weather-ready location identity.
- *
- * The strategy is:
- * 1. Accept the top-level feature if its `feature_type` is one of the
- *    supported weather tiers (neighborhood / locality / place / city).
- * 2. Otherwise walk `context` in priority order and pick the first supported
- *    entry.
- * 3. If nothing was found, walk a secondary fallback list (district / postcode
- *    / region) so rural coordinates, overseas cities and lightly-mapped areas
- *    still yield a result the user can recognise.
- *
- * The returned identity deliberately carries no id-suffix because suggestion
- * identity should be driven by the stable `mapbox_id` of the feature that
- * supplied the final location, matching what the search/suggest path produces.
+ * Returns the supported place's own name and ID, never the containing address's
+ * ID. Districts, postcodes and regions cannot be restored by our search filter.
  */
 function toWeatherLocationIdentity(
   properties: MapboxReverseProperties,
@@ -187,34 +153,27 @@ function toWeatherLocationIdentity(
     properties.name_preferred ?? properties.name,
   );
 
-  if (LOCATION_TYPE_SET.has(featureType) && featureName) {
-    return { featureType, name: featureName };
-  }
-
   for (const contextType of LOCATION_CONTEXT_PRIORITY) {
+    const featureId = toTrimmedString(properties.mapbox_id);
+    if (featureType === contextType && featureName && featureId) {
+      return { featureType, name: featureName, mapboxId: featureId };
+    }
+
     const entry = toContextEntry(properties.context, contextType);
     const contextName = entry
       ? toTrimmedString(entry.name_preferred ?? entry.name)
       : "";
 
-    if (contextName) {
+    // Search Box contexts expose `id`; accept `mapbox_id` when supplied too.
+    const contextId = entry
+      ? toTrimmedString(entry.mapbox_id) || toTrimmedString(entry.id)
+      : "";
+
+    if (contextName && contextId) {
       return {
         featureType: contextType,
         name: contextName,
-      };
-    }
-  }
-
-  for (const fallbackType of FALLBACK_CONTEXT_PRIORITY) {
-    const entry = toContextEntry(properties.context, fallbackType);
-    const fallbackName = entry
-      ? toTrimmedString(entry.name_preferred ?? entry.name)
-      : "";
-
-    if (fallbackName) {
-      return {
-        featureType: fallbackType,
-        name: fallbackName,
+        mapboxId: contextId,
       };
     }
   }
@@ -223,22 +182,14 @@ function toWeatherLocationIdentity(
 }
 
 /**
- * Constructs a `LocationSuggestion` from a Search Box reverse feature plus
- * the raw coordinates that produced it.
- *
- * The returned suggestion is deliberately shaped to match the output of the
- * existing `mapboxSuggest.ts` path so:
- * - `id` === `mapboxId` (no suffix appended, unlike an earlier draft that
- *   tagged `:locality` / `:place` etc, which broke same-place detection
- *   between detected results and saved/search results).
- * - `displayLabel` is assembled from the same `name, region, country` parts
- *   the search suggest path uses (see `toDisplayLabel` in mapboxSuggest.ts).
+ * Builds a search-compatible label and identity, retaining device coordinates
+ * for the risk calculation rather than substituting the suburb's centre.
  */
 function toLocationSuggestion(params: {
   feature: UnknownRecord;
   latitude: number;
   longitude: number;
-}): LocationSuggestion | null {
+}): { suggestion: LocationSuggestion; priority: number } | null {
   const { feature, latitude, longitude } = params;
   const properties = isRecord(feature.properties)
     ? (feature.properties as MapboxReverseProperties)
@@ -248,13 +199,12 @@ function toLocationSuggestion(params: {
     return null;
   }
 
-  const mapboxId = toTrimmedString(properties.mapbox_id);
   const weatherLocation = toWeatherLocationIdentity(properties);
-  if (!mapboxId || !weatherLocation) {
+  if (!weatherLocation) {
     return null;
   }
 
-  const { featureType, name } = weatherLocation;
+  const { featureType, name, mapboxId } = weatherLocation;
   const regionName = toContextName(properties.context, "region");
   const countryName = toCountryName({
     context: properties.context,
@@ -268,41 +218,43 @@ function toLocationSuggestion(params: {
   }
 
   return {
-    id: mapboxId,
-    displayLabel: [name, regionName, countryName].filter(Boolean).join(", "),
-    name,
-    ...(regionName ? { regionName } : {}),
-    countryName,
-    mapboxId,
-    ...(countryCode ? { countryCode } : {}),
-    latitude,
-    longitude,
+    priority: LOCATION_CONTEXT_PRIORITY.findIndex(
+      (type) => type === featureType,
+    ),
+    suggestion: {
+      id: mapboxId,
+      displayLabel: [name, regionName, countryName].filter(Boolean).join(", "),
+      name,
+      ...(regionName ? { regionName } : {}),
+      countryName,
+      mapboxId,
+      ...(countryCode ? { countryCode } : {}),
+      latitude,
+      longitude,
+    },
   };
 }
 
 /**
  * Serialises the reverse-geocoding request parameters into a query string.
  *
- * Defaults mirror `suggestLocations` so results are presented with the same
- * type filter and language the user already sees in the combobox.
+ * Requests nearby places using the caller's language preference.
  */
 function toReverseQueryString({
   latitude,
   longitude,
   accessToken,
-  types,
-  limit,
   language,
 }: Required<
   Pick<MapboxReverseGeocodeParams, "latitude" | "longitude" | "accessToken">
 > &
-  Pick<MapboxReverseGeocodeParams, "types" | "limit" | "language">): string {
+  Pick<MapboxReverseGeocodeParams, "language">): string {
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),
     access_token: accessToken,
-    limit: String(limit ?? 5),
-    types: types ?? LOCATION_SUGGEST_TYPES_PARAM,
+    limit: "5",
+    types: "locality,place,city",
   });
 
   if (language) {
@@ -313,21 +265,9 @@ function toReverseQueryString({
 }
 
 /**
- * Reverse-geocodes coordinates into supported weather-location suggestions.
- *
- * Uses the Mapbox Search Box `reverse` endpoint and converts each returned
- * feature into the same `LocationSuggestion` shape used by the text-search
- * path (suggest + retrieve). This ensures saved-location identity, risk
- * calculation, URL serialisation and UI labels behave identically whether
- * the user picked their current location or typed a suburb into the box.
- *
- * Results are best-effort: if no supported neighborhood/locality/place/city
- * tier is present the implementation falls back to broader administrative
- * tiers (district / postcode / region) so rural sports grounds and lightly
- * mapped overseas regions still resolve to something recognisable. When
- * nothing meaningful is available the returned array is empty and the caller
- * should surface the `location_not_resolved` error directing the user to
- * search manually instead of retrying.
+ * Resolves coordinates to searchable suburbs or towns, in that priority order.
+ * If no supported place with its own ID exists, returns an empty array so the
+ * caller can direct the user to search manually.
  *
  * @throws MapboxApiError Throws the same structured error family used by
  *   `suggestLocations` so callers can treat both lookup paths uniformly.
@@ -336,8 +276,6 @@ export async function reverseGeocodeCoordinates({
   latitude,
   longitude,
   accessToken,
-  types,
-  limit = 5,
   language,
   signal,
 }: MapboxReverseGeocodeParams): Promise<LocationSuggestion[]> {
@@ -345,8 +283,6 @@ export async function reverseGeocodeCoordinates({
     latitude,
     longitude,
     accessToken,
-    types,
-    limit,
     language,
   });
 
@@ -381,10 +317,18 @@ export async function reverseGeocodeCoordinates({
     );
   }
 
+  const seenIds = new Set<string>();
   return payload.features
     .filter((feature): feature is UnknownRecord => isRecord(feature))
     .map((feature) => toLocationSuggestion({ feature, latitude, longitude }))
-    .filter(
-      (suggestion): suggestion is LocationSuggestion => suggestion !== null,
-    );
+    .filter((result): result is NonNullable<typeof result> => result !== null)
+    .sort((a, b) => a.priority - b.priority)
+    .map(({ suggestion }) => suggestion)
+    .filter((suggestion) => {
+      if (seenIds.has(suggestion.id)) {
+        return false;
+      }
+      seenIds.add(suggestion.id);
+      return true;
+    });
 }

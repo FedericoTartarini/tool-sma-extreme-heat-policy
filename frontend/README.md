@@ -52,7 +52,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 Notes:
 
-- `VITE_MAPBOX_ACCESS_TOKEN` is required for Home location `suggest + retrieve`.
+- `VITE_MAPBOX_ACCESS_TOKEN` is required for Home location `suggest + retrieve` and current-location reverse lookup.
 - `VITE_API_BASE_URL` is required for backend forecast and current-risk data.
 - `.env.local` is ignored by git via `*.local`.
 
@@ -84,13 +84,16 @@ Import rules:
 - Uses the official `zustand` npm package.
 - Server state uses React Query (`@tanstack/react-query`).
 - Location search uses Mapbox Search Box `suggest` with neighborhood, locality, place, and city types (`neighborhood,locality,place,city`); selecting a suggestion triggers Mapbox `retrieve` in frontend to resolve coordinates. City-state and special-place results without a country context fall back to their place/name so results such as Singapore remain selectable.
+- Current-location detection runs only when the user clicks **Use my location**. It uses browser geolocation followed by a Mapbox reverse lookup; it never requests device location on page load and has no IP-based fallback. A detected suburb or town carries its own Mapbox identity, matching search and saved locations, while risk uses the device coordinates. If no supported place can be identified, the error directs the user to search manually; postcode, district and state-only results are not selected.
+- Search retrieval and current-location detection share one pending-request controller. Editing or clearing the location field, choosing a searched or saved place, or starting a new detection cancels older work. Cancelled results and errors cannot replace the user's latest choice.
+- The geolocation phase has a 15-second watchdog, including time spent on the permission prompt. The reverse lookup has a separate 15-second limit. Either timeout restores the location button and displays an error; cancellation and completion clear the corresponding timer.
 - Location labels shown in the input, dropdown, URL, and local persistence use readable `Name, Region, Country` text, for example `Auburn, New South Wales, Australia`.
 - The visible location dropdown is capped to the first 3 unique Mapbox suggestions after dedupe by name, region, and country.
 - Prefilled location labels restored from shared URL (`loc`) or local persistence automatically attempt `suggest + retrieve` once using exact normalized canonical label matching; old or non-canonical labels show Mapbox candidates for manual selection when suggestions are available.
 - Risk API request sends `sport + latitude + longitude + profile` (no Mapbox identifiers).
 - Risk API response returns a non-empty `forecast[]` plus a nested `request` block containing `sport`, `profile`, and `location`; backend defines `forecast[0]` as the earliest complete forecast point, each forecast row includes both `time_utc` and `time_local`, and frontend derives the current risk from `forecast[0]` while grouping chart days from `time_local`.
 - Risk is fetched automatically when:
-  - a location suggestion is selected (manual or auto-resolved) and coordinates are resolved, and
+  - a location is selected (searched, restored, detected or saved) and coordinates are resolved, and
   - the sport changes.
 - Location and risk calculation failures are shown as bottom error toasts.
 - Risk API failures keep the last valid result and do not silently fall back to fixtures.

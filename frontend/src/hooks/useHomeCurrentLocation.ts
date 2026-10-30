@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isAbortApiError } from "@/api/apiErrors";
 import { reverseGeocodeCoordinates } from "@/api/mapboxReverseGeocode";
 import type { HomeCurrentLocationErrorReason } from "@/domain/homeErrorMap";
-import { LOCATION_SUGGEST_TYPES_PARAM } from "@/domain/locationSearch";
-import { createLatestAbortableRequestController } from "@/lib/latestAbortableRequest";
 import { requestGeolocation } from "@/lib/requestGeolocation";
 import { useHomeStore } from "@/store/homeStore";
 
@@ -69,9 +67,7 @@ function getLanguagePreference(): string | undefined {
  * Scope:
  * - Click-only. Never runs on page load.
  * - Browser `navigator.geolocation` only. No IP fallback.
- * - Results are reverse-geocoded into the same `LocationSuggestion` shape the
- *   existing combobox search produces, so saved-location identity and risk
- *   calculation work identically for detected and searched places.
+ * - A supported suburb/town identity is paired with the device coordinates.
  */
 export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
   const mapboxAccessToken = (
@@ -81,23 +77,25 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
   const selectLocation = useHomeStore((state) => state.selectLocation);
   const [isDetecting, setIsDetecting] = useState(false);
   const [error, setError] = useState<CurrentLocationErrorEvent | null>(null);
-  const requestController = useMemo(
-    () => createLatestAbortableRequestController(),
-    [],
+  const nextErrorId = useRef(0);
+  const requestController = useHomeStore(
+    (state) => state.locationRequestController,
   );
   const language = useMemo(() => getLanguagePreference(), []);
 
   useEffect(() => () => requestController.cancel(), [requestController]);
 
   const emitError = useCallback((reason: HomeCurrentLocationErrorReason) => {
-    setError((previous) => ({
+    nextErrorId.current += 1;
+    setError({
       reason,
-      eventId: (previous?.eventId ?? 0) + 1,
-    }));
+      eventId: nextErrorId.current,
+    });
   }, []);
 
   const requestCurrentLocation = useCallback(() => {
     requestController.cancel();
+    useHomeStore.getState().finishPrefilledLocationResolve();
     setIsDetecting(false);
 
     if (!hasMapboxToken) {
@@ -110,10 +108,18 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
       return;
     }
 
-    const startingSessionToken = useHomeStore.getState().locationSessionToken;
     const request = requestController.start();
     setError(null);
     setIsDetecting(true);
+    const onCancel = () => setIsDetecting(false);
+    request.signal.addEventListener("abort", onCancel, { once: true });
+    const finish = () => {
+      request.signal.removeEventListener("abort", onCancel);
+      if (request.isCurrent()) {
+        setIsDetecting(false);
+      }
+      request.finish();
+    };
 
     requestGeolocation({
       geolocation: navigator.geolocation,
@@ -127,14 +133,25 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
         emitError("geolocation_timeout");
       },
       onSuccess: (position) => {
+        if (!request.isCurrent()) {
+          return;
+        }
+        const lookupTimeout = setTimeout(() => {
+          if (request.isCurrent()) {
+            requestController.cancel();
+            emitError("reverse_geocode_failed");
+          }
+        }, 15_000);
+        const clearLookupTimeout = () => clearTimeout(lookupTimeout);
+        request.signal.addEventListener("abort", clearLookupTimeout, {
+          once: true,
+        });
         void (async () => {
           try {
             const suggestions = await reverseGeocodeCoordinates({
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               accessToken: mapboxAccessToken,
-              types: LOCATION_SUGGEST_TYPES_PARAM,
-              limit: 5,
               language,
               signal: request.signal,
             });
@@ -149,12 +166,6 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
               return;
             }
 
-            const latestSessionToken =
-              useHomeStore.getState().locationSessionToken;
-            if (latestSessionToken !== startingSessionToken) {
-              return;
-            }
-
             selectLocation(selectedLocation);
           } catch (error) {
             if (!request.isCurrent() || isAbortApiError(error)) {
@@ -163,10 +174,9 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
 
             emitError("reverse_geocode_failed");
           } finally {
-            if (request.isCurrent()) {
-              setIsDetecting(false);
-            }
-            request.finish();
+            clearLookupTimeout();
+            request.signal.removeEventListener("abort", clearLookupTimeout);
+            finish();
           }
         })();
       },
@@ -177,7 +187,7 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
 
         setIsDetecting(false);
         emitError(toCurrentLocationErrorReason(error));
-        request.finish();
+        finish();
       },
     });
   }, [
