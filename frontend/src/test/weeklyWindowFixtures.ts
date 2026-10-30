@@ -46,6 +46,24 @@ export function sydneyForecast(): DashboardForecastSnapshot {
   };
 }
 
+/**
+ * Drops forecast samples the way the backend does
+ * (`clients/open_meteo.py`: keep `time_utc >= now - 1h`).
+ */
+export function trimForecastLikeBackend(
+  response: HeatRiskApiResponse,
+  now: Date,
+): HeatRiskApiResponse {
+  const threshold = now.getTime() - 3_600_000;
+
+  return {
+    ...response,
+    forecast: response.forecast.filter(
+      (point) => Date.parse(point.time_utc) >= threshold,
+    ),
+  };
+}
+
 export function sydneyHeatRiskResponse(): HeatRiskApiResponse {
   const forecast = buildSydneyForecastPoints();
 

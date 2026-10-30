@@ -73,6 +73,8 @@ export type DashboardWeeklyWindowCardState =
       averageRiskLevel: RiskLevel;
       minRiskLevel: RiskLevel;
       maxRiskLevel: RiskLevel;
+      /** Set when risk covers only the part of the window from this instant. */
+      coveredFromUtc?: string;
     };
 
 /**
@@ -304,5 +306,8 @@ export function resolveDashboardWeeklyWindowCardState(
     averageRiskLevel: toRiskLevel(summary.averageRiskScore),
     minRiskLevel: toRiskLevel(summary.minRiskScore),
     maxRiskLevel: toRiskLevel(summary.maxRiskScore),
+    ...(preview.coveredFromUtc
+      ? { coveredFromUtc: preview.coveredFromUtc }
+      : {}),
   };
 }

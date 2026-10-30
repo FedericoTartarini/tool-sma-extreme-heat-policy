@@ -199,6 +199,33 @@ describe("DashboardCard", () => {
     expect(harness.host.textContent).not.toContain("Next session ·");
     expect(harness.host.textContent).toContain("Min: 0.9 LOW");
     expect(harness.host.textContent).toContain("Max: 2.3 MODERATE");
+    expect(harness.host.textContent).not.toContain(
+      "The forecast only covers this period from",
+    );
+  });
+
+  it("explains when risk covers only part of the selected period", () => {
+    harness.render(
+      createElement(DashboardCard, {
+        card: sydneyCard,
+        cardState: OK_CARD_STATE,
+        scheduledCardState: null,
+        otherPeriodCardState: {
+          ...OK_OTHER_PERIOD_CARD_STATE,
+          coveredFromUtc: "2026-09-15T09:00:00.000Z",
+        },
+        viewMode: "other_time_period",
+        ...CARD_ACTIONS,
+      }),
+    );
+
+    expect(harness.host.textContent).toContain("Average");
+    expect(harness.host.textContent).toContain(
+      "The forecast only covers this period from 7:00",
+    );
+    expect(harness.host.textContent).toContain(
+      "Earlier hours are not included.",
+    );
   });
 
   it("shows fetch errors instead of metrics placeholders", () => {

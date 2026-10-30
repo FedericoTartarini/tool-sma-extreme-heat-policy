@@ -31,6 +31,7 @@ import { toIntlLocale } from "@/i18n/language";
 import {
   formatDashboardCardSchedule,
   formatLocalCalendarDate,
+  formatScheduledWindowClockTime,
   formatScheduledWindowLocalDate,
   formatScheduledWindowTimeRange,
 } from "@/lib/scheduleFormat";
@@ -114,9 +115,11 @@ function dashboardWindowScheduleErrorKey(
 
 function DashboardCardWindowMetrics({
   sessionHeading,
+  coverageNote,
   metrics,
 }: {
   sessionHeading: string | null;
+  coverageNote: string | null;
   metrics: DashboardWindowMetricsState;
 }) {
   const { t } = useTranslation();
@@ -138,6 +141,11 @@ function DashboardCardWindowMetrics({
         maxScore={metrics.maxRiskScore}
         maxLevel={metrics.maxRiskLevel}
       />
+      {coverageNote ? (
+        <Text c="dimmed" fz="sm">
+          {coverageNote}
+        </Text>
+      ) : null}
     </Stack>
   );
 }
@@ -212,10 +220,20 @@ function DashboardCardMetricsContent({
           date: formatScheduledWindowLocalDate(windowState.window, intlLocale),
         })
       : null;
+  const coverageNote = windowState.coveredFromUtc
+    ? t("dashboard.cards.partialForecastNote", {
+        time: formatScheduledWindowClockTime(
+          windowState.coveredFromUtc,
+          windowState.window.timeZone,
+          intlLocale,
+        ),
+      })
+    : null;
 
   return (
     <DashboardCardWindowMetrics
       sessionHeading={sessionHeading}
+      coverageNote={coverageNote}
       metrics={windowState}
     />
   );

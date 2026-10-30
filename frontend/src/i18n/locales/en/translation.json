@@ -400,6 +400,7 @@
       "nextSessionHeading": "Next session · {{date}}",
       "selectedPeriodHeader": "Selected · {{date}} · {{times}}",
       "selectedPeriodDateHeader": "Selected · {{date}}",
+      "partialForecastNote": "The forecast only covers this period from {{time}}. Earlier hours are not included.",
       "metrics": {
         "current": "Current",
         "maxRiskToday": "Max risk (today):",

@@ -400,6 +400,7 @@
       "nextSessionHeading": "下一次日程 · {{date}}",
       "selectedPeriodHeader": "所选 · {{date}} · {{times}}",
       "selectedPeriodDateHeader": "所选 · {{date}}",
+      "partialForecastNote": "预报仅覆盖该时段 {{time}} 之后的部分，之前的时间未计入。",
       "metrics": {
         "current": "当前",
         "maxRiskToday": "今日最高风险：",

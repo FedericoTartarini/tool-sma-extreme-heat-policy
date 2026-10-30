@@ -73,8 +73,10 @@ Notes:
   **My schedule** shows average and min/max risk for the next upcoming session
   on each card's saved weekly schedule. **Other time period** uses the same card
   metrics for the current or next occurrence of a weekday and time range you choose in the
-  dashboard mode panel; each card resolves that window in its location timezone. The
-  selected mode and other-period picker are persisted in `localStorage`
+  dashboard mode panel; each card resolves that window in its location timezone. If
+  a window is already under way and the forecast (which starts about an hour before
+  now) no longer includes its start, the card shows risk from the earliest forecast
+  hour and a note saying from what time the risk applies. The selected mode and other-period picker are persisted in `localStorage`
   (`dashboard-view-mode:v1`, `dashboard-other-period:v1`).
 
 ## Weekly-window development preview (#67)
@@ -105,7 +107,10 @@ schedule** and **Other time period** card metrics):
   on selection changes and tab resume/focus, with a one-minute fallback.
 - Missing or ambiguous DST endpoints are reported rather than shifted.
 - Actual hourly samples include both endpoints. Full, uninterrupted forecast
-  coverage is required; missing coverage never becomes a low-risk estimate.
+  coverage is required; missing coverage never becomes a low-risk estimate. The
+  one exception is **Other time period** cards for a window already under way:
+  they are scored from the earliest forecast hour, which must still be no later
+  than now, and coverage from that hour on must have no gaps.
 - The preview lists hourly risk levels in a table. It does not show the
   average/min/max summaries that cards display in **My schedule** or **Other
   time period**.

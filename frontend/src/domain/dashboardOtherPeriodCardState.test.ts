@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { DashboardCardQueryView } from "@/domain/dashboardCardState";
 import { resolveDashboardOtherPeriodDraft } from "@/domain/dashboardOtherPeriod";
 import { resolveDashboardOtherPeriodCardState } from "@/domain/dashboardOtherPeriodCardState";
-import { sydneyHeatRiskResponse } from "@/test/weeklyWindowFixtures";
+import {
+  sydneyHeatRiskResponse,
+  trimForecastLikeBackend,
+} from "@/test/weeklyWindowFixtures";
 
 function query(
   overrides: Partial<DashboardCardQueryView> = {},
@@ -96,6 +99,45 @@ describe("dashboard other period card state", () => {
       minRiskScore: 1.2,
       maxRiskScore: 3.2,
     });
+  });
+
+  it("summarizes the covered part once the backend forecast drops the window start", () => {
+    const now = new Date("2026-09-15T09:30:00Z");
+    const result = resolveDashboardOtherPeriodCardState(
+      query({ data: trimForecastLikeBackend(sydneyHeatRiskResponse(), now) }),
+      completeDraft,
+      now,
+    );
+
+    expect(result).toMatchObject({
+      status: "ok",
+      window: {
+        localDate: "2026-09-15",
+        timeZone: "Australia/Sydney",
+        startUtc: "2026-09-15T08:00:00.000Z",
+        endUtc: "2026-09-15T10:00:00.000Z",
+      },
+      coveredFromUtc: "2026-09-15T09:00:00.000Z",
+      minRiskScore: 1.2,
+      maxRiskScore: 3.2,
+    });
+    expect(result.status === "ok" ? result.averageRiskScore : null).toBeCloseTo(
+      2.2,
+    );
+  });
+
+  it("keeps the whole window while the backend forecast still covers its start", () => {
+    const now = new Date("2026-09-15T09:00:00Z");
+    const result = resolveDashboardOtherPeriodCardState(
+      query({ data: trimForecastLikeBackend(sydneyHeatRiskResponse(), now) }),
+      completeDraft,
+      now,
+    );
+
+    expect(result).toEqual(
+      resolveDashboardOtherPeriodCardState(query(), completeDraft, now),
+    );
+    expect(result).not.toHaveProperty("coveredFromUtc");
   });
 
   it("reports incomplete forecast coverage once that occurrence has ended", () => {

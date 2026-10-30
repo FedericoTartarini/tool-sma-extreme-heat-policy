@@ -78,6 +78,19 @@ function localDateKeyInTimeZone(instant: string, timeZone: string): string {
   }).format(new Date(instant));
 }
 
+/** Formats one instant as a local clock time in the window's timezone. */
+export function formatScheduledWindowClockTime(
+  instantUtc: string,
+  timeZone: string,
+  locale: string,
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  }).format(new Date(instantUtc));
+}
+
 /** Formats the local start–end clock times for a resolved scheduled window. */
 export function formatScheduledWindowTimeRange(
   window: ScheduledWindow,
