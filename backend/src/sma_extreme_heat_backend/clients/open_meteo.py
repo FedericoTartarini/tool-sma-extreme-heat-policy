@@ -50,9 +50,6 @@ class WeatherForecast:
     points: list[HourlyWeatherPoint]
 
 
-_DEFAULT_FORECAST_WINDOW_DAYS = 7
-
-
 def _to_float_or_none(value: Any) -> float | None:
     """Convert provider values to floats while treating invalid values as missing."""
 
@@ -177,16 +174,15 @@ def _select_hourly_points(
     payload: dict[str, Any],
     *,
     requested_timezone_name: str,
-    forecast_window_days: int = _DEFAULT_FORECAST_WINDOW_DAYS,
 ) -> list[HourlyWeatherPoint]:
-    """Keep only the current forecast window and normalize each row."""
+    """Keep only the current-to-7-day forecast window and normalize each row."""
 
     timestamps, series_data = _extract_hourly_series(
         payload,
         requested_timezone_name=requested_timezone_name,
     )
     threshold = datetime.now(tz=UTC) - timedelta(hours=1)
-    forecast_window_end = threshold + timedelta(days=forecast_window_days)
+    forecast_window_end = threshold + timedelta(days=7)
     candidate_rows = [
         (idx, timestamp)
         for idx, timestamp in sorted(enumerate(timestamps), key=lambda item: item[1])
@@ -205,23 +201,6 @@ def _select_hourly_points(
         )
         for idx, timestamp in candidate_rows
     ]
-
-
-def _parse_location_weather_payload(
-    payload: dict[str, Any],
-    *,
-    requested_timezone_name: str,
-    forecast_window_days: int,
-) -> WeatherForecast:
-    """Parse one Open-Meteo location payload into a normalized forecast."""
-
-    _validate_hourly_units(payload)
-    points = _select_hourly_points(
-        payload,
-        requested_timezone_name=requested_timezone_name,
-        forecast_window_days=forecast_window_days,
-    )
-    return WeatherForecast(points=points)
 
 
 class OpenMeteoClient:
@@ -262,11 +241,9 @@ class OpenMeteoClient:
 
         payload = await self._fetch_weather_payload(params=params)
 
-        return _parse_location_weather_payload(
-            payload,
-            requested_timezone_name=timezone_name,
-            forecast_window_days=_DEFAULT_FORECAST_WINDOW_DAYS,
-        )
+        _validate_hourly_units(payload)
+        points = _select_hourly_points(payload, requested_timezone_name=timezone_name)
+        return WeatherForecast(points=points)
 
     def _build_async_client(self) -> httpx.AsyncClient:
         """Build an owned HTTPX client with the configured Open-Meteo settings."""

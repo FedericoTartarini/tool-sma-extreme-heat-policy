@@ -211,11 +211,8 @@ Example response:
 
 ## Caching
 
-- The risk service keeps an in-memory TTL cache keyed by
-  `sport + profile + latitude + longitude`.
-- Latitude and longitude are formatted to six decimal places in cache keys.
-  Coordinates share a cache entry only when their six-decimal formatted values match;
-  values that differ beyond the sixth decimal can still round to different keys.
+- The risk service keeps an in-memory TTL cache keyed by:
+  `sport + profile + latitude + longitude`
 - `RISK_CACHE_TTL_SECONDS` (default `600`) sets how long an entry is reused.
   Expired entries are deleted on the next cache read or write, whatever its key.
 - `RISK_CACHE_MAX_ENTRIES` (default `200`, minimum `1`) caps the number of
@@ -225,8 +222,6 @@ Example response:
 - Requests from different users will reuse cached results only when they hit the
   same backend process.
 - The cache is not shared across multiple server instances.
-- Home and the multi-location dashboard both call `POST /home/risk`, so identical
-  sport/profile/coordinate requests share the same cache entry within one process.
 
 ## Validation And Errors
 
