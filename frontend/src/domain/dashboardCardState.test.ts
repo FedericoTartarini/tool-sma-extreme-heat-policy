@@ -64,12 +64,18 @@ describe("dashboardCardState", () => {
     });
   });
 
-  it("returns loading while a refetch is in flight", () => {
+  it("keeps current metrics while a background refetch is in flight", () => {
     expect(
       resolveDashboardCardState(sydneyHeatRiskResponse(), {
         isFetching: true,
       }),
-    ).toEqual({ status: "loading" });
+    ).toEqual({
+      status: "ok",
+      currentRiskScore: 1.2,
+      todayMaxRiskScore: 3.2,
+      currentRiskLevel: "low",
+      todayMaxRiskLevel: "high",
+    });
   });
 
   it("returns loading while placeholder data is shown during refetch", () => {

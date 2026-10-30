@@ -117,15 +117,9 @@ function hasFreshDashboardCardMetrics(
   options: {
     isPlaceholderData: boolean;
     isError: boolean;
-    isFetching: boolean;
   },
 ): boolean {
-  if (
-    !response ||
-    options.isPlaceholderData ||
-    options.isError ||
-    options.isFetching
-  ) {
+  if (!response || options.isPlaceholderData || options.isError) {
     return false;
   }
 
@@ -160,7 +154,6 @@ export function resolveDashboardCardState(
     hasFreshDashboardCardMetrics(response, {
       isPlaceholderData,
       isError,
-      isFetching,
     }) &&
     response
   ) {

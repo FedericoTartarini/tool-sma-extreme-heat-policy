@@ -110,14 +110,17 @@ describe("weekly preview query adapter", () => {
     expect(readWeeklyStatus()).toBe("ok");
   });
 
-  it.each(["isFetching", "isPlaceholderData"] as const)(
-    "does not show cached risks while %s",
-    (flag) => {
-      queries.results[0][flag] = true;
-      expect(readWeeklyStatus()).toBe("loading");
-      expect(readCardStatus()).toBe("loading");
-    },
-  );
+  it("does not show cached risks while isPlaceholderData", () => {
+    queries.results[0].isPlaceholderData = true;
+    expect(readWeeklyStatus()).toBe("loading");
+    expect(readCardStatus()).toBe("loading");
+  });
+
+  it("keeps current risks during a background refetch", () => {
+    queries.results[0].isFetching = true;
+    expect(readWeeklyStatus()).toBe("ok");
+    expect(readCardStatus()).toBe("ok");
+  });
 
   it("does not show cached risks after a failed refresh", () => {
     queries.results[0].isError = true;
