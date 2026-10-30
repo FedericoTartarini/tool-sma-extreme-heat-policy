@@ -20,6 +20,7 @@ import { useDashboardHeatRisk } from "@/hooks/useDashboardHeatRisk";
 import { useDashboardScheduleClock } from "@/hooks/useDashboardScheduleClock";
 import {
   createDashboardRefreshFailedToast,
+  createDashboardRiskPartiallyUpdatedToast,
   createDashboardRiskUpdatedToast,
   type DashboardToastEvent,
 } from "@/pages/dashboard/dashboardToast";
@@ -72,7 +73,8 @@ export function DashboardPage() {
   const runScheduledRefresh = useEffectEvent(async () => heatRisk.refresh());
 
   useEffect(() => {
-    if (!(cards.length > 0 && heatRisk.hasLoadedCardData)) {
+    // Runs even when every card failed its first load, so failed cards retry.
+    if (cards.length === 0) {
       return;
     }
 
@@ -87,7 +89,9 @@ export function DashboardPage() {
           return;
         }
 
-        if (refreshResult.hasAnySuccess) {
+        if (refreshResult.hasAnySuccess && refreshResult.hasAnyFailure) {
+          publishToast(createDashboardRiskPartiallyUpdatedToast);
+        } else if (refreshResult.hasAnySuccess) {
           publishToast(createDashboardRiskUpdatedToast);
         } else if (refreshResult.hasAnyFailure) {
           publishToast(createDashboardRefreshFailedToast);
@@ -106,7 +110,7 @@ export function DashboardPage() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [cards.length, heatRisk.hasLoadedCardData, publishToast]);
+  }, [cards.length, publishToast]);
 
   return (
     <>

@@ -28,6 +28,7 @@ const SYDNEY_CARD: SavedDashboardCard = {
   latitude: -33.847,
   longitude: 151.067,
   mapboxId: "mapbox-sydney",
+  schedule: { weekdays: [1], startMinutes: 540, endMinutes: 660 },
 };
 
 const MELBOURNE_CARD: SavedDashboardCard = {
@@ -40,6 +41,7 @@ const MELBOURNE_CARD: SavedDashboardCard = {
   latitude: -37.813,
   longitude: 144.963,
   mapboxId: "mapbox-melbourne",
+  schedule: { weekdays: [6], startMinutes: 420, endMinutes: 540 },
 };
 
 const SCHEDULED_SYDNEY_CARD: SavedDashboardCard = {
@@ -148,6 +150,17 @@ describe("dashboard browserState", () => {
       },
       MELBOURNE_CARD,
     ]);
+
+    expect(loadPersistedDashboardState(SPORT_TYPE_VALUES)).toEqual({
+      cards: [MELBOURNE_CARD],
+    });
+  });
+
+  it("drops a card saved without a schedule", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const unscheduledCard: Record<string, unknown> = { ...SYDNEY_CARD };
+    delete unscheduledCard.schedule;
+    persistRawCards(storage, [unscheduledCard, MELBOURNE_CARD]);
 
     expect(loadPersistedDashboardState(SPORT_TYPE_VALUES)).toEqual({
       cards: [MELBOURNE_CARD],

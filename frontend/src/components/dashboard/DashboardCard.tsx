@@ -14,6 +14,7 @@ import { DashboardCardSkeleton } from "@/components/dashboard/DashboardSkeletons
 import { RiskStackedBar } from "@/components/dashboard/RiskStackedBar";
 import {
   buildDashboardHomePath,
+  DASHBOARD_HOME_LINK_STATE,
   type DashboardCardSchedule,
   type SavedDashboardCard,
   type UpdateDashboardCardScheduleResult,
@@ -35,7 +36,13 @@ import {
   formatScheduledWindowLocalDate,
   formatScheduledWindowTimeRange,
 } from "@/lib/scheduleFormat";
-import { CONTENT_PADDING } from "@/config/uiLayout";
+import {
+  COMPACT_GAP,
+  CONTENT_GAP,
+  CONTENT_PADDING,
+  DASHBOARD_CARD_MIN_HEIGHT,
+  DASHBOARD_TIGHT_GAP,
+} from "@/config/uiLayout";
 import {
   DASHBOARD_CARD_CONTROL_LAYER_Z_INDEX,
   DASHBOARD_CARD_HIT_LAYER_Z_INDEX,
@@ -99,9 +106,6 @@ function dashboardWindowScheduleErrorKey(
   status: string,
   mode: "my_schedule" | "other_time_period",
 ): string {
-  if (status === "missing_schedule") {
-    return "dashboard.cardErrors.missingSchedule";
-  }
   if (status === "incomplete_forecast") {
     return mode === "other_time_period"
       ? "dashboard.cardErrors.otherPeriodForecastUnavailable"
@@ -125,7 +129,7 @@ function DashboardCardWindowMetrics({
   const { t } = useTranslation();
 
   return (
-    <Stack gap={4}>
+    <Stack gap={DASHBOARD_TIGHT_GAP}>
       {sessionHeading ? (
         <Text c="dimmed" fz="sm" fw={600}>
           {sessionHeading}
@@ -171,7 +175,7 @@ function DashboardCardMetricsContent({
     }
 
     return (
-      <Stack gap={4}>
+      <Stack gap={DASHBOARD_TIGHT_GAP}>
         <DashboardMetricColumnLabel>
           {t("dashboard.cards.metrics.current")}
         </DashboardMetricColumnLabel>
@@ -255,8 +259,8 @@ function DashboardCardHeader({
   actions: ReactNode;
 }) {
   return (
-    <Stack gap={4}>
-      <Group wrap="nowrap" align="center" gap="xs">
+    <Stack gap={DASHBOARD_TIGHT_GAP}>
+      <Group wrap="nowrap" align="center" gap={COMPACT_GAP}>
         <Box style={{ flex: 1, minWidth: 0 }}>
           <DashboardCardTitleLink
             homePath={homePath}
@@ -291,6 +295,7 @@ function DashboardCardTitleLink({
     <Text
       component={Link}
       to={homePath}
+      state={DASHBOARD_HOME_LINK_STATE}
       fw={700}
       lineClamp={lineClamp}
       aria-label={ariaLabel}
@@ -310,6 +315,7 @@ function DashboardCardHomeOverlay({ homePath }: { homePath: string }) {
   return (
     <Link
       to={homePath}
+      state={DASHBOARD_HOME_LINK_STATE}
       tabIndex={-1}
       aria-hidden="true"
       style={{
@@ -354,7 +360,7 @@ export function DashboardCard({
   const formatNextDayTime = (time: string) =>
     t("dashboard.cards.nextDayTime", { time });
   const scheduleLabel =
-    viewMode === "my_schedule" && card.schedule
+    viewMode === "my_schedule"
       ? formatDashboardCardSchedule(
           card.schedule,
           intlLocale,
@@ -404,7 +410,7 @@ export function DashboardCard({
     onRemove,
     onMoveUp,
     onMoveDown,
-    canEditSchedule: viewMode === "my_schedule" && card.schedule !== undefined,
+    canEditSchedule: viewMode === "my_schedule",
     onEditSchedule: () => setIsEditScheduleOpen(true),
   };
 
@@ -417,11 +423,11 @@ export function DashboardCard({
           radius="md"
           p={CONTENT_PADDING.base}
           style={{
-            minHeight: 168,
+            minHeight: DASHBOARD_CARD_MIN_HEIGHT,
             cursor: "pointer",
           }}
         >
-          <Stack gap="sm">
+          <Stack gap={CONTENT_GAP}>
             <DashboardCardHeader
               homePath={homePath}
               title={cardTitle}
@@ -441,7 +447,7 @@ export function DashboardCard({
           <DashboardCardHomeOverlay homePath={homePath} />
         </Paper>
       </Box>
-      {isEditScheduleOpen && card.schedule ? (
+      {isEditScheduleOpen ? (
         <DashboardEditScheduleModal
           schedule={card.schedule}
           cardTitle={cardTitle}

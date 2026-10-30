@@ -10,15 +10,17 @@ import {
 import type { LocationSuggestion } from "@/domain/location";
 import type { Weekday } from "@/domain/weeklyWindow";
 import {
+  findLocationSuggestionById,
+  getLocationLanguagePreference,
+  LOCATION_SUGGEST_DEBOUNCE_MS,
   LOCATION_SUGGEST_TYPES_PARAM,
+  MIN_LOCATION_QUERY_LENGTH,
   prepareLocationSuggestions,
 } from "@/domain/locationSearch";
 import { retrieveAndSelectLocation } from "@/hooks/homeLocationRetrieve";
 import { createLatestAbortableRequestController } from "@/lib/latestAbortableRequest";
 import { useDashboardStore } from "@/store/dashboardStore";
 
-const MIN_LOCATION_QUERY_LENGTH = 2;
-const SUGGEST_DEBOUNCE_MS = 800;
 const EMPTY_SUGGESTIONS: LocationSuggestion[] = [];
 
 export type DashboardLocationAddErrorReason =
@@ -47,27 +49,6 @@ interface UseDashboardLocationAddResult {
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
   onAddCardClick: () => DashboardLocationAddErrorReason | null;
-}
-
-function getLanguagePreference(): string | undefined {
-  if (typeof navigator === "undefined") {
-    return undefined;
-  }
-
-  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
-    return navigator.languages.join(",");
-  }
-
-  return navigator.language || undefined;
-}
-
-function findSubmittedSuggestion(
-  suggestions: LocationSuggestion[],
-  suggestionId: string,
-): LocationSuggestion | null {
-  return (
-    suggestions.find((suggestion) => suggestion.id === suggestionId) ?? null
-  );
 }
 
 function hasResolvedCoordinates(
@@ -114,8 +95,11 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
 
   const query = locationSearchInput.trim();
   const draftLocationValue = draftLocation?.displayLabel.trim() ?? "";
-  const language = useMemo(() => getLanguagePreference(), []);
-  const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
+  const language = useMemo(() => getLocationLanguagePreference(), []);
+  const [debouncedQuery] = useDebouncedValue(
+    query,
+    LOCATION_SUGGEST_DEBOUNCE_MS,
+  );
   const debouncedQueryValue = debouncedQuery.trim();
   const hasDebounced = debouncedQueryValue === query;
   const canAddMoreCards = canAddDashboardCard(cards);
@@ -243,7 +227,7 @@ export function useDashboardLocationAdd(): UseDashboardLocationAddResult {
   };
 
   const onLocationOptionSubmit = (suggestionId: string) => {
-    const selectedSuggestion = findSubmittedSuggestion(
+    const selectedSuggestion = findLocationSuggestionById(
       dedupedSuggestions,
       suggestionId,
     );

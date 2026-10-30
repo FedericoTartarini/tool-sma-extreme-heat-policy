@@ -64,9 +64,9 @@ Notes:
 - Saved cards persist in `localStorage` via `src/pages/dashboard/browserState.ts`.
 - Card metrics load through one `POST /home/risk` request per **unique**
   saved location/sport pair using the same forecast pipeline as Home. React Query
-  keys use normalized coordinates (not card id) so duplicate locations share one
-  request. The backend in-memory cache also dedupes by sport, profile, and
-  coordinates within a single server process.
+  keys use the sport and normalized coordinates (not card id), so cards with the
+  same sport and location share one request. The backend in-memory cache also
+  dedupes by sport, profile, and coordinates within a single server process.
 - Dashboard heat-risk requests always use `DEFAULT_HEAT_RISK_PROFILE` (`ADULT`).
   Home profile selection does not apply on `/dashboard`.
 - **Now** mode shows the stacked risk bar plus today's max on each card.
@@ -86,9 +86,10 @@ above. This section describes only the optional development panel—not the
 shipped dashboard UI.
 
 With the backend and Vite development server running, open
-`/dashboard?weeklyPreview=1`. Add a dashboard card first, then select its
-weekday and start/end hours in **Weekly window preview**. The panel reuses that
-card's forecast and the API-provided location timezone. It does not create
+`/dashboard?weeklyPreview=1`. Add a dashboard card first, then choose a card,
+a weekday and start/end hours in **Weekly window preview**. The panel ignores
+the card's saved schedule and reuses only its forecast and the API-provided
+location timezone. It does not create
 additional API requests. Schedule choices in this panel are not saved; card
 schedules on `/dashboard` are edited on each card and persist separately.
 
@@ -122,8 +123,8 @@ The domain helpers are `weeklyWindow.ts`, `weeklyWindowForecast.ts` and
 `weeklyWindowPreview.ts`, with matching `.test.ts` tests. The component test
 uses jsdom and real Mantine controls; the query-adapter test supplies mocked
 query states. These are not live-network end-to-end or visual-layout tests.
-Run `pnpm test:ci` and `pnpm run ci` for the configured checks. Test files use
-`.test.ts` to match the existing collector. The jsdom-only `nwsapi` override
+Run `pnpm test:ci` and `pnpm run ci` for the configured checks. Vitest collects
+`src/**/*.test.{ts,tsx}`. The jsdom-only `nwsapi` override
 avoids a recursive `:fullscreen` matcher in version 2.2.27.
 
 ## Project structure (Layer-first)
@@ -168,6 +169,7 @@ Import rules:
 - After a successful fetch:
   - URL query params update (`profile`, `sport`, `loc`) and
   - the last selection is persisted to localStorage only for direct visits (not shared links).
+    Opening Home from a dashboard card counts as a direct visit.
 - Dates are formatted in the selected location timezone supplied by the backend.
 - API time contract: forecast responses must carry `time_utc` as ISO-8601 UTC (`...Z`) and `time_local` as ISO-8601 local time with an explicit offset.
 - Profile support is reserved for a future release. The frontend keeps the profile domain/store/API contract, but the Home filters do not currently expose a Profile select and bootstrap keeps the active profile fixed to `ADULT`.

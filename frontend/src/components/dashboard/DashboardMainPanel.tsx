@@ -92,7 +92,6 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
             isLoading={isSuggestLoading || isResolvingLocation}
             disabled={isAddFormDisabled}
             isCommitted={isShowingCommittedDraftLocation}
-            openDropdownWhenTyping={!isShowingCommittedDraftLocation}
             onChange={onLocationSearchInputChange}
             onOptionSubmit={onLocationOptionSubmit}
           />
@@ -124,13 +123,6 @@ export function DashboardMainPanel({ onAddError }: DashboardMainPanelProps) {
             labelWidth={FILTER_FIELD_LABEL_WIDTH}
             disabled={isAddFormDisabled}
           />
-
-          <Group wrap="nowrap" align="flex-start" gap={CONTENT_GAP}>
-            <Box w={FILTER_FIELD_LABEL_WIDTH} visibleFrom="xs" />
-            <Text c="dimmed" fz="sm" flex={1}>
-              {t("dashboard.addLocation.scheduleRequired")}
-            </Text>
-          </Group>
 
           <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
             <Box w={FILTER_FIELD_LABEL_WIDTH} visibleFrom="xs" />

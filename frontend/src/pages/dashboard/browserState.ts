@@ -71,7 +71,7 @@ function isValidSavedDashboardCard(
     Number.isFinite(value.longitude) &&
     (value.regionName === undefined || typeof value.regionName === "string") &&
     (value.mapboxId === undefined || typeof value.mapboxId === "string") &&
-    (value.schedule === undefined || isDashboardCardSchedule(value.schedule))
+    isDashboardCardSchedule(value.schedule)
   );
 }
 

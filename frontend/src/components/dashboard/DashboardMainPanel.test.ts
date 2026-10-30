@@ -186,6 +186,40 @@ describe("dashboard add panel schedule fields", () => {
     ).toBeNull();
   });
 
+  it("opens the suggestions when a new name replaces the picked one", () => {
+    const pickedLabel = "Sydney, New South Wales, Australia";
+    setAddForm({
+      locationSearchInput: pickedLabel,
+      isShowingCommittedDraftLocation: true,
+      locationSuggestions: [
+        {
+          id: "melbourne",
+          displayLabel: "Melbourne, Victoria, Australia",
+          name: "Melbourne",
+          countryName: "Australia",
+        },
+      ],
+    });
+    render();
+    openAddModal();
+
+    const input = document.querySelector<HTMLInputElement>(
+      'input[aria-label="Location"]',
+    );
+    expect(input, "Missing location field").not.toBeNull();
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!.call(input, "Melbourne");
+      input!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(document.body.textContent).toContain(
+      "Melbourne, Victoria, Australia",
+    );
+  });
+
   it("disables the add button while the schedule is incomplete", () => {
     setAddForm({ draftWeekdays: [2], canSubmitAdd: false });
     render();

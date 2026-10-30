@@ -4,7 +4,6 @@ import {
   getDashboardHeatRiskApiResponseOrThrow,
   throwIfDashboardHeatRiskFetchFailed,
   toDashboardHeatRiskQueryFailure,
-  toDashboardHeatRiskQueryErrorReason,
 } from "@/api/dashboardHeatRiskQuery";
 import { sydneyHeatRiskResponse } from "@/test/weeklyWindowFixtures";
 
@@ -57,17 +56,6 @@ describe("dashboardHeatRiskQuery helpers", () => {
 
   it("returns null for non-API errors", () => {
     expect(toDashboardHeatRiskQueryFailure(new Error("boom"))).toBeNull();
-  });
-
-  it("keeps fetch reason mapping available for legacy callers", () => {
-    expect(
-      toDashboardHeatRiskQueryErrorReason(
-        new ApiError({
-          kind: "network",
-          message: "network",
-        }),
-      ),
-    ).toBe("network");
   });
 
   it("throws unknown_inputs for 422 heat-risk fetch failures", () => {

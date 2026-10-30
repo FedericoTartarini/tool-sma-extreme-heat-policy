@@ -8,7 +8,6 @@ export const UI_TITLE_ICON_STROKE = 1.8;
 export const UI_TITLE_THEME_ICON_SIZE = "xl";
 
 export const COMPACT_RECOMMENDATION_LAYOUT_QUERY = "(max-width: 36em)";
-export const ACTION_IMAGE_ICON_SIZE = "calc(var(--mantine-font-size-md) * 2.5)";
 
 export const DASHBOARD_CARD_HIT_LAYER_Z_INDEX = 1;
 export const DASHBOARD_CARD_CONTROL_LAYER_Z_INDEX = 2;
@@ -19,6 +18,8 @@ export const RISK_STACKED_BAR_CHART_PADDING_BOTTOM = rem(6);
 export const RISK_STACKED_BAR_VALUE_TOP = rem(4);
 export const RISK_STACKED_BAR_LEGEND_GAP = 0;
 export const RISK_STACKED_BAR_PADDING_BELOW_LEGEND = rem(12);
+/** Height of the bar block (value label space, bar and padding), without the legend. */
+export const RISK_STACKED_BAR_CHART_HEIGHT = `calc(${RISK_STACKED_BAR_CHART_PADDING_TOP} + ${RISK_STACKED_BAR_HEIGHT} + ${RISK_STACKED_BAR_CHART_PADDING_BOTTOM})`;
 export const RISK_STACKED_BAR_MARKER_WIDTH = rem(2);
 export const RISK_STACKED_BAR_MARKER_TRIANGLE = rem(6);
 export const RISK_STACKED_BAR_MARKER_TOP = rem(-7);

@@ -34,17 +34,6 @@ export function toDashboardHeatRiskQueryFailure(
 }
 
 /**
- * @deprecated Use {@link toDashboardHeatRiskQueryFailure} for card state resolution.
- */
-export function toDashboardHeatRiskQueryErrorReason(
-  error: unknown,
-): HeatRiskErrorReason | null {
-  const failure = toDashboardHeatRiskQueryFailure(error);
-
-  return failure?.kind === "fetch" ? failure.reason : null;
-}
-
-/**
  * Throws a structured API error when a heat-risk fetch did not succeed.
  */
 export function throwIfDashboardHeatRiskFetchFailed(

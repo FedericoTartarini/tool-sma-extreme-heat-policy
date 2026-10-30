@@ -347,6 +347,7 @@
   "dashboard": {
     "notifications": {
       "riskUpdated": "风险已更新",
+      "riskPartiallyUpdated": "部分卡片的风险已更新，其余卡片无法刷新。",
       "refreshFailed": "无法刷新仪表盘风险数据，请重试。"
     },
     "header": {
@@ -368,7 +369,8 @@
       "startTime": "开始时间",
       "endTime": "结束时间",
       "midnight": "次日零点",
-      "scheduleRequired": "请选择至少一个星期日期，结束时间须晚于开始时间，并在当天或次日零点结束。所有日程字段均为必填项。"
+      "scheduleRequired": "请选择至少一个星期日期，结束时间须晚于开始时间，并在当天或次日零点结束。所有日程字段均为必填项。",
+      "scheduleInvalidHint": "结束时间须晚于开始时间。不支持跨夜时段。"
     },
     "emptyState": {
       "title": "仪表盘上还没有已保存的卡片。添加卡片即可开始监控热风险。"
@@ -416,7 +418,6 @@
       "missingResult": "此地点的风险数据不可用。",
       "unknownInputs": "此地点的天气输入数据不可用。",
       "riskCalculationFailed": "无法计算此地点的风险。",
-      "missingSchedule": "此卡片没有已保存的日程。",
       "scheduleForecastUnavailable": "天气预报暂未覆盖下一次日程时段。",
       "scheduleUnavailable": "无法计算下一次日程时段。",
       "otherPeriodForecastUnavailable": "预报数据尚未覆盖该地点的所选时段。",

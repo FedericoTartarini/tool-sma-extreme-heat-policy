@@ -1,6 +1,7 @@
 import { Collapse, SegmentedControl, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { DashboardOtherPeriodFields } from "@/components/dashboard/DashboardOtherPeriodFields";
+import { FILTER_FIELD_LABEL_WIDTH } from "@/components/filters/LocationSuggestField";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
   DASHBOARD_VIEW_MODES,
@@ -8,8 +9,6 @@ import {
   type DashboardViewMode,
 } from "@/domain/dashboardViewMode";
 import { useDashboardStore } from "@/store/dashboardStore";
-
-const FIELD_LABEL_WIDTH = 72;
 
 interface DashboardViewModeSelectorProps {
   value: DashboardViewMode;
@@ -59,7 +58,7 @@ export function DashboardViewModeSelector({
             onWeekdayChange={setOtherPeriodWeekday}
             onStartMinutesChange={setOtherPeriodStartMinutes}
             onEndMinutesChange={setOtherPeriodEndMinutes}
-            labelWidth={FIELD_LABEL_WIDTH}
+            labelWidth={FILTER_FIELD_LABEL_WIDTH}
           />
         ) : null}
       </Collapse>

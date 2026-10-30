@@ -25,6 +25,21 @@ export function createDashboardRiskUpdatedToast(
 }
 
 /**
+ * Creates an error toast when a scheduled dashboard refetch updates some cards
+ * but fails for others.
+ */
+export function createDashboardRiskPartiallyUpdatedToast(
+  id: number,
+): DashboardToastEvent {
+  return {
+    id,
+    i18nKey: "dashboard.notifications.riskPartiallyUpdated",
+    variant: "error",
+    durationMs: DASHBOARD_ERROR_TOAST_DURATION_MS,
+  };
+}
+
+/**
  * Creates an error toast when a scheduled dashboard refetch fails for every card.
  */
 export function createDashboardRefreshFailedToast(

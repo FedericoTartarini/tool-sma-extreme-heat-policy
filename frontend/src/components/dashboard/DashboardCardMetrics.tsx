@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { RiskLevel } from "@/domain/risk";
 import {
+  formatRiskScore,
   getRiskBadgeForegroundColor,
   getRiskColor,
   getRiskLevelI18nKeys,
@@ -42,7 +43,12 @@ function MetricSecondaryLine({ children }: { children: ReactNode }) {
   return <Text {...METRIC_LABEL_TEXT_PROPS}>{children}</Text>;
 }
 
-function DashboardRiskLevelBadge({ level }: { level: RiskLevel }) {
+/**
+ * Same colours and label as Home's risk badges (all from `riskRegistry`).
+ * It differs only in rendering as a span aligned to the text, because on cards
+ * it sits inside a sentence rather than on its own.
+ */
+export function DashboardRiskLevelBadge({ level }: { level: RiskLevel }) {
   const { t } = useTranslation();
 
   return (
@@ -85,7 +91,7 @@ export function DashboardCardTodayLine({
   return (
     <MetricSecondaryLine>
       {t("dashboard.cards.metrics.maxRiskToday")}{" "}
-      <MetricSecondarySpan>{score.toFixed(1)} </MetricSecondarySpan>
+      <MetricSecondarySpan>{formatRiskScore(score)} </MetricSecondarySpan>
       <DashboardRiskLevelBadge level={level} />
     </MetricSecondaryLine>
   );
@@ -109,11 +115,11 @@ export function DashboardCardRangeLine({
   return (
     <MetricSecondaryLine>
       {t("dashboard.cards.metrics.minimum")}{" "}
-      <MetricSecondarySpan>{minScore.toFixed(1)} </MetricSecondarySpan>
+      <MetricSecondarySpan>{formatRiskScore(minScore)} </MetricSecondarySpan>
       <DashboardRiskLevelBadge level={minLevel} />
       {t("dashboard.cards.metrics.rangeSeparator")}
       {t("dashboard.cards.metrics.maximum")}{" "}
-      <MetricSecondarySpan>{maxScore.toFixed(1)} </MetricSecondarySpan>
+      <MetricSecondarySpan>{formatRiskScore(maxScore)} </MetricSecondarySpan>
       <DashboardRiskLevelBadge level={maxLevel} />
     </MetricSecondaryLine>
   );

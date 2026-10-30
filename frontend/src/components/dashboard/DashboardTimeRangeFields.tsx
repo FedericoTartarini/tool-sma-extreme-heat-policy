@@ -1,6 +1,7 @@
 import { Group, Select } from "@mantine/core";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { COMPACT_GAP } from "@/config/uiLayout";
 import { toIntlLocale } from "@/i18n/language";
 import { formatMinutesOfDay } from "@/lib/scheduleFormat";
 
@@ -45,7 +46,7 @@ export function DashboardTimeRangeFields({
   );
 
   return (
-    <Group flex={1} wrap="nowrap" gap="xs">
+    <Group flex={1} wrap="nowrap" gap={COMPACT_GAP}>
       <Select
         flex={1}
         aria-label={t("dashboard.addLocation.startTime")}

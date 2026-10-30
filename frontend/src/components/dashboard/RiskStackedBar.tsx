@@ -22,6 +22,7 @@ import {
 import { DASHBOARD_METRIC_VALUE_STYLE } from "@/components/dashboard/dashboardMetricStyles";
 import { createRiskLevelLabels } from "@/domain/riskLabels";
 import {
+  formatRiskScore,
   getRiskBands,
   RISK_DISPLAY_AXIS_MAX,
   toRiskDisplayScore,
@@ -52,7 +53,7 @@ export function RiskStackedBar({ score }: RiskStackedBarProps) {
     Math.max(0, (displayScore / RISK_DISPLAY_AXIS_MAX) * 100),
   );
   const riskLevel = toRiskLevel(score);
-  const scoreLabel = score.toFixed(1);
+  const scoreLabel = formatRiskScore(score);
   const anchorStyle = getRiskStackedBarAnchorStyle(markerPercent);
   const trackInsetStyle = getRiskStackedBarTrackInsetStyle();
 
@@ -62,7 +63,7 @@ export function RiskStackedBar({ score }: RiskStackedBarProps) {
       w="100%"
       pb={RISK_STACKED_BAR_PADDING_BELOW_LEGEND}
       aria-label={t("dashboard.cards.metrics.stackedBarAriaLabel", {
-        score: score.toFixed(1),
+        score: scoreLabel,
         level: longRiskLabels[riskLevel],
       })}
     >
@@ -94,6 +95,7 @@ export function RiskStackedBar({ score }: RiskStackedBarProps) {
           >
             {scoreLabel}
           </Text>
+          {/* 1px gaps draw the dividers between risk bands. */}
           <Group
             gap={1}
             wrap="nowrap"
@@ -154,6 +156,7 @@ export function RiskStackedBar({ score }: RiskStackedBarProps) {
           </Box>
         </Box>
       </Box>
+      {/* Same 1px gaps as the bar so each label sits under its band. */}
       <Group gap={1} wrap="nowrap" w="100%" style={trackInsetStyle}>
         {bands.map((band) => (
           <Box key={band.level} style={{ flex: 1, minWidth: 0 }}>

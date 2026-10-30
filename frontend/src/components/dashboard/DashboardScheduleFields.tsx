@@ -1,8 +1,9 @@
-import { Group, Text } from "@mantine/core";
+import { Box, Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { DashboardTimeRangeFields } from "@/components/dashboard/DashboardTimeRangeFields";
 import { DashboardWeekdayChips } from "@/components/dashboard/DashboardWeekdayChips";
 import { CONTENT_GAP } from "@/config/uiLayout";
+import { resolveDashboardCardScheduleDraft } from "@/domain/dashboard";
 import type { Weekday } from "@/domain/weeklyWindow";
 
 interface DashboardScheduleFieldsProps {
@@ -27,6 +28,9 @@ export function DashboardScheduleFields({
   disabled = false,
 }: DashboardScheduleFieldsProps) {
   const { t } = useTranslation();
+  const isInvalidSelection =
+    resolveDashboardCardScheduleDraft({ weekdays, startMinutes, endMinutes })
+      .status === "invalid";
 
   return (
     <>
@@ -53,6 +57,17 @@ export function DashboardScheduleFields({
           onEndMinutesChange={onEndMinutesChange}
           disabled={disabled}
         />
+      </Group>
+
+      <Group wrap="nowrap" align="flex-start" gap={CONTENT_GAP}>
+        <Box w={labelWidth} visibleFrom="xs" />
+        <Text c={isInvalidSelection ? "red" : "dimmed"} fz="sm" flex={1}>
+          {t(
+            isInvalidSelection
+              ? "dashboard.addLocation.scheduleInvalidHint"
+              : "dashboard.addLocation.scheduleRequired",
+          )}
+        </Text>
       </Group>
     </>
   );

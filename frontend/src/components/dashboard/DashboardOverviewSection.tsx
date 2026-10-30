@@ -6,7 +6,8 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { DashboardViewModeSelector } from "@/components/dashboard/DashboardViewModeSelector";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { CONTENT_GAP } from "@/config/uiLayout";
+import { COMPACT_GAP, CONTENT_GAP } from "@/config/uiLayout";
+import { UI_INLINE_ICON_SIZE } from "@/config/uiScale";
 import { RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT } from "@/config/uiTypography";
 import { MAX_DASHBOARD_CARDS } from "@/domain/dashboard";
 import { useDashboardStore } from "@/store/dashboardStore";
@@ -61,14 +62,14 @@ export function DashboardOverviewSection() {
   return (
     <SectionCard title={t("dashboard.header.title")}>
       <Stack gap={CONTENT_GAP}>
-        <Stack gap="xs" align="flex-start">
+        <Stack gap={COMPACT_GAP} align="flex-start">
           <Button
             variant="subtle"
             px={0}
             onClick={toggleSummary}
             aria-expanded={isSummaryOpen}
             aria-controls={summaryId}
-            rightSection={<SummaryToggleIcon size={16} />}
+            rightSection={<SummaryToggleIcon size={UI_INLINE_ICON_SIZE} />}
           >
             {t(
               isSummaryOpen
@@ -81,7 +82,7 @@ export function DashboardOverviewSection() {
           </Collapse>
         </Stack>
 
-        <Stack gap="xs">
+        <Stack gap={COMPACT_GAP}>
           <Text fw={600}>{t("dashboard.viewMode.label")}</Text>
           <DashboardViewModeSelector value={viewMode} onChange={setViewMode} />
         </Stack>

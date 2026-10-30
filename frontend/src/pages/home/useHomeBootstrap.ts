@@ -2,10 +2,12 @@ import { useQueryStates } from "nuqs";
 import { useOptimisticSearchParams } from "nuqs/adapters/react-router/v7";
 import { useLayoutEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import {
   DEFAULT_HEAT_RISK_PROFILE,
   type HeatRiskProfile,
 } from "@/domain/heatRiskProfile";
+import { isDashboardHomeLinkState } from "@/domain/dashboard";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 import { loadPersistedHomeFilters } from "@/pages/home/browserState";
 import {
@@ -45,6 +47,7 @@ interface UseHomeBootstrapResult {
 export function useHomeBootstrap(): UseHomeBootstrapResult {
   const { t } = useTranslation();
   const optimisticSearchParams = useOptimisticSearchParams();
+  const isInAppNavigation = isDashboardHomeLinkState(useLocation().state);
   const [
     { profile: urlProfile, sport: urlSport, location: urlLocation },
     setQueryStates,
@@ -72,6 +75,7 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
     () =>
       resolveHomeBootstrapState({
         hasUrlState,
+        isInAppNavigation,
         defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
         defaultSport: DEFAULT_SPORT_TYPE,
         defaultLocationLabel,
@@ -83,6 +87,7 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
     [
       defaultLocationLabel,
       hasUrlState,
+      isInAppNavigation,
       persistedFilters,
       urlLocation,
       urlProfile,
@@ -100,20 +105,23 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
 
     if (
       hasUrlState &&
-      shouldRebootstrapHomeFromUrl(
-        {
-          profile: state.profile,
-          sport: state.sport,
-          locationSearchInput: state.locationSearchInput,
-          selectedLocationDisplayLabel:
-            state.selectedLocation?.displayLabel ?? null,
-        },
-        bootstrapState,
-      )
+      // A card link to the filters Home already shows must still end an
+      // earlier shared-link session, so later choices are saved.
+      ((isInAppNavigation && state.channel !== bootstrapState.channel) ||
+        shouldRebootstrapHomeFromUrl(
+          {
+            profile: state.profile,
+            sport: state.sport,
+            locationSearchInput: state.locationSearchInput,
+            selectedLocationDisplayLabel:
+              state.selectedLocation?.displayLabel ?? null,
+          },
+          bootstrapState,
+        ))
     ) {
       state.bootstrap(bootstrapState);
     }
-  }, [bootstrapState, hasUrlState]);
+  }, [bootstrapState, hasUrlState, isInAppNavigation]);
 
   return {
     bootstrapState,

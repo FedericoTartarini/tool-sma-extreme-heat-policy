@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { LocationSuggestion } from "@/domain/location";
+import { isStartingNewLocationSearch } from "@/domain/locationSearch";
 import {
   createSavedDashboardCardFromSuggestion,
   type AddDashboardCardResult,
@@ -158,14 +159,15 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
   },
 
   setLocationSearchInput: (value) => {
-    const trimmedValue = value.trim();
-    const previousValue = get().locationSearchInput.trim();
-    const shouldRefreshSessionToken =
-      trimmedValue.length > 0 && previousValue.length === 0;
     const draftLocation = get().draftLocation;
+    const shouldRefreshSessionToken = isStartingNewLocationSearch({
+      previousInput: get().locationSearchInput,
+      nextInput: value,
+      selectedLabel: draftLocation?.displayLabel ?? null,
+    });
     const shouldKeepDraftLocation =
       draftLocation !== null &&
-      trimmedValue === draftLocation.displayLabel.trim();
+      value.trim() === draftLocation.displayLabel.trim();
 
     set((state) => ({
       locationSearchInput: value,
@@ -201,6 +203,8 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
       cards: [...state.cards, savedCard],
       locationSearchInput: "",
       draftLocation: null,
+      // The picked place ended the Mapbox session; the next search needs a new one.
+      locationSessionToken: createSessionToken(),
     }));
 
     return { ok: true };

@@ -77,23 +77,6 @@ export type DashboardWeeklyWindowCardState =
       coveredFromUtc?: string;
     };
 
-/**
- * @deprecated Use {@link toDashboardLocationErrorI18nKey} from `dashboardErrorMap`.
- */
-export function toDashboardCardErrorI18nKey(
-  errorCode: DashboardCardLocationErrorCode | null,
-): string {
-  if (errorCode === "risk_calculation_failed") {
-    return "dashboard.cardErrors.riskCalculationFailed";
-  }
-
-  if (errorCode === "unknown_inputs") {
-    return "dashboard.cardErrors.unknownInputs";
-  }
-
-  return "dashboard.cardErrors.generic";
-}
-
 function resolveLocationError(
   errorCode: DashboardCardLocationErrorCode,
 ): DashboardCardState {
@@ -112,25 +95,11 @@ function resolveFetchErrorReason(
   };
 }
 
-function hasFreshDashboardCardMetrics(
-  response: HeatRiskApiResponse | null | undefined,
-  options: {
-    isPlaceholderData: boolean;
-    isError: boolean;
-  },
-): boolean {
-  if (!response || options.isPlaceholderData || options.isError) {
-    return false;
-  }
-
-  return deriveDashboardRiskLevels(response.forecast) !== null;
-}
-
 /**
  * Resolves a saved card's state from a single `/home/risk` response.
  *
- * Mirrors Home's `hasCalculatedRisk` gate: stale placeholder data and failed
- * fetches must not render as fresh card metrics.
+ * Stale placeholder data and failed fetches never render as fresh card
+ * metrics; a background refetch keeps the current metrics on screen.
  */
 export function resolveDashboardCardState(
   response: HeatRiskApiResponse | null | undefined,
@@ -150,19 +119,12 @@ export function resolveDashboardCardState(
   const errorReason = options?.errorReason ?? null;
   const locationErrorCode = options?.locationErrorCode ?? null;
 
-  if (
-    hasFreshDashboardCardMetrics(response, {
-      isPlaceholderData,
-      isError,
-    }) &&
-    response
-  ) {
-    const derivedRiskLevels = deriveDashboardRiskLevels(response.forecast);
+  const derivedRiskLevels =
+    response && !isPlaceholderData && !isError
+      ? deriveDashboardRiskLevels(response.forecast)
+      : null;
 
-    if (!derivedRiskLevels) {
-      return resolveLocationError("risk_calculation_failed");
-    }
-
+  if (derivedRiskLevels) {
     return {
       status: "ok",
       currentRiskScore: derivedRiskLevels.currentRiskLevelInterpolated,
@@ -271,20 +233,8 @@ export function resolveDashboardWeeklyWindowCardState(
     options,
   );
 
-  if (preview.status === "incomplete_forecast") {
-    return { status: "incomplete_forecast", window: preview.window };
-  }
-
-  if (preview.status === "unresolved_local_time") {
-    return {
-      status: "unresolved_local_time",
-      localDate: preview.localDate,
-      timeZone: preview.timeZone,
-    };
-  }
-
   if (preview.status !== "ok") {
-    return { status: preview.status };
+    return preview;
   }
 
   const summary = summarizeWeeklyWindowRisk(preview.points);

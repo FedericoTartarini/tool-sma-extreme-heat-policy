@@ -2,6 +2,7 @@ import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DashboardScheduleFields } from "@/components/dashboard/DashboardScheduleFields";
+import { FILTER_FIELD_LABEL_WIDTH } from "@/components/filters/LocationSuggestField";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import {
   resolveDashboardCardScheduleDraft,
@@ -9,8 +10,6 @@ import {
   type UpdateDashboardCardScheduleResult,
 } from "@/domain/dashboard";
 import type { Weekday } from "@/domain/weeklyWindow";
-
-const FIELD_LABEL_WIDTH = 72;
 
 interface DashboardEditScheduleModalProps {
   schedule: DashboardCardSchedule;
@@ -94,12 +93,8 @@ export function DashboardEditScheduleModal({
             clearSaveError();
             setEndMinutes(value);
           }}
-          labelWidth={FIELD_LABEL_WIDTH}
+          labelWidth={FILTER_FIELD_LABEL_WIDTH}
         />
-
-        <Text c="dimmed" fz="sm">
-          {t("dashboard.addLocation.scheduleRequired")}
-        </Text>
 
         {saveError ? (
           <Text c="red" fz="sm" role="alert">

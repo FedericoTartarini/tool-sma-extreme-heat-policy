@@ -10,6 +10,7 @@ export const sydneyCard: SavedDashboardCard = {
   countryName: "Australia",
   latitude: -33.86,
   longitude: 151.21,
+  schedule: { weekdays: [2], startMinutes: 1080, endMinutes: 1200 },
 };
 
 function buildSydneyForecastPoints() {

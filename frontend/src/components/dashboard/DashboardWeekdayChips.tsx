@@ -1,6 +1,7 @@
 import { Chip, Group } from "@mantine/core";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { DASHBOARD_TIGHT_GAP } from "@/config/uiLayout";
 import type { Weekday } from "@/domain/weeklyWindow";
 import { toIntlLocale } from "@/i18n/language";
 import { formatWeekday } from "@/lib/scheduleFormat";
@@ -56,7 +57,12 @@ export function DashboardWeekdayChips(props: DashboardWeekdayChipsProps) {
           props.onChange(Number(value) as Weekday);
         }}
       >
-        <Group flex={1} gap={4} role="group" aria-label={ariaLabel}>
+        <Group
+          flex={1}
+          gap={DASHBOARD_TIGHT_GAP}
+          role="group"
+          aria-label={ariaLabel}
+        >
           {weekdayOptions.map((option) => (
             <Chip
               key={option.value}
@@ -85,7 +91,12 @@ export function DashboardWeekdayChips(props: DashboardWeekdayChipsProps) {
         )
       }
     >
-      <Group flex={1} gap={4} role="group" aria-label={ariaLabel}>
+      <Group
+        flex={1}
+        gap={DASHBOARD_TIGHT_GAP}
+        role="group"
+        aria-label={ariaLabel}
+      >
         {weekdayOptions.map((option) => (
           <Chip
             key={option.value}

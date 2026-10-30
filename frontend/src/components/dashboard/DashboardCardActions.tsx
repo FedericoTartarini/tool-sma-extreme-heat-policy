@@ -20,7 +20,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { CONTENT_GAP } from "@/config/uiLayout";
+import { CONTENT_GAP, DASHBOARD_TIGHT_GAP } from "@/config/uiLayout";
 import {
   DASHBOARD_CARD_CONTROL_LAYER_Z_INDEX,
   UI_INLINE_ICON_SIZE,
@@ -205,7 +205,7 @@ export function DashboardCardActions({
 
   return (
     <>
-      <Group gap={4} wrap="nowrap" style={controlLayerStyle}>
+      <Group gap={DASHBOARD_TIGHT_GAP} wrap="nowrap" style={controlLayerStyle}>
         {canEditSchedule ? (
           <Tooltip label={t("dashboard.cards.editSchedule.action")}>
             <ActionIcon

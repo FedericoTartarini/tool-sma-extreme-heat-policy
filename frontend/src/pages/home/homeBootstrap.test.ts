@@ -34,6 +34,49 @@ describe("resolveHomeBootstrapState", () => {
     });
   });
 
+  it("treats a dashboard card link as a direct visit that uses the URL filters", () => {
+    expect(
+      resolveHomeBootstrapState({
+        hasUrlState: true,
+        isInAppNavigation: true,
+        defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+        defaultSport: DEFAULT_SPORT_TYPE,
+        defaultLocationLabel: "",
+        urlProfile: null,
+        urlSport: SportType.Basketball,
+        urlLocation: "Perth, Western Australia, Australia",
+        persistedFilters: null,
+      }),
+    ).toEqual({
+      channel: "direct",
+      profile: DEFAULT_HEAT_RISK_PROFILE,
+      sport: SportType.Basketball,
+      locationSearchInput: "Perth, Western Australia, Australia",
+      locationPrefillSource: "url",
+      prefilledLocationResolveState: "pending",
+    });
+  });
+
+  it("ignores in-app navigation when the URL has no filters", () => {
+    expect(
+      resolveHomeBootstrapState({
+        hasUrlState: false,
+        isInAppNavigation: true,
+        defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
+        defaultSport: DEFAULT_SPORT_TYPE,
+        defaultLocationLabel: "Sydney, New South Wales, Australia",
+        urlProfile: null,
+        urlSport: null,
+        urlLocation: null,
+        persistedFilters: null,
+      }),
+    ).toMatchObject({
+      channel: "direct",
+      locationSearchInput: "Sydney, New South Wales, Australia",
+      locationPrefillSource: "default",
+    });
+  });
+
   it("keeps the default adult profile when persisted filters store a younger profile", () => {
     expect(
       resolveHomeBootstrapState({

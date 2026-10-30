@@ -116,7 +116,7 @@ describe("weekly window component interactions", () => {
   it("renders the real Mantine controls, risk samples and location/sport Home link", () => {
     render();
     expect(host.querySelectorAll("tbody tr")).toHaveLength(3);
-    expect(host.querySelector("tbody")?.textContent).toContain("High");
+    expect(host.querySelector("tbody")?.textContent).toContain("HIGH");
     const home = host.querySelector("a")!;
     const params = new URL(home.href).searchParams;
     expect(params.get("sport")).toBe("SOCCER");

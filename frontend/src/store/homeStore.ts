@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { LocationSuggestion } from "@/domain/location";
+import { isStartingNewLocationSearch } from "@/domain/locationSearch";
 import {
   DEFAULT_HEAT_RISK_PROFILE,
   type HeatRiskProfile,
@@ -97,10 +98,11 @@ export const useHomeStore = create<HomeStoreState>((set) => ({
       const selectedLocationValue = state.selectedLocation?.displayLabel ?? "";
       const shouldClearSelectedLocation =
         Boolean(state.selectedLocation) && value !== selectedLocationValue;
-      const isStartingNewSearch =
-        Boolean(state.selectedLocation) &&
-        state.locationSearchInput === selectedLocationValue &&
-        value !== selectedLocationValue;
+      const isStartingNewSearch = isStartingNewLocationSearch({
+        previousInput: state.locationSearchInput,
+        nextInput: value,
+        selectedLabel: state.selectedLocation?.displayLabel ?? null,
+      });
 
       return {
         locationSearchInput: value,

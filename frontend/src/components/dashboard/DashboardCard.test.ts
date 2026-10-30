@@ -298,7 +298,7 @@ describe("dashboard card schedule", () => {
     expect(harness.host.textContent).toContain("周二、周四 · 18:00 – 20:00");
   });
 
-  it("shows no schedule line for a card saved without one", () => {
+  it("shows no schedule line outside My schedule", () => {
     renderCard(sydneyCard);
 
     expect(harness.host.textContent).not.toMatch(/\d:\d{2}\s*(am|pm)\s*–/i);

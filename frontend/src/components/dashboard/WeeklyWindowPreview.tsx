@@ -14,22 +14,20 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { DashboardRiskLevelBadge } from "@/components/dashboard/DashboardCardMetrics";
 import {
   buildDashboardHomePath,
+  DASHBOARD_HOME_LINK_STATE,
   type SavedDashboardCard,
 } from "@/domain/dashboard";
 import { sports } from "@/domain/sport";
-import {
-  getRiskBadgeForegroundColor,
-  getRiskColor,
-  getRiskLevelI18nKeys,
-  toRiskLevel,
-} from "@/domain/riskRegistry";
+import { toRiskLevel } from "@/domain/riskRegistry";
 import type { Weekday } from "@/domain/weeklyWindow";
 import {
   resolveWeeklyWindowPreview,
   type WeeklyPreviewSource,
 } from "@/domain/weeklyWindowPreview";
+import { CONTENT_GAP } from "@/config/uiLayout";
 import { toIntlLocale } from "@/i18n/language";
 import { formatWeeklyForecastTime } from "@/lib/weeklyWindowLabels";
 
@@ -123,6 +121,7 @@ export function WeeklyWindowPreview({
 
   return (
     <Paper withBorder radius="md" p="md">
+      {/* Development-only panel; roomier spacing sets it apart from the cards. */}
       <Stack gap="md">
         <Group justify="space-between">
           <Title order={2}>{t("weeklyPreview.title")}</Title>
@@ -174,7 +173,7 @@ export function WeeklyWindowPreview({
             <Text size="sm" c="dimmed">
               {t("weeklyPreview.rules")}
             </Text>
-            <Stack gap="sm" role="status" aria-live="polite">
+            <Stack gap={CONTENT_GAP} role="status" aria-live="polite">
               {scheduledWindow && (
                 <>
                   <Title order={3}>{t("weeklyPreview.next")}</Title>
@@ -236,12 +235,7 @@ export function WeeklyWindowPreview({
                               : localTime.label}
                           </Table.Td>
                           <Table.Td>
-                            <Badge
-                              color={getRiskColor(risk)}
-                              c={getRiskBadgeForegroundColor(risk)}
-                            >
-                              {t(getRiskLevelI18nKeys(risk).levelKey)}
-                            </Badge>
+                            <DashboardRiskLevelBadge level={risk} />
                           </Table.Td>
                         </Table.Tr>
                       );
@@ -254,6 +248,7 @@ export function WeeklyWindowPreview({
               <Button
                 component={Link}
                 to={buildDashboardHomePath(card.sport, card.displayLabel)}
+                state={DASHBOARD_HOME_LINK_STATE}
                 variant="light"
               >
                 {t("weeklyPreview.openHome")}

@@ -34,7 +34,7 @@ export interface SavedDashboardCard {
   latitude: number;
   longitude: number;
   mapboxId?: string;
-  schedule?: DashboardCardSchedule;
+  schedule: DashboardCardSchedule;
 }
 
 export type AddDashboardCardFailureReason =
@@ -69,6 +69,20 @@ export function toDashboardCardKey(
   longitude: number,
 ): string {
   return `${sport}|${toCoordinateKey(latitude, longitude)}`;
+}
+
+/**
+ * Router state on card links to Home. It marks the visit as in-app navigation,
+ * so Home treats it as a direct visit and keeps saving filter choices.
+ */
+export const DASHBOARD_HOME_LINK_STATE = { from: "dashboard" } as const;
+
+export function isDashboardHomeLinkState(state: unknown): boolean {
+  return (
+    typeof state === "object" &&
+    state !== null &&
+    (state as { from?: unknown }).from === DASHBOARD_HOME_LINK_STATE.from
+  );
 }
 
 /**
@@ -122,7 +136,6 @@ export function isDuplicateSavedDashboardCard(
 
     return (
       hasSamePlace &&
-      card.schedule !== undefined &&
       areDashboardCardSchedulesEqual(card.schedule, candidate.schedule)
     );
   });

@@ -46,7 +46,6 @@ interface UseDashboardHeatRiskResult {
     card: SavedDashboardCard,
     now: Date,
   ) => DashboardOtherPeriodCardState;
-  hasLoadedCardData: boolean;
   refresh: () => Promise<DashboardHeatRiskRefreshResult>;
 }
 
@@ -151,15 +150,6 @@ export function useDashboardHeatRisk(): UseDashboardHeatRiskResult {
     [queryCards],
   );
 
-  const hasLoadedCardData = useMemo(
-    () =>
-      cards.length > 0 &&
-      cardQueries.some(
-        (query) => query.data !== undefined && query.isPlaceholderData !== true,
-      ),
-    [cards.length, cardQueries],
-  );
-
   async function refresh(): Promise<DashboardHeatRiskRefreshResult> {
     if (queryCards.length === 0) {
       return { hasAnySuccess: false, hasAnyFailure: false };
@@ -221,7 +211,6 @@ export function useDashboardHeatRisk(): UseDashboardHeatRiskResult {
     getCardState,
     getScheduledCardState,
     getOtherPeriodCardState,
-    hasLoadedCardData,
     refresh,
   };
 }

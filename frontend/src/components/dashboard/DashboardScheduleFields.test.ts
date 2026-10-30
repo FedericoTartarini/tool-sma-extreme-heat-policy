@@ -172,6 +172,23 @@ describe("dashboard schedule fields", () => {
     ).toBe(true);
   });
 
+  it("explains why an end time not after the start is rejected", () => {
+    render({ weekdays: [1], startMinutes: 660, endMinutes: 540 });
+
+    expect(host.textContent).toContain(
+      "Choose an end time later than the start.",
+    );
+  });
+
+  it("keeps the required-fields hint for a valid schedule", () => {
+    render({ weekdays: [1], startMinutes: 540, endMinutes: 660 });
+
+    expect(host.textContent).toContain("All schedule fields are required.");
+    expect(host.textContent).not.toContain(
+      "Choose an end time later than the start.",
+    );
+  });
+
   it("labels weekdays and times in Chinese", () => {
     act(() => {
       void language.changeLanguage("zh-CN");

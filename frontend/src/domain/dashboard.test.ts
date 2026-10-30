@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { resolveDashboardCardScheduleDraft } from "@/domain/dashboard";
+import {
+  DASHBOARD_HOME_LINK_STATE,
+  isDashboardHomeLinkState,
+  resolveDashboardCardScheduleDraft,
+} from "@/domain/dashboard";
+
+describe("isDashboardHomeLinkState", () => {
+  it("recognises the state set on dashboard card links", () => {
+    expect(isDashboardHomeLinkState(DASHBOARD_HOME_LINK_STATE)).toBe(true);
+  });
+
+  it("rejects missing or unrelated router state", () => {
+    expect(isDashboardHomeLinkState(null)).toBe(false);
+    expect(isDashboardHomeLinkState({ from: "elsewhere" })).toBe(false);
+  });
+});
 
 describe("resolveDashboardCardScheduleDraft", () => {
   it("treats an untouched draft as no schedule", () => {

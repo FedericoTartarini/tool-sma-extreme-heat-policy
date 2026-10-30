@@ -59,16 +59,6 @@ describe("dashboard scheduled card state", () => {
     expect(result.averageRiskScore).toBeCloseTo(1.8667, 4);
   });
 
-  it("reports an old card without a persisted schedule", () => {
-    expect(
-      resolveDashboardScheduledCardState(
-        sydneyCard,
-        query(),
-        new Date("2026-09-15T00:00:00Z"),
-      ),
-    ).toEqual({ status: "missing_schedule" });
-  });
-
   it("does not use this week's forecast after the occurrence has started", () => {
     expect(
       resolveDashboardScheduledCardState(

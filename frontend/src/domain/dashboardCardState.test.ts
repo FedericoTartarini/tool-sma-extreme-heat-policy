@@ -4,7 +4,6 @@ import {
   resolveDashboardCardQueryState,
   resolveDashboardCardState,
   resolveWeeklyPreviewSourceFromQuery,
-  toDashboardCardErrorI18nKey,
 } from "@/domain/dashboardCardState";
 import { sydneyHeatRiskResponse } from "@/test/weeklyWindowFixtures";
 
@@ -148,17 +147,5 @@ describe("dashboardCardState", () => {
       status: "location_error",
       errorCode: "unknown_inputs",
     });
-  });
-
-  it("maps derived-risk failures to dashboard card copy", () => {
-    expect(toDashboardCardErrorI18nKey("risk_calculation_failed")).toBe(
-      "dashboard.cardErrors.riskCalculationFailed",
-    );
-    expect(toDashboardCardErrorI18nKey("unknown_inputs")).toBe(
-      "dashboard.cardErrors.unknownInputs",
-    );
-    expect(toDashboardCardErrorI18nKey(null)).toBe(
-      "dashboard.cardErrors.generic",
-    );
   });
 });

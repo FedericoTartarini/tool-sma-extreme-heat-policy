@@ -347,6 +347,7 @@
   "dashboard": {
     "notifications": {
       "riskUpdated": "Risk updated",
+      "riskPartiallyUpdated": "Risk updated for some cards. Others could not be refreshed.",
       "refreshFailed": "Could not refresh dashboard risk data. Please try again."
     },
     "header": {
@@ -368,7 +369,8 @@
       "startTime": "Start time",
       "endTime": "End time",
       "midnight": "Midnight (next day)",
-      "scheduleRequired": "Choose at least one day and a time range ending later that day or at midnight. All schedule fields are required."
+      "scheduleRequired": "Choose at least one day and a time range ending later that day or at midnight. All schedule fields are required.",
+      "scheduleInvalidHint": "Choose an end time later than the start. Overnight windows are not supported."
     },
     "emptyState": {
       "title": "No saved cards on your dashboard yet. Start monitoring heat risk by adding a card."
@@ -416,7 +418,6 @@
       "missingResult": "Risk data is unavailable for this location.",
       "unknownInputs": "Weather inputs are unavailable for this location.",
       "riskCalculationFailed": "Risk could not be calculated for this location.",
-      "missingSchedule": "This card has no saved schedule.",
       "scheduleForecastUnavailable": "Forecast data does not yet cover the next scheduled window.",
       "scheduleUnavailable": "The next scheduled window could not be calculated.",
       "otherPeriodForecastUnavailable": "Forecast data does not cover the selected time period at this location.",

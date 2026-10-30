@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import type { SavedDashboardCard } from "@/domain/dashboard";
 import { SPORT_TYPE_VALUES } from "@/domain/sport";
 import {
   loadPersistedDashboardState,
@@ -15,6 +16,7 @@ export function useDashboardBootstrap(): void {
   const isBootstrapped = useDashboardStore((state) => state.isBootstrapped);
   const bootstrap = useDashboardStore((state) => state.bootstrap);
   const cards = useDashboardStore((state) => state.cards);
+  const bootstrappedCardsRef = useRef<SavedDashboardCard[] | null>(null);
 
   useEffect(() => {
     if (isBootstrapped) {
@@ -22,14 +24,18 @@ export function useDashboardBootstrap(): void {
     }
 
     const persistedState = loadPersistedDashboardState(SPORT_TYPE_VALUES);
+    const initialCards = resolveInitialDashboardCards(persistedState);
+    bootstrappedCardsRef.current = initialCards;
     bootstrap({
-      cards: resolveInitialDashboardCards(persistedState),
+      cards: initialCards,
       draftSport: resolveInitialDashboardDraftSport(persistedState),
     });
   }, [bootstrap, isBootstrapped]);
 
   useEffect(() => {
-    if (!isBootstrapped) {
+    // Write only after the cards change, so stored data that could not be read
+    // is not replaced with an empty list on load.
+    if (!isBootstrapped || cards === bootstrappedCardsRef.current) {
       return;
     }
 

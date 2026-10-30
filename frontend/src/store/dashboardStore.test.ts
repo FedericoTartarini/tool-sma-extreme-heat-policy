@@ -112,6 +112,7 @@ describe("dashboardStore", () => {
           countryName: SYDNEY_LOCATION.countryName,
           latitude: SYDNEY_LOCATION.latitude as number,
           longitude: SYDNEY_LOCATION.longitude as number,
+          schedule: { weekdays: [1], startMinutes: 540, endMinutes: 660 },
         },
       ],
     });
@@ -193,6 +194,31 @@ describe("dashboardStore", () => {
       startMinutes: 1080,
       endMinutes: 1200,
     });
+  });
+
+  it("starts a new search session when editing away from the picked place", () => {
+    useDashboardStore.getState().setDraftLocation(SYDNEY_LOCATION);
+
+    useDashboardStore.getState().setLocationSearchInput("M");
+    const tokenAfterFirstEdit =
+      useDashboardStore.getState().locationSessionToken;
+    useDashboardStore.getState().setLocationSearchInput("Me");
+
+    expect(tokenAfterFirstEdit).not.toBe("session-initial");
+    expect(useDashboardStore.getState().locationSessionToken).toBe(
+      tokenAfterFirstEdit,
+    );
+    expect(useDashboardStore.getState().draftLocation).toBeNull();
+  });
+
+  it("starts a new search session after a card is added", () => {
+    useDashboardStore
+      .getState()
+      .addCard(SportType.Soccer, SYDNEY_LOCATION, TUESDAY_THURSDAY_EVENING);
+
+    expect(useDashboardStore.getState().locationSessionToken).not.toBe(
+      "session-initial",
+    );
   });
 
   it("adds, reorders, and removes saved cards", () => {
