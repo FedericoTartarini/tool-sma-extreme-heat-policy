@@ -238,12 +238,13 @@ Example response:
 - Retryable Open-Meteo failures are retried once after `0.25` seconds; each
   attempt uses `HTTP_TIMEOUT_SECONDS`.
 - Forecast rows with missing or infinite required inputs are skipped instead of failing
-  the request when another usable row remains. No range checks, clamping or fallback
-  values are added.
+  the request when another usable row remains. Required inputs are not range-checked,
+  clamped or filled with fallback values.
 - A request that skips hours because of infinite required inputs produces one server-side
   warning summarising all affected hours, including when no usable hour remains and the
-  request returns `422`. The message text lists each skipped UTC timestamp with its
-  infinite fields, so the details are visible with the standard message-only formatter.
+  request returns `422`. The message text includes the location timezone and lists each
+  skipped UTC timestamp with its infinite fields, so the details are visible with the
+  standard message-only formatter. The timezone is also retained as a structured attribute.
   The same information is retained in the structured `skipped_hours` attribute: a list
   of entries containing `time_utc` and `infinite_inputs`. Multiple infinite fields in one
   hour share an entry; rows with only missing inputs are not included. Cache hits do not
@@ -252,7 +253,7 @@ Example response:
   Example message for two skipped hours in one request:
 
   ```text
-  Skipping forecast hours with infinite required inputs: 2026-03-09T00:00:00+00:00: tdb, tr; 2026-03-09T02:00:00+00:00: v_z1
+  Skipping forecast hours with infinite required inputs in Australia/Sydney: 2026-03-09T00:00:00+00:00: tdb, tr; 2026-03-09T02:00:00+00:00: v_z1
   ```
 
 ## Notes

@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 import logging
 from datetime import UTC, datetime, timedelta
+from math import isfinite
+from zoneinfo import ZoneInfo
 
+import httpx
 import pandas as pd
 import pytest
 
@@ -11,7 +14,11 @@ from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     SportsHeatStressInput,
     SportsHeatStressOutput,
 )
-from sma_extreme_heat_backend.clients.open_meteo import HourlyWeatherPoint, WeatherForecast
+from sma_extreme_heat_backend.clients.open_meteo import (
+    HourlyWeatherPoint,
+    OpenMeteoClient,
+    WeatherForecast,
+)
 from sma_extreme_heat_backend.core.errors import ModelInputUnavailableError
 from sma_extreme_heat_backend.schemas.home import RiskRequest
 from sma_extreme_heat_backend.services.risk_service import RiskService
@@ -629,6 +636,7 @@ async def test_risk_service_uses_only_height_scaled_wind_for_higher_values(
 
 async def test_risk_service_skips_future_points_with_missing_inputs(
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Future rows with missing inputs should be skipped instead of failing the request."""
 
@@ -645,27 +653,31 @@ async def test_risk_service_skips_future_points_with_missing_inputs(
         max_entries=1000,
     )
 
-    response = await service.calculate_home_risk(
-        RiskRequest(
-            sport="SOCCER",
-            latitude=-33.847,
-            longitude=151.067,
-            profile="ADULT",
+    with caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"):
+        response = await service.calculate_home_risk(
+            RiskRequest(
+                sport="SOCCER",
+                latitude=-33.847,
+                longitude=151.067,
+                profile="ADULT",
+            )
         )
-    )
 
     assert calculator.calls == 2
     assert [point.model_dump(mode="json")["time_utc"] for point in response.forecast] == [
         "2026-03-09T00:00:00Z",
         "2026-03-09T02:00:00Z",
     ]
+    assert caplog.records == []
 
 
 async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete_point(
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Leading incomplete rows should be skipped until the first complete forecast point."""
+    """Skip missing leading rows without an infinity warning when a usable row remains."""
 
+    caplog.set_level(logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service")
     _install_mrt_pipeline(monkeypatch, df=_build_mrt_dataframe(current_missing={"v_z1"}))
     calculator = FakeCalculator()
     service = RiskService(
@@ -696,6 +708,7 @@ async def test_risk_service_skips_incomplete_leading_rows_and_uses_next_complete
         "v_z1": 1.6,
         "sol_radiation_dir": 562.5,
     }
+    assert caplog.records == []
 
 
 @pytest.mark.parametrize("field", ["tdb", "rh", "v_z1", "sol_radiation_dir", "tr"])
@@ -753,6 +766,7 @@ async def test_risk_service_raises_422_when_no_complete_forecast_point_exists(
         assert len(caplog.records) == 1
         record = caplog.records[0]
         assert record.levelno == logging.WARNING
+        assert record.timezone == "Australia/Sydney"
         assert record.skipped_hours == [
             {"time_utc": timestamp.tz_convert(UTC).isoformat(), "infinite_inputs": [field]}
             for timestamp in df.index
@@ -812,11 +826,12 @@ async def test_risk_service_skips_and_logs_hours_with_infinite_inputs(
     assert len(caplog.records) == 1
     record = caplog.records[0]
     assert record.levelno == logging.WARNING
+    assert record.timezone == "Australia/Sydney"
     assert record.skipped_hours == [
         {"time_utc": timestamp.tz_convert(UTC).isoformat(), "infinite_inputs": [field]}
     ]
     assert logging.Formatter("%(message)s").format(record) == (
-        "Skipping forecast hours with infinite required inputs: "
+        "Skipping forecast hours with infinite required inputs in Australia/Sydney: "
         f"{timestamp.tz_convert(UTC).isoformat()}: {field}"
     )
 
@@ -878,12 +893,13 @@ async def test_risk_service_handles_mixed_missing_and_infinite_inputs(
     assert len(caplog.records) == 1
     record = caplog.records[0]
     assert record.levelno == logging.WARNING
+    assert record.timezone == "Australia/Sydney"
     assert record.skipped_hours == [
         {"time_utc": "2026-03-09T00:00:00+00:00", "infinite_inputs": ["tdb", "tr"]},
         {"time_utc": "2026-03-09T02:00:00+00:00", "infinite_inputs": ["v_z1"]},
     ]
     assert logging.Formatter("%(message)s").format(record) == (
-        "Skipping forecast hours with infinite required inputs: "
+        "Skipping forecast hours with infinite required inputs in Australia/Sydney: "
         "2026-03-09T00:00:00+00:00: tdb, tr; 2026-03-09T02:00:00+00:00: v_z1"
     )
 
@@ -918,12 +934,107 @@ async def test_risk_service_logs_one_summary_per_cache_miss(
     assert response == cached_response
     assert weather_client.calls == 2
     assert calculator.calls == 2
-    assert [point.time_utc for point in response.forecast] == [
-        datetime(2026, 3, 9, 1, tzinfo=UTC)
-    ]
+    assert [point.time_utc for point in response.forecast] == [datetime(2026, 3, 9, 1, tzinfo=UTC)]
     assert len(caplog.records) == 2
     for record in caplog.records:
+        assert record.timezone == "Australia/Sydney"
         assert record.skipped_hours == [
             {"time_utc": "2026-03-09T00:00:00+00:00", "infinite_inputs": ["tdb"]},
             {"time_utc": "2026-03-09T02:00:00+00:00", "infinite_inputs": ["tr"]},
         ]
+
+
+@pytest.mark.parametrize(
+    ("provider_field", "required_field"),
+    [("temperature_2m", "tdb"), ("direct_normal_irradiance", "sol_radiation_dir")],
+)
+@pytest.mark.parametrize("infinite_value", [float("inf"), float("-inf")])
+async def test_risk_service_skips_infinite_provider_input_through_real_mrt(
+    caplog: pytest.LogCaptureFixture,
+    provider_field: str,
+    required_field: str,
+    infinite_value: float,
+) -> None:
+    """Keep usable hours through real provider parsing, solar geometry and solar gain."""
+
+    timezone_name = "Australia/Adelaide"
+    start = (datetime.now(tz=UTC) + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    times = [start + timedelta(hours=offset) for offset in range(3)]
+    hourly = {
+        "time": [
+            timestamp.astimezone(ZoneInfo(timezone_name)).strftime("%Y-%m-%dT%H:%M")
+            for timestamp in times
+        ],
+        "temperature_2m": [31.0, 32.0, 33.0],
+        "relative_humidity_2m": [62.0, 63.0, 64.0],
+        "wind_speed_10m": [1.5, 1.6, 1.7],
+        "direct_normal_irradiance": [700.0, 750.0, 800.0],
+    }
+    hourly[provider_field][1] = infinite_value
+    provider_payload = {
+        "timezone": timezone_name,
+        "hourly_units": {
+            "temperature_2m": "°C",
+            "relative_humidity_2m": "%",
+            "wind_speed_10m": "m/s",
+            "direct_normal_irradiance": "W/m²",
+        },
+        "hourly": hourly,
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["timezone"] == timezone_name
+        # Deliberately encode Infinity in upstream bytes; HTTPX's json= disallows it.
+        return httpx.Response(
+            200,
+            content=json.dumps(provider_payload),
+            headers={"content-type": "application/json"},
+        )
+
+    calculator = FakeCalculator()
+    async with httpx.AsyncClient(
+        base_url="https://api.open-meteo.com/v1", transport=httpx.MockTransport(handler)
+    ) as http_client:
+        weather_client = OpenMeteoClient(
+            base_url="https://api.open-meteo.com/v1",
+            timeout_seconds=10,
+            client=http_client,
+        )
+        service = RiskService(
+            weather_client=weather_client,
+            calculator=calculator,
+            ttl_seconds=600,
+            max_entries=1000,
+        )
+        with caplog.at_level(
+            logging.WARNING, logger="sma_extreme_heat_backend.services.risk_service"
+        ):
+            response = await service.calculate_home_risk(
+                RiskRequest(sport="SOCCER", latitude=-34.9285, longitude=138.6007, profile="ADULT")
+            )
+
+    assert response.request.location.timezone == timezone_name
+    assert [point.time_utc for point in response.forecast] == [times[0], times[2]]
+    assert calculator.calls == 2
+    for point in response.forecast:
+        assert all(isfinite(value) for value in point.inputs.model_dump().values())
+        assert point.inputs.tr > point.inputs.tdb
+    for payload in calculator.payloads:
+        assert all(isfinite(value) for value in (payload.tdb, payload.tr, payload.rh, payload.vr))
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "sma_extreme_heat_backend.services.risk_service"
+    ]
+    assert len(records) == 1
+    record = records[0]
+    assert record.timezone == timezone_name
+    assert len(record.skipped_hours) == 1
+    assert record.skipped_hours[0]["time_utc"] == times[1].isoformat()
+    assert required_field in record.skipped_hours[0]["infinite_inputs"]
+    message = logging.Formatter("%(message)s").format(record)
+    assert timezone_name in message
+    assert times[1].isoformat() in message
+    assert required_field in message
