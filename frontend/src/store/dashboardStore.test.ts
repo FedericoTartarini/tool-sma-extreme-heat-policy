@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type DashboardCardSchedule,
   isDuplicateSavedDashboardCard,
+  MAX_DASHBOARD_CARDS,
   validateAddSavedDashboardCard,
 } from "@/domain/dashboard";
 import type { LocationSuggestion } from "@/domain/location";
@@ -320,6 +321,29 @@ describe("dashboardStore", () => {
       ok: false,
       reason: "duplicate",
     });
+  });
+
+  it("rejects a new card once the dashboard is full", () => {
+    for (let index = 0; index < MAX_DASHBOARD_CARDS; index += 1) {
+      expect(
+        useDashboardStore
+          .getState()
+          .addCard(SportType.Soccer, SYDNEY_LOCATION, {
+            weekdays: [1],
+            startMinutes: index * 60,
+            endMinutes: index * 60 + 60,
+          }),
+      ).toEqual({ ok: true });
+    }
+
+    expect(
+      useDashboardStore
+        .getState()
+        .addCard(SportType.Soccer, MELBOURNE_LOCATION, MONDAY_MORNING),
+    ).toEqual({ ok: false, reason: "max_reached" });
+    expect(useDashboardStore.getState().cards).toHaveLength(
+      MAX_DASHBOARD_CARDS,
+    );
   });
 
   it("allows the same sport and location with a different schedule", () => {
