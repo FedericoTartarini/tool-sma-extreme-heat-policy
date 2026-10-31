@@ -124,8 +124,7 @@ The domain helpers are `weeklyWindow.ts`, `weeklyWindowForecast.ts` and
 uses jsdom and real Mantine controls; the query-adapter test supplies mocked
 query states. These are not live-network end-to-end or visual-layout tests.
 Run `pnpm test:ci` and `pnpm run ci` for the configured checks. Vitest collects
-`src/**/*.test.{ts,tsx}`. The jsdom-only `nwsapi` override
-avoids a recursive `:fullscreen` matcher in version 2.2.27.
+`src/**/*.test.{ts,tsx}`.
 
 ## Project structure (Layer-first)
 
