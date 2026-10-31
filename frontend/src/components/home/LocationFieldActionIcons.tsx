@@ -44,10 +44,10 @@ export function LocationFieldActionIcons({
   return (
     <>
       <ActionIcon
-        variant="subtle"
-        color="gray"
+        variant="light"
+        color="brand"
         size="sm"
-        disabled={isDetecting}
+        loading={isDetecting}
         aria-busy={isDetecting}
         aria-label={t("home.savedLocations.useMyLocationButton")}
         onClick={requestCurrentLocation}
