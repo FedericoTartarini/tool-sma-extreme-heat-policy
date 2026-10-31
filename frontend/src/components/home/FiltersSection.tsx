@@ -20,10 +20,8 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
 import { isSportType, sports, type SportType } from "@/domain/sport";
-import {
-  useHomeLocationSuggest,
-  type LocationSuggestErrorReason,
-} from "@/hooks/useHomeLocationSuggest";
+import { useHomeLocationSuggest } from "@/hooks/useHomeLocationSuggest";
+import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
 import {
   getSportImageFailureUrl,
   type SportImageFailure,
@@ -41,7 +39,7 @@ const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
 const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
 interface FiltersSectionProps {
-  onLocationError?: (reason: LocationSuggestErrorReason) => void;
+  onLocationError?: (reason: HomeLocationErrorReason) => void;
 }
 
 /**
@@ -270,6 +268,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               canSaveCurrentLocation={selectedLocation !== null}
               hasSavedLocations={savedLocations.length > 0}
               onOpenSavedLocations={openSaveSavedLocationModal}
+              onCurrentLocationError={onLocationError}
             />
           </Group>
         </Group>

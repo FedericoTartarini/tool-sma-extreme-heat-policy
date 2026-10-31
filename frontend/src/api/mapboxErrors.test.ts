@@ -24,6 +24,14 @@ describe("Mapbox API errors", () => {
     });
   });
 
+  it("supports structured reverse-geocoding errors", () => {
+    expect(createMapboxHttpStatusError("reverse", 401)).toMatchObject({
+      endpoint: "reverse",
+      kind: "http_status",
+      status: 401,
+    });
+  });
+
   it("classifies aborts separately from network failures", () => {
     expect(
       toMapboxApiError("retrieve", new DOMException("Aborted", "AbortError")),
