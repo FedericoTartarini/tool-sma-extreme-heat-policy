@@ -67,10 +67,10 @@ class InvalidSportError(AppError):
 
 
 class ModelInputUnavailableError(AppError):
-    """Raised when the current forecast point lacks required model inputs."""
+    """Raised when no forecast row has all required inputs finite and present."""
 
     def __init__(self, unknown_inputs: list[str], available_inputs: dict[str, Any]) -> None:
-        """Return the missing and available inputs for an unusable forecast candidate row."""
+        """Report missing or infinite inputs and JSON-safe values for a candidate row."""
 
         super().__init__(
             status_code=422,

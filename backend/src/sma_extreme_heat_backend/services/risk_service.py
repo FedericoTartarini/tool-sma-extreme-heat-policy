@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import cache
+from math import isfinite
 
 import pandas as pd
 from pythermalcomfort.utils.scale_wind_speed_log import scale_wind_speed_log
@@ -34,6 +36,8 @@ from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
     resolve_timezone_name,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -120,7 +124,9 @@ class RiskService:
                     timezone=timezone_name,
                 ),
             ),
-            forecast=self._build_forecast(forecast_mrt_df=mrt_df, sport=payload.sport),
+            forecast=self._build_forecast(
+                forecast_mrt_df=mrt_df, sport=payload.sport, timezone_name=timezone_name
+            ),
         )
 
         self._store(key, response)
@@ -158,16 +164,39 @@ class RiskService:
         *,
         forecast_mrt_df: pd.DataFrame,
         sport: str,
+        timezone_name: str,
     ) -> list[ForecastPoint]:
-        """Convert MRT rows into forecast points, using the earliest complete row as current."""
+        """Keep usable MRT rows and warn once about infinite inputs with location context."""
 
-        first_candidate_point = self._first_candidate_forecast_point(
-            forecast_mrt_df=forecast_mrt_df
-        )
-        complete_rows = forecast_mrt_df.dropna(subset=list(_REQUIRED_INPUT_FIELDS))
+        required_inputs = forecast_mrt_df[list(_REQUIRED_INPUT_FIELDS)]
+        unavailable_input_mask = required_inputs.map(_is_unavailable_input)
+        infinite_input_mask = unavailable_input_mask & required_inputs.notna()
+        has_infinite_inputs = infinite_input_mask.any(axis=1)
+        skipped_hours = [
+            {
+                "time_utc": timestamp.tz_convert(UTC).isoformat(),
+                "infinite_inputs": fields.index[fields].tolist(),
+            }
+            for timestamp, fields in infinite_input_mask.loc[has_infinite_inputs].iterrows()
+        ]
+        if skipped_hours:
+            LOGGER.warning(
+                "Skipping forecast hours with infinite required inputs in %s: %s",
+                timezone_name,
+                "; ".join(
+                    f"{hour['time_utc']}: {', '.join(hour['infinite_inputs'])}"
+                    for hour in skipped_hours
+                ),
+                extra={"timezone": timezone_name, "skipped_hours": skipped_hours},
+            )
+
+        complete_rows = forecast_mrt_df.loc[~unavailable_input_mask.any(axis=1)]
         if complete_rows.empty:
             # The earliest candidate explains why no usable forecast point remains.
-            raise self._missing_input_error_for_point(point=first_candidate_point)
+            first_candidate_point = self._first_candidate_forecast_point(
+                forecast_mrt_df=forecast_mrt_df
+            )
+            raise self._unavailable_input_error_for_point(point=first_candidate_point)
 
         forecast: list[ForecastPoint] = []
         for timestamp, point in complete_rows.iterrows():
@@ -184,10 +213,10 @@ class RiskService:
         return forecast
 
     @staticmethod
-    def _missing_required_input_fields(point: pd.Series) -> list[str]:
-        """List missing public input fields for a forecast row."""
+    def _unavailable_required_input_fields(point: pd.Series) -> list[str]:
+        """List missing or infinite public input fields for a forecast row."""
 
-        return [field for field in _REQUIRED_INPUT_FIELDS if pd.isna(point[field])]
+        return [field for field in _REQUIRED_INPUT_FIELDS if _is_unavailable_input(point[field])]
 
     @staticmethod
     def _first_candidate_forecast_point(*, forecast_mrt_df: pd.DataFrame) -> pd.Series:
@@ -197,15 +226,15 @@ class RiskService:
             return point
         raise WeatherProviderError("No hourly record after MRT enrichment")
 
-    def _missing_input_error_for_point(
+    def _unavailable_input_error_for_point(
         self,
         *,
         point: pd.Series,
     ) -> ModelInputUnavailableError:
-        """Build the public 422 error for a candidate row with missing required inputs."""
+        """Build the public 422 error for a row with missing or infinite required inputs."""
 
         return ModelInputUnavailableError(
-            unknown_inputs=self._missing_required_input_fields(point),
+            unknown_inputs=self._unavailable_required_input_fields(point),
             available_inputs=self._available_inputs_for_point(
                 point=point,
             ),
@@ -298,9 +327,15 @@ async def shutdown_risk_service() -> None:
     get_risk_service.cache_clear()
 
 
+def _is_unavailable_input(value: float | None) -> bool:
+    """Treat missing and infinite required inputs as unavailable throughout the service."""
+
+    return value is None or pd.isna(value) or not isfinite(value)
+
+
 def _to_optional_float(value: float | None) -> float | None:
     """Convert a pandas scalar into a JSON-safe float-or-none value."""
 
-    if value is None or pd.isna(value):
+    if _is_unavailable_input(value):
         return None
     return float(value)

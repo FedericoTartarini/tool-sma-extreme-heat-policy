@@ -21,7 +21,7 @@ All three pass when ruff and pytest exit 0 and, with the server running, `curl h
 - Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before the model call.
 - The location timezone is resolved from coordinates inside backend orchestration.
 - Inputs reach the model exactly as the pipeline produced them: the MRT pipeline and wind-height scaling are the only transforms, with no clamping, default fill or remapping.
-- Required forecast inputs are `tdb`, `rh`, `v_z1`, `sol_radiation_dir`, `tr`. Forecast rows missing any of them are skipped; if no complete row remains, return `422` with `detail.unknown_inputs` and `detail.available_inputs` from the earliest candidate row.
+- Required forecast inputs are `tdb`, `rh`, `v_z1`, `sol_radiation_dir`, `tr`. Forecast rows with any missing or infinite (`+inf` or `-inf`) required input are skipped; if no complete row remains, return JSON `422` with `detail.unknown_inputs` and `detail.available_inputs` from the earliest candidate row. Missing and infinite fields appear in `unknown_inputs` and are `null` in `available_inputs`; finite values are preserved. When a request skips hours because of infinite required inputs, log one server-side warning summarising all affected hours. Include the location timezone in the message text and structured `timezone` attribute, and each UTC timestamp and its infinite fields in the message text and structured `skipped_hours` attribute (entries contain `time_utc` and `infinite_inputs`). Cache hits and missing-only rows do not produce this warning.
 - Return pythermalcomfort output in `response.heat_risk` with original field names.
 
 ## Layers

@@ -205,7 +205,8 @@ Example response:
 8. Convert `v_z1` to the model's required 1.1 m wind speed using
    `pythermalcomfort.utils.scale_wind_speed_log(...)`.
 9. Run `sports_heat_stress_risk` for each complete forecast row.
-10. Skip incomplete rows and treat the earliest complete row as `forecast[0]`.
+10. Skip rows with missing or infinite required inputs and treat the earliest complete
+    row as `forecast[0]`.
 11. Return `422` only when no complete forecast row exists; the error payload is derived
     from the earliest candidate row.
 
@@ -226,15 +227,34 @@ Example response:
 ## Validation And Errors
 
 - Invalid request bodies return `422`.
-- Missing required inputs return `422` only when the backend cannot build any complete
-  forecast point; in that case the error payload uses the earliest candidate row and includes:
-  - `unknown_inputs`
-  - `available_inputs`
+- Missing or infinite (`+inf` or `-inf`) required inputs (`tdb`, `rh`, `v_z1`,
+  `sol_radiation_dir`, `tr`) return JSON `422` only when the backend cannot build any
+  complete forecast point; in that case the error payload uses the earliest candidate
+  row and includes:
+  - `unknown_inputs`: the missing or infinite fields
+  - `available_inputs`: missing or infinite values as `null`, with finite values preserved
 - Upstream weather failures return `502` with:
   `{"detail": "Weather provider unavailable", "error_code": "weather_provider_unavailable"}`.
 - Retryable Open-Meteo failures are retried once after `0.25` seconds; each
   attempt uses `HTTP_TIMEOUT_SECONDS`.
-- Future forecast rows with missing inputs are skipped instead of failing the request.
+- Forecast rows with missing or infinite required inputs are skipped instead of failing
+  the request when another usable row remains. Required inputs are not range-checked,
+  clamped or filled with fallback values.
+- A request that skips hours because of infinite required inputs produces one server-side
+  warning summarising all affected hours, including when no usable hour remains and the
+  request returns `422`. The message text includes the location timezone and lists each
+  skipped UTC timestamp with its infinite fields, so the details are visible with the
+  standard message-only formatter. The timezone is also retained as a structured attribute.
+  The same information is retained in the structured `skipped_hours` attribute: a list
+  of entries containing `time_utc` and `infinite_inputs`. Multiple infinite fields in one
+  hour share an entry; rows with only missing inputs are not included. Cache hits do not
+  recalculate or repeat this warning.
+
+  Example message for two skipped hours in one request:
+
+  ```text
+  Skipping forecast hours with infinite required inputs in Australia/Sydney: 2026-03-09T00:00:00+00:00: tdb, tr; 2026-03-09T02:00:00+00:00: v_z1
+  ```
 
 ## Notes
 
