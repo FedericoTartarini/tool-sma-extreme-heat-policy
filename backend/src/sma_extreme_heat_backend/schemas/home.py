@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import ClassVar
 
@@ -86,8 +86,28 @@ class ForecastPoint(BaseModel):
     heat_risk: ForecastHeatRisk
 
 
+class DailyWeatherSummary(BaseModel):
+    """Daily weather summary for one location-local calendar day."""
+
+    date: date
+    sunrise_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    sunset_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    uv_index_max: FiniteFloat | None = None
+    precip_prob_max_pct: FiniteFloat | None = None
+    cumulative_rainfall_mm: FiniteFloat | None = None
+    max_temp_c: FiniteFloat | None = None
+    min_temp_c: FiniteFloat | None = None
+    max_temp_time_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    min_temp_time_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    humidity_at_max_pct: FiniteFloat | None = None
+    humidity_at_min_pct: FiniteFloat | None = None
+    uv_index_max_time_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    avg_wind_speed_ms: FiniteFloat | None = None
+
+
 class RiskResponse(BaseModel):
     """Forecast-centric response contract for `/home/risk`."""
 
     request: RequestSummary
     forecast: list[ForecastPoint] = Field(min_length=1)
+    daily_weather: list[DailyWeatherSummary] = Field(default_factory=list)
