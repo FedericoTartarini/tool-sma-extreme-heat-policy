@@ -9,6 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
+import { FOOTER_LOGO_SLOT_HEIGHT } from "@/config/responsiveImages";
 import { CONTENT_GAP, CONTENT_PADDING } from "@/config/uiLayout";
 import {
   PARAGRAPH_GAP,
@@ -19,9 +20,9 @@ import { BRANDING_ASSETS } from "@/domain/brandingAssets";
 const APP_VERSION = "1.2.2";
 const COPYRIGHT_YEAR = 2025;
 const REVIEW_YEAR = 2025;
-const FOOTER_LOGO_SLOT_HEIGHT = 50;
 const OPEN_METEO_URL = "https://open-meteo.com/";
 const CC_BY_4_URL = "https://creativecommons.org/licenses/by/4.0/";
+const CITATION_DOI_URL = "https://doi.org/10.1016/j.jsams.2025.03.006";
 const FOOTER_TEXT_PROPS = {
   inherit: true,
   lh: STANDARD_TEXT_LINE_HEIGHT,
@@ -117,19 +118,21 @@ export function SiteFooter() {
               >
                 {t("footer.feedbackLink")}
               </Anchor>
-              <Text {...FOOTER_TEXT_PROPS}>{t("footer.citePrompt")}</Text>
-              <Anchor
-                lh={STANDARD_TEXT_LINE_HEIGHT}
-                styles={footerLinkStyles}
-                href="https://doi.org/10.1016/j.jsams.2025.03.006"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("footer.paperTitle")}
-              </Anchor>
-              <Text {...FOOTER_TEXT_PROPS}>{t("footer.authors")}</Text>
-              <Text {...FOOTER_TEXT_PROPS} fs="italic">
-                {t("footer.journal")}
+              <Text {...FOOTER_TEXT_PROPS}>
+                {t("footer.citePrompt")}{" "}
+                <Anchor
+                  inherit
+                  styles={footerLinkStyles}
+                  href={CITATION_DOI_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("footer.paperTitle")}
+                </Anchor>{" "}
+                {t("footer.authors")}{" "}
+                <Text span inherit fs="italic">
+                  {t("footer.journal")}
+                </Text>
               </Text>
               <Text {...FOOTER_TEXT_PROPS}>
                 <Trans

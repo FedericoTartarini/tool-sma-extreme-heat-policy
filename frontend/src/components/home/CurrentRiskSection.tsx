@@ -1,7 +1,9 @@
-import { Badge, Box, Stack } from "@mantine/core";
+import { IconInfoCircle } from "@tabler/icons-react";
+import { Badge, Box, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { CONTENT_GAP } from "@/config/uiLayout";
+import { UI_INLINE_ICON_SIZE, UI_INLINE_ICON_STROKE } from "@/config/uiScale";
 import { getHeatRiskProfileMeta } from "@/domain/heatRiskProfile";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
@@ -13,6 +15,7 @@ import {
 import { CurrentRiskSkeleton } from "@/components/home/HomeSectionSkeletons";
 import { RiskGauge } from "@/components/home/RiskGauge";
 import { SectionCard } from "@/components/ui/SectionCard";
+import { getDetailedRecommendationsPath } from "@/lib/recommendationRouteState";
 import { useHomeStore } from "@/store/homeStore";
 
 const RISK_BADGE_SHADOW = "0 10px 24px rgba(15, 23, 42, 0.08)";
@@ -28,6 +31,7 @@ export function CurrentRiskSection() {
   const longRiskLabels = createRiskLevelLabels((key) => t(key), "long");
   const profileLabel = t(getHeatRiskProfileMeta(profile).labelKey);
   const currentRiskTitle = t("home.sections.currentRisk.title");
+
   const profileBadge = (
     <Box
       style={{
@@ -67,15 +71,13 @@ export function CurrentRiskSection() {
     <SectionCard title={currentRiskTitle}>
       <Stack gap={CONTENT_GAP} align="center">
         {profileBadge}
-        <RiskGauge
-          score={heatRisk.risk.riskLevelInterpolated}
-          title={t("charts.gauge.seriesName")}
-          unavailableLabel={t("charts.gauge.riskUnavailable")}
-          riskLevelLabels={longRiskLabels}
-        />
+        <RiskGauge score={heatRisk.risk.riskLevelInterpolated} />
         <Badge
           component={Link}
-          to="/detailed-recommendations"
+          to={getDetailedRecommendationsPath(heatRisk.riskLevel)}
+          aria-label={t("home.sections.currentRisk.badgeAriaLabel", {
+            level: longRiskLabels[heatRisk.riskLevel],
+          })}
           color={riskBadgeColor}
           size={isMobile ? "lg" : "xl"}
           radius="xl"
@@ -96,7 +98,16 @@ export function CurrentRiskSection() {
             },
           }}
         >
-          {riskBadgeValue}
+          <Group component="span" gap={6} wrap="nowrap">
+            <Text component="span" inherit>
+              {riskBadgeValue}
+            </Text>
+            <IconInfoCircle
+              size={UI_INLINE_ICON_SIZE}
+              stroke={UI_INLINE_ICON_STROKE}
+              aria-hidden={true}
+            />
+          </Group>
         </Badge>
       </Stack>
     </SectionCard>
