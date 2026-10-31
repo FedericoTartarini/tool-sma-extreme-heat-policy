@@ -1,25 +1,16 @@
-import {
-  Box,
-  Combobox,
-  InputBase,
-  Loader,
-  Group,
-  Select,
-  Stack,
-  Text,
-  useCombobox,
-} from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconBookmarkFilled } from "@tabler/icons-react";
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LocationSuggestField } from "@/components/filters/LocationSuggestField";
+import { SportSelectField } from "@/components/filters/SportSelectField";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
 import { SportImagePreview } from "@/components/home/SportImagePreview";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
-import { isSportType, sports, type SportType } from "@/domain/sport";
+import { sports } from "@/domain/sport";
 import {
   useHomeLocationSuggest,
   type LocationSuggestErrorReason,
@@ -31,15 +22,6 @@ import {
 import { useHomeStore } from "@/store/homeStore";
 import { useSavedLocationsStore } from "@/store/savedLocationsStore";
 
-interface SelectOption<T extends string = string> {
-  value: T;
-  label: string;
-}
-
-const FIELD_LABEL_WIDTH = 72;
-const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
-const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
-
 interface FiltersSectionProps {
   onLocationError?: (reason: LocationSuggestErrorReason) => void;
 }
@@ -49,15 +31,10 @@ interface FiltersSectionProps {
  */
 export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const { t } = useTranslation();
-  const locationCombobox = useCombobox();
   const [
     isSaveSavedLocationModalOpen,
     { open: openSaveSavedLocationModal, close: closeSaveSavedLocationModal },
   ] = useDisclosure(false);
-  /*
-  const profile = useHomeStore((state) => state.profile);
-  const setProfile = useHomeStore((state) => state.setProfile);
-  */
   const sport = useHomeStore((state) => state.sport);
   const selectedLocation = useHomeStore((state) => state.selectedLocation);
   const setSport = useHomeStore((state) => state.setSport);
@@ -67,25 +44,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const [sportImageFailure, setSportImageFailure] =
     useState<SportImageFailure | null>(null);
 
-  /*
-  const profileOptions = useMemo<SelectOption<HeatRiskProfile>[]>(
-    () =>
-      heatRiskProfiles.map((profileMeta) => ({
-        value: profileMeta.type,
-        label: t(profileMeta.labelKey),
-      })),
-    [t],
-  );
-  */
-  const sportOptions = useMemo<SelectOption<SportType>[]>(
-    () =>
-      sports.map((sportMeta) => ({
-        value: sportMeta.type,
-        label: t(sportMeta.labelKey),
-      })),
-    [t],
-  );
-
   const selectedSportMeta = useMemo(
     () => sports.find((sportMeta) => sportMeta.type === sport)!,
     [sport],
@@ -93,9 +51,10 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
 
   const selectedSportLabel = useMemo(
     () =>
-      sportOptions.find((option) => option.value === sport)?.label ??
-      t("home.sections.filters.selectedSportFallback"),
-    [sport, sportOptions, t],
+      selectedSportMeta
+        ? t(selectedSportMeta.labelKey)
+        : t("home.sections.filters.selectedSportFallback"),
+    [selectedSportMeta, t],
   );
   const sportImage = selectedSportMeta.image;
   const failedSportImageUrl = getSportImageFailureUrl(sportImageFailure, sport);
@@ -112,45 +71,6 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const isShowingCommittedLocation =
     selectedLocation !== null &&
     locationSearchInput === selectedLocation.displayLabel;
-  const shouldRenderLocationDropdown = locationSuggestions.length > 0;
-  const locationOptions = locationSuggestions.map((suggestion) => {
-    const isSavedSuggestion = isSuggestionAlreadySaved(
-      savedLocations,
-      suggestion,
-    );
-
-    return (
-      <Combobox.Option value={suggestion.id} key={suggestion.id}>
-        <Group justify="space-between" wrap="nowrap" gap="xs">
-          <Text span fz="md" lineClamp={1} flex={1} miw={0}>
-            {suggestion.displayLabel}
-          </Text>
-          {isSavedSuggestion ? (
-            <Box
-              component="span"
-              role="img"
-              c="brand"
-              aria-label={t("home.savedLocations.suggestionSaved")}
-            >
-              <IconBookmarkFilled
-                size={LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE}
-              />
-            </Box>
-          ) : null}
-        </Group>
-      </Combobox.Option>
-    );
-  });
-
-  useEffect(() => {
-    if (shouldOpenLocationDropdown && shouldRenderLocationDropdown) {
-      locationCombobox.openDropdown();
-    }
-  }, [
-    locationCombobox,
-    shouldOpenLocationDropdown,
-    shouldRenderLocationDropdown,
-  ]);
 
   useEffect(() => {
     if (suggestErrorReason) {
@@ -158,138 +78,39 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     }
   }, [onLocationError, suggestErrorReason]);
 
-  /*
-  const handleProfileChange = (value: string | null) => {
-    if (value !== null && isHeatRiskProfile(value)) {
-      setProfile(value);
-    }
-  };
-  */
-  const handleLocationInputClick = (event: MouseEvent<HTMLInputElement>) => {
-    if (isShowingCommittedLocation) {
-      event.currentTarget.select();
-    }
-
-    if (shouldRenderLocationDropdown) {
-      locationCombobox.openDropdown();
-    }
-  };
-
-  const closeLocationDropdown = () => {
-    locationCombobox.closeDropdown();
-    locationCombobox.resetSelectedOption();
-  };
-
-  const handleSportChange = (value: string | null) => {
-    // Picking a sport in the Select retries its image, even after an earlier failure.
-    setSportImageFailure(null);
-
-    if (value === null) {
-      return;
-    }
-
-    if (isSportType(value)) {
-      setSport(value);
-    }
-  };
-
   return (
     <SectionCard>
       <Stack gap={CONTENT_GAP}>
-        {/*
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.profileLabel")}:
-          </Text>
-          <Box flex={1}>
-            <Select
-              aria-label={t("home.sections.filters.profileLabel")}
-              size="md"
-              data={profileOptions}
-              value={profile}
-              onChange={handleProfileChange}
-              searchable={false}
-              allowDeselect={false}
-            />
-          </Box>
-        </Group>
-        */}
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.locationLabel")}:
-          </Text>
-          <Group wrap="nowrap" align="center" gap="xs" flex={1} miw={0}>
-            <Box flex={1} miw={0}>
-              <Combobox
-                store={locationCombobox}
-                onOptionSubmit={(value) => {
-                  onLocationOptionSubmit(value);
-                  closeLocationDropdown();
-                }}
-                size="md"
-              >
-                <Combobox.Target targetType="input">
-                  <InputBase
-                    __staticSelector="Select"
-                    aria-label={t("home.sections.filters.locationLabel")}
-                    size="md"
-                    placeholder={t("home.sections.filters.locationPlaceholder")}
-                    value={locationSearchInput}
-                    onChange={(event) => {
-                      onLocationSearchInputChange(event.currentTarget.value);
-                      locationCombobox.openDropdown();
-                    }}
-                    onFocus={() => {
-                      if (shouldRenderLocationDropdown) {
-                        locationCombobox.openDropdown();
-                      }
-                    }}
-                    onBlur={closeLocationDropdown}
-                    onClick={handleLocationInputClick}
-                    rightSection={
-                      isSuggestLoading ? (
-                        <Loader size={16} />
-                      ) : (
-                        <Combobox.Chevron size="md" />
-                      )
-                    }
-                    rightSectionWidth={LOCATION_INPUT_CHEVRON_SECTION_WIDTH}
-                    rightSectionPointerEvents="none"
-                    autoComplete="off"
-                  />
-                </Combobox.Target>
-
-                {shouldRenderLocationDropdown ? (
-                  <Combobox.Dropdown>
-                    <Combobox.Options>{locationOptions}</Combobox.Options>
-                  </Combobox.Dropdown>
-                ) : null}
-              </Combobox>
-            </Box>
+        <LocationSuggestField
+          value={locationSearchInput}
+          suggestions={locationSuggestions}
+          isLoading={isSuggestLoading}
+          isCommitted={isShowingCommittedLocation}
+          openDropdownWhenTyping
+          enableSelectOnCommittedClick
+          autoOpenWhenSuggestionsReady={shouldOpenLocationDropdown}
+          isSuggestionSaved={(suggestion) =>
+            isSuggestionAlreadySaved(savedLocations, suggestion)
+          }
+          locationFieldActions={
             <LocationFieldActionIcons
               canSaveCurrentLocation={selectedLocation !== null}
               hasSavedLocations={savedLocations.length > 0}
               onOpenSavedLocations={openSaveSavedLocationModal}
             />
-          </Group>
-        </Group>
+          }
+          onChange={onLocationSearchInputChange}
+          onOptionSubmit={onLocationOptionSubmit}
+        />
 
-        <Group wrap="nowrap" align="center" gap={CONTENT_GAP}>
-          <Text fw={600} w={FIELD_LABEL_WIDTH} ta="right">
-            {t("home.sections.filters.sportLabel")}:
-          </Text>
-          <Box flex={1}>
-            <Select
-              aria-label={t("home.sections.filters.sportLabel")}
-              size="md"
-              data={sportOptions}
-              value={sport}
-              onChange={handleSportChange}
-              searchable
-              nothingFoundMessage={t("home.sections.filters.sportNotFound")}
-            />
-          </Box>
-        </Group>
+        <SportSelectField
+          value={sport}
+          onChange={(nextSport) => {
+            // Picking a sport retries its image, even after an earlier failure.
+            setSportImageFailure(null);
+            setSport(nextSport);
+          }}
+        />
 
         <SportImagePreview
           image={sportImage}

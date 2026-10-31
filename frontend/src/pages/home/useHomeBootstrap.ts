@@ -1,14 +1,19 @@
 import { useQueryStates } from "nuqs";
 import { useOptimisticSearchParams } from "nuqs/adapters/react-router/v7";
-import { useEffect, useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import {
   DEFAULT_HEAT_RISK_PROFILE,
   type HeatRiskProfile,
 } from "@/domain/heatRiskProfile";
+import { isDashboardHomeLinkState } from "@/domain/dashboard";
 import { DEFAULT_SPORT_TYPE, type SportType } from "@/domain/sport";
 import { loadPersistedHomeFilters } from "@/pages/home/browserState";
-import { resolveHomeBootstrapState } from "@/pages/home/homeBootstrap";
+import {
+  resolveHomeBootstrapState,
+  shouldRebootstrapHomeFromUrl,
+} from "@/pages/home/homeBootstrap";
 import {
   HOME_QUERY_PARSERS,
   HOME_QUERY_URL_KEYS,
@@ -42,6 +47,7 @@ interface UseHomeBootstrapResult {
 export function useHomeBootstrap(): UseHomeBootstrapResult {
   const { t } = useTranslation();
   const optimisticSearchParams = useOptimisticSearchParams();
+  const isInAppNavigation = isDashboardHomeLinkState(useLocation().state);
   const [
     { profile: urlProfile, sport: urlSport, location: urlLocation },
     setQueryStates,
@@ -61,28 +67,61 @@ export function useHomeBootstrap(): UseHomeBootstrapResult {
     [hasUrlState],
   );
 
+  const defaultLocationLabel = hasUrlState
+    ? ""
+    : t("home.sections.filters.defaultLocation");
+
   const bootstrapState = useMemo<HomeStoreBootstrapPayload>(
     () =>
       resolveHomeBootstrapState({
         hasUrlState,
+        isInAppNavigation,
         defaultProfile: DEFAULT_HEAT_RISK_PROFILE,
         defaultSport: DEFAULT_SPORT_TYPE,
-        defaultLocationLabel: t("home.sections.filters.defaultLocation"),
+        defaultLocationLabel,
         urlProfile,
         urlSport,
         urlLocation,
         persistedFilters,
       }),
-    [hasUrlState, persistedFilters, t, urlLocation, urlProfile, urlSport],
+    [
+      defaultLocationLabel,
+      hasUrlState,
+      isInAppNavigation,
+      persistedFilters,
+      urlLocation,
+      urlProfile,
+      urlSport,
+    ],
   );
 
-  useEffect(() => {
-    if (useHomeStore.getState().isBootstrapped) {
+  useLayoutEffect(() => {
+    const state = useHomeStore.getState();
+
+    if (!state.isBootstrapped) {
+      state.bootstrap(bootstrapState);
       return;
     }
 
-    useHomeStore.getState().bootstrap(bootstrapState);
-  }, [bootstrapState]);
+    if (
+      hasUrlState &&
+      // A card link to the filters Home already shows must still end an
+      // earlier shared-link session, so later choices are saved.
+      ((isInAppNavigation && state.channel !== bootstrapState.channel) ||
+        shouldRebootstrapHomeFromUrl(
+          {
+            profile: state.profile,
+            sport: state.sport,
+            locationSearchInput: state.locationSearchInput,
+            selectedLocationDisplayLabel:
+              state.selectedLocation?.displayLabel ?? null,
+          },
+          bootstrapState,
+        ))
+    ) {
+      state.bootstrap(bootstrapState);
+    }
+  }, [bootstrapState, hasUrlState, isInAppNavigation]);
 
   return {
     bootstrapState,

@@ -16,6 +16,7 @@ import { appTheme } from "@/config/mantineTheme";
 import { i18n } from "@/i18n/i18n";
 import { resolveSupportedLanguage } from "@/i18n/language";
 import { AboutPage } from "@/pages/AboutPage";
+import { DashboardPage } from "@/pages/DashboardPage";
 import { DetailedRecommendationsPage } from "@/pages/DetailedRecommendationsPage";
 import { HomePage } from "@/pages/HomePage";
 
@@ -37,6 +38,10 @@ const router = createBrowserRouter(
         {
           path: "about",
           element: <AboutPage />,
+        },
+        {
+          path: "dashboard",
+          element: <DashboardPage />,
         },
         {
           path: "detailed-recommendations",

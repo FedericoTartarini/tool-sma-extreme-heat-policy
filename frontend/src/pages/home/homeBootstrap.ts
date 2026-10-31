@@ -10,6 +10,8 @@ import type {
 
 interface ResolveHomeBootstrapStateParams {
   hasUrlState: boolean;
+  /** URL filters came from a link inside the app (a dashboard card), not a shared link. */
+  isInAppNavigation?: boolean;
   defaultProfile: HeatRiskProfile;
   defaultSport: SportType;
   defaultLocationLabel: string;
@@ -33,6 +35,7 @@ export function resolveInitialLocationLabel(
  */
 export function resolveHomeBootstrapState({
   hasUrlState,
+  isInAppNavigation = false,
   defaultProfile,
   defaultSport,
   defaultLocationLabel,
@@ -40,7 +43,8 @@ export function resolveHomeBootstrapState({
   urlLocation,
   persistedFilters,
 }: ResolveHomeBootstrapStateParams): HomeStoreBootstrapPayload {
-  const channel: HomeChannel = hasUrlState ? "shared" : "direct";
+  const channel: HomeChannel =
+    hasUrlState && !isInAppNavigation ? "shared" : "direct";
 
   const profile = defaultProfile;
   /*
@@ -50,7 +54,7 @@ export function resolveHomeBootstrapState({
   let locationSearchInput = "";
   let locationPrefillSource: LocationPrefillSource = "none";
 
-  if (channel === "shared") {
+  if (hasUrlState) {
     /*
     if (urlProfile) {
       profile = urlProfile;
@@ -91,4 +95,31 @@ export function resolveHomeBootstrapState({
     locationPrefillSource,
     prefilledLocationResolveState,
   };
+}
+
+interface HomeStoreUrlComparisonState {
+  profile: HeatRiskProfile;
+  sport: SportType;
+  locationSearchInput: string;
+  selectedLocationDisplayLabel: string | null;
+}
+
+/**
+ * Returns true when URL-driven bootstrap state no longer matches the Home store.
+ */
+export function shouldRebootstrapHomeFromUrl(
+  storeState: HomeStoreUrlComparisonState,
+  bootstrapState: HomeStoreBootstrapPayload,
+): boolean {
+  const locationMatches =
+    storeState.selectedLocationDisplayLabel ===
+      bootstrapState.locationSearchInput ||
+    (storeState.locationSearchInput === bootstrapState.locationSearchInput &&
+      bootstrapState.locationPrefillSource !== "none");
+
+  return (
+    storeState.sport !== bootstrapState.sport ||
+    storeState.profile !== bootstrapState.profile ||
+    !locationMatches
+  );
 }

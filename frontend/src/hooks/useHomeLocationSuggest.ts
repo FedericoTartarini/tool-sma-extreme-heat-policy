@@ -5,7 +5,11 @@ import { suggestLocations } from "@/api/mapboxSuggest";
 import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
 import type { LocationSuggestion } from "@/domain/location";
 import {
+  findLocationSuggestionById,
+  getLocationLanguagePreference,
+  LOCATION_SUGGEST_DEBOUNCE_MS,
   LOCATION_SUGGEST_TYPES_PARAM,
+  MIN_LOCATION_QUERY_LENGTH,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
   shouldOpenPrefilledLocationDropdown,
@@ -15,8 +19,6 @@ import { createLatestAbortableRequestController } from "@/lib/latestAbortableReq
 import { retrieveAndSelectLocation } from "@/hooks/homeLocationRetrieve";
 import { useHomeStore } from "@/store/homeStore";
 
-const MIN_LOCATION_QUERY_LENGTH = 2;
-const SUGGEST_DEBOUNCE_MS = 800;
 const EMPTY_SUGGESTIONS: LocationSuggestion[] = [];
 
 export type LocationSuggestErrorReason = HomeSuggestErrorReason;
@@ -29,18 +31,6 @@ interface UseHomeLocationSuggestResult {
   suggestErrorReason: LocationSuggestErrorReason | null;
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
-}
-
-function getLanguagePreference(): string | undefined {
-  if (typeof navigator === "undefined") {
-    return undefined;
-  }
-
-  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
-    return navigator.languages.join(",");
-  }
-
-  return navigator.language || undefined;
 }
 
 function shouldRunSuggestQuery(params: {
@@ -110,15 +100,6 @@ function toSuggestErrorReason(params: {
   return null;
 }
 
-function findSubmittedSuggestion(
-  suggestions: LocationSuggestion[],
-  suggestionId: string,
-): LocationSuggestion | null {
-  return (
-    suggestions.find((suggestion) => suggestion.id === suggestionId) ?? null
-  );
-}
-
 /**
  * Query-driven location suggest hook for Home.
  */
@@ -162,8 +143,11 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
 
   const query = locationSearchInput.trim();
   const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
-  const language = useMemo(() => getLanguagePreference(), []);
-  const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
+  const language = useMemo(() => getLocationLanguagePreference(), []);
+  const [debouncedQuery] = useDebouncedValue(
+    query,
+    LOCATION_SUGGEST_DEBOUNCE_MS,
+  );
   const debouncedQueryValue = debouncedQuery.trim();
   const hasRestoredPrefillSource =
     locationPrefillSource === "url" || locationPrefillSource === "persisted";
@@ -312,7 +296,7 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   };
 
   const onLocationOptionSubmit = (suggestionId: string) => {
-    const selectedSuggestion = findSubmittedSuggestion(
+    const selectedSuggestion = findLocationSuggestionById(
       dedupedSuggestions,
       suggestionId,
     );
