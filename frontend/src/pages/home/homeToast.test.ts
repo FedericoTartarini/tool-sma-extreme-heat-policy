@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createCalculationErrorToast,
   createForecastUpdatedToast,
-  createSuggestErrorToast,
+  createLocationErrorToast,
   HOME_ERROR_TOAST_DURATION_MS,
   HOME_SUCCESS_TOAST_DURATION_MS,
 } from "@/pages/home/homeToast";
@@ -29,7 +29,7 @@ describe("homeToast", () => {
   });
 
   it("creates a longer error toast for location retrieve failures", () => {
-    expect(createSuggestErrorToast(9, "retrieve_failed")).toEqual({
+    expect(createLocationErrorToast(9, "retrieve_failed")).toEqual({
       id: 9,
       i18nKey: "errors.mapbox.retrieveFailed",
       variant: "error",
@@ -37,8 +37,19 @@ describe("homeToast", () => {
     });
   });
 
+  it("creates a longer error toast for denied location permission", () => {
+    expect(
+      createLocationErrorToast(10, "geolocation_permission_denied"),
+    ).toEqual({
+      id: 10,
+      i18nKey: "errors.location.permissionDenied",
+      variant: "error",
+      durationMs: HOME_ERROR_TOAST_DURATION_MS,
+    });
+  });
+
   it("does not create a toast without an error reason", () => {
-    expect(createCalculationErrorToast(10, null)).toBeNull();
-    expect(createSuggestErrorToast(11, null)).toBeNull();
+    expect(createCalculationErrorToast(11, null)).toBeNull();
+    expect(createLocationErrorToast(12, null)).toBeNull();
   });
 });
