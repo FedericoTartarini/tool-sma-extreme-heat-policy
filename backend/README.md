@@ -203,7 +203,7 @@ Example response:
    - compute `delta_mrt` with `pythermalcomfort.models.solar_gain`
    - derive `tr = tdb + delta_mrt`
 8. Convert `v_z1` to the model's required 1.1 m wind speed using
-   `pythermalcomfort.utils.scale_wind_speed_log(...)`.
+   `pythermalcomfort.environment.scale_wind_speed_log(...)`.
 9. Run `sports_heat_stress_risk` for each complete forecast row.
 10. Skip incomplete rows and treat the earliest complete row as `forecast[0]`.
 11. Return `422` only when no complete forecast row exists; the error payload is derived

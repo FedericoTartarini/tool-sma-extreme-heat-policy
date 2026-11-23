@@ -452,17 +452,16 @@ wheels = [
 
 [[package]]
 name = "pythermalcomfort"
-version = "4.0.3"
+version = "4.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numba" },
     { name = "numpy" },
     { name = "scipy" },
-    { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/ca/2042715d1d15d8399c7cf25d7187e34a3a8ed7d708040937047694ece516/pythermalcomfort-4.0.3.tar.gz", hash = "sha256:a75e4c52aa33d4704fc6ad3415e6795405c07f4fd21530ce2cc159ca8a88adcf", size = 2479183, upload-time = "2026-07-20T12:29:58.419Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/f2/eee8ee7c8f5fdb00fb63fbb53452c0805ae521836c052999016943484172/pythermalcomfort-4.8.1.tar.gz", hash = "sha256:3f96bfe757ce19f5e0918ceadb4ddd902af327e48657cb1976fe4d20cf03da13", size = 2542456, upload-time = "2026-11-05T08:40:27.988Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/67/b6471b82811a1ae8814f31f7c4b54c3e9016d900ed43ab8a68edcee7e3d3/pythermalcomfort-4.0.3-py2.py3-none-any.whl", hash = "sha256:f87ea530334613cc58cc6c648bd369bfc4719ec8fa5f5bc243f5e323ffa76839", size = 277535, upload-time = "2026-07-20T12:29:56.687Z" },
+    { url = "https://files.pythonhosted.org/packages/74/a1/94c3f4f5bb45983a78de08e5c8b16f771606ea0a823a33d1bfcb70767dfc/pythermalcomfort-4.8.1-py2.py3-none-any.whl", hash = "sha256:3454ac7f97ef19f5d803f4044d894ef3161f871138c78da8e42304bc36f75837", size = 385915, upload-time = "2026-11-05T08:40:25.902Z" },
 ]
 
 [[package]]
@@ -575,15 +574,6 @@ wheels = [
 ]
 
 [[package]]
-name = "setuptools"
-version = "82.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/f3/748f4d6f65d1756b9ae577f329c951cda23fb900e4de9f70900ced962085/setuptools-82.0.0.tar.gz", hash = "sha256:22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb", size = 1144893, upload-time = "2026-02-08T15:08:40.206Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/c6/76dc613121b793286a3f91621d7b75a2b493e0390ddca50f11993eadf192/setuptools-82.0.0-py3-none-any.whl", hash = "sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0", size = 1003468, upload-time = "2026-02-08T15:08:38.723Z" },
-]
-
-[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -621,7 +611,7 @@ requires-dist = [
     { name = "pandas", specifier = "==3.0.3" },
     { name = "pvlib", specifier = "==0.15.1" },
     { name = "pydantic-settings", specifier = "==2.14.1" },
-    { name = "pythermalcomfort", specifier = "==4.0.3" },
+    { name = "pythermalcomfort", specifier = "==4.8.1" },
     { name = "timezonefinder", specifier = "==8.2.4" },
     { name = "uvicorn", extras = ["standard"], specifier = "==0.49.0" },
 ]

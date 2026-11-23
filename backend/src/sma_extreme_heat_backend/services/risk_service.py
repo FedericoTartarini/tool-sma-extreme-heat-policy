@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from functools import cache
 
 import pandas as pd
-from pythermalcomfort.utils.scale_wind_speed_log import scale_wind_speed_log
+from pythermalcomfort.environment import scale_wind_speed_log
 
 from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     PythermalcomfortSportsHeatStressCalculator,

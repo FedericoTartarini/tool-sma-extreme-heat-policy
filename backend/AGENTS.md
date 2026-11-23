@@ -18,7 +18,7 @@ All three pass when ruff and pytest exit 0 and, with the server running, `curl h
 
 - Risk is the output of `pythermalcomfort.models.sports_heat_stress_risk.sports_heat_stress_risk`, called directly with `tdb`, `tr`, `rh`, `vr`, `sport` and returned unscored and unadjusted.
 - `tr` is mean radiant temperature from the MRT pipeline: Open-Meteo `direct_normal_irradiance` as the radiation source, MRT via `pvlib` + `pythermalcomfort.models.solar_gain`. `tr = tdb` and globe temperature (`tg`) are out of scope.
-- Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.utils.scale_wind_speed_log(..., round_output=True)` before the model call.
+- Convert Open-Meteo `wind_speed_10m` to 1.1 m with `pythermalcomfort.environment.scale_wind_speed_log(..., round_output=True)` before the model call.
 - The location timezone is resolved from coordinates inside backend orchestration.
 - Inputs reach the model exactly as the pipeline produced them: the MRT pipeline and wind-height scaling are the only transforms, with no clamping, default fill or remapping.
 - Required forecast inputs are `tdb`, `rh`, `v_z1`, `sol_radiation_dir`, `tr`. Forecast rows missing any of them are skipped; if no complete row remains, return `422` with `detail.unknown_inputs` and `detail.available_inputs` from the earliest candidate row.
