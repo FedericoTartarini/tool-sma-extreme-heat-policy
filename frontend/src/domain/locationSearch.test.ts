@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LocationSuggestion } from "@/domain/location";
 import {
+  isStartingNewLocationSearch,
   normalizeLocationSearchText,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
@@ -29,6 +30,38 @@ function createSuggestion(
     longitude: overrides.longitude,
   };
 }
+
+describe("isStartingNewLocationSearch", () => {
+  it("starts a new search when editing away from the picked label", () => {
+    expect(
+      isStartingNewLocationSearch({
+        previousInput: "Sydney, New South Wales, Australia",
+        nextInput: "Melbourne",
+        selectedLabel: "Sydney, New South Wales, Australia",
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps the session while still typing a new search", () => {
+    expect(
+      isStartingNewLocationSearch({
+        previousInput: "Mel",
+        nextInput: "Melb",
+        selectedLabel: "Sydney, New South Wales, Australia",
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps the session when nothing has been picked", () => {
+    expect(
+      isStartingNewLocationSearch({
+        previousInput: "",
+        nextInput: "S",
+        selectedLabel: null,
+      }),
+    ).toBe(false);
+  });
+});
 
 describe("normalizeLocationSearchText", () => {
   it("normalizes case and punctuation for matching", () => {

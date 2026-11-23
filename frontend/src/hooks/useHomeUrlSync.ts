@@ -16,10 +16,17 @@ export function useHomeUrlSync({
   setQueryStates,
   canSyncSelection,
 }: UseHomeUrlSyncParams): void {
-  const channel = useHomeStore((state) => state.channel);
   const profile = useHomeStore((state) => state.profile);
   const sport = useHomeStore((state) => state.sport);
-  const selectedLocation = useHomeStore((state) => state.selectedLocation);
+  const selectedLocationLabel = useHomeStore(
+    (state) => state.selectedLocation?.displayLabel ?? null,
+  );
+  const setQueryStatesRef = useRef(setQueryStates);
+
+  useEffect(() => {
+    setQueryStatesRef.current = setQueryStates;
+  }, [setQueryStates]);
+
   const lastAppliedRef = useRef<{
     profile: HeatRiskProfile;
     sport: string;
@@ -28,14 +35,25 @@ export function useHomeUrlSync({
   const syncRunRef = useRef(0);
 
   useEffect(() => {
-    if (!canSyncSelection || !selectedLocation) {
+    if (!canSyncSelection) {
+      return;
+    }
+
+    const {
+      channel,
+      profile: currentProfile,
+      sport: currentSport,
+      selectedLocation: currentSelectedLocation,
+    } = useHomeStore.getState();
+
+    if (!currentSelectedLocation) {
       return;
     }
 
     const nextSelection = {
-      profile,
-      sport,
-      loc: selectedLocation.displayLabel,
+      profile: currentProfile,
+      sport: currentSport,
+      loc: currentSelectedLocation.displayLabel,
     };
     const hasSelectionChanged =
       !lastAppliedRef.current ||
@@ -50,7 +68,7 @@ export function useHomeUrlSync({
     const runId = ++syncRunRef.current;
 
     void (async () => {
-      await setQueryStates(
+      await setQueryStatesRef.current(
         {
           profile: nextSelection.profile,
           sport: nextSelection.sport,
@@ -69,12 +87,9 @@ export function useHomeUrlSync({
 
       lastAppliedRef.current = nextSelection;
     })();
-  }, [
-    canSyncSelection,
-    channel,
-    profile,
-    selectedLocation,
-    setQueryStates,
-    sport,
-  ]);
+
+    return () => {
+      syncRunRef.current += 1;
+    };
+  }, [canSyncSelection, profile, selectedLocationLabel, sport]);
 }

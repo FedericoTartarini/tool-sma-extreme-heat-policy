@@ -6,7 +6,7 @@ import { RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT } from "@/config/uiTypography";
 interface SectionCardProps {
   title?: string;
   titleIcon?: ReactNode;
-  subtitle?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
 }
 
@@ -54,13 +54,17 @@ export function SectionCard({
             </Title>
           ) : null}
           {subtitle ? (
-            <Text
-              c="dimmed"
-              fz={{ base: "md", sm: "lg" }}
-              lh={RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT}
-            >
-              {subtitle}
-            </Text>
+            typeof subtitle === "string" ? (
+              <Text
+                c="dimmed"
+                fz={{ base: "md", sm: "lg" }}
+                lh={RESPONSIVE_STANDARD_TEXT_LINE_HEIGHT}
+              >
+                {subtitle}
+              </Text>
+            ) : (
+              subtitle
+            )
           ) : null}
         </Stack>
       ) : null}

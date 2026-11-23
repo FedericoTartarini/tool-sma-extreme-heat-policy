@@ -7,6 +7,8 @@ export const LOCATION_SUGGEST_TYPES = [
   "city",
 ] as const;
 export const LOCATION_SUGGEST_TYPES_PARAM = LOCATION_SUGGEST_TYPES.join(",");
+export const MIN_LOCATION_QUERY_LENGTH = 2;
+export const LOCATION_SUGGEST_DEBOUNCE_MS = 800;
 const DEFAULT_VISIBLE_SUGGESTION_LIMIT = 3;
 
 export interface PreparedLocationSuggestions {
@@ -168,4 +170,46 @@ export function shouldOpenPrefilledLocationDropdown(params: {
   }
 
   return findExactNormalizedSuggestion(suggestions, value) === null;
+}
+
+/**
+ * Returns the browser's language list for Mapbox suggest requests.
+ */
+export function getLocationLanguagePreference(): string | undefined {
+  if (typeof navigator === "undefined") {
+    return undefined;
+  }
+
+  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+    return navigator.languages.join(",");
+  }
+
+  return navigator.language || undefined;
+}
+
+export function findLocationSuggestionById(
+  suggestions: readonly LocationSuggestion[],
+  suggestionId: string,
+): LocationSuggestion | null {
+  return (
+    suggestions.find((suggestion) => suggestion.id === suggestionId) ?? null
+  );
+}
+
+/**
+ * A Mapbox session ends when a place is picked, so editing away from the
+ * picked label starts a new search session.
+ */
+export function isStartingNewLocationSearch(params: {
+  previousInput: string;
+  nextInput: string;
+  selectedLabel: string | null;
+}): boolean {
+  const { previousInput, nextInput, selectedLabel } = params;
+
+  return (
+    selectedLabel !== null &&
+    previousInput === selectedLabel &&
+    nextInput !== selectedLabel
+  );
 }

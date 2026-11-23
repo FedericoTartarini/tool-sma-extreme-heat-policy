@@ -124,7 +124,7 @@ function isForecastInputsApiData(
   );
 }
 
-function isForecastApiPoint(value: unknown): value is ForecastApiPoint {
+export function isForecastApiPoint(value: unknown): value is ForecastApiPoint {
   if (!isRecord(value)) {
     return false;
   }
