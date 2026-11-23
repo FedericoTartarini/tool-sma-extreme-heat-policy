@@ -42,3 +42,5 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Fail on deprecated APIs called from backend code; library-internal deprecations only warn.
+filterwarnings = ["error::DeprecationWarning:sma_extreme_heat_backend"]
