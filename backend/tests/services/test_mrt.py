@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime, timedelta
 
+import pandas as pd
 import pytest
 
 from sma_extreme_heat_backend.clients.open_meteo import HourlyWeatherPoint
+from sma_extreme_heat_backend.services import mrt
 from sma_extreme_heat_backend.services.mrt import (
     build_mrt_dataframe,
     resolve_timezone_name,
@@ -22,7 +24,7 @@ def _next_utc_time(hour: int, minute: int = 0) -> datetime:
     return candidate
 
 
-def _build_points(*, start: datetime, radiation: list[float]) -> list[HourlyWeatherPoint]:
+def _build_points(*, start: datetime, radiation: list[float | None]) -> list[HourlyWeatherPoint]:
     """Create deterministic hourly weather points for MRT tests."""
 
     points: list[HourlyWeatherPoint] = []
@@ -65,6 +67,42 @@ def test_build_mrt_dataframe_daytime_produces_positive_delta_mrt_and_higher_tr()
     assert (result["delta_mrt"] > 0).all()
     assert (result["tr"] > result["tdb"]).all()
     assert result["dni"].tolist() == [800.0, 850.0, 900.0]
+
+
+def test_build_mrt_dataframe_matches_per_row_solar_gain_and_keeps_missing_rows_nan() -> None:
+    """The single array call must equal one scalar solar_gain call per row."""
+
+    points = _build_points(
+        start=_next_utc_time(6),
+        radiation=[0.0, 400.0, None, 850.0, 900.0, 300.0],
+    )
+
+    result = build_mrt_dataframe(
+        points=points,
+        latitude=-33.847,
+        longitude=151.067,
+        timezone_name="UTC",
+    )
+
+    config = mrt.MRT_MODEL_CONFIG
+    for _, row in result.iterrows():
+        if pd.isna(row["sol_radiation_dir"]):
+            assert pd.isna(row["delta_mrt"])
+            assert pd.isna(row["tr"])
+            continue
+        expected = mrt.solar_gain(
+            sol_altitude=float(row["elevation"]),
+            sharp=config.sharp,
+            sol_radiation_dir=float(row["sol_radiation_dir"]),
+            sol_transmittance=config.sol_transmittance,
+            f_svv=config.f_svv,
+            f_bes=config.f_bes,
+            asw=config.asw,
+            posture=config.posture,
+            floor_reflectance=config.floor_reflectance,
+        ).delta_mrt
+        assert row["delta_mrt"] == pytest.approx(float(expected))
+        assert row["tr"] == pytest.approx(row["tdb"] + float(expected))
 
 
 def test_build_mrt_dataframe_nighttime_clamps_elevation_and_keeps_delta_mrt_near_zero() -> None:
