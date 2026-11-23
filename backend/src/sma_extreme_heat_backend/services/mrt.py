@@ -75,10 +75,29 @@ def _extract_delta_mrt(result: Any, *, size: int) -> np.ndarray:
     if delta_mrt is None:
         raise RiskCalculationError("Solar gain result did not include delta_mrt")
 
-    try:
-        return np.broadcast_to(np.asarray(delta_mrt, dtype=float), (size,))
-    except ValueError as exc:
-        raise RiskCalculationError("Solar gain returned an unexpected number of values") from exc
+    values = np.asarray(delta_mrt, dtype=float)
+    if values.shape != (size,):
+        raise RiskCalculationError("Solar gain returned an unexpected number of values")
+    return values
+
+
+def compute_delta_mrt(*, sol_altitude: np.ndarray, sol_radiation_dir: np.ndarray) -> np.ndarray:
+    """Run `solar_gain` with the pipeline's fixed settings on 1-D arrays of equal length."""
+
+    return _extract_delta_mrt(
+        solar_gain(
+            sol_altitude=sol_altitude,
+            sharp=MRT_MODEL_CONFIG.sharp,
+            sol_radiation_dir=sol_radiation_dir,
+            sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
+            f_svv=MRT_MODEL_CONFIG.f_svv,
+            f_bes=MRT_MODEL_CONFIG.f_bes,
+            asw=MRT_MODEL_CONFIG.asw,
+            posture=MRT_MODEL_CONFIG.posture,
+            floor_reflectance=MRT_MODEL_CONFIG.floor_reflectance,
+        ),
+        size=len(sol_altitude),
+    )
 
 
 def _points_to_dataframe(points: list[HourlyWeatherPoint]) -> pd.DataFrame:
@@ -140,19 +159,9 @@ def build_mrt_dataframe(
     valid = df_result["elevation"].notna() & df_result["sol_radiation_dir"].notna()
     delta_mrt = pd.Series(np.nan, index=df_result.index, dtype=float)
     if valid.any():
-        delta_mrt.loc[valid] = _extract_delta_mrt(
-            solar_gain(
-                sol_altitude=df_result.loc[valid, "elevation"].to_numpy(dtype=float),
-                sharp=MRT_MODEL_CONFIG.sharp,
-                sol_radiation_dir=df_result.loc[valid, "sol_radiation_dir"].to_numpy(dtype=float),
-                sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
-                f_svv=MRT_MODEL_CONFIG.f_svv,
-                f_bes=MRT_MODEL_CONFIG.f_bes,
-                asw=MRT_MODEL_CONFIG.asw,
-                posture=MRT_MODEL_CONFIG.posture,
-                floor_reflectance=MRT_MODEL_CONFIG.floor_reflectance,
-            ),
-            size=int(valid.sum()),
+        delta_mrt.loc[valid] = compute_delta_mrt(
+            sol_altitude=df_result.loc[valid, "elevation"].to_numpy(dtype=float),
+            sol_radiation_dir=df_result.loc[valid, "sol_radiation_dir"].to_numpy(dtype=float),
         )
 
     negative_delta_mrt = delta_mrt[delta_mrt < 0]

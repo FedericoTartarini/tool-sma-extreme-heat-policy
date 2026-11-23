@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime, timedelta
 
-import pandas as pd
+import numpy as np
 import pytest
 
 from sma_extreme_heat_backend.clients.open_meteo import HourlyWeatherPoint
@@ -84,25 +84,19 @@ def test_build_mrt_dataframe_matches_per_row_solar_gain_and_keeps_missing_rows_n
         timezone_name="UTC",
     )
 
-    config = mrt.MRT_MODEL_CONFIG
-    for _, row in result.iterrows():
-        if pd.isna(row["sol_radiation_dir"]):
-            assert pd.isna(row["delta_mrt"])
-            assert pd.isna(row["tr"])
-            continue
-        expected = mrt.solar_gain(
-            sol_altitude=float(row["elevation"]),
-            sharp=config.sharp,
-            sol_radiation_dir=float(row["sol_radiation_dir"]),
-            sol_transmittance=config.sol_transmittance,
-            f_svv=config.f_svv,
-            f_bes=config.f_bes,
-            asw=config.asw,
-            posture=config.posture,
-            floor_reflectance=config.floor_reflectance,
-        ).delta_mrt
-        assert row["delta_mrt"] == pytest.approx(float(expected))
-        assert row["tr"] == pytest.approx(row["tdb"] + float(expected))
+    missing = result["sol_radiation_dir"].isna()
+    assert missing.tolist() == [False, False, True, False, False, False]
+    assert result.loc[missing, ["delta_mrt", "tr"]].isna().all().all()
+
+    compared = result.loc[~missing]
+    assert len(compared) == 5
+    for _, row in compared.iterrows():
+        expected = mrt.compute_delta_mrt(
+            sol_altitude=np.array([row["elevation"]]),
+            sol_radiation_dir=np.array([row["sol_radiation_dir"]]),
+        )[0]
+        assert row["delta_mrt"] == pytest.approx(expected)
+        assert row["tr"] == pytest.approx(row["tdb"] + expected)
 
 
 def test_build_mrt_dataframe_nighttime_clamps_elevation_and_keeps_delta_mrt_near_zero() -> None:
@@ -179,7 +173,7 @@ def test_build_mrt_dataframe_logs_structured_warning_for_negative_delta_mrt(
 
     monkeypatch.setattr(
         "sma_extreme_heat_backend.services.mrt.solar_gain",
-        lambda **_: {"delta_mrt": -0.25},
+        lambda **kwargs: {"delta_mrt": np.full(len(kwargs["sol_altitude"]), -0.25)},
     )
 
     with caplog.at_level(logging.WARNING, logger="sma_extreme_heat_backend.services.mrt"):

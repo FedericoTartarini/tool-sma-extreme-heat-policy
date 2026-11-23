@@ -10,7 +10,7 @@ from sma_extreme_heat_backend.api.routes import router
 from sma_extreme_heat_backend.core.config import get_settings
 from sma_extreme_heat_backend.core.errors import AppError
 from sma_extreme_heat_backend.services.risk_service import shutdown_risk_service
-from sma_extreme_heat_backend.services.warmup import warm_up_models
+from sma_extreme_heat_backend.services.warmup import warm_up_models_safely
 
 
 @asynccontextmanager
@@ -19,7 +19,7 @@ async def lifespan(_: FastAPI):
 
     # Uvicorn runs this before it binds the port, so Cloud Run sends no traffic until
     # the numba kernels are compiled.
-    warm_up_models()
+    warm_up_models_safely()
     yield
     await shutdown_risk_service()
 

@@ -3,15 +3,19 @@ from __future__ import annotations
 import logging
 import time
 
-from pythermalcomfort.models import solar_gain
+import numpy as np
 
 from sma_extreme_heat_backend.calculators.sports_heat_stress import (
     PythermalcomfortSportsHeatStressCalculator,
     SportsHeatStressInput,
 )
-from sma_extreme_heat_backend.services.mrt import MRT_MODEL_CONFIG
+from sma_extreme_heat_backend.services.mrt import compute_delta_mrt
 
 LOGGER = logging.getLogger(__name__)
+
+# sports_heat_stress_risk returns early without running PHS when tdb is below 23 °C,
+# so the warm-up must use a higher air temperature to compile the PHS kernel.
+WARM_UP_INPUT = SportsHeatStressInput(sport="SOCCER", tdb=30.0, rh=50.0, vr=1.0, tr=40.0)
 
 
 def warm_up_models() -> None:
@@ -24,22 +28,21 @@ def warm_up_models() -> None:
     """
 
     start = time.perf_counter()
-    solar_gain(
-        sol_altitude=45.0,
-        sharp=MRT_MODEL_CONFIG.sharp,
-        sol_radiation_dir=600.0,
-        sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
-        f_svv=MRT_MODEL_CONFIG.f_svv,
-        f_bes=MRT_MODEL_CONFIG.f_bes,
-        asw=MRT_MODEL_CONFIG.asw,
-        posture=MRT_MODEL_CONFIG.posture,
-        floor_reflectance=MRT_MODEL_CONFIG.floor_reflectance,
-    )
-    # tdb must be at least 23 °C, otherwise the model returns early without running PHS.
-    PythermalcomfortSportsHeatStressCalculator().model_sports_heat_stress(
-        SportsHeatStressInput(sport="SOCCER", tdb=30.0, rh=50.0, vr=1.0, tr=40.0)
-    )
+    compute_delta_mrt(sol_altitude=np.array([45.0]), sol_radiation_dir=np.array([600.0]))
+    PythermalcomfortSportsHeatStressCalculator().model_sports_heat_stress(WARM_UP_INPUT)
     LOGGER.info(
         "Warmed up pythermalcomfort models",
         extra={"duration_seconds": round(time.perf_counter() - start, 3)},
     )
+
+
+def warm_up_models_safely() -> None:
+    """Warm up the models, but never stop the app from starting if that fails.
+
+    A failure here only means the first request compiles the kernels itself.
+    """
+
+    try:
+        warm_up_models()
+    except Exception:  # noqa: BLE001
+        LOGGER.exception("Model warm-up failed; the first request will compile the models")
