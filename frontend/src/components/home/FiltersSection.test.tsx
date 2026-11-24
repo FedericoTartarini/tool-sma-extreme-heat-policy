@@ -61,10 +61,12 @@ vi.mock("@/hooks/useHomeLocationSuggest", () => ({
     locationSearchInput: "Per",
     locationSuggestions: [fixtures.perth, fixtures.sydney],
     isSuggestLoading: false,
+    areSuggestionsCurrent: true,
     shouldOpenLocationDropdown: true,
     suggestErrorReason: null,
     onLocationSearchInputChange: () => undefined,
     onLocationOptionSubmit: () => undefined,
+    onLocationSearchSubmit: () => undefined,
   }),
 }));
 

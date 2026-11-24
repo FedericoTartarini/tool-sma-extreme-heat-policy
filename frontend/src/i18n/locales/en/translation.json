@@ -259,6 +259,7 @@
         "locationLabel": "Location",
         "defaultLocation": "North Sydney, New South Wales, Australia",
         "locationPlaceholder": "Search suburb, town, or city",
+        "locationNotPicked": "Choose a location from the list, or press Enter to use the top match.",
         "sportNotFound": "No sport found",
         "selectedSportFallback": "Selected sport",
         "sportImageUnavailable": "Sport image unavailable",
