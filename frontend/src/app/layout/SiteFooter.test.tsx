@@ -30,18 +30,29 @@ describe("SiteFooter", () => {
     }
   });
 
-  it("renders the citation as one paragraph that links to the paper", () => {
+  it("lists the global paper above the SMA paper, each linking to its DOI", () => {
     const markup = renderWithAppTheme(<SiteFooter />);
+    const paragraphs = markup.match(/<p\b[^>]*>(.*?)<\/p>/g) ?? [];
+    const promptIndex = paragraphs.findIndex((paragraph) =>
+      paragraph.includes("footer.citePrompt"),
+    );
+    const [globalCitation, smaCitation] = paragraphs.slice(
+      promptIndex + 1,
+      promptIndex + 3,
+    );
 
-    const citation = markup
-      .match(/<p\b[^>]*>(.*?)<\/p>/g)
-      ?.find((paragraph) => paragraph.includes("footer.citePrompt"));
-    expect(citation).toBeDefined();
-    expect(citation).toContain(
+    expect(promptIndex).toBeGreaterThanOrEqual(0);
+    expect(globalCitation).toContain(
+      'href="https://doi.org/10.1136/bjsports-2026-111907"',
+    );
+    expect(globalCitation).toContain("footer.globalPaperTitle");
+    expect(globalCitation).toContain("footer.globalAuthors");
+    expect(globalCitation).toContain("footer.globalJournal");
+    expect(smaCitation).toContain(
       'href="https://doi.org/10.1016/j.jsams.2025.03.006"',
     );
-    expect(citation).toContain("footer.paperTitle");
-    expect(citation).toContain("footer.authors");
-    expect(citation).toContain("footer.journal");
+    expect(smaCitation).toContain("footer.paperTitle");
+    expect(smaCitation).toContain("footer.authors");
+    expect(smaCitation).toContain("footer.journal");
   });
 });
