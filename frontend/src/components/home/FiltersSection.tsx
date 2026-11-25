@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconBookmarkFilled } from "@tabler/icons-react";
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocationFieldActionIcons } from "@/components/home/LocationFieldActionIcons";
 import { SaveLocationModal } from "@/components/home/SaveLocationModal";
@@ -20,10 +20,8 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { CONTENT_GAP } from "@/config/uiLayout";
 import { isSuggestionAlreadySaved } from "@/domain/savedLocation";
 import { isSportType, sports, type SportType } from "@/domain/sport";
-import {
-  useHomeLocationSuggest,
-  type LocationSuggestErrorReason,
-} from "@/hooks/useHomeLocationSuggest";
+import { useHomeLocationSuggest } from "@/hooks/useHomeLocationSuggest";
+import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
 import {
   getSportImageFailureUrl,
   type SportImageFailure,
@@ -41,7 +39,7 @@ const LOCATION_INPUT_CHEVRON_SECTION_WIDTH = 32;
 const LOCATION_SUGGESTION_BOOKMARK_ICON_SIZE = 16;
 
 interface FiltersSectionProps {
-  onLocationError?: (reason: LocationSuggestErrorReason) => void;
+  onLocationError?: (reason: HomeLocationErrorReason) => void;
 }
 
 /**
@@ -104,14 +102,34 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     locationSearchInput,
     locationSuggestions,
     isSuggestLoading,
+    areSuggestionsCurrent,
     shouldOpenLocationDropdown,
     suggestErrorReason,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
+    onLocationSearchSubmit,
   } = useHomeLocationSuggest();
+  // Focusing a committed location hides its label so the user can type a new
+  // search straight away; blurring without typing shows the label again.
+  const [isLocationLabelHidden, setIsLocationLabelHidden] = useState(false);
+  // Set when the user leaves the field without picking a suggestion.
+  const [hasLeftLocationUnpicked, setHasLeftLocationUnpicked] = useState(false);
+  // An empty search shows the current sport as placeholder, so typing filters
+  // all sports instead of appending to the current sport's label.
+  const [sportSearch, setSportSearch] = useState<string | null>(null);
   const isShowingCommittedLocation =
     selectedLocation !== null &&
     locationSearchInput === selectedLocation.displayLabel;
+  const shouldShowLocationNotPicked =
+    hasLeftLocationUnpicked && !isShowingCommittedLocation;
+  const locationInputValue =
+    isLocationLabelHidden && isShowingCommittedLocation
+      ? ""
+      : locationSearchInput;
+  const locationPlaceholder =
+    isLocationLabelHidden && selectedLocation
+      ? selectedLocation.displayLabel
+      : t("home.sections.filters.locationPlaceholder");
   const shouldRenderLocationDropdown = locationSuggestions.length > 0;
   const locationOptions = locationSuggestions.map((suggestion) => {
     const isSavedSuggestion = isSuggestionAlreadySaved(
@@ -152,6 +170,30 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     shouldRenderLocationDropdown,
   ]);
 
+  // Highlights the top suggestion once it matches the typed text, so Enter
+  // picks it. The frame wait lets the dropdown mount its options first.
+  // The store object is new on every render, but selectFirstOption is stable,
+  // so re-renders do not undo the user's arrow-key choice.
+  const isLocationDropdownOpened = locationCombobox.dropdownOpened;
+  const { selectFirstOption } = locationCombobox;
+  useEffect(() => {
+    if (
+      !isLocationDropdownOpened ||
+      !areSuggestionsCurrent ||
+      locationSuggestions.length === 0
+    ) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => selectFirstOption());
+    return () => window.cancelAnimationFrame(frameId);
+  }, [
+    areSuggestionsCurrent,
+    isLocationDropdownOpened,
+    locationSuggestions,
+    selectFirstOption,
+  ]);
+
   useEffect(() => {
     if (suggestErrorReason) {
       onLocationError?.(suggestErrorReason);
@@ -165,19 +207,68 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
     }
   };
   */
-  const handleLocationInputClick = (event: MouseEvent<HTMLInputElement>) => {
-    if (isShowingCommittedLocation) {
-      event.currentTarget.select();
-    }
+  const closeLocationDropdown = () => {
+    locationCombobox.closeDropdown();
+    locationCombobox.resetSelectedOption();
+  };
+
+  const handleLocationInputFocus = () => {
+    setIsLocationLabelHidden(isShowingCommittedLocation);
 
     if (shouldRenderLocationDropdown) {
       locationCombobox.openDropdown();
     }
   };
 
-  const closeLocationDropdown = () => {
-    locationCombobox.closeDropdown();
+  const handleLocationInputChange = (value: string) => {
+    setIsLocationLabelHidden(false);
+    setHasLeftLocationUnpicked(false);
+    // The highlight belonged to suggestions for the previous text.
     locationCombobox.resetSelectedOption();
+    onLocationSearchInputChange(value);
+    locationCombobox.openDropdown();
+  };
+
+  const handleLocationInputBlur = () => {
+    setIsLocationLabelHidden(false);
+    setHasLeftLocationUnpicked(!isShowingCommittedLocation);
+    closeLocationDropdown();
+  };
+
+  const handleLocationInputKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    // keyCode 229 is the Enter that confirms an IME candidate (Safari reports
+    // it after compositionend, so isComposing alone misses it).
+    if (
+      event.key !== "Enter" ||
+      event.nativeEvent.isComposing ||
+      event.nativeEvent.keyCode === 229
+    ) {
+      return;
+    }
+
+    const hasHighlightedOption =
+      locationCombobox.dropdownOpened &&
+      locationCombobox.getSelectedOptionIndex() !== -1;
+
+    if (hasHighlightedOption) {
+      // Mantine clicks the highlighted option only when `code` is "Enter".
+      // Phone keyboards often send an empty code, so click it ourselves then.
+      const { code } = event.nativeEvent;
+      if (code !== "Enter" && code !== "NumpadEnter") {
+        event.preventDefault();
+        locationCombobox.clickSelectedOption();
+      }
+      return;
+    }
+
+    // Nothing highlighted yet: pick the top match for the typed text,
+    // waiting for suggestions if needed.
+    if (!isShowingCommittedLocation) {
+      event.preventDefault();
+      onLocationSearchSubmit();
+    }
   };
 
   const handleSportChange = (value: string | null) => {
@@ -233,19 +324,24 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
                     __staticSelector="Select"
                     aria-label={t("home.sections.filters.locationLabel")}
                     size="md"
-                    placeholder={t("home.sections.filters.locationPlaceholder")}
-                    value={locationSearchInput}
-                    onChange={(event) => {
-                      onLocationSearchInputChange(event.currentTarget.value);
-                      locationCombobox.openDropdown();
-                    }}
-                    onFocus={() => {
+                    placeholder={locationPlaceholder}
+                    value={locationInputValue}
+                    error={
+                      shouldShowLocationNotPicked
+                        ? t("home.sections.filters.locationNotPicked")
+                        : undefined
+                    }
+                    onChange={(event) =>
+                      handleLocationInputChange(event.currentTarget.value)
+                    }
+                    onFocus={handleLocationInputFocus}
+                    onBlur={handleLocationInputBlur}
+                    onKeyDown={handleLocationInputKeyDown}
+                    onClick={() => {
                       if (shouldRenderLocationDropdown) {
                         locationCombobox.openDropdown();
                       }
                     }}
-                    onBlur={closeLocationDropdown}
-                    onClick={handleLocationInputClick}
                     rightSection={
                       isSuggestLoading ? (
                         <Loader size={16} />
@@ -270,6 +366,7 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               canSaveCurrentLocation={selectedLocation !== null}
               hasSavedLocations={savedLocations.length > 0}
               onOpenSavedLocations={openSaveSavedLocationModal}
+              onCurrentLocationError={onLocationError}
             />
           </Group>
         </Group>
@@ -286,6 +383,12 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
               value={sport}
               onChange={handleSportChange}
               searchable
+              searchValue={sportSearch ?? selectedSportLabel}
+              onSearchChange={setSportSearch}
+              placeholder={selectedSportLabel}
+              onFocus={() => setSportSearch("")}
+              onOptionSubmit={() => setSportSearch(null)}
+              selectFirstOptionOnChange
               nothingFoundMessage={t("home.sections.filters.sportNotFound")}
             />
           </Box>

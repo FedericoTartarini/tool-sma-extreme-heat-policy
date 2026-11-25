@@ -15,11 +15,11 @@ import { BottomToast } from "@/components/ui/BottomToast";
 import { SECTION_STACK_GAP } from "@/config/uiLayout";
 import { useHomeHeatRisk } from "@/hooks/useHomeHeatRisk";
 import { useHomeUrlSync } from "@/hooks/useHomeUrlSync";
-import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
+import type { HomeLocationErrorReason } from "@/domain/homeErrorMap";
 import {
   createCalculationErrorToast,
   createForecastUpdatedToast,
-  createSuggestErrorToast,
+  createLocationErrorToast,
   type HomeToastEvent,
 } from "@/pages/home/homeToast";
 import { useHomeBootstrap } from "@/pages/home/useHomeBootstrap";
@@ -62,8 +62,8 @@ export function HomePage() {
     [],
   );
   const handleLocationError = useCallback(
-    (reason: HomeSuggestErrorReason) => {
-      publishToast((id) => createSuggestErrorToast(id, reason));
+    (reason: HomeLocationErrorReason) => {
+      publishToast((id) => createLocationErrorToast(id, reason));
     },
     [publishToast],
   );

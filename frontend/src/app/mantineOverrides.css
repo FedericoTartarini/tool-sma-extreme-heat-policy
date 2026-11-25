@@ -1,0 +1,9 @@
+/*
+ * Mantine fills the keyboard-highlighted dropdown option with the primary
+ * colour. Our primary is the USYD red-orange, so a highlighted location or
+ * sport looked like an error. A light brand tint marks it as "Enter picks this".
+ */
+[data-combobox-option][data-combobox-selected] {
+  background-color: var(--mantine-color-brand-0);
+  color: var(--mantine-color-text);
+}

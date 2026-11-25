@@ -22,6 +22,9 @@
     "endorsedBy": "认可：",
     "feedbackLink": "提供反馈",
     "citePrompt": "如果您使用本工具，请引用以下论文：",
+    "globalPaperTitle": "Safeguarding global physical activity and sport participation in a warming world: a freely available international web tool.",
+    "globalAuthors": "Tartarini F, Smallcombe JW, Broderick C, Jay O.",
+    "globalJournal": "Br J Sports Med. Published online 2026 Sep 3.",
     "paperTitle": "The Sports Medicine Australia extreme heat risk and response guidelines and web tool.",
     "authors": "Tartarini F, Smallcombe JW, Lynch GP, Cross TJ, Broderick C, Jay O.",
     "journal": "J Sci Med Sport. 2025 Sep;28(9):690-699.",
@@ -256,6 +259,7 @@
         "locationLabel": "地点",
         "defaultLocation": "North Sydney, New South Wales, Australia",
         "locationPlaceholder": "搜索郊区、城镇或城市",
+        "locationNotPicked": "请从列表中选择一个地点，或按 Enter 键使用最匹配的结果。",
         "sportNotFound": "未找到运动项目",
         "selectedSportFallback": "已选运动项目",
         "sportImageUnavailable": "运动项目图片不可用",
@@ -320,11 +324,16 @@
       "missingToken": "地点搜索尚未配置。\n请设置 VITE_MAPBOX_ACCESS_TOKEN。",
       "unavailable": "地点服务暂时不可用。\n请稍后重试。",
       "noResults": "未找到匹配的地点。",
-      "retrieveFailed": "地点服务请求失败。\n请稍后重试。"
+      "retrieveFailed": "地点服务请求失败。\n请稍后重试。",
+      "reverseFailed": "已获取您的坐标，但无法解析地点名称。\n请重试或手动搜索。"
     },
     "location": {
       "missingCoordinates": "无法获取此地点的坐标，请选择其他建议地点。",
-      "prefilledNotMatched": "请从建议列表中选择地点。"
+      "prefilledNotMatched": "请从建议列表中选择地点。",
+      "notResolved": "无法在坐标附近找到支持的郊区或城镇。\n请手动搜索地点。",
+      "permissionDenied": "定位权限已被拒绝。请在浏览器中允许定位，或手动搜索地点。",
+      "geolocationUnavailable": "无法获取您的当前位置。请检查设备定位设置，或手动搜索地点。",
+      "geolocationTimeout": "获取当前位置超时。请重试或手动搜索地点。"
     },
     "risk": {
       "missingApiBaseUrl": "风险 API 尚未配置。\n请设置 VITE_API_BASE_URL。",

@@ -11,7 +11,6 @@ import {
   shouldOpenPrefilledLocationDropdown,
   toPrefilledLocationSuggestQuery,
 } from "@/domain/locationSearch";
-import { createLatestAbortableRequestController } from "@/lib/latestAbortableRequest";
 import { retrieveAndSelectLocation } from "@/hooks/homeLocationRetrieve";
 import { useHomeStore } from "@/store/homeStore";
 
@@ -25,10 +24,18 @@ interface UseHomeLocationSuggestResult {
   locationSearchInput: string;
   locationSuggestions: LocationSuggestion[];
   isSuggestLoading: boolean;
+  /** True when the listed suggestions were fetched for the text now in the input. */
+  areSuggestionsCurrent: boolean;
   shouldOpenLocationDropdown: boolean;
   suggestErrorReason: LocationSuggestErrorReason | null;
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
+  /**
+   * Picks the top-ranked suggestion for the typed text (Enter without a
+   * highlighted option). Skips the debounce and waits for suggestions when
+   * none are ready.
+   */
+  onLocationSearchSubmit: () => void;
 }
 
 function getLanguagePreference(): string | undefined {
@@ -154,17 +161,33 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const markPrefilledLocationNotMatched = useHomeStore(
     (state) => state.markPrefilledLocationNotMatched,
   );
+  const pendingSearchSubmit = useHomeStore(
+    (state) => state.pendingLocationSearchSubmit,
+  );
+  const requestLocationSearchSubmit = useHomeStore(
+    (state) => state.requestLocationSearchSubmit,
+  );
+  const clearLocationSearchSubmit = useHomeStore(
+    (state) => state.clearLocationSearchSubmit,
+  );
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
-  const retrieveController = useMemo(
-    () => createLatestAbortableRequestController(),
-    [],
+  const [lastSubmittedQuery, setLastSubmittedQuery] = useState<string | null>(
+    null,
+  );
+  const retrieveController = useHomeStore(
+    (state) => state.locationRequestController,
   );
 
   const query = locationSearchInput.trim();
   const selectedLocationValue = selectedLocation?.displayLabel.trim() ?? "";
   const language = useMemo(() => getLanguagePreference(), []);
   const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
-  const debouncedQueryValue = debouncedQuery.trim();
+  // A submit is only live while the input still holds the text it was made for.
+  const isSearchSubmitPending = pendingSearchSubmit === query;
+  // Pressing Enter should not wait out the typing debounce. This stays true
+  // after the submit is handled, so its result or error is shown at once.
+  const debouncedQueryValue =
+    lastSubmittedQuery === query ? query : debouncedQuery.trim();
   const hasRestoredPrefillSource =
     locationPrefillSource === "url" || locationPrefillSource === "persisted";
   const isPrefilledLocationResolvePending =
@@ -254,15 +277,18 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
       return;
     }
 
+    const request = retrieveController.start();
     void retrieveAndSelectLocation({
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
-      request: retrieveController.start(),
+      request,
       selectLocation,
       setHasRetrieveError,
     }).finally(() => {
-      finishPrefilledLocationResolve();
+      if (!request.signal.aborted) {
+        finishPrefilledLocationResolve();
+      }
     });
   }, [
     finishPrefilledLocationResolve,
@@ -311,43 +337,79 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
     setLocationSearchInput(value);
   };
 
-  const onLocationOptionSubmit = (suggestionId: string) => {
-    const selectedSuggestion = findSubmittedSuggestion(
-      dedupedSuggestions,
-      suggestionId,
-    );
-
-    if (!selectedSuggestion) {
-      return;
-    }
-
+  const submitSuggestion = (selectedSuggestion: LocationSuggestion) => {
     const shouldFinishPrefilledResolve = hasActivePrefilledLocationResolve;
 
     if (shouldFinishPrefilledResolve) {
       startPrefilledLocationResolve();
     }
 
+    const request = retrieveController.start();
     void retrieveAndSelectLocation({
       selectedSuggestion,
       hasMapboxToken,
       mapboxAccessToken,
-      request: retrieveController.start(),
+      request,
       selectLocation,
       setHasRetrieveError,
     }).finally(() => {
-      if (shouldFinishPrefilledResolve) {
+      if (shouldFinishPrefilledResolve && !request.signal.aborted) {
         finishPrefilledLocationResolve();
       }
     });
   };
 
+  const onLocationOptionSubmit = (suggestionId: string) => {
+    const selectedSuggestion = findSubmittedSuggestion(
+      dedupedSuggestions,
+      suggestionId,
+    );
+
+    if (selectedSuggestion) {
+      submitSuggestion(selectedSuggestion);
+    }
+  };
+
+  const onLocationSearchSubmit = () => {
+    if (query.length > 0) {
+      setLastSubmittedQuery(query);
+      requestLocationSearchSubmit(query);
+    }
+  };
+
+  const areSuggestionsCurrent =
+    shouldSuggest && suggestQuery.isSuccess && !suggestQuery.isFetching;
+
+  // Commits Mapbox's top-ranked suggestion (the same one the dropdown
+  // highlights) once suggestions for the submitted text arrive. The submit is
+  // cleared either way, so a failed or empty search never commits later on its
+  // own; the matching error toast tells the user why nothing was picked.
+  useEffect(() => {
+    if (!isSearchSubmitPending) {
+      return;
+    }
+
+    if (shouldSuggest && !areSuggestionsCurrent && !suggestQuery.isError) {
+      return;
+    }
+
+    clearLocationSearchSubmit();
+    const topSuggestion = areSuggestionsCurrent ? dedupedSuggestions[0] : null;
+
+    if (topSuggestion) {
+      submitSuggestion(topSuggestion);
+    }
+  });
+
   return {
     locationSearchInput,
     locationSuggestions: visibleSuggestions,
     isSuggestLoading: shouldSuggest && suggestQuery.isFetching,
+    areSuggestionsCurrent,
     shouldOpenLocationDropdown,
     suggestErrorReason,
     onLocationSearchInputChange,
     onLocationOptionSubmit,
+    onLocationSearchSubmit,
   };
 }

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from functools import cache
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from pvlib import location
 from pythermalcomfort.models import solar_gain
@@ -64,8 +65,8 @@ def resolve_timezone_name(*, latitude: float, longitude: float) -> str:
     return timezone_name
 
 
-def _extract_delta_mrt(result: Any) -> float:
-    """Normalize `solar_gain` output into a single delta MRT float."""
+def _extract_delta_mrt(result: Any, *, size: int) -> np.ndarray:
+    """Normalize `solar_gain` output into a float array of delta MRT values of length `size`."""
 
     delta_mrt = getattr(result, "delta_mrt", None)
     if delta_mrt is None and isinstance(result, Mapping):
@@ -74,7 +75,29 @@ def _extract_delta_mrt(result: Any) -> float:
     if delta_mrt is None:
         raise RiskCalculationError("Solar gain result did not include delta_mrt")
 
-    return float(delta_mrt)
+    values = np.asarray(delta_mrt, dtype=float)
+    if values.shape != (size,):
+        raise RiskCalculationError("Solar gain returned an unexpected number of values")
+    return values
+
+
+def compute_delta_mrt(*, sol_altitude: np.ndarray, sol_radiation_dir: np.ndarray) -> np.ndarray:
+    """Run `solar_gain` with the pipeline's fixed settings on 1-D arrays of equal length."""
+
+    return _extract_delta_mrt(
+        solar_gain(
+            sol_altitude=sol_altitude,
+            sharp=MRT_MODEL_CONFIG.sharp,
+            sol_radiation_dir=sol_radiation_dir,
+            sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
+            f_svv=MRT_MODEL_CONFIG.f_svv,
+            f_bes=MRT_MODEL_CONFIG.f_bes,
+            asw=MRT_MODEL_CONFIG.asw,
+            posture=MRT_MODEL_CONFIG.posture,
+            floor_reflectance=MRT_MODEL_CONFIG.floor_reflectance,
+        ),
+        size=len(sol_altitude),
+    )
 
 
 def _points_to_dataframe(points: list[HourlyWeatherPoint]) -> pd.DataFrame:
@@ -131,41 +154,28 @@ def build_mrt_dataframe(
         df_result["dni"] * MRT_MODEL_CONFIG.solar_radiation_correction_coefficient
     )
 
-    delta_mrt_values: list[float] = []
-    negative_delta_mrt_values: list[float] = []
-    for row in df_result.itertuples():
-        if pd.isna(row.elevation) or pd.isna(row.sol_radiation_dir):
-            delta_mrt_values.append(float("nan"))
-            continue
-
-        delta_mrt = _extract_delta_mrt(
-            solar_gain(
-                sol_altitude=float(row.elevation),
-                sharp=MRT_MODEL_CONFIG.sharp,
-                sol_radiation_dir=float(row.sol_radiation_dir),
-                sol_transmittance=MRT_MODEL_CONFIG.sol_transmittance,
-                f_svv=MRT_MODEL_CONFIG.f_svv,
-                f_bes=MRT_MODEL_CONFIG.f_bes,
-                asw=MRT_MODEL_CONFIG.asw,
-                posture=MRT_MODEL_CONFIG.posture,
-                floor_reflectance=MRT_MODEL_CONFIG.floor_reflectance,
-            )
+    # One array call for all rows: per-row scalar calls repeat solar_gain's validation and
+    # numba dispatch for every hour. Rows missing an input keep delta_mrt as NaN.
+    valid = df_result["elevation"].notna() & df_result["sol_radiation_dir"].notna()
+    delta_mrt = pd.Series(np.nan, index=df_result.index, dtype=float)
+    if valid.any():
+        delta_mrt.loc[valid] = compute_delta_mrt(
+            sol_altitude=df_result.loc[valid, "elevation"].to_numpy(dtype=float),
+            sol_radiation_dir=df_result.loc[valid, "sol_radiation_dir"].to_numpy(dtype=float),
         )
-        if delta_mrt < 0:
-            negative_delta_mrt_values.append(delta_mrt)
-        delta_mrt_values.append(delta_mrt)
 
-    if negative_delta_mrt_values:
+    negative_delta_mrt = delta_mrt[delta_mrt < 0]
+    if not negative_delta_mrt.empty:
         LOGGER.warning(
             "Calculated negative delta_mrt values during MRT pipeline",
             extra={
-                "count": len(negative_delta_mrt_values),
-                "min_delta_mrt": min(negative_delta_mrt_values),
+                "count": len(negative_delta_mrt),
+                "min_delta_mrt": float(negative_delta_mrt.min()),
                 "timezone": timezone_name,
             },
         )
 
-    df_result["delta_mrt"] = delta_mrt_values
+    df_result["delta_mrt"] = delta_mrt
     df_result["tr"] = df_result["tdb"] + df_result["delta_mrt"]
 
     return df_result.loc[:, list(MRT_COLUMNS)].copy()

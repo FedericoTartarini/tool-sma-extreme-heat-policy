@@ -21,7 +21,10 @@
     "developedBy": "Developed by:",
     "endorsedBy": "Endorsed by:",
     "feedbackLink": "Provide your feedback",
-    "citePrompt": "If you use this tool, please cite the following paper:",
+    "citePrompt": "If you use this tool, please cite the following papers:",
+    "globalPaperTitle": "Safeguarding global physical activity and sport participation in a warming world: a freely available international web tool.",
+    "globalAuthors": "Tartarini F, Smallcombe JW, Broderick C, Jay O.",
+    "globalJournal": "Br J Sports Med. Published online 2026 Sep 3.",
     "paperTitle": "The Sports Medicine Australia extreme heat risk and response guidelines and web tool.",
     "authors": "Tartarini F, Smallcombe JW, Lynch GP, Cross TJ, Broderick C, Jay O.",
     "journal": "J Sci Med Sport. 2025 Sep;28(9):690-699.",
@@ -256,6 +259,7 @@
         "locationLabel": "Location",
         "defaultLocation": "North Sydney, New South Wales, Australia",
         "locationPlaceholder": "Search suburb, town, or city",
+        "locationNotPicked": "Choose a location from the list, or press Enter to use the top match.",
         "sportNotFound": "No sport found",
         "selectedSportFallback": "Selected sport",
         "sportImageUnavailable": "Sport image unavailable",
@@ -320,11 +324,16 @@
       "missingToken": "Location search is not configured.\nSet VITE_MAPBOX_ACCESS_TOKEN.",
       "unavailable": "Location provider is unavailable.\nTry again soon.",
       "noResults": "No matching location found.",
-      "retrieveFailed": "Location provider failed.\nTry again soon."
+      "retrieveFailed": "Location provider failed.\nTry again soon.",
+      "reverseFailed": "Your coordinates were found, but the location name could not be resolved.\nTry again or search manually."
     },
     "location": {
       "missingCoordinates": "This location has no coordinates. Choose another suggestion.",
-      "prefilledNotMatched": "Please choose a location from the suggestions."
+      "prefilledNotMatched": "Please choose a location from the suggestions.",
+      "notResolved": "A nearby supported suburb or town could not be found for your coordinates.\nPlease search manually.",
+      "permissionDenied": "Location permission was denied. Allow access in your browser or search manually.",
+      "geolocationUnavailable": "Your current location is unavailable. Check your device settings or search manually.",
+      "geolocationTimeout": "Getting your current location took too long. Try again or search manually."
     },
     "risk": {
       "missingApiBaseUrl": "Risk API is not configured.\nSet VITE_API_BASE_URL.",

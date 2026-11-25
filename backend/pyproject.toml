@@ -13,7 +13,7 @@ dependencies = [
     "pandas==3.0.3",
     "pvlib==0.15.1",
     "pydantic-settings==2.14.1",
-    "pythermalcomfort==4.0.3",
+    "pythermalcomfort==4.8.1",
     "timezonefinder==8.2.4",
     "uvicorn[standard]==0.49.0",
 ]
@@ -42,3 +42,5 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Fail on deprecated APIs called from backend code; library-internal deprecations only warn.
+filterwarnings = ["error::DeprecationWarning:sma_extreme_heat_backend"]

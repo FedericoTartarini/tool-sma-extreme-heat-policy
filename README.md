@@ -175,6 +175,7 @@ The response contains the resolved location context and hourly forecast points w
 The tool is based on:
 
 - [Sports Medicine Australia Extreme Heat Policy](https://sma.org.au/resources/policies-and-guidelines/hot-weather/)
+- Tartarini, F. et al. (2026), [_Safeguarding global physical activity and sport participation in a warming world: a freely available international web tool_](https://doi.org/10.1136/bjsports-2026-111907), _British Journal of Sports Medicine_
 - Tartarini, F. et al. (2025), [_A modified Sports Medicine Australia extreme heat policy and web tool_](https://doi.org/10.1016/j.jsams.2025.03.006), _Journal of Science and Medicine in Sport_
 
 ## Contributing

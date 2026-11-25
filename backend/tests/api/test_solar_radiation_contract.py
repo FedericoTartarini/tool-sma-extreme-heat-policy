@@ -57,9 +57,10 @@ def _create_test_app(radiation: list[float | None]):
 @pytest.mark.parametrize(("raw", "adjusted"), [(0.0, 0.0), (800.0, 600.0)])
 def test_api_radiation_matches_actual_solar_gain_input(raw: float, adjusted: float) -> None:
     """Expose the once-adjusted model input, not raw or twice-adjusted radiation."""
+    # Start the client first so the startup warm-up's solar_gain call is not counted.
     with (
-        patch.object(mrt, "solar_gain", wraps=mrt.solar_gain) as solar_gain,
         TestClient(_create_test_app([raw])) as client,
+        patch.object(mrt, "solar_gain", wraps=mrt.solar_gain) as solar_gain,
     ):
         response = client.post("/home/risk", json=REQUEST)
 

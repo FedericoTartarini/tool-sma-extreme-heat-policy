@@ -20,8 +20,10 @@ React 19, TypeScript, Vite, Mantine, React Router v7, nuqs, Zustand, TanStack Re
 
 ## Home domain contracts (Mapbox + risk)
 
-- `VITE_MAPBOX_ACCESS_TOKEN` is required for location suggest/retrieve.
-- Risk requests need resolved coordinates. A fresh suggestion resolves them via retrieve; a saved location (`saved-locations:v1`) already holds them and goes straight to risk fetch.
+- `VITE_MAPBOX_ACCESS_TOKEN` is required for location suggest/retrieve and current-location reverse lookup.
+- Risk requests need resolved coordinates. A fresh suggestion resolves them via retrieve; a saved location (`saved-locations:v1`) already holds them and goes straight to risk fetch. Current-location detection supplies device coordinates after resolving a supported suburb or town under that place's own Mapbox identity.
+- Browser geolocation is click-only: never run it on page load or use an IP-based fallback. If reverse lookup cannot identify a supported place, direct the user to manual search; do not select postcode, district or state-only results.
+- Search retrieval and detection share a pending-request controller. Every location input edit or clear, location pick, or new detection cancels older work, including stale errors. Geolocation and reverse lookup each have a separate 15-second timeout; the geolocation watchdog includes the permission prompt.
 - Valid prefilled `loc` from URL or `browserState` persistence auto-triggers suggest/retrieve and then risk fetch.
 - Backend risk payload is `sport + latitude + longitude + profile` only.
 - Risk refetches when selected location coordinates resolve and when sport changes.

@@ -84,6 +84,7 @@ describe("homeStore location search", () => {
 
   it("keeps the committed selection when the input still matches it", () => {
     useHomeStore.getState().selectLocation(DAMPER_LOCATION);
+    const tokenAfterSelect = useHomeStore.getState().locationSessionToken;
 
     useHomeStore
       .getState()
@@ -92,8 +93,9 @@ describe("homeStore location search", () => {
     expect(useHomeStore.getState()).toMatchObject({
       locationSearchInput: DAMPER_LOCATION.displayLabel,
       selectedLocation: DAMPER_LOCATION,
-      locationSessionToken: INITIAL_SESSION_TOKEN,
+      locationSessionToken: tokenAfterSelect,
     });
+    expect(tokenAfterSelect).not.toBe(INITIAL_SESSION_TOKEN);
   });
 
   it("restores a committed selection and formatted label after choosing a new suggestion", () => {
@@ -141,6 +143,16 @@ describe("homeStore location search", () => {
 
     useHomeStore.getState().finishPrefilledLocationResolve();
     expect(useHomeStore.getState().prefilledLocationResolveState).toBe("idle");
+  });
+
+  it("drops a pending Enter submit on any newer location edit or pick", () => {
+    useHomeStore.getState().requestLocationSearchSubmit("Per");
+    useHomeStore.getState().setLocationSearchInput("Pert");
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
+
+    useHomeStore.getState().requestLocationSearchSubmit("Pert");
+    useHomeStore.getState().selectLocation(PERTH_LOCATION);
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
   });
 
   it("keeps the current sport and location selection when the profile changes", () => {
