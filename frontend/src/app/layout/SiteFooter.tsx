@@ -22,7 +22,23 @@ const COPYRIGHT_YEAR = 2025;
 const REVIEW_YEAR = 2025;
 const OPEN_METEO_URL = "https://open-meteo.com/";
 const CC_BY_4_URL = "https://creativecommons.org/licenses/by/4.0/";
-const CITATION_DOI_URL = "https://doi.org/10.1016/j.jsams.2025.03.006";
+// Newest paper first: the global tool paper, then the original SMA guidelines.
+const CITATIONS = [
+  {
+    key: "global",
+    doiUrl: "https://doi.org/10.1136/bjsports-2026-111907",
+    titleKey: "footer.globalPaperTitle",
+    authorsKey: "footer.globalAuthors",
+    journalKey: "footer.globalJournal",
+  },
+  {
+    key: "sma",
+    doiUrl: "https://doi.org/10.1016/j.jsams.2025.03.006",
+    titleKey: "footer.paperTitle",
+    authorsKey: "footer.authors",
+    journalKey: "footer.journal",
+  },
+] as const;
 const FOOTER_TEXT_PROPS = {
   inherit: true,
   lh: STANDARD_TEXT_LINE_HEIGHT,
@@ -118,22 +134,24 @@ export function SiteFooter() {
               >
                 {t("footer.feedbackLink")}
               </Anchor>
-              <Text {...FOOTER_TEXT_PROPS}>
-                {t("footer.citePrompt")}{" "}
-                <Anchor
-                  inherit
-                  styles={footerLinkStyles}
-                  href={CITATION_DOI_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t("footer.paperTitle")}
-                </Anchor>{" "}
-                {t("footer.authors")}{" "}
-                <Text span inherit fs="italic">
-                  {t("footer.journal")}
+              <Text {...FOOTER_TEXT_PROPS}>{t("footer.citePrompt")}</Text>
+              {CITATIONS.map((citation) => (
+                <Text key={citation.key} {...FOOTER_TEXT_PROPS}>
+                  <Anchor
+                    inherit
+                    styles={footerLinkStyles}
+                    href={citation.doiUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t(citation.titleKey)}
+                  </Anchor>{" "}
+                  {t(citation.authorsKey)}{" "}
+                  <Text span inherit fs="italic">
+                    {t(citation.journalKey)}
+                  </Text>
                 </Text>
-              </Text>
+              ))}
               <Text {...FOOTER_TEXT_PROPS}>
                 <Trans
                   i18nKey="footer.weatherAttribution"

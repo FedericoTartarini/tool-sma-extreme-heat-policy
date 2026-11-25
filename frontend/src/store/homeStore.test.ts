@@ -145,6 +145,16 @@ describe("homeStore location search", () => {
     expect(useHomeStore.getState().prefilledLocationResolveState).toBe("idle");
   });
 
+  it("drops a pending Enter submit on any newer location edit or pick", () => {
+    useHomeStore.getState().requestLocationSearchSubmit("Per");
+    useHomeStore.getState().setLocationSearchInput("Pert");
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
+
+    useHomeStore.getState().requestLocationSearchSubmit("Pert");
+    useHomeStore.getState().selectLocation(PERTH_LOCATION);
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
+  });
+
   it("keeps the current sport and location selection when the profile changes", () => {
     useHomeStore.getState().setSport("RUNNING");
     useHomeStore.getState().selectLocation(DAMPER_LOCATION);

@@ -96,6 +96,8 @@ export function useHomeCurrentLocation(): UseHomeCurrentLocationResult {
   const requestCurrentLocation = useCallback(() => {
     requestController.cancel();
     useHomeStore.getState().finishPrefilledLocationResolve();
+    // A newer detection wins over an Enter still waiting for suggestions.
+    useHomeStore.getState().clearLocationSearchSubmit();
     setIsDetecting(false);
 
     if (!hasMapboxToken) {
