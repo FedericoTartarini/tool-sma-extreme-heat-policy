@@ -109,7 +109,7 @@ describe("useHomeLocationSuggest search submit", () => {
     );
   });
 
-  it("prefers a suggestion whose full label matches the typed text", async () => {
+  it("commits the top-ranked suggestion, the one the dropdown highlights", async () => {
     vi.mocked(suggestLocations).mockResolvedValue([romeGeorgia, romeItaly]);
     const hook = mount();
 
@@ -117,7 +117,19 @@ describe("useHomeLocationSuggest search submit", () => {
     act(() => hook.current.onLocationSearchSubmit());
     await flush();
 
-    expect(useHomeStore.getState().selectedLocation?.id).toBe(romeItaly.id);
+    expect(useHomeStore.getState().selectedLocation?.id).toBe(romeGeorgia.id);
+  });
+
+  it("forgets a submit whose search failed, so a later retry does not commit on its own", async () => {
+    vi.mocked(suggestLocations).mockRejectedValueOnce(new Error("offline"));
+    const hook = mount();
+
+    typeInto(hook, "Rome");
+    act(() => hook.current.onLocationSearchSubmit());
+    await flush();
+
+    expect(hook.current.suggestErrorReason).toBe("unavailable");
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
   });
 
   it("drops a pending submit when the user keeps typing", async () => {

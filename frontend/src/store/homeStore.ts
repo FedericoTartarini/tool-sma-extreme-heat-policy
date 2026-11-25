@@ -39,6 +39,11 @@ interface HomeStoreState {
   prefilledLocationResolveState: PrefilledLocationResolveState;
   locationSessionToken: string;
   locationRequestController: LatestAbortableRequestController;
+  /**
+   * Search text the user pressed Enter on before its suggestions were ready.
+   * Any newer location action (edit, pick, detection, bootstrap) clears it.
+   */
+  pendingLocationSearchSubmit: string | null;
 
   bootstrap: (payload: HomeStoreBootstrapPayload) => void;
   setProfile: (profile: HeatRiskProfile) => void;
@@ -49,6 +54,8 @@ interface HomeStoreState {
   finishPrefilledLocationResolve: () => void;
   markPrefilledLocationNotFound: () => void;
   markPrefilledLocationNotMatched: () => void;
+  requestLocationSearchSubmit: (query: string) => void;
+  clearLocationSearchSubmit: () => void;
 }
 
 function createSessionToken(): string {
@@ -76,6 +83,7 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   prefilledLocationResolveState: "idle",
   locationSessionToken: createSessionToken(),
   locationRequestController: createLatestAbortableRequestController(),
+  pendingLocationSearchSubmit: null,
 
   bootstrap: ({
     channel,
@@ -96,6 +104,7 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
       selectedLocation: null,
       prefilledLocationResolveState,
       locationSessionToken: createSessionToken(),
+      pendingLocationSearchSubmit: null,
     });
   },
   setProfile: (profile) => set({ profile }),
@@ -116,6 +125,7 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         locationPrefillSource: "none",
         ...(shouldClearSelectedLocation ? { selectedLocation: null } : {}),
         prefilledLocationResolveState: "idle",
+        pendingLocationSearchSubmit: null,
         ...(isStartingNewSearch
           ? { locationSessionToken: createSessionToken() }
           : {}),
@@ -130,6 +140,7 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
       locationPrefillSource: "none",
       prefilledLocationResolveState: "idle",
       locationSessionToken: createSessionToken(),
+      pendingLocationSearchSubmit: null,
     });
   },
   startPrefilledLocationResolve: () =>
@@ -140,4 +151,7 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
     set({ prefilledLocationResolveState: "not_found" }),
   markPrefilledLocationNotMatched: () =>
     set({ prefilledLocationResolveState: "not_matched" }),
+  requestLocationSearchSubmit: (query) =>
+    set({ pendingLocationSearchSubmit: query }),
+  clearLocationSearchSubmit: () => set({ pendingLocationSearchSubmit: null }),
 }));

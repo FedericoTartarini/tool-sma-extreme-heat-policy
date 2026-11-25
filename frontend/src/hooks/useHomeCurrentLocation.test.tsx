@@ -162,6 +162,13 @@ describe("toCurrentLocationErrorReason", () => {
 });
 
 describe("useHomeCurrentLocation", () => {
+  it("drops a search Enter that is still waiting for suggestions", () => {
+    useHomeStore.getState().requestLocationSearchSubmit("Rom");
+    const hook = mount();
+    act(() => hook.current.requestCurrentLocation());
+    expect(useHomeStore.getState().pendingLocationSearchSubmit).toBeNull();
+  });
+
   it("requests location only after a click and updates busy state through lookup success", async () => {
     const lookup = deferred<LocationSuggestion[]>();
     vi.mocked(reverseGeocodeCoordinates).mockReturnValue(lookup.promise);

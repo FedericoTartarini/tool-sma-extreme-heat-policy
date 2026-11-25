@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@mantine/hooks";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { suggestLocations } from "@/api/mapboxSuggest";
 import type { HomeSuggestErrorReason } from "@/domain/homeErrorMap";
 import type { LocationSuggestion } from "@/domain/location";
 import {
   LOCATION_SUGGEST_TYPES_PARAM,
-  findExactNormalizedSuggestion,
   prepareLocationSuggestions,
   resolvePrefilledLocationSuggestion,
   shouldOpenPrefilledLocationDropdown,
@@ -32,14 +31,11 @@ interface UseHomeLocationSuggestResult {
   onLocationSearchInputChange: (value: string) => void;
   onLocationOptionSubmit: (suggestionId: string) => void;
   /**
-   * Picks the best suggestion for the typed text (Enter without a highlighted
-   * option). Skips the debounce and waits for suggestions when none are ready.
+   * Picks the top-ranked suggestion for the typed text (Enter without a
+   * highlighted option). Skips the debounce and waits for suggestions when
+   * none are ready.
    */
   onLocationSearchSubmit: () => void;
-}
-
-interface PendingSearchSubmit {
-  query: string;
 }
 
 function getLanguagePreference(): string | undefined {
@@ -131,19 +127,6 @@ function findSubmittedSuggestion(
 }
 
 /**
- * Chooses the suggestion Enter commits: an exact label match when the user
- * typed one in full, otherwise Mapbox's top-ranked result.
- */
-function findBestSuggestion(
-  suggestions: LocationSuggestion[],
-  query: string,
-): LocationSuggestion | null {
-  return (
-    findExactNormalizedSuggestion(suggestions, query) ?? suggestions[0] ?? null
-  );
-}
-
-/**
  * Query-driven location suggest hook for Home.
  */
 export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
@@ -178,10 +161,19 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const markPrefilledLocationNotMatched = useHomeStore(
     (state) => state.markPrefilledLocationNotMatched,
   );
+  const pendingSearchSubmit = useHomeStore(
+    (state) => state.pendingLocationSearchSubmit,
+  );
+  const requestLocationSearchSubmit = useHomeStore(
+    (state) => state.requestLocationSearchSubmit,
+  );
+  const clearLocationSearchSubmit = useHomeStore(
+    (state) => state.clearLocationSearchSubmit,
+  );
   const [hasRetrieveError, setHasRetrieveError] = useState(false);
-  const [pendingSearchSubmit, setPendingSearchSubmit] =
-    useState<PendingSearchSubmit | null>(null);
-  const handledSearchSubmitRef = useRef<PendingSearchSubmit | null>(null);
+  const [lastSubmittedQuery, setLastSubmittedQuery] = useState<string | null>(
+    null,
+  );
   const retrieveController = useHomeStore(
     (state) => state.locationRequestController,
   );
@@ -191,11 +183,11 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
   const language = useMemo(() => getLanguagePreference(), []);
   const [debouncedQuery] = useDebouncedValue(query, SUGGEST_DEBOUNCE_MS);
   // A submit is only live while the input still holds the text it was made for.
-  const isSearchSubmitPending = pendingSearchSubmit?.query === query;
-  // Pressing Enter should not wait out the typing debounce.
-  const debouncedQueryValue = isSearchSubmitPending
-    ? query
-    : debouncedQuery.trim();
+  const isSearchSubmitPending = pendingSearchSubmit === query;
+  // Pressing Enter should not wait out the typing debounce. This stays true
+  // after the submit is handled, so its result or error is shown at once.
+  const debouncedQueryValue =
+    lastSubmittedQuery === query ? query : debouncedQuery.trim();
   const hasRestoredPrefillSource =
     locationPrefillSource === "url" || locationPrefillSource === "persisted";
   const isPrefilledLocationResolvePending =
@@ -380,34 +372,32 @@ export function useHomeLocationSuggest(): UseHomeLocationSuggestResult {
 
   const onLocationSearchSubmit = () => {
     if (query.length > 0) {
-      setPendingSearchSubmit({ query });
+      setLastSubmittedQuery(query);
+      requestLocationSearchSubmit(query);
     }
   };
 
   const areSuggestionsCurrent =
     shouldSuggest && suggestQuery.isSuccess && !suggestQuery.isFetching;
 
-  // Commits the best match once suggestions for the submitted text arrive.
-  // No results or a failed request leave the input as typed; the matching
-  // error toast tells the user why.
+  // Commits Mapbox's top-ranked suggestion (the same one the dropdown
+  // highlights) once suggestions for the submitted text arrive. The submit is
+  // cleared either way, so a failed or empty search never commits later on its
+  // own; the matching error toast tells the user why nothing was picked.
   useEffect(() => {
-    if (
-      !pendingSearchSubmit ||
-      !isSearchSubmitPending ||
-      !areSuggestionsCurrent ||
-      handledSearchSubmitRef.current === pendingSearchSubmit
-    ) {
+    if (!isSearchSubmitPending) {
       return;
     }
 
-    handledSearchSubmitRef.current = pendingSearchSubmit;
-    const bestSuggestion = findBestSuggestion(
-      dedupedSuggestions,
-      pendingSearchSubmit.query,
-    );
+    if (shouldSuggest && !areSuggestionsCurrent && !suggestQuery.isError) {
+      return;
+    }
 
-    if (bestSuggestion) {
-      submitSuggestion(bestSuggestion);
+    clearLocationSearchSubmit();
+    const topSuggestion = areSuggestionsCurrent ? dedupedSuggestions[0] : null;
+
+    if (topSuggestion) {
+      submitSuggestion(topSuggestion);
     }
   });
 

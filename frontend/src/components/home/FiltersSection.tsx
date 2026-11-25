@@ -172,7 +172,10 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
 
   // Highlights the top suggestion once it matches the typed text, so Enter
   // picks it. The frame wait lets the dropdown mount its options first.
+  // The store object is new on every render, but selectFirstOption is stable,
+  // so re-renders do not undo the user's arrow-key choice.
   const isLocationDropdownOpened = locationCombobox.dropdownOpened;
+  const { selectFirstOption } = locationCombobox;
   useEffect(() => {
     if (
       !isLocationDropdownOpened ||
@@ -182,15 +185,13 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      locationCombobox.selectFirstOption();
-    });
+    const frameId = window.requestAnimationFrame(() => selectFirstOption());
     return () => window.cancelAnimationFrame(frameId);
   }, [
     areSuggestionsCurrent,
     isLocationDropdownOpened,
-    locationCombobox,
     locationSuggestions,
+    selectFirstOption,
   ]);
 
   useEffect(() => {
@@ -237,7 +238,13 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
   const handleLocationInputKeyDown = (
     event: KeyboardEvent<HTMLInputElement>,
   ) => {
-    if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+    // keyCode 229 is the Enter that confirms an IME candidate (Safari reports
+    // it after compositionend, so isComposing alone misses it).
+    if (
+      event.key !== "Enter" ||
+      event.nativeEvent.isComposing ||
+      event.nativeEvent.keyCode === 229
+    ) {
       return;
     }
 
@@ -245,9 +252,20 @@ export function FiltersSection({ onLocationError }: FiltersSectionProps) {
       locationCombobox.dropdownOpened &&
       locationCombobox.getSelectedOptionIndex() !== -1;
 
-    // Mantine submits a highlighted option itself. Otherwise pick the best
-    // match for the typed text, waiting for suggestions if needed.
-    if (!hasHighlightedOption && !isShowingCommittedLocation) {
+    if (hasHighlightedOption) {
+      // Mantine clicks the highlighted option only when `code` is "Enter".
+      // Phone keyboards often send an empty code, so click it ourselves then.
+      const { code } = event.nativeEvent;
+      if (code !== "Enter" && code !== "NumpadEnter") {
+        event.preventDefault();
+        locationCombobox.clickSelectedOption();
+      }
+      return;
+    }
+
+    // Nothing highlighted yet: pick the top match for the typed text,
+    // waiting for suggestions if needed.
+    if (!isShowingCommittedLocation) {
       event.preventDefault();
       onLocationSearchSubmit();
     }
