@@ -9,6 +9,10 @@
 # Local package manager cache
 .pnpm-store/
 
+# Firebase CLI local deploy cache and debug logs
+.firebase/
+firebase-debug*.log
+
 # Agent tooling: local config, hooks, skill docs and scratch tickets
 .claude/
 docs/agents/

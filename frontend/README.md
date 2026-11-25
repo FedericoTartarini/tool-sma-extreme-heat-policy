@@ -135,12 +135,26 @@ Import rules:
 - `pnpm build`
 - `pnpm ci` (lint, test, and build for deployment checks)
 
-## Netlify deployment
+## Deployment
 
-Frontend production and pull-request previews deploy through Netlify.
+Production deploys to Firebase Hosting (project `sma-extreme-heat-policy`).
+`.github/workflows/firebase-hosting-merge.yml` runs `pnpm run ci` in this
+directory and deploys `dist` on every push to `main`. The root `firebase.json`
+holds the publish directory, SPA fallback and cache headers.
 
-`frontend/netlify.toml` is the source of truth for the build command, publish
-directory, and SPA fallback.
+The workflow reads two GitHub repository variables (Settings → Secrets and
+variables → Actions → Variables). Both are required:
+
+- `VITE_API_BASE_URL`: the production backend URL.
+- `VITE_MAPBOX_ACCESS_TOKEN`: the production Mapbox public token.
+
+### Netlify (until DNS cutover)
+
+Until DNS for `sports-heat-tool.sydney.edu.au` points to Firebase, Netlify
+still serves production and pull-request previews.
+
+`frontend/netlify.toml` is the source of truth for the Netlify build command,
+publish directory, and SPA fallback.
 
 Netlify project settings:
 
@@ -150,8 +164,7 @@ Netlify project settings:
   - `VITE_API_BASE_URL`
   - `VITE_MAPBOX_ACCESS_TOKEN`
 
-Set both variables in Netlify with the Builds scope. GitHub Actions runs
-frontend quality checks but does not deploy the frontend.
+Set both variables in Netlify with the Builds scope.
 
 ## Frontend Conventions Compliance
 
