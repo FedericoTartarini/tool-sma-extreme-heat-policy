@@ -364,4 +364,17 @@ def test_post_home_risk_missing_wind_returns_422_unknown_inputs() -> None:
         )
 
     assert response.status_code == 422
-    assert response.json()["detail"]["unknown_inputs"] == ["v_z1"]
+    assert response.headers["content-type"] == "application/json"
+    assert response.json() == {
+        "detail": {
+            "message": "Required model inputs are missing or uncertain",
+            "unknown_inputs": ["v_z1"],
+            "available_inputs": {
+                "tdb": 30.0,
+                "tr": 35.0,
+                "rh": 60.0,
+                "v_z1": None,
+                "sol_radiation_dir": 525.0,
+            },
+        },
+    }
