@@ -50,7 +50,30 @@ export interface HeatRiskApiRequestSummary {
   location: HeatRiskApiLocation;
 }
 
+export interface DailyWeatherApiSummary {
+  date: string;
+  sunrise_local?: string | null;
+  sunset_local?: string | null;
+  uv_index_max?: number | null;
+  precip_prob_max_pct?: number | null;
+  cumulative_rainfall_mm?: number | null;
+  max_temp_c?: number | null;
+  min_temp_c?: number | null;
+  max_temp_time_local?: string | null;
+  min_temp_time_local?: string | null;
+  humidity_at_max_pct?: number | null;
+  humidity_at_min_pct?: number | null;
+  uv_index_max_time_local?: string | null;
+  avg_wind_speed_ms?: number | null;
+}
+
 export interface HeatRiskApiResponse {
+  request: HeatRiskApiRequestSummary;
+  forecast: ForecastApiPoint[];
+  daily_weather: DailyWeatherApiSummary[];
+}
+
+export interface HeatRiskApiCore {
   request: HeatRiskApiRequestSummary;
   forecast: ForecastApiPoint[];
 }
@@ -150,6 +173,79 @@ function isHeatRiskApiLocation(value: unknown): value is HeatRiskApiLocation {
   );
 }
 
+const LOCAL_CALENDAR_DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function isLocalCalendarDateKey(value: unknown): value is string {
+  return (
+    typeof value === "string" && LOCAL_CALENDAR_DATE_KEY_PATTERN.test(value)
+  );
+}
+
+function isLocalTimeLabel(value: unknown): value is string {
+  return typeof value === "string" && /^\d{2}:\d{2}$/.test(value);
+}
+
+const DAILY_WEATHER_FIELD_VALIDATORS = {
+  sunrise_local: isLocalTimeLabel,
+  sunset_local: isLocalTimeLabel,
+  uv_index_max: isFiniteNumber,
+  precip_prob_max_pct: isFiniteNumber,
+  cumulative_rainfall_mm: isFiniteNumber,
+  max_temp_c: isFiniteNumber,
+  min_temp_c: isFiniteNumber,
+  max_temp_time_local: isLocalTimeLabel,
+  min_temp_time_local: isLocalTimeLabel,
+  humidity_at_max_pct: isFiniteNumber,
+  humidity_at_min_pct: isFiniteNumber,
+  uv_index_max_time_local: isLocalTimeLabel,
+  avg_wind_speed_ms: isFiniteNumber,
+} satisfies {
+  [Field in Exclude<keyof DailyWeatherApiSummary, "date">]: (
+    value: unknown,
+  ) => value is NonNullable<DailyWeatherApiSummary[Field]>;
+};
+
+/**
+ * Keeps a daily weather row with a valid date; each malformed metric becomes
+ * `null` so one bad value does not hide the rest of that day's details.
+ */
+function toDailyWeatherApiSummary(
+  value: unknown,
+): DailyWeatherApiSummary | null {
+  if (!isRecord(value) || !isLocalCalendarDateKey(value.date)) {
+    console.warn("Ignoring daily weather row without a valid date.", value);
+    return null;
+  }
+
+  const summary: Record<string, unknown> = { date: value.date };
+  const invalidFields: string[] = [];
+
+  for (const [field, isValid] of Object.entries(
+    DAILY_WEATHER_FIELD_VALIDATORS,
+  )) {
+    const fieldValue = value[field];
+    if (fieldValue === undefined) {
+      continue;
+    }
+
+    if (fieldValue === null || isValid(fieldValue)) {
+      summary[field] = fieldValue;
+    } else {
+      summary[field] = null;
+      invalidFields.push(field);
+    }
+  }
+
+  if (invalidFields.length > 0) {
+    console.warn("Ignoring malformed daily weather fields.", {
+      date: value.date,
+      fields: invalidFields,
+    });
+  }
+
+  return summary as unknown as DailyWeatherApiSummary;
+}
+
 function isHeatRiskApiRequestSummary(
   value: unknown,
 ): value is HeatRiskApiRequestSummary {
@@ -163,11 +259,25 @@ function isHeatRiskApiRequestSummary(
 }
 
 /**
- * Validates the backend heat-risk response payload shape at runtime.
+ * Parses daily weather rows so malformed weather never rejects the rest of the
+ * heat-risk payload.
  */
-export function isHeatRiskApiResponse(
+function listDailyWeatherApiSummaries(
   value: unknown,
-): value is HeatRiskApiResponse {
+): DailyWeatherApiSummary[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((row) => {
+    const summary = toDailyWeatherApiSummary(row);
+    return summary ? [summary] : [];
+  });
+}
+
+function isHeatRiskApiCore(
+  value: unknown,
+): value is HeatRiskApiCore & Record<string, unknown> {
   if (!isRecord(value)) {
     return false;
   }
@@ -178,6 +288,18 @@ export function isHeatRiskApiResponse(
     value.forecast.length > 0 &&
     value.forecast.every(isForecastApiPoint)
   );
+}
+
+function parseHeatRiskApiResponse(value: unknown): HeatRiskApiResponse | null {
+  if (!isHeatRiskApiCore(value)) {
+    return null;
+  }
+
+  return {
+    request: value.request,
+    forecast: value.forecast,
+    daily_weather: listDailyWeatherApiSummaries(value.daily_weather),
+  };
 }
 
 function toHeatRiskErrorReason(error: unknown): HeatRiskErrorReason {
@@ -210,9 +332,9 @@ export async function fetchHeatRisk(
       body: JSON.stringify(payload),
       signal: options?.signal,
     });
-    const isValidResponse = isHeatRiskApiResponse(response);
+    const parsedResponse = parseHeatRiskApiResponse(response);
 
-    if (!isValidResponse) {
+    if (!parsedResponse) {
       return {
         ok: false,
         reason: "invalid_response",
@@ -221,7 +343,7 @@ export async function fetchHeatRisk(
 
     return {
       ok: true,
-      data: response,
+      data: parsedResponse,
     };
   } catch (error) {
     return {
