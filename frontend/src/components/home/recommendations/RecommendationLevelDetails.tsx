@@ -15,6 +15,7 @@ import {
 interface RecommendationLevelDetailsProps {
   content: RecommendationDetailContentModel;
   showLevelBadge?: boolean;
+  beforeSuggestions?: ReactNode;
   footer?: ReactNode;
 }
 
@@ -24,6 +25,7 @@ interface RecommendationLevelDetailsProps {
 export function RecommendationLevelDetails({
   content,
   showLevelBadge = false,
+  beforeSuggestions,
   footer,
 }: RecommendationLevelDetailsProps) {
   const { t, i18n } = useTranslation();
@@ -52,6 +54,7 @@ export function RecommendationLevelDetails({
       ) : null}
       <RecommendationActionGrid items={content.items} />
       <Text lh={STANDARD_TEXT_LINE_HEIGHT}>{content.description}</Text>
+      {beforeSuggestions}
       <Text lh={STANDARD_TEXT_LINE_HEIGHT}>
         {t("recommendations.detailed.youShouldLabel")}
       </Text>

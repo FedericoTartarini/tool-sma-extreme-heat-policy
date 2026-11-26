@@ -37,4 +37,27 @@ describe("RecommendationLevelDetails", () => {
     expect(markup).toContain("İYİ");
     expect(markup).not.toContain("IYI");
   });
+  it("places optional Home controls after the description and before You should", () => {
+    const markup = renderToStaticMarkup(
+      <MantineProvider theme={appTheme}>
+        <RecommendationLevelDetails
+          content={{
+            level: "high",
+            levelLabel: "High",
+            items: [],
+            description: "Policy description",
+            suggestions: ["Policy method"],
+          }}
+          beforeSuggestions={<span>Cooling controls</span>}
+        />
+      </MantineProvider>,
+    );
+    expect(markup).toContain("Cooling controls");
+    expect(markup.indexOf("Cooling controls")).toBeGreaterThan(
+      markup.indexOf("Policy description"),
+    );
+    expect(markup.indexOf("Cooling controls")).toBeLessThan(
+      markup.indexOf("recommendations.detailed.youShouldLabel"),
+    );
+  });
 });

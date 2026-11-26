@@ -4,10 +4,23 @@ import type { ResponsiveImageAsset } from "@/lib/responsiveImage";
 
 export type RiskLevel = "low" | "moderate" | "high" | "extreme";
 
+export type RecommendationActionId =
+  | "hydration"
+  | "clothing"
+  | "rest"
+  | "cooling"
+  | "suspend";
+
+export interface RecommendationActionDefinition {
+  id: RecommendationActionId;
+  image: ResponsiveImageAsset | null;
+}
+
 export interface RiskRegistryEntry {
   scoreLowerInclusive: number;
   scoreUpperExclusive: number;
   color: string;
+  keyActions: readonly RecommendationActionDefinition[];
   keyIconAssets: (ResponsiveImageAsset | null)[];
   levelKey: string;
   levelShortKey: string;
@@ -34,63 +47,106 @@ export const RISK_DISPLAY_OFFSET = 1;
 export const RISK_DISPLAY_AXIS_MAX = RISK_RAW_SCALE_MAX - RISK_DISPLAY_OFFSET;
 export const RISK_SCORE_DISPLAY_PRECISION = 1;
 
+type RiskRegistryEntryDefinition = Omit<RiskRegistryEntry, "keyIconAssets">;
+
+function createRiskRegistryEntry(
+  definition: RiskRegistryEntryDefinition,
+): RiskRegistryEntry {
+  return {
+    ...definition,
+    keyIconAssets: definition.keyActions.map((action) => action.image),
+  };
+}
+
 export const RISK_REGISTRY: Record<RiskLevel, RiskRegistryEntry> = {
-  low: {
+  low: createRiskRegistryEntry({
     scoreLowerInclusive: 0,
     scoreUpperExclusive: 1,
     color: "#FFE478",
-    keyIconAssets: [
-      RECOMMENDATION_ACTION_ASSETS.hydration,
-      RECOMMENDATION_ACTION_ASSETS.clothing,
+    keyActions: [
+      {
+        id: "hydration",
+        image: RECOMMENDATION_ACTION_ASSETS.hydration,
+      },
+      {
+        id: "clothing",
+        image: RECOMMENDATION_ACTION_ASSETS.clothing,
+      },
     ],
     levelKey: "risk.level.low",
     levelShortKey: "risk.levelShort.low",
     keyRecommendationsKey: "recommendations.key.low",
     detailedDescriptionKey: "recommendations.detailed.low.description",
     detailedSuggestionsKey: "recommendations.detailed.low.suggestions",
-  },
-  moderate: {
+  }),
+  moderate: createRiskRegistryEntry({
     scoreLowerInclusive: 1,
     scoreUpperExclusive: 2,
     color: "#F5810C",
-    keyIconAssets: [
-      RECOMMENDATION_ACTION_ASSETS.hydration,
-      RECOMMENDATION_ACTION_ASSETS.clothing,
-      RECOMMENDATION_ACTION_ASSETS.pause,
+    keyActions: [
+      {
+        id: "hydration",
+        image: RECOMMENDATION_ACTION_ASSETS.hydration,
+      },
+      {
+        id: "clothing",
+        image: RECOMMENDATION_ACTION_ASSETS.clothing,
+      },
+      {
+        id: "rest",
+        image: RECOMMENDATION_ACTION_ASSETS.pause,
+      },
     ],
     levelKey: "risk.level.moderate",
     levelShortKey: "risk.levelShort.moderate",
     keyRecommendationsKey: "recommendations.key.moderate",
     detailedDescriptionKey: "recommendations.detailed.moderate.description",
     detailedSuggestionsKey: "recommendations.detailed.moderate.suggestions",
-  },
-  high: {
+  }),
+  high: createRiskRegistryEntry({
     scoreLowerInclusive: 2,
     scoreUpperExclusive: 3,
     color: "#CF3838",
-    keyIconAssets: [
-      RECOMMENDATION_ACTION_ASSETS.hydration,
-      RECOMMENDATION_ACTION_ASSETS.clothing,
-      RECOMMENDATION_ACTION_ASSETS.pause,
-      RECOMMENDATION_ACTION_ASSETS.cooling,
+    keyActions: [
+      {
+        id: "hydration",
+        image: RECOMMENDATION_ACTION_ASSETS.hydration,
+      },
+      {
+        id: "clothing",
+        image: RECOMMENDATION_ACTION_ASSETS.clothing,
+      },
+      {
+        id: "rest",
+        image: RECOMMENDATION_ACTION_ASSETS.pause,
+      },
+      {
+        id: "cooling",
+        image: RECOMMENDATION_ACTION_ASSETS.cooling,
+      },
     ],
     levelKey: "risk.level.high",
     levelShortKey: "risk.levelShort.high",
     keyRecommendationsKey: "recommendations.key.high",
     detailedDescriptionKey: "recommendations.detailed.high.description",
     detailedSuggestionsKey: "recommendations.detailed.high.suggestions",
-  },
-  extreme: {
+  }),
+  extreme: createRiskRegistryEntry({
     scoreLowerInclusive: 3,
     scoreUpperExclusive: Number.POSITIVE_INFINITY,
     color: "#8C2439",
-    keyIconAssets: [RECOMMENDATION_ACTION_ASSETS.stop],
+    keyActions: [
+      {
+        id: "suspend",
+        image: RECOMMENDATION_ACTION_ASSETS.stop,
+      },
+    ],
     levelKey: "risk.level.extreme",
     levelShortKey: "risk.levelShort.extreme",
     keyRecommendationsKey: "recommendations.key.extreme",
     detailedDescriptionKey: "recommendations.detailed.extreme.description",
     detailedSuggestionsKey: "recommendations.detailed.extreme.suggestions",
-  },
+  }),
 };
 
 /**

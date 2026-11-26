@@ -1,20 +1,33 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  ACTIVE_COOLING_METHOD_IDS,
+  type ActiveCoolingMethodId,
+  type ActiveCoolingResolution,
+} from "@/domain/activeCooling";
 import type { RiskLevel } from "@/domain/riskRegistry";
 import { RECOMMENDATION_ACTION_ASSETS } from "@/domain/recommendationActionAssets";
 import enTranslations from "@/i18n/locales/en/translation.json";
-import { getRecommendationDetailContent } from "@/lib/recommendationDetails";
+import zhTranslations from "@/i18n/locales/zh-CN/translation.json";
+import {
+  getRecommendationDetailContent,
+  personaliseHomeRecommendationContent,
+} from "@/lib/recommendationDetails";
 
-function translate(key: string): unknown {
-  return key
-    .split(".")
-    .reduce<unknown>(
-      (value, segment) =>
-        value !== null && typeof value === "object" && segment in value
-          ? (value as Record<string, unknown>)[segment]
-          : undefined,
-      enTranslations,
-    );
+function createTranslate(translations: unknown) {
+  return (key: string): unknown =>
+    key
+      .split(".")
+      .reduce<unknown>(
+        (value, segment) =>
+          value !== null && typeof value === "object" && segment in value
+            ? (value as Record<string, unknown>)[segment]
+            : undefined,
+        translations,
+      );
 }
+
+const translate = createTranslate(enTranslations);
+const translateZh = createTranslate(zhTranslations);
 
 afterEach(() => {
   vi.doUnmock("@/domain/recommendationActionAssets");
@@ -22,10 +35,11 @@ afterEach(() => {
 });
 
 describe("getRecommendationDetailContent", () => {
-  it.each<[RiskLevel, string, string[], string[]]>([
+  it.each<[RiskLevel, string, string[], string[], string[]]>([
     [
       "low",
       "Low",
+      ["hydration", "clothing"],
       ["Stay hydrated", "Wear light clothing"],
       [
         "Ensure pre-exercise hydration by consuming 6 ml of water per kilogram of body weight every 2-3 hours before exercise. For a 70kg individual, this equates to 420ml of fluid every 2-3 hours (a standard sports drink bottle contains 500ml).",
@@ -38,6 +52,7 @@ describe("getRecommendationDetailContent", () => {
     [
       "moderate",
       "Moderate",
+      ["hydration", "clothing", "rest"],
       ["Stay hydrated", "Wear light clothing", "Rest Breaks"],
       [
         "During training sessions, provide a minimum of 15 minutes of rest for every 45 minutes of practice.",
@@ -50,6 +65,7 @@ describe("getRecommendationDetailContent", () => {
     [
       "high",
       "High",
+      ["hydration", "clothing", "rest", "cooling"],
       ["Stay hydrated", "Wear light clothing", "Rest Breaks", "Active Cooling"],
       [
         "Drinking cold fluids and/or ice slushies before exercise commences. Note that cold water and ice slushy ingestion during exercise is less effective for cooling.",
@@ -62,6 +78,7 @@ describe("getRecommendationDetailContent", () => {
     [
       "extreme",
       "Extreme",
+      ["suspend"],
       ["Consider Suspending Play"],
       [
         "All players should seek shade or cool refuge in an air-conditioned space if available.",
@@ -70,11 +87,18 @@ describe("getRecommendationDetailContent", () => {
     ],
   ])(
     "returns translated recommendation details for %s risk",
-    (level, expectedLabel, expectedItems, expectedSuggestions) => {
+    (
+      level,
+      expectedLabel,
+      expectedItemIds,
+      expectedItems,
+      expectedSuggestions,
+    ) => {
       const content = getRecommendationDetailContent(level, translate);
 
       expect(content.level).toBe(level);
       expect(content.levelLabel).toBe(expectedLabel);
+      expect(content.items.map((item) => item.id)).toEqual(expectedItemIds);
       expect(content.items.map((item) => item.label)).toEqual(expectedItems);
       expect(content.items).toHaveLength(expectedItems.length);
       for (const item of content.items) {
@@ -106,8 +130,9 @@ describe("getRecommendationDetailContent", () => {
       await import("@/lib/recommendationDetails");
 
     expect(getContent("low", translate).items).toEqual([
-      { image: null, label: "Stay hydrated" },
+      { id: "hydration", image: null, label: "Stay hydrated" },
       {
+        id: "clothing",
         image: {
           src: "/actions/clothing-96.webp",
           srcSet:
@@ -132,7 +157,7 @@ describe("getRecommendationDetailContent", () => {
       await import("@/lib/recommendationDetails");
 
     expect(getContent("extreme", translate).items).toEqual([
-      { image: null, label: "Consider Suspending Play" },
+      { id: "suspend", image: null, label: "Consider Suspending Play" },
     ]);
   });
 
@@ -145,9 +170,125 @@ describe("getRecommendationDetailContent", () => {
 
     expect(content.items).toEqual([
       {
+        id: "clothing",
         image: RECOMMENDATION_ACTION_ASSETS.clothing,
         label: "Wear light clothing",
       },
     ]);
+  });
+});
+
+describe("personaliseHomeRecommendationContent", () => {
+  it.each<[string, ReturnType<typeof createTranslate>]>([
+    ["en", translate],
+    ["zh-CN", translateZh],
+  ])(
+    "keeps all five Active Cooling suggestions keyed in %s",
+    (_language, t) => {
+      const content = getRecommendationDetailContent("high", t);
+
+      expect(Object.keys(content.suggestionsByMethodId ?? {})).toEqual(
+        ACTIVE_COOLING_METHOD_IDS,
+      );
+      expect(content.suggestions).toHaveLength(
+        ACTIVE_COOLING_METHOD_IDS.length,
+      );
+    },
+  );
+
+  it.each<[ActiveCoolingMethodId, number]>([
+    ["cold-fluids-or-slushies", 0],
+    ["arm-or-foot-immersion", 1],
+    ["water-dousing", 2],
+    ["ice-packs-or-towels", 3],
+    ["fans", 4],
+  ])("maps %s to its policy suggestion", (methodId, suggestionIndex) => {
+    const content = getRecommendationDetailContent("high", translate);
+    expect(Object.keys(content.suggestionsByMethodId ?? {})).toEqual(
+      ACTIVE_COOLING_METHOD_IDS,
+    );
+    const resolution: ActiveCoolingResolution = {
+      visibleMethodIds: [methodId],
+      showPrepareReminder: false,
+    };
+
+    const result = personaliseHomeRecommendationContent(content, resolution);
+
+    expect(result.content.suggestions).toEqual([
+      content.suggestions[suggestionIndex],
+    ]);
+  });
+
+  it("filters only the selected high-risk Active Cooling methods", () => {
+    const content = getRecommendationDetailContent("high", translate);
+    const resolution: ActiveCoolingResolution = {
+      visibleMethodIds: ["water-dousing", "fans"],
+      showPrepareReminder: false,
+    };
+
+    const result = personaliseHomeRecommendationContent(content, resolution);
+
+    expect(result.content.items.map((item) => item.id)).toEqual([
+      "hydration",
+      "clothing",
+      "rest",
+      "cooling",
+    ]);
+    expect(result.content.suggestions).toEqual([
+      content.suggestions[2],
+      content.suggestions[4],
+    ]);
+    expect(result.showPrepareCoolingReminder).toBe(false);
+  });
+
+  it.each<RiskLevel>(["low", "moderate", "extreme"])(
+    "returns %s content unchanged while forwarding the reminder",
+    (level) => {
+      const content = getRecommendationDetailContent(level, translate);
+      const resolution: ActiveCoolingResolution = {
+        visibleMethodIds: [],
+        showPrepareReminder: true,
+      };
+
+      const result = personaliseHomeRecommendationContent(content, resolution);
+
+      expect(result.content).toBe(content);
+      expect(result.showPrepareCoolingReminder).toBe(true);
+    },
+  );
+
+  it("leaves the complete shared recommendation content unchanged", () => {
+    const content = getRecommendationDetailContent("high", translate);
+    const originalContent = structuredClone(content);
+    const resolution: ActiveCoolingResolution = {
+      visibleMethodIds: ["ice-packs-or-towels"],
+      showPrepareReminder: true,
+    };
+
+    const result = personaliseHomeRecommendationContent(content, resolution);
+
+    expect(content).toEqual(originalContent);
+    expect(content.suggestions).toHaveLength(5);
+    expect(result.content).not.toBe(content);
+    expect(result.content.suggestions).not.toBe(content.suggestions);
+    expect(result.showPrepareCoolingReminder).toBe(true);
+  });
+
+  it("keeps Home advice complete when suggestion metadata is invalid", () => {
+    const content = getRecommendationDetailContent("high", translate);
+    const invalidContent = {
+      ...content,
+      suggestionsByMethodId: {
+        fans: content.suggestionsByMethodId?.fans,
+      },
+    };
+
+    const result = personaliseHomeRecommendationContent(invalidContent, {
+      visibleMethodIds: ["fans"],
+      showPrepareReminder: false,
+    });
+
+    expect(result.content.suggestions).toEqual(content.suggestions);
+    expect(result.showPrepareCoolingReminder).toBe(false);
   });
 });

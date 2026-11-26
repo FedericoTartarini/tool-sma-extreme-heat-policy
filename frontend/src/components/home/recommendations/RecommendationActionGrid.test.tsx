@@ -18,7 +18,7 @@ if (hydrationImage === null) {
 }
 
 const items: RecommendationDetailItem[] = [
-  { image: hydrationImage, label: "Stay hydrated" },
+  { id: "hydration", image: hydrationImage, label: "Stay hydrated" },
 ];
 
 function renderGrid(gridItems: RecommendationDetailItem[] = items): string {
@@ -48,7 +48,7 @@ describe("RecommendationActionGrid", () => {
 
   it("renders extreme stop advice without an image", () => {
     const markup = renderGrid([
-      { image: null, label: "Consider Suspending Play" },
+      { id: "suspend", image: null, label: "Consider Suspending Play" },
     ]);
 
     expect(markup).toContain(">Consider Suspending Play<");
@@ -58,7 +58,7 @@ describe("RecommendationActionGrid", () => {
   it("keeps all labels when only some images are available", () => {
     const markup = renderGrid([
       ...items,
-      { image: null, label: "Wear light clothing" },
+      { id: "clothing", image: null, label: "Wear light clothing" },
     ]);
 
     expect(markup).toContain(">Stay hydrated<");
